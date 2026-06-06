@@ -1334,12 +1334,14 @@ def get_admin_router() -> Router:
         except Exception as e:
             await message.answer(f"❌ Не удалось скачать файл: {e}")
             return
-        ok = backup_manager.restore_from_file(dest).get('ok')
+        restore_result = backup_manager.restore_from_file(dest)
+        ok = restore_result.get('ok')
         await state.clear()
         if ok:
             await message.answer("✅ Восстановление выполнено успешно.\nБот и панель продолжают работу с новой БД.")
         else:
-            await message.answer("❌ Восстановление не удалось. Проверьте файл и повторите.")
+            err = '; '.join(restore_result.get('errors') or []) or 'проверьте файл'
+            await message.answer(f"❌ Восстановление не удалось: {err[:350]}")
 
 
     @admin_router.callback_query(F.data.startswith("admin_speedtest_autoinstall_"))

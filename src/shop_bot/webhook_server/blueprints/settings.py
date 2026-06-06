@@ -1729,7 +1729,8 @@ def restore_db_route():
             )
             panel_ctx.audit('db.restore', {'source': existing or 'upload'})
         else:
-            flash('Восстановление не удалось. Проверьте файл и повторите.', 'danger')
+            err = '; '.join(result.get('errors') or []) or 'неизвестная ошибка'
+            flash(f'Восстановление не удалось: {err[:400]}', 'danger')
         return redirect(request.referrer or url_for('backups_page'))
     except Exception as e:
         logger.error(f"Ошибка восстановления БД: {e}", exc_info=True)

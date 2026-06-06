@@ -1,6 +1,6 @@
 <div align="center">
 
-# 📖 Установка Remnawave ShopBot
+# 📖 Установка Remnawave App
 
 **Co-install с [Remnawave Panel](https://github.com/remnawave/panel) на одном сервере**
 
@@ -630,6 +630,6 @@ Remnawave API: [docs.rw/api](https://docs.rw/api)
 
 <div align="center">
 
-**Remnawave ShopBot** · Open Source · [GitHub](https://github.com/kissesses/remnawave-app)
+**Remnawave App** · Open Source · [GitHub](https://github.com/kissesses/remnawave-app)
 
 </div>

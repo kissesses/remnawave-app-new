@@ -1,0 +1,33 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate release notes
+        id: notes
+        run: |
+          chmod +x .github/scripts/release-notes.sh
+          BODY=$(.github/scripts/release-notes.sh "${{ github.ref_name }}")
+          echo "body<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$BODY" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ format('🚀 remnawave-app {0}', github.ref_name) }}
+          body: ${{ steps.notes.outputs.body }}
+          generate_release_notes: false
+          draft: false
+          prerelease: false

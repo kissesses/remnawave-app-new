@@ -9,6 +9,7 @@
 
 <br>
 
+[![Release](https://img.shields.io/github/v/release/kissesses/remnawave-app?style=for-the-badge&logo=github)](https://github.com/kissesses/remnawave-app/releases)
 [![License](https://img.shields.io/github/license/kissesses/remnawave-app?style=for-the-badge)](LICENSE)
 [![Docker](https://img.shields.io/badge/GHCR-ghcr.io-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://github.com/kissesses/remnawave-app/pkgs/container/remnawave-app)
 
@@ -24,7 +25,7 @@
 <br>
 
 <p align="center">
-  <img width="1200" alt="Remnawave ShopBot" src="docs/assets/hero-banner.png" />
+  <img width="1200" alt="Remnawave App" src="docs/assets/hero-banner.png" />
 </p>
 
 ---
@@ -210,7 +211,8 @@ UQAIaNG4ccxBDViWi3hISWeZEHDM1LvBrV292USg_A0AERHF
 ## 🆘 Помощь
 
 - 🐛 [Issues](https://github.com/kissesses/remnawave-app/issues) — баги и предложения
-- 🐳 [GHCR](https://github.com/kissesses/remnawave-app/pkgs/container/remnawave-app) — Docker-образ `latest`
+- 📦 [Releases](https://github.com/kissesses/remnawave-app/releases) — версии и образы
+- 🐳 [GHCR](https://github.com/kissesses/remnawave-app/pkgs/container/remnawave-app) — Docker `latest`
 
 ---
 

@@ -250,12 +250,49 @@ def _resolve_backup_password(cfg: dict[str, Any]) -> str | None:
     if not cfg.get("encrypt_enabled"):
         return None
     if cfg.get("password_mode") == "master":
-        from shop_bot.data_manager import secrets_vault
-        raw = rw_repo.get_setting("backup_master_password") or ""
-        master = secrets_vault.decrypt_secret(raw) if raw else ""
-        if master:
-            return master
+        return _load_master_backup_password()
     return backup_crypto.generate_backup_password()
+
+
+def _load_master_backup_password() -> str | None:
+    from shop_bot.data_manager import secrets_vault
+    raw = rw_repo.get_setting("backup_master_password") or ""
+    master = secrets_vault.decrypt_secret(raw) if raw else ""
+    return master or None
+
+
+def _resolve_restore_password(explicit: str | None) -> str | None:
+    """Пароль для restore: из формы или мастер-пароль (если режим master)."""
+    pwd = (explicit or "").strip() or None
+    if pwd:
+        return pwd
+    cfg = get_backup_config()
+    if cfg.get("encrypt_enabled") and cfg.get("password_mode") == "master":
+        return _load_master_backup_password()
+    return None
+
+
+def _format_subprocess_error(proc: subprocess.CompletedProcess[str] | subprocess.CalledProcessError) -> str:
+    detail = (proc.stderr or proc.stdout or "").strip()
+    if detail:
+        lines = [ln.strip() for ln in detail.splitlines() if ln.strip()]
+        if lines:
+            return lines[-1][:500]
+    return f"код выхода {proc.returncode}"
+
+
+def _reset_public_schema_for_restore() -> None:
+    """Очистить public перед replay дампа (иначе CREATE TABLE падает на существующих объектах)."""
+    if not is_postgresql():
+        return
+    sql = """
+    DROP SCHEMA IF EXISTS public CASCADE;
+    CREATE SCHEMA public;
+    GRANT ALL ON SCHEMA public TO CURRENT_USER;
+    GRANT ALL ON SCHEMA public TO public;
+    """
+    from shop_bot.data_manager.db_admin import _shopbot_autocommit_sql
+    _shopbot_autocommit_sql(sql)
 
 
 def _data_dir_path() -> Path | None:
@@ -393,7 +430,16 @@ def _build_manifest(
 
 def _run_pg_dump(dump_path: Path) -> int:
     result = subprocess.run(
-        ["pg_dump", DATABASE_URL, "--no-owner", "--no-privileges", "-f", str(dump_path)],
+        [
+            "pg_dump",
+            DATABASE_URL,
+            "--no-owner",
+            "--no-privileges",
+            "--clean",
+            "--if-exists",
+            "-f",
+            str(dump_path),
+        ],
         capture_output=True,
         text=True,
     )
@@ -784,10 +830,11 @@ def restore_from_file(
 
         work_path = uploaded_path
         tmp_holder = None
+        restore_password = _resolve_restore_password(backup_password)
         if backup_crypto.is_encrypted_backup(uploaded_path):
             try:
                 work_path, tmp_holder = backup_crypto.materialize_for_restore(
-                    uploaded_path, backup_password
+                    uploaded_path, restore_password
                 )
             except ValueError as e:
                 result["errors"].append(str(e))
@@ -796,12 +843,9 @@ def restore_from_file(
                 result["errors"].append(f"Не удалось расшифровать архив: {e}")
                 return result
 
-        if not validate_backup_file(work_path if work_path != uploaded_path else uploaded_path):
-            if backup_crypto.read_sidecar(uploaded_path):
-                work_path = uploaded_path
-            else:
-                result["errors"].append("Файл не прошёл проверку")
-                return result
+        if not validate_backup_file(work_path):
+            result["errors"].append("Файл не прошёл проверку (повреждён или не архив shopbot)")
+            return result
 
         caps = archive_capabilities(work_path)
         do_db = caps["database"] if restore_database is None else restore_database
@@ -858,7 +902,7 @@ def restore_from_file(
             tmp_dir.mkdir(parents=True, exist_ok=True)
             candidate_sql: Path | None = None
 
-            if uploaded_path.suffix.lower() == ".zip":
+            if work_path.suffix.lower() == ".zip":
                 with zipfile.ZipFile(work_path, "r") as zf:
                     dest = tmp_dir.resolve()
                     for name in zf.namelist():
@@ -866,19 +910,30 @@ def restore_from_file(
                             zf.extract(name, path=dest)
                             candidate_sql = (dest / name).resolve()
                             break
-            elif uploaded_path.suffix.lower() == ".sql":
-                candidate_sql = uploaded_path
+            elif work_path.suffix.lower() == ".sql":
+                candidate_sql = work_path
 
             if not candidate_sql or not candidate_sql.exists():
                 result["errors"].append("SQL dump не найден")
                 shutil.rmtree(tmp_dir, ignore_errors=True)
                 return result
 
-            subprocess.run(
+            try:
+                _reset_public_schema_for_restore()
+            except Exception as e:
+                result["errors"].append(f"Не удалось очистить схему перед restore: {e}")
+                shutil.rmtree(tmp_dir, ignore_errors=True)
+                return result
+
+            proc = subprocess.run(
                 ["psql", DATABASE_URL, "-v", "ON_ERROR_STOP=1", "-f", str(candidate_sql)],
-                check=True,
                 capture_output=True,
+                text=True,
             )
+            if proc.returncode != 0:
+                result["errors"].append(f"psql: {_format_subprocess_error(proc)}")
+                shutil.rmtree(tmp_dir, ignore_errors=True)
+                return result
             try:
                 rw_repo.run_migration()
             except Exception:
@@ -892,6 +947,12 @@ def restore_from_file(
                 tmp_holder.cleanup()
             except Exception:
                 pass
+        return result
+    except subprocess.CalledProcessError as e:
+        detail = _format_subprocess_error(e)
+        logger.error("Восстановление: subprocess: %s", detail, exc_info=True)
+        result["errors"].append(detail)
+        result["ok"] = False
         return result
     except Exception as e:
         logger.error("Восстановление: ошибка: %s", e, exc_info=True)
