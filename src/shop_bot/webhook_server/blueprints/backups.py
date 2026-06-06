@@ -322,7 +322,7 @@ def backup_test_channel_route():
         return jsonify({'ok': False, 'error': 'Бот недоступен'}), 503
     thread_id = backup_manager._parse_telegram_topic_id(cfg.get(topic_key) or '')
     label = 'секретный топик (пароли)' if target == 'secrets' else 'канал архивов'
-    text = f"✅ Тест ShopBot: {label}\nНастройки бэкапа работают."
+    text = f"✅ Тест Remnawave App: {label}\nНастройки бэкапа работают."
     try:
         kwargs = {'chat_id': chat_id, 'text': text}
         if thread_id is not None:

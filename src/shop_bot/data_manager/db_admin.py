@@ -43,7 +43,7 @@ PROTECTED_TABLES: dict[str, frozenset[str]] = {
 
 DATABASE_SOURCES: tuple[str, ...] = ('shopbot', 'remnawave')
 SOURCE_LABELS: dict[str, str] = {
-    'shopbot': 'ShopBot',
+    'shopbot': 'Remnawave App',
     'remnawave': 'Remnawave Panel',
 }
 

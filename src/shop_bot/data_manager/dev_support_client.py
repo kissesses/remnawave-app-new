@@ -307,7 +307,7 @@ def _hub_request(
         body_bytes = b""
     else:
         body_bytes = json.dumps(json_body or {}, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
-    headers = {"Accept": "application/json", "User-Agent": "RemnawaveShopBot-DevSupport/1.0"}
+    headers = {"Accept": "application/json", "User-Agent": "RemnawaveApp-DevSupport/1.0"}
     if signed:
         try:
             headers.update(_sign_headers(body_bytes))
@@ -438,7 +438,7 @@ def _hub_multipart(
 
     headers = {
         "Accept": "application/json",
-        "User-Agent": "RemnawaveShopBot-DevSupport/1.0",
+        "User-Agent": "RemnawaveApp-DevSupport/1.0",
         **sign_headers,
     }
     files: dict[str, tuple] = {
@@ -469,7 +469,7 @@ def _hub_get_binary(path: str) -> tuple[bool, str | None, bytes, dict[str, str]]
     if not hub:
         return False, "DEVELOPER_SUPPORT_HUB_URL не задан", b"", {}
 
-    headers = {"Accept": "*/*", "User-Agent": "RemnawaveShopBot-DevSupport/1.0"}
+    headers = {"Accept": "*/*", "User-Agent": "RemnawaveApp-DevSupport/1.0"}
     try:
         sign_headers = _sign_headers(b"")
         headers.update(sign_headers)

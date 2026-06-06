@@ -48,7 +48,7 @@ def get_common_template_data() -> dict:
         "waiting_tickets_count": waiting_tickets_count,
         "closed_tickets_count": closed_tickets_count,
         "all_tickets_count": all_tickets_count,
-        "brand_title": settings.get('panel_brand_title') or 'Remnawave Control',
+        "brand_title": settings.get('panel_brand_title') or 'Remnawave App',
         "project_info": project_info,
         "other_settings": get_all_other_settings(),
     }

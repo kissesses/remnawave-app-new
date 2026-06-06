@@ -188,7 +188,7 @@
 
     function applyOverview(overview, source) {
         if (!overview) return;
-        const label = overview.source_label || (source === 'remnawave' ? 'Remnawave Panel' : 'ShopBot');
+        const label = overview.source_label || (source === 'remnawave' ? 'Remnawave Panel' : 'Remnawave App');
         document.getElementById('db-source-caption')?.replaceChildren(document.createTextNode(label));
         document.getElementById('db-maint-source')?.replaceChildren(document.createTextNode(label));
 

@@ -390,7 +390,7 @@ def _load_settings_page_context(tab: str) -> dict:
             setup_uri = panel_totp.get_setup_uri(
                 current_admin_id,
                 session.get('panel_login') or '',
-                common_data.get('brand_title') or 'Remnawave ShopBot',
+                common_data.get('brand_title') or 'Remnawave App',
             )
             if setup_uri:
                 totp_qr_data_uri = panel_ctx.qr_data_uri(setup_uri)
@@ -839,7 +839,7 @@ def settings_mail_templates_data():
         'meta': meta,
         'accent': smtp_templates.get_accent(),
         'footer': smtp_templates.get_footer(),
-        'brand': (get_setting('panel_brand_title') or 'Remnawave ShopBot').strip(),
+        'brand': (get_setting('panel_brand_title') or 'Remnawave App').strip(),
     })
 
 
@@ -1037,7 +1037,7 @@ def settings_bot_messages_data():
         'ok': True,
         'templates': bot_messages.get_all_templates(),
         'meta': meta,
-        'brand': (get_setting('panel_brand_title') or 'Remnawave ShopBot').strip(),
+        'brand': (get_setting('panel_brand_title') or 'Remnawave App').strip(),
     })
 
 

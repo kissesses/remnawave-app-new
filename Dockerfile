@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# Remnawave ShopBot — multi-stage: без build-essential в финальном образе (меньше pull).
+# Remnawave App — multi-stage: без build-essential в финальном образе (меньше pull).
 
 ARG INSTALL_DOCKER_CLI=1
 

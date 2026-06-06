@@ -573,7 +573,7 @@ def render_from_fields(
     accent: str | None = None,
     footer: str | None = None,
 ) -> tuple[str, str, str]:
-    br = (brand or (get_setting("panel_brand_title") or "Remnawave ShopBot")).strip()
+    br = (brand or (get_setting("panel_brand_title") or "Remnawave App")).strip()
     full_ctx = {"brand": br, **ctx}
     subject = render_vars(fields.get("subject", ""), full_ctx).strip() or br
     headline = render_vars(fields.get("headline", ""), full_ctx).strip() or subject
@@ -619,7 +619,7 @@ def render_message(
 
 
 def sample_context(template_id: str) -> dict[str, Any]:
-    br = (get_setting("panel_brand_title") or "Remnawave ShopBot").strip()
+    br = (get_setting("panel_brand_title") or "Remnawave App").strip()
     samples: dict[str, dict[str, Any]] = {
         "password_reset": {
             "brand": br, "code": "847291", "valid_minutes": "10",

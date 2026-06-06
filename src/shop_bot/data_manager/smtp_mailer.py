@@ -135,7 +135,7 @@ def send_mail(
     if not cfg["from_email"]:
         return False, "Не указан адрес отправителя"
 
-    from_name = cfg["from_name"] or "Remnawave ShopBot"
+    from_name = cfg["from_name"] or "Remnawave App"
     msg = EmailMessage()
     msg["Subject"] = subject
     msg["From"] = formataddr((from_name, cfg["from_email"]))
@@ -266,7 +266,7 @@ def send_monitoring_alert(scope: str, name: str, issues: list[dict], level: str)
 
 
 def _brand_name() -> str:
-    return (get_setting("panel_brand_title") or "Remnawave ShopBot").strip()
+    return (get_setting("panel_brand_title") or "Remnawave App").strip()
 
 
 def password_reset_enabled() -> bool:

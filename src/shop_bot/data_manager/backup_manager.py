@@ -844,7 +844,7 @@ def restore_from_file(
                 return result
 
         if not validate_backup_file(work_path):
-            result["errors"].append("Файл не прошёл проверку (повреждён или не архив shopbot)")
+            result["errors"].append("Файл не прошёл проверку (повреждён или не архив приложения)")
             return result
 
         caps = archive_capabilities(work_path)
@@ -853,7 +853,7 @@ def restore_from_file(
         do_rw = caps["remnawave"] if restore_remnawave is None else restore_remnawave
 
         if do_db and not caps["database"]:
-            result["errors"].append("В архиве нет дампа базы данных shopbot")
+            result["errors"].append("В архиве нет дампа базы данных")
             return result
         if do_files and not caps["files"]:
             result["errors"].append("В архиве нет файлов проекта")

@@ -37,7 +37,7 @@ def generate_secret() -> str:
     return pyotp.random_base32()
 
 
-def provisioning_uri(secret: str, login: str, issuer: str = "Remnawave ShopBot") -> str:
+def provisioning_uri(secret: str, login: str, issuer: str = "Remnawave App") -> str:
     return pyotp.TOTP(secret).provisioning_uri(name=login, issuer_name=issuer)
 
 
@@ -154,7 +154,7 @@ def totp_status(admin_id: int) -> dict[str, Any]:
     }
 
 
-def get_setup_uri(admin_id: int, login: str, issuer: str = "Remnawave ShopBot") -> str | None:
+def get_setup_uri(admin_id: int, login: str, issuer: str = "Remnawave App") -> str | None:
     secret = get_setup_secret(admin_id)
     if not secret:
         return None

@@ -295,7 +295,7 @@ def _run_upgrade_job(job_id: str) -> None:
         _set_step(job, 'pull', 'Загрузка образа с GHCR…', 12)
         _run_compose(['pull', _SERVICE], job, 'pull')
 
-        _set_step(job, 'recreate', 'Пересоздание контейнера ShopBot…', 75)
+        _set_step(job, 'recreate', 'Пересоздание контейнера Remnawave App…', 75)
         # Сначала передаём браузеру фазу health — иначе контейнер погибает на recreate
         # и клиент навсегда остаётся на 75% (job только в памяти).
         job['await_client_health'] = True

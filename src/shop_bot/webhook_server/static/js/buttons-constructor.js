@@ -1,5 +1,5 @@
 /**
- * Remnawave ShopBot — Button Constructor
+ * Remnawave App — Button Constructor
  */
 (function () {
     'use strict';

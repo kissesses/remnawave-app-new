@@ -282,7 +282,7 @@ def create_webhook_app(bot_controller_instance):
                 ('buttons', 'Кнопки', 'build', 'button_constructor_page', 'button_constructor', []),
                 ('nodes', 'Ноды', 'dns', 'node_page', 'node', []),
                 ('backups', 'Бэкапы', 'database', 'backups_page', 'db_manage', []),
-                ('devsupport', 'Dev Support', 'developer_mode', 'developer_support_page', 'dev_support', []),
+                ('devsupport', 'Поддержка разработчика', 'developer_mode', 'developer_support_page', 'dev_support', []),
                 ('settings', 'Настройки', 'settings', 'settings_tab_page', 'settings', ['settings_tab_page']),
             ]
             items = []

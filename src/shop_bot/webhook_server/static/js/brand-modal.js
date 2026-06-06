@@ -12,7 +12,7 @@
             const current = (titleEl || glassTitleEl)?.textContent.trim() || '';
             if (inputEl) {
                 inputEl.value = current;
-                if (previewEl) previewEl.textContent = current || 'Remnawave Control';
+                if (previewEl) previewEl.textContent = current || 'Remnawave App';
             }
             if (typeof window.openModal === 'function') {
                 window.openModal('brandModal');
@@ -27,7 +27,7 @@
         if (inputEl && previewEl) {
             inputEl.addEventListener('input', () => {
                 const val = inputEl.value.trim();
-                previewEl.textContent = val || 'Remnawave Control';
+                previewEl.textContent = val || 'Remnawave App';
             });
         }
     }

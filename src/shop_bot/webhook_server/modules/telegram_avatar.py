@@ -88,7 +88,7 @@ def fetch_telegram_avatar_bytes(user_id: int) -> tuple[bytes, str] | None:
     if not file_url:
         return None
     try:
-        req = urllib.request.Request(file_url, headers={'User-Agent': 'RemnawaveShopBot/1.0'})
+        req = urllib.request.Request(file_url, headers={'User-Agent': 'RemnawaveApp/1.0'})
         with urllib.request.urlopen(req, timeout=10) as resp:
             data = resp.read()
             ctype = resp.headers.get('Content-Type') or 'image/jpeg'

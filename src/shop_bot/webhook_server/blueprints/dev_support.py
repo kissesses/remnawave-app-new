@@ -47,11 +47,15 @@ def _require_access(*, edit: bool = False):
 @panel_ctx.login_required
 def developer_support_page():
     if not dsc.is_enabled():
+        if not session.get("panel_is_superadmin"):
+            abort(404)
         return render_template(
             "developer_support.html",
             **panel_ctx.get_common_template_data(),
             dev_support_enabled=False,
             dev_support_state={},
+            app_version=get_current_version(),
+            panel_domain=_panel_domain(),
         )
     if not _can_dev_support(edit=False):
         from flask import flash as _flash, redirect as _redirect, url_for as _url_for

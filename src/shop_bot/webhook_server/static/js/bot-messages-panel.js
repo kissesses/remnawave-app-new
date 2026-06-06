@@ -21,7 +21,7 @@
     let state = {
         templates: {},
         meta: [],
-        brand: 'ShopBot',
+        brand: 'Remnawave App',
         activeId: null,
         audienceFilter: 'all',
         categoryFilter: 'all',
@@ -328,7 +328,7 @@
         }
         state.templates = data.templates || {};
         state.meta = data.meta || [];
-        state.brand = data.brand || 'ShopBot';
+        state.brand = data.brand || 'Remnawave App';
         const brandEl = $('bmsg-preview-brand');
         if (brandEl) brandEl.textContent = state.brand;
         const statEl = $('bmsg-stat-count');

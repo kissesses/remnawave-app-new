@@ -17,6 +17,7 @@
 
 [🚀 Установка](#-установка) ·
 [📖 Полная инструкция](docs/INSTALL.md) ·
+[🛠 Developer Support](docs/DEVELOPER-SUPPORT.md) ·
 [💎 Поддержать](#-поддержать-проект) ·
 [📸 Скриншоты](#-скриншоты)
 
@@ -32,13 +33,13 @@
 
 ## Зачем это нужно
 
-ShopBot — **витрина и касса** поверх Remnawave. Без Remnawave Panel приложение не выдаёт ключи.
+Remnawave App — **витрина и касса** поверх Remnawave. Без Remnawave Panel приложение не выдаёт ключи.
 
-| Вы делаете | ShopBot делает |
+| Вы делаете | Remnawave App делает |
 |------------|----------------|
-| Ставите Remnawave + ShopBot на один VPS | Продаёт подписки в Telegram |
+| Ставите Remnawave + Remnawave App на один VPS | Продаёт подписки в Telegram |
 | Настраиваете тарифы и оплату в панели | Создаёт пользователей и ключи через API Remnawave |
-| — | Бэкапит ShopBot **и** Remnawave (ReSTEAL, AES-256) |
+| — | Бэкапит Remnawave App **и** Remnawave (ReSTEAL, AES-256) |
 
 ---
 
@@ -48,9 +49,9 @@ ShopBot — **витрина и касса** поверх Remnawave. Без Remn
 
 | | |
 |---|---|
-| 🌊 **Remnawave** | **[Установлена и работает](https://docs.rw/docs/install/remnawave-panel)** до ShopBot: `/opt/remnawave`, сеть `remnawave-network`, HTTPS на `panel.*` |
+| 🌊 **Remnawave** | **[Установлена и работает](https://docs.rw/docs/install/remnawave-panel)** до Remnawave App: `/opt/remnawave`, сеть `remnawave-network`, HTTPS на `panel.*` |
 | 🖥 **Сервер** | Ubuntu 22.04+ / Debian 11+, 2 GB RAM (лучше 4 GB), Docker 24+ и Compose v2 |
-| 🌐 **Домены** | `panel.example.com` (Remnawave) + `shop.example.com` (ShopBot) — **разные** поддомены |
+| 🌐 **Домены** | `panel.example.com` (Remnawave) + `shop.example.com` (Remnawave App) — **разные** поддомены |
 | 🤖 **Telegram** | Токен от [@BotFather](https://t.me/botfather) |
 
 Подробные требования и проверки: **[docs/INSTALL.md](docs/INSTALL.md#-требования)**
@@ -59,7 +60,7 @@ ShopBot — **витрина и касса** поверх Remnawave. Без Remn
 
 ### Шаг 1 · Remnawave Panel (обязательно)
 
-**Без работающей Remnawave ShopBot не ставится.** Сначала панель по официальной инструкции:  
+**Без работающей Remnawave App не ставится.** Сначала панель по официальной инструкции:  
 **[docs.rw — Remnawave Panel](https://docs.rw/docs/install/remnawave-panel)**
 
 ```bash
@@ -70,7 +71,7 @@ docker network inspect remnawave-network >/dev/null && echo "✓ сеть OK"
 
 ---
 
-### Шаг 2 · ShopBot
+### Шаг 2 · Remnawave App
 
 ```bash
 mkdir /opt/remnawave-app && cd /opt/remnawave-app
@@ -184,7 +185,7 @@ docker compose pull && docker compose up -d --force-recreate
 
 ## 💎 Поддержать проект
 
-ShopBot — open source. Если проект полезен — можно поддержать разработку:
+Remnawave App — open source. Если проект полезен — можно поддержать разработку:
 
 <div align="center">
 
@@ -200,7 +201,7 @@ UQAIaNG4ccxBDViWi3hISWeZEHDM1LvBrV292USg_A0AERHF
 
 <br>
 
-🙏 **Спасибо** — это мотивирует развивать ShopBot дальше
+🙏 **Спасибо** — это мотивирует развивать Remnawave App дальше
 
 </div>
 
@@ -218,7 +219,7 @@ UQAIaNG4ccxBDViWi3hISWeZEHDM1LvBrV292USg_A0AERHF
 
 <div align="center">
 
-**GPLv3** · [kissesses/remnawave-app](https://github.com/kissesses/remnawave-app)
+**MIT** · [kissesses/remnawave-app](https://github.com/kissesses/remnawave-app)
 
 ⭐ Звёздочка на GitHub помогает проекту
 

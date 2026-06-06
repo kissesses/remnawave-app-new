@@ -79,7 +79,7 @@ def _fetch_github(owner: str, repo: str) -> dict:
     if cached and time.time() - cached[0] < _GITHUB_CACHE_TTL:
         return cached[1]
 
-    headers = {'Accept': 'application/vnd.github+json', 'User-Agent': 'Remnawave-ShopBot-Panel'}
+    headers = {'Accept': 'application/vnd.github+json', 'User-Agent': 'Remnawave-App-Panel'}
     result = {'user': None, 'repo': None}
 
     try:

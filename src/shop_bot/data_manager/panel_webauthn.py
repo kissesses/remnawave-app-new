@@ -129,7 +129,7 @@ def rp_config(request: Request | None = None) -> tuple[str, str, str]:
     if request and not origin:
         origin = _origin_from_request(request)
     rp_id = (rp_id.split(":")[0] if rp_id else "") or "localhost"
-    rp_name = (get_setting("panel_brand_title") or "Remnawave ShopBot").strip()
+    rp_name = (get_setting("panel_brand_title") or "Remnawave App").strip()
     return rp_id, rp_name, origin
 
 

@@ -575,9 +575,9 @@
         const ok = typeof showCustomConfirm === 'function'
             ? await showCustomConfirm(
                 `Будет загружен образ (тег ${lastUpgradeCaps.image_tag || 'latest'}) и перезапущен контейнер. Панель на 1–2 минуты может быть недоступна.`,
-                'Обновить ShopBot?',
+                'Обновить Remnawave App?',
             )
-            : window.confirm('Обновить ShopBot? Панель будет недоступна 1–2 минуты.');
+            : window.confirm('Обновить Remnawave App? Панель будет недоступна 1–2 минуты.');
 
         if (!ok) return;
 

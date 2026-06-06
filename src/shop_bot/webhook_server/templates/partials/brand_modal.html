@@ -17,7 +17,7 @@
                     <p class="brand-mac-preview__label">Предпросмотр в шапке</p>
                     <div class="brand-mac-preview__bar">
                         <img src="{{ url_for('static', filename='img/app-icon-32.png') }}" alt="" class="brand-mac-preview__icon" onerror="this.style.display='none'" />
-                        <span id="brand-preview-title" class="brand-mac-preview__title">{{ brand_title or 'Remnawave Control' }}</span>
+                        <span id="brand-preview-title" class="brand-mac-preview__title">{{ brand_title or 'Remnawave App' }}</span>
                         <span class="brand-mac-preview__page">Дашборд</span>
                     </div>
                 </div>
@@ -25,7 +25,7 @@
                 <div class="brand-mac-field">
                     <label class="brand-mac-field__label" for="brand-input">Заголовок</label>
                     <input type="text" id="brand-input" name="title" maxlength="64"
-                        placeholder="Remnawave Control" autocomplete="off"
+                        placeholder="Remnawave App" autocomplete="off"
                         class="brand-mac-field__input" />
                     <p class="brand-mac-field__hint">Отображается в верхней панели и в заголовках окон macOS v2.</p>
                 </div>

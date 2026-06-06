@@ -38,7 +38,7 @@
         templates: {},
         meta: [],
         accent: '#0A84FF',
-        brand: 'Remnawave ShopBot',
+        brand: 'Remnawave App',
         footer: '',
         activeId: null,
         filter: 'all',
@@ -197,7 +197,7 @@
     function updateInboxMock(subject, preheader) {
         const subj = subject || '—';
         const pre = preheader || '—';
-        const from = state.brand || 'Remnawave ShopBot';
+        const from = state.brand || 'Remnawave App';
 
         ['', '-modal'].forEach((suffix) => {
             const fromEl = $(`mtm-inbox-from${suffix}`);
@@ -422,7 +422,7 @@
         state.templates = data.templates || {};
         state.meta = data.meta || [];
         state.accent = data.accent || '#0A84FF';
-        state.brand = data.brand || 'Remnawave ShopBot';
+        state.brand = data.brand || 'Remnawave App';
         state.footer = data.footer || '';
 
         const brandStat = $('mtm-stat-brand');

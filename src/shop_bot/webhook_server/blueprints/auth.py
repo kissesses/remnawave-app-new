@@ -501,7 +501,7 @@ def totp_setup_page():
         setup_uri = panel_totp.get_setup_uri(
             int(admin_id),
             session.get('panel_login') or '',
-            panel_ctx.get_common_template_data().get('brand_title') or 'Remnawave ShopBot',
+            panel_ctx.get_common_template_data().get('brand_title') or 'Remnawave App',
         )
         if setup_uri:
             totp_qr_data_uri = panel_ctx.qr_data_uri(setup_uri)
