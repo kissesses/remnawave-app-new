@@ -1,0 +1,313 @@
+/* WebApp — STEALTHNET Stealth design (mobile mini-app style) */
+
+html[data-webapp-design="stealth"] {
+    --wa-st-accent: #ff2357;
+    --wa-st-accent-soft: rgba(255, 35, 87, 0.16);
+    --wa-st-bg: #020202;
+    --wa-st-surface: rgba(24, 24, 27, 0.72);
+    --wa-st-border: rgba(255, 255, 255, 0.06);
+    --wa-st-label: rgba(161, 161, 170, 0.95);
+    --wa-st-text: #ffffff;
+    --wa-st-bottom: calc(72px + env(safe-area-inset-bottom));
+}
+
+html[data-webapp-design="stealth"] body {
+    font-family: "Inter", system-ui, sans-serif !important;
+    background: var(--wa-st-bg) !important;
+    color: var(--wa-st-text) !important;
+    -webkit-font-smoothing: antialiased;
+}
+
+html[data-webapp-design="stealth"] #webapp-stealth-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+html[data-webapp-design="stealth"] #webapp-stealth-bg__base {
+    position: absolute;
+    inset: 0;
+    background: var(--wa-st-bg);
+}
+
+html[data-webapp-design="stealth"] #webapp-stealth-bg svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+html[data-webapp-design="stealth"] #webapp-stealth-bg__blob1,
+html[data-webapp-design="stealth"] #webapp-stealth-bg__blob2,
+html[data-webapp-design="stealth"] #webapp-stealth-bg__blob3 {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+html[data-webapp-design="stealth"] #webapp-stealth-bg__blob1 {
+    top: -15%;
+    right: -10%;
+    width: min(55vw, 600px);
+    height: min(55vw, 600px);
+    background: radial-gradient(circle, rgba(255, 35, 87, 0.2) 0%, transparent 60%);
+}
+
+html[data-webapp-design="stealth"] #webapp-stealth-bg__blob2 {
+    top: 30%;
+    left: -15%;
+    width: min(50vw, 500px);
+    height: min(50vw, 500px);
+    background: radial-gradient(circle, rgba(255, 35, 87, 0.13) 0%, transparent 65%);
+}
+
+html[data-webapp-design="stealth"] #webapp-stealth-bg__blob3 {
+    bottom: -10%;
+    right: -5%;
+    width: min(40vw, 450px);
+    height: min(40vw, 450px);
+    background: radial-gradient(circle, rgba(255, 35, 87, 0.16) 0%, transparent 65%);
+}
+
+/* Brand header */
+.webapp-stealth-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 99960;
+    padding: max(env(safe-area-inset-top), 18px) 16px 10px;
+    text-align: center;
+    pointer-events: none;
+}
+
+.webapp-stealth-header__title {
+    position: relative;
+    display: inline-block;
+    margin: 0;
+    font-family: "Syncopate", "Inter", system-ui, sans-serif;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #fff;
+}
+
+.webapp-stealth-header__title::before {
+    content: "";
+    position: absolute;
+    inset: -8px -20px;
+    z-index: -1;
+    background: radial-gradient(closest-side, rgba(255, 255, 255, 0.18), transparent 70%);
+    filter: blur(12px);
+    opacity: 0.5;
+}
+
+/* Pages */
+html[data-webapp-design="stealth"] #main-page,
+html[data-webapp-design="stealth"] #purchase-page,
+html[data-webapp-design="stealth"] #renew-page,
+html[data-webapp-design="stealth"] #setup-page,
+html[data-webapp-design="stealth"] #profile-page,
+html[data-webapp-design="stealth"] #support-page {
+    position: relative;
+    z-index: 1;
+    width: 100% !important;
+    max-width: 480px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding: calc(max(env(safe-area-inset-top), 18px) + 44px) 16px var(--wa-st-bottom) !important;
+    min-height: 100vh;
+    min-height: 100dvh;
+    box-sizing: border-box;
+}
+
+html[data-webapp-design="stealth"] #main-page > header,
+html[data-webapp-design="stealth"] #purchase-page > header,
+html[data-webapp-design="stealth"] #renew-page > header,
+html[data-webapp-design="stealth"] #setup-page > header,
+html[data-webapp-design="stealth"] #profile-page > header,
+html[data-webapp-design="stealth"] #support-page > header {
+    display: none !important;
+}
+
+html[data-webapp-design="stealth"] #main-page > nav,
+html[data-webapp-design="stealth"] #main-page > footer {
+    display: none !important;
+}
+
+html[data-webapp-design="stealth"] .absolute.-top-20.-left-20,
+html[data-webapp-design="stealth"] .absolute.-top-24.-right-24 {
+    display: none !important;
+}
+
+/* Accent remap: emerald → rose */
+html[data-webapp-design="stealth"] .text-primary,
+html[data-webapp-design="stealth"] .text-emerald-500,
+html[data-webapp-design="stealth"] .text-emerald-400 {
+    color: var(--wa-st-accent) !important;
+}
+
+html[data-webapp-design="stealth"] .bg-primary,
+html[data-webapp-design="stealth"] button.bg-primary {
+    background-color: var(--wa-st-accent) !important;
+}
+
+html[data-webapp-design="stealth"] .border-primary\/20,
+html[data-webapp-design="stealth"] .border-primary\/30 {
+    border-color: rgba(255, 35, 87, 0.28) !important;
+}
+
+html[data-webapp-design="stealth"] .bg-primary\/10,
+html[data-webapp-design="stealth"] .bg-primary\/20,
+html[data-webapp-design="stealth"] .from-primary\/10,
+html[data-webapp-design="stealth"] .to-primary\/5 {
+    background: var(--wa-st-accent-soft) !important;
+}
+
+html[data-webapp-design="stealth"] .glass-card,
+html[data-webapp-design="stealth"] .bg-white.dark\:bg-surface-dark,
+html[data-webapp-design="stealth"] .dark\:bg-surface-dark,
+html[data-webapp-design="stealth"] .dark\:bg-surface-highlight-dark,
+html[data-webapp-design="stealth"] .bg-black\/20,
+html[data-webapp-design="stealth"] .bg-black\/30,
+html[data-webapp-design="stealth"] .bg-black\/40 {
+    background: var(--wa-st-surface) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: 1px solid var(--wa-st-border) !important;
+    box-shadow: none !important;
+}
+
+html[data-webapp-design="stealth"] .glass-card,
+html[data-webapp-design="stealth"] #key-info-section-container > div,
+html[data-webapp-design="stealth"] #user-profile-card-container > div,
+html[data-webapp-design="stealth"] #profile-keys-list-container > div {
+    border-radius: 1.5rem !important;
+}
+
+html[data-webapp-design="stealth"] .text-gray-500,
+html[data-webapp-design="stealth"] .text-gray-400,
+html[data-webapp-design="stealth"] .text-gray-600 {
+    color: var(--wa-st-label) !important;
+}
+
+html[data-webapp-design="stealth"] button,
+html[data-webapp-design="stealth"] #purchase-btn,
+html[data-webapp-design="stealth"] #renew-btn,
+html[data-webapp-design="stealth"] #setup-btn {
+    border-radius: 999px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.04em !important;
+}
+
+html[data-webapp-design="stealth"] #purchase-btn,
+html[data-webapp-design="stealth"] #webapp-promo-btn,
+html[data-webapp-design="stealth"] #pay-button,
+html[data-webapp-design="stealth"] #renew-pay-button {
+    background: linear-gradient(180deg, #ff3d6a 0%, var(--wa-st-accent) 100%) !important;
+    color: #fff !important;
+    border: none !important;
+    min-height: 52px;
+    box-shadow: 0 0 24px rgba(255, 35, 87, 0.35) !important;
+}
+
+html[data-webapp-design="stealth"] #renew-btn,
+html[data-webapp-design="stealth"] #setup-btn,
+html[data-webapp-design="stealth"] #logout-btn {
+    background: rgba(255, 255, 255, 0.04) !important;
+    color: #fff !important;
+    border: 1px solid var(--wa-st-border) !important;
+}
+
+html[data-webapp-design="stealth"] #main-page::before {
+    content: none;
+}
+
+html[data-webapp-design="stealth"] #key-info-section-container {
+    margin-top: 8px;
+}
+
+html[data-webapp-design="stealth"] .shadow-\[0_0_15px_rgba\(16\,185\,129\,0\.3\)\] {
+    box-shadow: 0 0 20px rgba(255, 35, 87, 0.25) !important;
+}
+
+/* Bottom tab bar — STEALTHNET 3-tab */
+.webapp-stealth-tabbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 99970;
+    background: rgba(2, 2, 2, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+    padding: 8px 16px calc(8px + env(safe-area-inset-bottom));
+}
+
+.webapp-stealth-tabbar__inner {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+.webapp-stealth-tabbar__btn {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 4px 10px;
+    border: none;
+    background: transparent;
+    color: #71717a;
+    cursor: pointer;
+    transition: color 0.18s ease;
+}
+
+.webapp-stealth-tabbar__btn .material-icons-round {
+    font-size: 20px !important;
+}
+
+.webapp-stealth-tabbar__label {
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+}
+
+.webapp-stealth-tabbar__btn.is-active {
+    color: var(--wa-st-accent);
+}
+
+.webapp-stealth-tabbar__btn.is-active::after {
+    content: "";
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 24px;
+    height: 3px;
+    border-radius: 999px;
+    background: var(--wa-st-accent);
+    box-shadow: 0 0 8px rgba(255, 35, 87, 0.6);
+}
+
+html[data-webapp-design="stealth"] .webapp-theme-fab {
+    bottom: calc(78px + env(safe-area-inset-bottom));
+    right: 14px;
+    background: rgba(24, 24, 27, 0.88);
+    border-color: rgba(255, 35, 87, 0.2);
+}
+
+html[data-webapp-design="stealth"] .webapp-theme-option.is-active {
+    border-color: rgba(255, 35, 87, 0.45);
+    background: rgba(255, 35, 87, 0.1);
+}
+
+html[data-webapp-design="stealth"] .webapp-theme-option__check {
+    color: var(--wa-st-accent);
+}

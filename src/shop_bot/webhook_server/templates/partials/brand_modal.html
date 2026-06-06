@@ -1,0 +1,43 @@
+<div id="brandModal" class="modal-overlay brand-modal-overlay">
+    <div class="brand-mac-window modal-content" role="dialog" aria-labelledby="brand-mac-title" aria-modal="true">
+        <div class="brand-mac-titlebar">
+            <div class="macos-traffic-lights brand-mac-traffic" aria-hidden="true">
+                <button type="button" class="brand-mac-close" onclick="closeModal('brandModal')" aria-label="Закрыть"></button>
+                <span></span>
+                <span></span>
+            </div>
+            <span id="brand-mac-title" class="brand-mac-titlebar__label">Название панели</span>
+        </div>
+
+        <form data-ajax="true" data-refresh="page" action="{{ url_for('update_brand_title_route') }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+            <div class="brand-mac-body">
+                <div class="brand-mac-preview" aria-hidden="true">
+                    <p class="brand-mac-preview__label">Предпросмотр в шапке</p>
+                    <div class="brand-mac-preview__bar">
+                        <img src="{{ url_for('static', filename='img/app-icon-32.png') }}" alt="" class="brand-mac-preview__icon" onerror="this.style.display='none'" />
+                        <span id="brand-preview-title" class="brand-mac-preview__title">{{ brand_title or 'Remnawave Control' }}</span>
+                        <span class="brand-mac-preview__page">Дашборд</span>
+                    </div>
+                </div>
+
+                <div class="brand-mac-field">
+                    <label class="brand-mac-field__label" for="brand-input">Заголовок</label>
+                    <input type="text" id="brand-input" name="title" maxlength="64"
+                        placeholder="Remnawave Control" autocomplete="off"
+                        class="brand-mac-field__input" />
+                    <p class="brand-mac-field__hint">Отображается в верхней панели и в заголовках окон macOS v2.</p>
+                </div>
+            </div>
+
+            <footer class="brand-mac-footer">
+                <button type="button" class="brand-mac-btn brand-mac-btn--ghost" onclick="closeModal('brandModal')">Отмена</button>
+                <button type="submit" class="brand-mac-btn brand-mac-btn--primary">
+                    <span class="material-symbols-outlined">check</span>
+                    Сохранить
+                </button>
+            </footer>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,779 @@
+/* WebApp — Desktop layout */
+
+html[data-webapp-design="desktop"] {
+    --wa-d-sidebar: 272px;
+    --wa-d-accent: #10b981;
+    --wa-d-accent-soft: rgba(16, 185, 129, 0.14);
+    --wa-d-bg: #090909;
+    --wa-d-surface: #141414;
+    --wa-d-surface-hover: #1a1a1a;
+    --wa-d-border: rgba(255, 255, 255, 0.08);
+    --wa-d-text-muted: rgba(255, 255, 255, 0.55);
+    --wa-d-content-max: 1040px;
+}
+
+html[data-webapp-design="desktop"] body {
+    display: block !important;
+    background: var(--wa-d-bg) !important;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+html[data-webapp-design="desktop"] body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse 70% 50% at 0% 0%, rgba(16, 185, 129, 0.07), transparent 55%),
+        radial-gradient(ellipse 50% 40% at 100% 100%, rgba(16, 185, 129, 0.04), transparent 50%);
+    z-index: 0;
+}
+
+/* CRITICAL: only the active page is visible */
+html[data-webapp-design="desktop"] [id$="-page"]:not(.webapp-page-active) {
+    display: none !important;
+}
+
+/* Sidebar */
+.webapp-desktop-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: var(--wa-d-sidebar);
+    padding: 24px 16px;
+    border-right: 1px solid var(--wa-d-border);
+    background: rgba(10, 10, 10, 0.96);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    z-index: 100;
+}
+
+.webapp-desktop-sidebar__brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 10px 16px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.02em;
+    border-bottom: 1px solid var(--wa-d-border);
+    margin-bottom: 4px;
+}
+
+.webapp-desktop-sidebar__brand .webapp-desktop-sidebar__brand-icon,
+.webapp-desktop-sidebar__brand img {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    object-fit: contain;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--wa-d-accent-soft);
+    color: var(--wa-d-accent);
+    flex-shrink: 0;
+}
+
+.webapp-desktop-sidebar__brand .webapp-desktop-sidebar__brand-icon .material-icons-round {
+    font-size: 20px !important;
+    line-height: 1;
+}
+
+.webapp-desktop-sidebar__nav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.webapp-desktop-sidebar__btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 11px 14px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--wa-d-text-muted);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.webapp-desktop-sidebar__btn .material-icons-round {
+    font-size: 20px !important;
+    width: 22px;
+    min-width: 22px;
+    text-align: center;
+    line-height: 1;
+    opacity: 0.85;
+    flex-shrink: 0;
+}
+
+.webapp-desktop-sidebar__btn:hover {
+    background: var(--wa-d-surface-hover);
+    color: #fff;
+}
+
+.webapp-desktop-sidebar__btn.is-active {
+    background: var(--wa-d-accent-soft);
+    color: #fff;
+}
+
+.webapp-desktop-sidebar__btn.is-active .material-icons-round {
+    color: var(--wa-d-accent);
+}
+
+.webapp-desktop-sidebar__footer {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-top: 12px;
+    margin-top: auto;
+    border-top: 1px solid var(--wa-d-border);
+}
+
+.webapp-desktop-sidebar__footer-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--wa-d-text-muted);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.webapp-desktop-sidebar__footer-btn .material-icons-round {
+    font-size: 18px !important;
+    width: 20px;
+    min-width: 20px;
+    text-align: center;
+    line-height: 1;
+}
+
+.webapp-desktop-sidebar__footer-btn:hover {
+    background: var(--wa-d-surface-hover);
+    color: #fff;
+}
+
+.webapp-desktop-sidebar__footer-btn--danger:hover {
+    background: rgba(239, 68, 68, 0.12);
+    color: #f87171;
+}
+
+/* Visible page — full content pane */
+html[data-webapp-design="desktop"] [id$="-page"].webapp-page-active {
+    position: relative;
+    z-index: 1;
+    display: flex !important;
+    flex-direction: column;
+    margin-left: var(--wa-d-sidebar) !important;
+    margin-right: 0 !important;
+    width: calc(100vw - var(--wa-d-sidebar)) !important;
+    max-width: none !important;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 32px 40px 40px !important;
+    box-sizing: border-box;
+    overflow-y: auto;
+}
+
+html[data-webapp-design="desktop"] .absolute.-top-20.-left-20,
+html[data-webapp-design="desktop"] .absolute.-top-24.-right-24 {
+    display: none !important;
+}
+
+/* Inner content width limit */
+html[data-webapp-design="desktop"] #main-page.webapp-page-active > *:not(header),
+html[data-webapp-design="desktop"] #purchase-page.webapp-page-active > main,
+html[data-webapp-design="desktop"] #purchase-page.webapp-page-active > footer,
+html[data-webapp-design="desktop"] #renew-page.webapp-page-active > main,
+html[data-webapp-design="desktop"] #renew-page.webapp-page-active > footer,
+html[data-webapp-design="desktop"] #setup-page.webapp-page-active > main,
+html[data-webapp-design="desktop"] #profile-page.webapp-page-active > main,
+html[data-webapp-design="desktop"] #profile-page.webapp-page-active > footer,
+html[data-webapp-design="desktop"] #support-page.webapp-page-active > main {
+    max-width: var(--wa-d-content-max);
+    width: 100%;
+}
+
+/* Hide mobile-only elements */
+html[data-webapp-design="desktop"] #main-page > nav,
+html[data-webapp-design="desktop"] #main-page > .grid.grid-cols-2,
+html[data-webapp-design="desktop"] #main-page > header,
+html[data-webapp-design="desktop"] #main-page > footer {
+    display: none !important;
+}
+
+html[data-webapp-design="desktop"] [id^="back-"] {
+    display: none !important;
+}
+
+html[data-webapp-design="desktop"] #purchase-page > header,
+html[data-webapp-design="desktop"] #renew-page > header,
+html[data-webapp-design="desktop"] #setup-page > header,
+html[data-webapp-design="desktop"] #profile-page > header,
+html[data-webapp-design="desktop"] #support-page > header {
+    display: none !important;
+}
+
+/* Page titles — main uses injected intro block */
+html[data-webapp-design="desktop"] #main-page.webapp-page-active::before {
+    display: none !important;
+}
+
+html[data-webapp-design="desktop"] .webapp-desktop-page-intro {
+    max-width: var(--wa-d-content-max);
+    width: 100%;
+    margin-bottom: 4px;
+}
+
+html[data-webapp-design="desktop"] .webapp-desktop-page-intro__title {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: #fff;
+}
+
+html[data-webapp-design="desktop"] .webapp-desktop-page-intro__sub {
+    margin: 6px 0 0;
+    font-size: 0.875rem;
+    color: var(--wa-d-text-muted);
+}
+
+html[data-webapp-design="desktop"] #purchase-page.webapp-page-active::before { content: 'Купить ключ'; }
+html[data-webapp-design="desktop"] #renew-page.webapp-page-active::before { content: 'Продлить ключ'; }
+html[data-webapp-design="desktop"] #setup-page.webapp-page-active::before { content: 'Установка и настройка'; }
+html[data-webapp-design="desktop"] #profile-page.webapp-page-active::before { content: 'Профиль'; }
+html[data-webapp-design="desktop"] #support-page.webapp-page-active::before { content: 'Поддержка'; }
+
+html[data-webapp-design="desktop"] #purchase-page.webapp-page-active::before,
+html[data-webapp-design="desktop"] #renew-page.webapp-page-active::before,
+html[data-webapp-design="desktop"] #setup-page.webapp-page-active::before,
+html[data-webapp-design="desktop"] #profile-page.webapp-page-active::before,
+html[data-webapp-design="desktop"] #support-page.webapp-page-active::before {
+    display: block;
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin-bottom: 20px;
+    max-width: var(--wa-d-content-max);
+}
+
+/* Home layout */
+html[data-webapp-design="desktop"] #main-page.webapp-page-active {
+    gap: 16px;
+}
+
+html[data-webapp-design="desktop"] .webapp-desktop-home-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(300px, 380px);
+    gap: 20px;
+    width: 100%;
+    max-width: var(--wa-d-content-max);
+    align-items: stretch;
+}
+
+html[data-webapp-design="desktop"] #key-info-section-container {
+    width: 100%;
+    max-width: none;
+    display: flex;
+    align-items: stretch;
+}
+
+html[data-webapp-design="desktop"] #key-info-section-container > .glass-card,
+html[data-webapp-design="desktop"] #key-info-section-container > div {
+    width: 100%;
+    min-height: 240px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 32px !important;
+    border-radius: 20px !important;
+}
+
+html[data-webapp-design="desktop"] #key-info-section-container h3 {
+    font-size: 1.125rem !important;
+    margin-bottom: 8px !important;
+}
+
+html[data-webapp-design="desktop"] #key-info-section-container p {
+    font-size: 0.8125rem !important;
+    max-width: 280px !important;
+}
+
+html[data-webapp-design="desktop"] #key-info-section-container .w-12.h-12 {
+    width: 56px !important;
+    height: 56px !important;
+    margin-bottom: 16px !important;
+}
+
+html[data-webapp-design="desktop"] .webapp-desktop-quick-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    max-width: none;
+}
+
+.webapp-desktop-quick-actions__btn {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 14px;
+    min-height: 72px;
+    padding: 16px 18px;
+    border: 1px solid var(--wa-d-border);
+    border-radius: 14px;
+    background: var(--wa-d-surface);
+    color: #fff;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.webapp-desktop-quick-actions__btn:hover {
+    background: var(--wa-d-surface-hover);
+    border-color: rgba(16, 185, 129, 0.25);
+    transform: translateX(2px);
+}
+
+.webapp-desktop-quick-actions__btn.is-accent {
+    background: linear-gradient(145deg, rgba(16, 185, 129, 0.22), rgba(16, 185, 129, 0.08));
+    border-color: rgba(16, 185, 129, 0.35);
+}
+
+.webapp-desktop-quick-actions__icon {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    min-height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(16, 185, 129, 0.12);
+    flex-shrink: 0;
+}
+
+.webapp-desktop-quick-actions__icon .material-icons-round {
+    font-size: 22px !important;
+    line-height: 1;
+    color: var(--wa-d-accent);
+}
+
+.webapp-desktop-quick-actions__btn.is-accent .webapp-desktop-quick-actions__icon {
+    background: rgba(16, 185, 129, 0.2);
+}
+
+.webapp-desktop-quick-actions__text {
+    flex: 1;
+    min-width: 0;
+}
+
+.webapp-desktop-quick-actions__text strong {
+    display: block;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.3;
+}
+
+.webapp-desktop-quick-actions__text small {
+    display: block;
+    margin-top: 2px;
+    font-size: 0.75rem;
+    color: var(--wa-d-text-muted);
+    font-weight: 500;
+}
+
+.webapp-desktop-quick-actions__arrow {
+    font-size: 20px !important;
+    color: var(--wa-d-text-muted);
+    opacity: 0.5;
+    flex-shrink: 0;
+}
+
+.webapp-desktop-quick-actions__btn:hover .webapp-desktop-quick-actions__arrow {
+    opacity: 1;
+    color: var(--wa-d-accent);
+}
+
+/* Purchase / renew — desktop shop layout */
+html[data-webapp-design="desktop"] #purchase-page.webapp-page-active > main,
+html[data-webapp-design="desktop"] #renew-page.webapp-page-active > main {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px;
+    flex: 1;
+    max-width: var(--wa-d-content-max);
+    width: 100%;
+}
+
+html[data-webapp-design="desktop"] .webapp-shop-toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+    gap: 16px;
+    align-items: stretch;
+}
+
+html[data-webapp-design="desktop"] .webapp-shop-info {
+    padding: 0 !important;
+    margin: 0 !important;
+    height: 100%;
+}
+
+html[data-webapp-design="desktop"] .webapp-shop-info > div {
+    height: 100%;
+    min-height: 120px;
+    border-radius: 16px !important;
+    display: flex;
+    align-items: center;
+}
+
+html[data-webapp-design="desktop"] .webapp-shop-selector {
+    height: 100%;
+}
+
+html[data-webapp-design="desktop"] .webapp-shop-selector > button {
+    height: 100%;
+    min-height: 120px;
+    padding: 18px !important;
+    border-radius: 16px !important;
+}
+
+html[data-webapp-design="desktop"] .webapp-shop-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+html[data-webapp-design="desktop"] .server-plans-container,
+html[data-webapp-design="desktop"] #renew-plans-grid-container .server-plans-container {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+    margin-top: 0 !important;
+}
+
+html[data-webapp-design="desktop"] .server-plans-container .col-span-2,
+html[data-webapp-design="desktop"] #renew-plans-grid-container .col-span-2 {
+    grid-column: 1 / -1 !important;
+    padding: 32px 24px !important;
+    font-size: 0.875rem !important;
+    border-radius: 16px !important;
+}
+
+html[data-webapp-design="desktop"] #device-tier-slider,
+html[data-webapp-design="desktop"] #device-tier-slider-renew {
+    margin-top: 0 !important;
+    border-radius: 16px !important;
+}
+
+html[data-webapp-design="desktop"] #purchase-page.webapp-page-active > footer,
+html[data-webapp-design="desktop"] #renew-page.webapp-page-active > footer {
+    margin-top: auto;
+    padding-top: 16px !important;
+    padding-bottom: 0 !important;
+    max-width: var(--wa-d-content-max);
+    width: 100%;
+}
+
+html[data-webapp-design="desktop"] #purchase-page footer .fixed,
+html[data-webapp-design="desktop"] #renew-page footer .fixed {
+    position: static !important;
+    width: 100% !important;
+    padding: 0 !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+}
+
+html[data-webapp-design="desktop"] #pay-button,
+html[data-webapp-design="desktop"] #renew-pay-button {
+    width: 100% !important;
+    max-width: none !important;
+    border-radius: 14px !important;
+    min-height: 52px;
+}
+
+html[data-webapp-design="desktop"] #pay-button:not([disabled]),
+html[data-webapp-design="desktop"] #renew-pay-button:not([disabled]) {
+    background: var(--wa-d-accent) !important;
+    color: #000 !important;
+}
+
+/* Profile — two columns + avatar */
+html[data-webapp-design="desktop"] .webapp-profile-avatar {
+    width: 52px !important;
+    height: 52px !important;
+    border-radius: 16px !important;
+}
+
+html[data-webapp-design="desktop"] .webapp-profile-avatar.has-photo {
+    border-color: rgba(16, 185, 129, 0.35) !important;
+}
+
+html[data-webapp-design="desktop"] #user-profile-card-container > div {
+    border-radius: 20px !important;
+    padding: 20px !important;
+}
+
+html[data-webapp-design="desktop"] #profile-page.webapp-page-active > main {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+    gap: 24px;
+    align-items: start;
+    flex: 1;
+}
+
+html[data-webapp-design="desktop"] #profile-page.webapp-page-active > footer {
+    display: flex !important;
+    flex-direction: row;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+html[data-webapp-design="desktop"] #profile-page.webapp-page-active > footer button {
+    flex: 1;
+    max-width: 280px;
+}
+
+/* Setup */
+html[data-webapp-design="desktop"] #setup-page.webapp-page-active > main {
+    flex: 1;
+}
+
+/* Support — desktop chat panel */
+html[data-webapp-design="desktop"] #support-page.webapp-page-active {
+    height: 100vh;
+    height: 100dvh;
+    max-width: none !important;
+}
+
+html[data-webapp-design="desktop"] #support-loading,
+html[data-webapp-design="desktop"] #support-create-view {
+    max-width: 560px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+html[data-webapp-design="desktop"] #support-create-view {
+    justify-content: center;
+    padding: 24px 0;
+}
+
+html[data-webapp-design="desktop"] #support-create-view > .glass-card {
+    border-radius: 20px !important;
+    padding: 24px !important;
+}
+
+html[data-webapp-design="desktop"] #support-chat-view {
+    flex: 1;
+    min-height: 0;
+    display: flex !important;
+    flex-direction: column;
+    max-width: var(--wa-d-content-max);
+    width: 100%;
+    margin: 0 auto;
+    border: 1px solid var(--wa-d-border);
+    border-radius: 20px;
+    overflow: hidden;
+    background: var(--wa-d-surface);
+    height: calc(100vh - 140px) !important;
+}
+
+html[data-webapp-design="desktop"] #support-messages-container {
+    flex: 1;
+    max-height: none;
+    min-height: 0;
+    padding: 20px !important;
+}
+
+html[data-webapp-design="desktop"] #support-input-area {
+    background: rgba(0, 0, 0, 0.35) !important;
+    border-top: 1px solid var(--wa-d-border) !important;
+    padding: 14px 16px !important;
+}
+
+html[data-webapp-design="desktop"] #support-message-input {
+    border-radius: 14px !important;
+    font-size: 0.875rem !important;
+    min-height: 44px;
+}
+
+html[data-webapp-design="desktop"] #support-send-btn {
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 12px !important;
+    background: var(--wa-d-accent-soft) !important;
+    color: var(--wa-d-accent) !important;
+}
+
+html[data-webapp-design="desktop"] #support-page.webapp-page-active > main,
+html[data-webapp-design="desktop"] #support-chat-view {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+html[data-webapp-design="desktop"] #support-messages-container {
+    flex: 1;
+    max-height: none;
+    min-height: 320px;
+}
+
+/* Surfaces */
+html[data-webapp-design="desktop"] .glass-card,
+html[data-webapp-design="desktop"] .bg-white.dark\:bg-surface-dark,
+html[data-webapp-design="desktop"] .dark\:bg-surface-dark,
+html[data-webapp-design="desktop"] .dark\:bg-surface-highlight-dark {
+    background: var(--wa-d-surface) !important;
+    border: 1px solid var(--wa-d-border) !important;
+    border-radius: 16px !important;
+    backdrop-filter: none !important;
+}
+
+html[data-webapp-design="desktop"] #purchase-btn {
+    background: var(--wa-d-accent) !important;
+    color: #000 !important;
+    font-weight: 700 !important;
+    border: none !important;
+    border-radius: 12px !important;
+    min-height: 48px;
+}
+
+html[data-webapp-design="desktop"] .text-primary {
+    color: var(--wa-d-accent) !important;
+}
+
+html[data-webapp-design="desktop"] .text-\[10px\].uppercase,
+html[data-webapp-design="desktop"] .text-\[9px\].uppercase {
+    font-size: 0.6875rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.06em !important;
+    color: var(--wa-d-text-muted) !important;
+}
+
+html[data-webapp-design="desktop"] #profile-page.webapp-page-active > main > .flex.flex-col.gap-3 > .text-\[10px\] {
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.08em !important;
+    color: var(--wa-d-text-muted) !important;
+    margin-bottom: 4px;
+}
+
+html[data-webapp-design="desktop"] #profile-page.webapp-page-active > main > .flex.flex-col.gap-3 {
+    display: flex;
+    flex-direction: column;
+    min-height: 200px;
+}
+
+html[data-webapp-design="desktop"] .webapp-theme-fab {
+    right: 24px;
+    bottom: 24px;
+}
+
+/* Tablet */
+@media (max-width: 900px) {
+    html[data-webapp-design="desktop"] .webapp-desktop-sidebar {
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        height: auto;
+        flex-direction: row;
+        padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+        border-right: none;
+        border-top: 1px solid var(--wa-d-border);
+        overflow-x: auto;
+        gap: 8px;
+    }
+
+    html[data-webapp-design="desktop"] .webapp-desktop-sidebar__brand {
+        display: none;
+    }
+
+    html[data-webapp-design="desktop"] .webapp-desktop-sidebar__nav {
+        flex-direction: row;
+        flex: 1;
+        gap: 4px;
+    }
+
+    html[data-webapp-design="desktop"] .webapp-desktop-sidebar__btn {
+        flex-direction: column;
+        gap: 2px;
+        padding: 8px 10px;
+        font-size: 0.625rem;
+        text-align: center;
+        min-width: 64px;
+    }
+
+    html[data-webapp-design="desktop"] [id$="-page"].webapp-page-active {
+        margin-left: 0 !important;
+        width: 100vw !important;
+        padding: 20px 16px calc(80px + env(safe-area-inset-bottom)) !important;
+    }
+
+    html[data-webapp-design="desktop"] .webapp-desktop-home-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    html[data-webapp-design="desktop"] .webapp-desktop-quick-actions {
+        flex-direction: column;
+    }
+
+    html[data-webapp-design="desktop"] .webapp-desktop-sidebar__footer {
+        display: none;
+    }
+
+    html[data-webapp-design="desktop"] .webapp-shop-toolbar {
+        grid-template-columns: 1fr !important;
+    }
+
+    html[data-webapp-design="desktop"] .webapp-shop-selector > button {
+        min-height: auto;
+    }
+
+    html[data-webapp-design="desktop"] .server-plans-container,
+    html[data-webapp-design="desktop"] #renew-plans-grid-container .server-plans-container {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+
+    html[data-webapp-design="desktop"] #purchase-page.webapp-page-active > main,
+    html[data-webapp-design="desktop"] #renew-page.webapp-page-active > main,
+    html[data-webapp-design="desktop"] #profile-page.webapp-page-active > main {
+        grid-template-columns: 1fr !important;
+    }
+
+    html[data-webapp-design="desktop"] .webapp-desktop-quick-actions {
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    html[data-webapp-design="desktop"] #profile-page.webapp-page-active > footer {
+        flex-direction: column;
+    }
+
+    html[data-webapp-design="desktop"] #profile-page.webapp-page-active > footer button {
+        max-width: none;
+    }
+}

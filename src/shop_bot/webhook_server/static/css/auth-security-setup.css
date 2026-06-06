@@ -1,0 +1,249 @@
+/* 2FA setup — layout fix + theme hero (styles from auth-ios / auth-macos / auth-glass / auth-classic) */
+
+body.auth-security-setup > .auth-macos-chrome,
+body.auth-security-setup > .auth-glass-chrome {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+
+body.auth-security-setup > .auth-macos-chrome .auth-macos-menubar {
+    pointer-events: auto;
+}
+
+body.auth-security-setup > .auth-macos-chrome,
+body.auth-security-setup > .auth-glass-chrome {
+    display: none;
+}
+
+html[data-design="macos"] body.auth-security-setup > .auth-macos-chrome,
+html[data-design="macos-v2"] body.auth-security-setup > .auth-macos-chrome {
+    display: block;
+}
+
+html[data-design="glass"] body.auth-security-setup > .auth-glass-chrome,
+html[data-design="stealth-admin"] body.auth-security-setup > .auth-glass-chrome {
+    display: block;
+}
+
+body.auth-security-setup > .auth-page {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 22rem;
+}
+
+body.auth-security-setup .auth-mobile-brand {
+    display: none !important;
+}
+
+/* One hero block per theme */
+body.auth-security-setup .auth-macos-profile,
+body.auth-security-setup .auth-security-classic-head,
+body.auth-security-setup .auth-security-glass-head {
+    display: none;
+}
+
+html[data-design="macos"] body.auth-security-setup .auth-macos-profile,
+html[data-design="macos-v2"] body.auth-security-setup .auth-macos-profile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 0.85rem;
+}
+
+html[data-design="classic"] body.auth-security-setup .auth-security-classic-head {
+    display: block;
+    text-align: center;
+    margin-bottom: 1.25rem;
+}
+
+html[data-design="glass"] body.auth-security-setup .auth-security-glass-head,
+html[data-design="stealth-admin"] body.auth-security-setup .auth-security-glass-head {
+    display: block;
+}
+
+html[data-design="macos"] body.auth-security-setup .auth-macos-profile__icon,
+html[data-design="macos-v2"] body.auth-security-setup .auth-macos-profile__icon {
+    width: 4.25rem;
+    height: 4.25rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.85rem;
+    background: rgba(255, 255, 255, 0.12);
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+    color: rgba(255, 255, 255, 0.95);
+}
+
+html[data-design="macos"] body.auth-security-setup .auth-macos-profile__icon .material-symbols-outlined,
+html[data-design="macos-v2"] body.auth-security-setup .auth-macos-profile__icon .material-symbols-outlined {
+    font-size: 2rem;
+}
+
+html[data-design="macos"] body.auth-security-setup .auth-macos-display-name,
+html[data-design="macos-v2"] body.auth-security-setup .auth-macos-display-name {
+    color: #fff;
+    text-shadow: 0 2px 16px rgba(0, 0, 0, 0.45);
+}
+
+html[data-design="macos"] body.auth-security-setup .auth-macos-hint,
+html[data-design="macos-v2"] body.auth-security-setup .auth-macos-hint {
+    color: rgba(255, 255, 255, 0.72);
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
+}
+
+html[data-design="macos"] body.auth-security-setup .auth-account-note,
+html[data-design="macos-v2"] body.auth-security-setup .auth-account-note {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.72);
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
+}
+
+html[data-design="macos"] body.auth-security-setup .auth-account-note strong,
+html[data-design="macos-v2"] body.auth-security-setup .auth-account-note strong {
+    color: #fff;
+}
+
+html[data-design="macos"] body.auth-security-setup .auth-form-wrap,
+html[data-design="macos-v2"] body.auth-security-setup .auth-form-wrap {
+    text-align: center;
+}
+
+/* TOTP secret row (setup page only) */
+body.auth-security-setup .auth-totp-secret {
+    margin: 0 0 0.75rem;
+    text-align: left;
+}
+
+body.auth-security-setup .auth-totp-secret__label {
+    margin: 0 0 0.35rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--auth-text-tertiary);
+}
+
+body.auth-security-setup .auth-totp-secret__row {
+    display: flex;
+    align-items: stretch;
+    gap: 0.4rem;
+}
+
+body.auth-security-setup .auth-totp-secret__value {
+    flex: 1;
+    min-width: 0;
+    padding: 0.5rem 0.65rem;
+    border-radius: 10px;
+    border: 1px solid var(--auth-separator);
+    background: var(--auth-grouped);
+    color: var(--auth-text);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.75rem;
+    line-height: 1.35;
+    letter-spacing: 0.06em;
+    word-break: break-all;
+    user-select: all;
+}
+
+body.auth-security-setup .auth-totp-secret__copy {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.1rem;
+    flex-shrink: 0;
+    min-width: 3.25rem;
+    padding: 0.35rem 0.45rem;
+    border-radius: 10px;
+    border: 1px solid var(--auth-separator);
+    background: var(--auth-grouped);
+    color: var(--auth-text-secondary);
+    cursor: pointer;
+}
+
+body.auth-security-setup .auth-totp-secret__copy--done {
+    border-color: rgba(48, 209, 88, 0.45);
+    background: rgba(48, 209, 88, 0.14);
+    color: var(--auth-success);
+}
+
+body.auth-security-setup .auth-totp-secret__copy .material-symbols-outlined {
+    font-size: 1.1rem;
+}
+
+body.auth-security-setup .auth-totp-secret__copy-label {
+    font-size: 0.625rem;
+    font-weight: 600;
+    line-height: 1;
+}
+
+html[data-design="macos"] body.auth-security-setup .auth-totp-secret__label,
+html[data-design="macos-v2"] body.auth-security-setup .auth-totp-secret__label {
+    color: rgba(255, 255, 255, 0.55);
+}
+
+html[data-design="macos"] body.auth-security-setup .auth-totp-secret__value,
+html[data-design="macos-v2"] body.auth-security-setup .auth-totp-secret__value {
+    border-color: rgba(255, 255, 255, 0.22);
+    background: rgba(0, 0, 0, 0.28);
+    color: rgba(255, 255, 255, 0.92);
+}
+
+html[data-design="macos"] body.auth-security-setup .auth-totp-secret__copy,
+html[data-design="macos-v2"] body.auth-security-setup .auth-totp-secret__copy {
+    border-color: rgba(255, 255, 255, 0.28);
+    background: rgba(255, 255, 255, 0.14);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Classic / Glass — card layout */
+html[data-design="classic"] body.auth-security-setup > .auth-page {
+    max-width: 26rem;
+}
+
+html[data-design="classic"] body.auth-security-setup .auth-card {
+    border-radius: var(--auth-radius-lg);
+    border: 1px solid var(--auth-separator);
+    background: var(--auth-elevated);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+html[data-design="classic"] body.auth-security-setup .auth-form-panel {
+    padding: 2rem 1.75rem;
+}
+
+html[data-design="glass"] body.auth-security-setup > .auth-page,
+html[data-design="stealth-admin"] body.auth-security-setup > .auth-page {
+    max-width: 420px;
+}
+
+html[data-design="glass"] body.auth-security-setup .auth-card,
+html[data-design="stealth-admin"] body.auth-security-setup .auth-card {
+    border-radius: 1.25rem;
+    border: 1px solid var(--auth-separator);
+    background: var(--auth-elevated);
+    box-shadow: 0 32px 80px rgba(0, 0, 0, 0.45);
+}
+
+html[data-design="stealth-admin"] body.auth-security-setup .auth-card {
+    background: rgba(8, 8, 10, 0.92);
+    border-color: rgba(255, 35, 87, 0.22);
+}
+
+html[data-design="glass"] body.auth-security-setup .auth-form-panel,
+html[data-design="stealth-admin"] body.auth-security-setup .auth-form-panel {
+    padding: 2rem 1.75rem 1.75rem;
+}
+
+@media (max-width: 480px) {
+    html[data-design="macos"] body.auth-security-setup,
+    html[data-design="macos-v2"] body.auth-security-setup {
+        padding-top: 2.5rem;
+    }
+}

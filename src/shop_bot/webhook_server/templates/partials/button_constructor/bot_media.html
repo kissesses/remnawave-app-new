@@ -1,0 +1,169 @@
+{% set cnt_media_cats = [
+    {
+        'id': 'info', 'label': 'Инфо', 'icon': 'info',
+        'items': [
+            {'id': 'main_menu', 'label': 'Главное меню', 'tag': 'ГЛАВНОЕ МЕНЮ', 'desc': 'Картинка при /start'},
+            {'id': 'profile', 'label': 'Профиль', 'tag': 'ВАШ ПРОФИЛЬ', 'desc': 'Экран «Мой профиль»'},
+            {'id': 'support', 'label': 'Поддержка', 'tag': 'ТЕХ ПОДДЕРЖКА', 'desc': 'Раздел поддержки'},
+            {'id': 'about', 'label': 'О проекте', 'tag': 'О СЕРВИСЕ', 'desc': 'Экран «О боте»'},
+            {'id': 'speedtest', 'label': 'Speedtest', 'tag': 'ПРОВЕРКА СКОРОСТИ', 'desc': 'Замер скорости'},
+            {'id': 'howto', 'label': 'Инструкция', 'tag': 'ИНСТРУКЦИЯ ПО ПОДКЛЮЧЕНИЮ', 'desc': 'How-to по платформам'},
+            {'id': 'referral', 'label': 'Рефералы', 'tag': 'ПАРТНЕРСКАЯ ПРОГРАММА', 'desc': 'Реферальная система'},
+            {'id': 'key_comments', 'label': 'Комменты', 'tag': 'КОММЕНТАРИИ К КЛЮЧУ', 'desc': 'Комментарии к ключу'},
+            {'id': 'devices_list', 'label': 'Устройства', 'tag': 'СПИСОК УСТРОЙСТВ', 'desc': 'Список устройств'}
+        ]
+    },
+    {
+        'id': 'purchase', 'label': 'Покупка', 'icon': 'shopping_cart',
+        'items': [
+            {'id': 'buy_server', 'label': 'Локации', 'tag': 'ВЫБОР ЛОКАЦИИ', 'desc': 'Выбор сервера / страны'},
+            {'id': 'buy_plan', 'label': 'Тарифы', 'tag': 'ВЫБОР ТАРИФА', 'desc': 'Выбор длительности подписки'},
+            {'id': 'enter_email', 'label': 'Email', 'tag': 'ВВОД EMAIL', 'desc': 'Запрос email для чека'},
+            {'id': 'payment_method', 'label': 'Оплата', 'tag': 'ВЫБОР СПОСОБА ОПЛАТЫ', 'desc': 'Способ оплаты'}
+        ]
+    },
+    {
+        'id': 'keys', 'label': 'Ключи', 'icon': 'vpn_key',
+        'items': [
+            {'id': 'keys_list', 'label': 'Мои ключи', 'tag': 'МОИ ПОДПИСКИ', 'desc': 'Список подписок'},
+            {'id': 'key_ready', 'label': 'Готов', 'tag': 'КЛЮЧ ГОТОВ', 'desc': 'Сообщение о готовности ключа'},
+            {'id': 'key_info', 'label': 'Детали', 'tag': 'ИНФОРМАЦИЯ О ПОДПИСКЕ', 'desc': 'Карточка ключа'},
+            {'id': 'extend_plan', 'label': 'Продление', 'tag': 'ПРОДЛЕНИЕ', 'desc': 'Выбор тарифа при продлении'},
+            {'id': 'topup', 'label': 'Пополнение', 'tag': 'ПОПОЛНЕНИЕ БАЛАНСА', 'desc': 'Экран пополнения'},
+            {'id': 'topup_amount', 'label': 'Сумма', 'tag': 'ВВОД СУММЫ', 'desc': 'Ввод суммы пополнения'},
+            {'id': 'waiting_payment', 'label': 'Ожидание', 'tag': 'ОЖИДАНИЕ ОПЛАТЫ', 'desc': 'До подтверждения оплаты'},
+            {'id': 'payment', 'label': 'Счёт', 'tag': 'СЧЕТ НА ОПЛАТУ', 'desc': 'Экран с кнопкой оплаты'},
+            {'id': 'payment_success', 'label': 'Успех', 'tag': 'ОПЛАТА ПОЛУЧЕНА', 'desc': 'Успешная оплата'}
+        ]
+    }
+] %}
+{% set cnt_media_all = namespace(media=[]) %}
+{% for cat in cnt_media_cats %}{% for item in cat['items'] %}{% set _ = cnt_media_all.media.append(item) %}{% endfor %}{% endfor %}
+{% set cnt_ns = namespace(images=0) %}
+{% for item in cnt_media_all.media %}
+    {% if item.id == 'main_menu' %}
+        {% if settings.main_menu_image %}{% set cnt_ns.images = cnt_ns.images + 1 %}{% endif %}
+    {% elif settings[item.id ~ '_image'] %}
+        {% set cnt_ns.images = cnt_ns.images + 1 %}
+    {% endif %}
+{% endfor %}
+
+<div class="cnt-panel btn-cstr-media-root cstr-sub-studio" data-media-studio>
+    <header class="cstr-sub-hub">
+        <div class="cstr-sub-hub__intro">
+            <div class="cstr-sub-hub__icon cstr-sub-hub__icon--media" aria-hidden="true">
+                <span class="material-symbols-outlined">photo_library</span>
+            </div>
+            <div>
+                <h2 class="cstr-sub-hub__title">Media Studio</h2>
+                <p class="cstr-sub-hub__desc">Баннеры шапок экранов Telegram-бота</p>
+            </div>
+        </div>
+        <div class="cstr-sub-hub__stats">
+            <span class="cnt-stat cnt-stat--ok">
+                <span class="material-symbols-outlined">image</span>
+                <span>{{ cnt_ns.images }} / {{ cnt_media_all.media | length }}</span>
+            </span>
+            <span class="cnt-stat">
+                <span class="material-symbols-outlined">pie_chart</span>
+                <span>{{ ((cnt_ns.images / cnt_media_all.media | length) * 100) | round if cnt_media_all.media | length else 0 }}% покрытие</span>
+            </span>
+        </div>
+    </header>
+
+    <div class="cstr-sub-body cstr-sub-body--flush">
+    <div class="cnt-media-studio">
+        <div class="cnt-media-picker">
+            <div class="cnt-media-picker__toolbar">
+                <div class="cnt-search">
+                    <span class="material-symbols-outlined">search</span>
+                    <input type="search" id="cnt-media-search" class="cnt-search__input" placeholder="Поиск экрана…" autocomplete="off" />
+                </div>
+            </div>
+            <div class="cnt-media-filters">
+                <button type="button" class="cnt-media-filter is-active" data-cat="all">Все</button>
+                {% for cat in cnt_media_cats %}
+                <button type="button" class="cnt-media-filter" data-cat="{{ cat.id }}">{{ cat.label }}</button>
+                {% endfor %}
+            </div>
+            <div class="cnt-media-grid" id="cnt-media-grid">
+                {% set first_tile = namespace(done=false) %}
+                {% for cat in cnt_media_cats %}
+                {% for item in cat['items'] %}
+                {% if item.id == 'main_menu' %}
+                    {% set has_img = settings.main_menu_image %}
+                {% else %}
+                    {% set img_key = item.id ~ '_image' %}
+                    {% set has_img = settings[img_key] %}
+                {% endif %}
+                <button type="button" class="cnt-media-tile{% if not first_tile.done %} is-selected{% endif %}"
+                    data-section="{{ item.id }}"
+                    data-cat="{{ cat.id }}"
+                    data-label="{{ item.label }}"
+                    data-tag="{{ item.tag }}"
+                    data-desc="{{ item.desc }}"
+                    data-has-image="{{ '1' if has_img else '0' }}">
+                    {% if not first_tile.done %}{% set first_tile.done = true %}{% endif %}
+                    <span class="cnt-media-tile__thumb">
+                        {% if has_img %}
+                        <img src="{{ url_for('content_menu_image_route', section=item.id) }}" alt="" loading="lazy" />
+                        {% else %}
+                        <span class="material-symbols-outlined">image</span>
+                        {% endif %}
+                    </span>
+                    <span>
+                        <span class="cnt-media-tile__label">{{ item.label }}</span>
+                        <span class="cnt-media-tile__meta">{{ cat.label }}</span>
+                    </span>
+                    <span class="cnt-media-tile__dot{% if has_img %} cnt-media-tile__dot--ok{% endif %}"></span>
+                </button>
+                {% endfor %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="cnt-media-preview">
+            <div class="cnt-media-preview__empty" id="cnt-media-preview-empty">
+                <span class="material-symbols-outlined">touch_app</span>
+                <p>Выберите экран слева</p>
+            </div>
+            <div id="cnt-media-preview-body" hidden>
+                <h3 class="cnt-card__title" id="cnt-media-preview-title"></h3>
+                <div class="cnt-media-preview__tag" id="cnt-media-preview-tag"></div>
+                <div class="cnt-media-preview__frame">
+                    <img id="cnt-media-preview-img" alt="" hidden />
+                </div>
+                <p class="cnt-media-preview__desc" id="cnt-media-preview-desc"></p>
+                <input type="text" id="cnt-media-preview-path" readonly class="cnt-input cnt-media-preview__path" />
+                <div class="cnt-media-preview__actions">
+                    <button type="button" class="cnt-btn cnt-btn--primary btn-upload-menu-image" data-section="">
+                        <span class="material-symbols-outlined">upload</span> Загрузить
+                    </button>
+                    <button type="button" class="cnt-btn cnt-btn--danger btn-delete-menu-image" data-section="">
+                        <span class="material-symbols-outlined">delete</span> Удалить
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="cstr-media-coverage">
+        <div class="cnt-coverage__bar"><div class="cnt-coverage__fill" id="cnt-coverage-fill" style="width:{{ ((cnt_ns.images / cnt_media_all.media | length) * 100) | round if cnt_media_all.media | length else 0 }}%"></div></div>
+        <span class="cstr-media-coverage__label" id="cnt-coverage-label">{{ cnt_ns.images }} / {{ cnt_media_all.media | length }} экранов с медиа</span>
+    </div>
+
+    <div class="sr-only" aria-hidden="true">
+        {% for cat in cnt_media_cats %}
+        {% for item in cat['items'] %}
+        {% if item.id == 'main_menu' %}
+        <input type="text" id="main_menu_image_url" value="{{ settings.main_menu_image or '' }}" readonly tabindex="-1" />
+        <input type="file" id="main_menu_image_file" accept=".jpg,.jpeg,.png,.gif" class="hidden" data-section="main_menu" tabindex="-1" />
+        {% else %}
+        <input type="text" id="{{ item.id }}_image_url" value="{{ settings[item.id ~ '_image'] or '' }}" readonly tabindex="-1" />
+        <input type="file" id="{{ item.id }}_image_file" accept=".jpg,.jpeg,.png,.gif" class="hidden" data-section="{{ item.id }}" tabindex="-1" />
+        {% endif %}
+        {% endfor %}
+        {% endfor %}
+    </div>
+    </div>
+</div>

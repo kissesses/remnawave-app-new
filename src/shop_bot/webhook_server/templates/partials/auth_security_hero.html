@@ -1,0 +1,24 @@
+{# Theme-specific hero — visibility controlled in auth-security-setup.css + auth-*.css #}
+<div class="auth-macos-profile">
+    <div class="auth-macos-profile__icon" aria-hidden="true">
+        <span class="material-symbols-outlined">verified_user</span>
+    </div>
+    <h1 class="auth-macos-display-name">Защита аккаунта</h1>
+    <p class="auth-macos-hint">Завершите настройку: {{ security_info.label }}</p>
+</div>
+
+<header class="auth-form-header auth-security-classic-head">
+    <div class="auth-form-icon">
+        <span class="material-symbols-outlined">verified_user</span>
+    </div>
+    <h1 class="auth-form-title">Защита аккаунта</h1>
+    <p class="auth-form-subtitle">Завершите настройку: {{ security_info.label }}</p>
+</header>
+
+<div class="auth-glass-head auth-security-glass-head">
+    <div class="auth-glass-head__badge">
+        <span class="material-symbols-outlined">verified_user</span>
+    </div>
+    <h1 class="auth-glass-head__title">Защита аккаунта</h1>
+    <p class="auth-glass-head__sub">Завершите настройку: {{ security_info.label }}</p>
+</div>

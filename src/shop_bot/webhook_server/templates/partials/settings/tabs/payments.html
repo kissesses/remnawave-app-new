@@ -1,0 +1,409 @@
+{% macro pay_field(name, label, value='', type='text', icon='', placeholder='', hint='', secret=false, step='', id='') %}
+<div class="pay-field">
+    <label class="pay-field__label"{% if id %} for="{{ id }}"{% endif %}>{{ label }}</label>
+    <div class="pay-field__wrap">
+        {% if icon %}
+        <span class="material-symbols-outlined pay-field__icon" aria-hidden="true">{{ icon }}</span>
+        {% endif %}
+        <input type="{{ type }}" name="{{ name }}" value="{{ value }}"
+            {% if id %}id="{{ id }}"{% endif %}
+            {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
+            {% if step %}step="{{ step }}"{% endif %}
+            class="pay-field__input{% if not icon %} pay-field__input--plain{% endif %}{% if secret %} pay-field__input--secret{% endif %}"
+            {% if secret %}autocomplete="off"{% endif %} />
+        {% if secret %}
+        <button type="button" class="pay-field__reveal" aria-label="Показать пароль" tabindex="-1">
+            <span class="material-symbols-outlined">visibility</span>
+        </button>
+        {% endif %}
+    </div>
+    {% if hint %}<p class="pay-field__hint">{{ hint }}</p>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro pay_pill(name, label, checked=false, hidden_value='false', value='true', id='') %}
+<div class="pay-pill">
+    <input type="hidden" name="{{ name }}" value="{{ hidden_value }}" />
+    <span class="pay-pill__label">{{ label }}</span>
+    <label>
+        <input type="checkbox" name="{{ name }}" value="{{ value }}" class="pay-pill__input"
+            {% if id %}id="{{ id }}"{% endif %}{% if checked %} checked{% endif %} />
+        <span class="pay-pill__track" aria-hidden="true"></span>
+    </label>
+</div>
+{% endmacro %}
+
+{% macro pay_webhook(label, endpoint='', path='', secret_param='', hint='') %}
+<div class="pay-webhook{% if path %} pay-webhook--static{% endif %}"{% if path %} data-path="{{ path }}"{% endif %}>
+    <div class="pay-webhook__meta">
+        <p class="pay-webhook__label">{{ label }}</p>
+        {% if endpoint %}
+        <p class="pay-webhook__url webhook-display" data-endpoint="{{ endpoint }}"
+            {% if secret_param %}data-secret-param="{{ secret_param }}"{% endif %}></p>
+        {% else %}
+        <p class="pay-webhook__url"></p>
+        {% endif %}
+        {% if hint %}<p class="pay-webhook__hint">{{ hint }}</p>{% endif %}
+    </div>
+    <button type="button" class="pay-webhook__copy" title="Копировать" aria-label="Копировать URL">
+        <span class="material-symbols-outlined">content_copy</span>
+    </button>
+</div>
+{% endmacro %}
+
+{% set pay_stats = namespace(count=0) %}
+{% if settings.sbp_enabled == 'true' %}{% set pay_stats.count = pay_stats.count + 1 %}{% endif %}
+{% if settings.platega_enabled == 'true' or settings.platega_payform_enabled == 'true' or settings.platega_crypto_enabled == 'true' %}{% set pay_stats.count = pay_stats.count + 1 %}{% endif %}
+{% if settings.yoomoney_enabled == 'true' %}{% set pay_stats.count = pay_stats.count + 1 %}{% endif %}
+{% if settings.heleket_merchant_id or settings.heleket_api_key %}{% set pay_stats.count = pay_stats.count + 1 %}{% endif %}
+{% if settings.ton_wallet_address %}{% set pay_stats.count = pay_stats.count + 1 %}{% endif %}
+{% if settings.cryptobot_token %}{% set pay_stats.count = pay_stats.count + 1 %}{% endif %}
+{% if settings.stars_enabled == 'true' %}{% set pay_stats.count = pay_stats.count + 1 %}{% endif %}
+
+<section id="tab-payments" class="tab-content settings-tab-sectioned pay-panel">
+    {% include 'partials/settings/section_nav.html' %}
+    {% set settings_default_section = tab_sections[0].id if tab_sections else 'payments-general' %}
+
+    <div class="pay-panel__hero">
+        <div>
+            <h3 class="pay-panel__hero-title">Платёжный хаб</h3>
+            <p class="pay-panel__hero-desc">Подключите провайдеров, скопируйте webhook URL и сохраните настройки одной кнопкой вверху страницы.</p>
+        </div>
+        <div class="pay-panel__stats" aria-label="Активные методы">
+            <span class="pay-stat{% if pay_stats.count > 0 %} pay-stat--on{% endif %}">
+                <span class="material-symbols-outlined" aria-hidden="true">bolt</span>
+                {{ pay_stats.count }} активн{% if pay_stats.count == 1 %}ый{% elif pay_stats.count in [2,3,4] %}ых{% else %}ых{% endif %}
+            </span>
+            {% if settings.domain %}
+            <span class="pay-stat pay-stat--on">
+                <span class="material-symbols-outlined" aria-hidden="true">language</span>
+                {{ settings.domain }}
+            </span>
+            {% else %}
+            <span class="pay-stat">
+                <span class="material-symbols-outlined" aria-hidden="true">warning</span>
+                Домен не задан
+            </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="pay-stack">
+
+        {# ── Общие ── #}
+        {% set section_id = 'payments-general' %}
+        <div class="settings-form-section{% if section_id == settings_default_section %} is-section-visible{% endif %}" id="{{ section_id }}">
+            {% set section_title = 'Общие' %}
+            {% set section_desc = 'Домен панели, комментарии к платежам и поведение формы' %}
+            {% set section_icon = 'settings_suggest' %}
+            {% include 'partials/settings/section_header.html' %}
+            <div class="settings-form-section__body">
+                <div class="pay-stack">
+                    <div class="pay-domain-card">
+                        <p class="pay-domain-card__label">
+                            <span class="material-symbols-outlined" aria-hidden="true">language</span>
+                            Домен панели ShopBot
+                        </p>
+                        {{ pay_field('domain', 'Публичный адрес', settings.domain or '', 'text', 'public', 'shop.example.com') }}
+                        <p class="pay-domain-card__hint">Без <code>https://</code> — для webhook URL, OAuth YooMoney и Heleket. Должен совпадать с адресом, по которому вы открываете панель.</p>
+                    </div>
+
+                    <div class="pay-card">
+                        <div class="pay-card__head">
+                            <div class="pay-card__brand">
+                                <div class="pay-card__icon">
+                                    <span class="material-symbols-outlined" aria-hidden="true">comment</span>
+                                </div>
+                                <div>
+                                    <h4 class="pay-card__title">Данные в комментариях к платежам</h4>
+                                    <p class="pay-card__sub">Сохраняются мгновенно при переключении</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pay-info-grid">
+                            <label class="pay-info-chip">
+                                <span class="pay-info-chip__text">ID пользователя</span>
+                                <span class="pay-pill" style="padding:0;border:none;background:transparent;">
+                                    <input type="checkbox" name="pay_info_id" value="1" data-field="id"
+                                        class="pay-pill__input pay-info-toggle"{% if pay_info.id == 1 %} checked{% endif %} />
+                                    <span class="pay-pill__track" aria-hidden="true"></span>
+                                </span>
+                            </label>
+                            <label class="pay-info-chip">
+                                <span class="pay-info-chip__text">Username</span>
+                                <span class="pay-pill" style="padding:0;border:none;background:transparent;">
+                                    <input type="checkbox" name="pay_info_username" value="1" data-field="username"
+                                        class="pay-pill__input pay-info-toggle"{% if pay_info.username == 1 %} checked{% endif %} />
+                                    <span class="pay-pill__track" aria-hidden="true"></span>
+                                </span>
+                            </label>
+                            <label class="pay-info-chip">
+                                <span class="pay-info-chip__text">Имя</span>
+                                <span class="pay-pill" style="padding:0;border:none;background:transparent;">
+                                    <input type="checkbox" name="pay_info_first_name" value="1" data-field="first_name"
+                                        class="pay-pill__input pay-info-toggle"{% if pay_info.first_name == 1 %} checked{% endif %} />
+                                    <span class="pay-pill__track" aria-hidden="true"></span>
+                                </span>
+                            </label>
+                            <label class="pay-info-chip">
+                                <span class="pay-info-chip__text">Хост</span>
+                                <span class="pay-pill" style="padding:0;border:none;background:transparent;">
+                                    <input type="checkbox" name="pay_info_host_name" value="1" data-field="host_name"
+                                        class="pay-pill__input pay-info-toggle"{% if pay_info.host_name == 1 %} checked{% endif %} />
+                                    <span class="pay-pill__track" aria-hidden="true"></span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="pay-feature">
+                        <div class="pay-feature__main">
+                            <div class="pay-feature__icon">
+                                <span class="material-symbols-outlined" aria-hidden="true">mail_off</span>
+                            </div>
+                            <div>
+                                <p class="pay-feature__title">Пропускать ввод email</p>
+                                <p class="pay-feature__desc">Пользователи сразу переходят к выбору способа оплаты</p>
+                            </div>
+                        </div>
+                        <div class="pay-pill">
+                            <input type="hidden" name="skip_email" value="0" />
+                            <span class="pay-pill__label">Вкл</span>
+                            <label>
+                                <input type="checkbox" name="skip_email" value="1" id="skip_email" class="pay-pill__input"
+                                    {% if settings.skip_email == '1' %}checked{% endif %} />
+                                <span class="pay-pill__track" aria-hidden="true"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# ── RUB и карты ── #}
+        {% set section_id = 'payments-fiat' %}
+        <div class="settings-form-section{% if section_id == settings_default_section %} is-section-visible{% endif %}" id="{{ section_id }}">
+            {% set section_title = 'RUB и карты' %}
+            {% set section_desc = 'Банковские карты, СБП, Platega и кошелёк YooMoney' %}
+            {% set section_icon = 'account_balance' %}
+            {% include 'partials/settings/section_header.html' %}
+            <div class="settings-form-section__body">
+                <div class="pay-stack">
+                    <div class="pay-grid pay-grid--2">
+                        {# YooKassa #}
+                        <div class="pay-card pay-card--accent-yk">
+                            <div class="pay-card__head">
+                                <div class="pay-card__brand">
+                                    <div class="pay-card__icon">
+                                        <span class="material-symbols-outlined" aria-hidden="true">account_balance</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="pay-card__title">YooKassa</h4>
+                                        <p class="pay-card__sub">Карты и СБП через ЮKassa</p>
+                                    </div>
+                                </div>
+                                <div class="pay-card__toggles">
+                                    {{ pay_pill('sbp_enabled', 'СБП', settings.sbp_enabled == 'true', 'false', 'true', 'sbp_enabled') }}
+                                </div>
+                            </div>
+                            <div class="pay-card__body">
+                                {{ pay_field('receipt_email', 'Почта для чеков', settings.receipt_email or '', 'email', 'mail') }}
+                                <div class="pay-grid pay-grid--2">
+                                    {{ pay_field('yookassa_shop_id', 'Shop ID', settings.yookassa_shop_id or '', 'text', 'pin') }}
+                                    {{ pay_field('yookassa_secret_key', 'Secret Key', settings.yookassa_secret_key or '', 'password', 'key', secret=true) }}
+                                </div>
+                            </div>
+                            <div class="pay-card__foot">
+                                {{ pay_webhook('Webhook URL', '/yookassa-webhook') }}
+                            </div>
+                        </div>
+
+                        {# Platega #}
+                        <div class="pay-card pay-card--accent-pl">
+                            <div class="pay-card__head">
+                                <div class="pay-card__brand">
+                                    <div class="pay-card__icon">
+                                        <span class="material-symbols-outlined" aria-hidden="true">credit_card</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="pay-card__title">Platega</h4>
+                                        <p class="pay-card__sub">PAY-FORM, СБП и крипта</p>
+                                    </div>
+                                </div>
+                                <div class="pay-card__toggles">
+                                    {{ pay_pill('platega_payform_enabled', 'PAY-FORM', settings.platega_payform_enabled == 'true', 'false', 'true', 'platega_payform_enabled') }}
+                                    {{ pay_pill('platega_enabled', 'СБП', settings.platega_enabled == 'true', 'false', 'true', 'platega_enabled') }}
+                                    {{ pay_pill('platega_crypto_enabled', 'Крипта', settings.platega_crypto_enabled == 'true', 'false', 'true', 'platega_crypto_enabled') }}
+                                </div>
+                            </div>
+                            <div class="pay-card__body">
+                                <div class="pay-grid pay-grid--2">
+                                    {{ pay_field('platega_merchant_id', 'Merchant ID', settings.platega_merchant_id or '', 'text', 'pin') }}
+                                    {{ pay_field('platega_api_key', 'API Key', settings.platega_api_key or '', 'password', 'key', secret=true) }}
+                                </div>
+                            </div>
+                            <div class="pay-card__foot">
+                                {{ pay_webhook('Webhook URL', '/platega-webhook') }}
+                            </div>
+                        </div>
+                    </div>
+
+                    {# YooMoney #}
+                    <div class="pay-card pay-card--accent-ym pay-card--wide">
+                        <div class="pay-card__head">
+                            <div class="pay-card__brand">
+                                <div class="pay-card__icon">
+                                    <span class="material-symbols-outlined" aria-hidden="true">account_balance_wallet</span>
+                                </div>
+                                <div>
+                                    <h4 class="pay-card__title">YooMoney</h4>
+                                    <p class="pay-card__sub">Кошелёк и OAuth для автоматических уведомлений</p>
+                                </div>
+                            </div>
+                            <div class="pay-card__toggles">
+                                {{ pay_pill('yoomoney_enabled', 'Вкл', settings.yoomoney_enabled == 'true', 'false', 'true', 'yoomoney_enabled') }}
+                            </div>
+                        </div>
+                        <div class="pay-card__body">
+                            <div class="pay-grid pay-grid--3">
+                                {{ pay_field('yoomoney_wallet', 'Номер кошелька', settings.yoomoney_wallet or '', 'text', 'credit_card') }}
+                                {{ pay_field('yoomoney_secret', 'Секрет HTTP-уведомлений', settings.yoomoney_secret or '', 'password', 'security', secret=true) }}
+                                {{ pay_field('yoomoney_api_token', 'API Token (OAuth)', settings.yoomoney_api_token or '', 'password', 'token', secret=true) }}
+                                {{ pay_field('yoomoney_client_id', 'Client ID', settings.yoomoney_client_id or '', 'text', 'badge') }}
+                                {{ pay_field('yoomoney_client_secret', 'Client Secret', settings.yoomoney_client_secret or '', 'password', 'vpn_key', secret=true) }}
+                                {{ pay_field('yoomoney_redirect_uri', 'Redirect URI', settings.yoomoney_redirect_uri or '', 'url', 'link', base_url ~ '/yoomoney/callback') }}
+                            </div>
+                            <div class="pay-actions">
+                                <a href="{{ url_for('yoomoney_connect_route') }}" class="pay-btn pay-btn--primary">
+                                    <span class="material-symbols-outlined" aria-hidden="true">link</span>
+                                    Подключить OAuth
+                                </a>
+                                <button type="submit" formmethod="post" formaction="{{ url_for('yoomoney_check_route') }}" class="pay-btn">
+                                    <span class="material-symbols-outlined" aria-hidden="true">verified_user</span>
+                                    Проверить токен
+                                </button>
+                            </div>
+                            <div class="pay-webhooks pay-webhooks--2">
+                                {{ pay_webhook('Webhook URL', path='/yoomoney-webhook') }}
+                                {{ pay_webhook('Callback URI', path='/yoomoney/callback', hint='Тот же URL — в приложении YooMoney и в поле Redirect URI.') }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# ── Криптовалюты ── #}
+        {% set section_id = 'payments-crypto' %}
+        <div class="settings-form-section{% if section_id == settings_default_section %} is-section-visible{% endif %}" id="{{ section_id }}">
+            {% set section_title = 'Криптовалюты' %}
+            {% set section_desc = 'Heleket, TonConnect и CryptoBot' %}
+            {% set section_icon = 'currency_bitcoin' %}
+            {% include 'partials/settings/section_header.html' %}
+            <div class="settings-form-section__body">
+                <div class="pay-grid pay-grid--2">
+                    {# Heleket #}
+                    <div class="pay-card pay-card--accent-hk">
+                        <div class="pay-card__head">
+                            <div class="pay-card__brand">
+                                <div class="pay-card__icon">
+                                    <span class="material-symbols-outlined" aria-hidden="true">payments</span>
+                                </div>
+                                <div>
+                                    <h4 class="pay-card__title">Heleket</h4>
+                                    <p class="pay-card__sub">Крипто-эквайринг</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pay-card__body">
+                            <div class="pay-grid pay-grid--2">
+                                {{ pay_field('heleket_merchant_id', 'Merchant ID', settings.heleket_merchant_id or '', 'text', 'pin') }}
+                                {{ pay_field('heleket_api_key', 'API Key', settings.heleket_api_key or '', 'password', 'key', secret=true) }}
+                            </div>
+                        </div>
+                        <div class="pay-card__foot">
+                            {{ pay_webhook('Webhook URL', '/heleket-webhook') }}
+                        </div>
+                    </div>
+
+                    {# TonConnect #}
+                    <div class="pay-card pay-card--accent-ton">
+                        <div class="pay-card__head">
+                            <div class="pay-card__brand">
+                                <div class="pay-card__icon">
+                                    <span class="material-symbols-outlined" aria-hidden="true">account_balance_wallet</span>
+                                </div>
+                                <div>
+                                    <h4 class="pay-card__title">TonConnect</h4>
+                                    <p class="pay-card__sub">Платежи в TON</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pay-card__body">
+                            {{ pay_field('ton_wallet_address', 'Ton Wallet Address', settings.ton_wallet_address or '', 'text', 'wallet') }}
+                            {{ pay_field('tonapi_key', 'TonAPI Key', settings.tonapi_key or '', 'password', 'key', secret=true) }}
+                            {{ pay_field('ton_webhook_secret', 'Webhook Secret', settings.ton_webhook_secret or '', 'password', 'lock', '', 'Секрет для ?secret= или X-Webhook-Secret', true) }}
+                        </div>
+                        <div class="pay-card__foot">
+                            {{ pay_webhook('Webhook URL', '/ton-webhook', '', 'secret') }}
+                        </div>
+                    </div>
+
+                    {# CryptoBot #}
+                    <div class="pay-card pay-card--accent-cb pay-card--wide">
+                        <div class="pay-card__head">
+                            <div class="pay-card__brand">
+                                <div class="pay-card__icon">
+                                    <span class="material-symbols-outlined" aria-hidden="true">currency_bitcoin</span>
+                                </div>
+                                <div>
+                                    <h4 class="pay-card__title">CryptoBot</h4>
+                                    <p class="pay-card__sub">@CryptoBot в Telegram</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pay-card__body">
+                            <div class="pay-grid pay-grid--2">
+                                {{ pay_field('cryptobot_token', 'CryptoBot Token', settings.cryptobot_token or '', 'password', 'key', secret=true) }}
+                                <div>
+                                    {{ pay_webhook('Webhook URL', '/cryptobot-webhook') }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# ── Telegram ── #}
+        {% set section_id = 'payments-telegram' %}
+        <div class="settings-form-section{% if section_id == settings_default_section %} is-section-visible{% endif %}" id="{{ section_id }}">
+            {% set section_title = 'Telegram' %}
+            {% set section_desc = 'Встроенные платежи Telegram Stars' %}
+            {% set section_icon = 'star' %}
+            {% include 'partials/settings/section_header.html' %}
+            <div class="settings-form-section__body">
+                <div class="pay-card pay-card--accent-stars" style="max-width:28rem;">
+                    <div class="pay-card__head">
+                        <div class="pay-card__brand">
+                            <div class="pay-card__icon">
+                                <span class="material-symbols-outlined" aria-hidden="true">star</span>
+                            </div>
+                            <div>
+                                <h4 class="pay-card__title">Telegram Stars</h4>
+                                <p class="pay-card__sub">Нативные платежи внутри бота</p>
+                            </div>
+                        </div>
+                        <div class="pay-card__toggles">
+                            {{ pay_pill('stars_enabled', 'Вкл', settings.stars_enabled == 'true', 'false', 'true', 'stars_enabled') }}
+                        </div>
+                    </div>
+                    <div class="pay-card__body">
+                        {{ pay_field('stars_per_rub', 'Коэффициент (⭐ за 1 RUB)', settings.stars_per_rub or '1', 'number', 'calculate', hint='Пример: 2.5 = 2.5 звезды за 1 RUB', step='0.01') }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>

@@ -1,0 +1,2010 @@
+<style>
+    /* Custom Scrollbar for Logs */
+    #logs-container::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    #logs-container::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 4px;
+    }
+
+    #logs-container::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        transition: background 0.2s;
+    }
+
+    #logs-container::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    #logs-container::-webkit-scrollbar-corner {
+        background: transparent;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const activeSettingsTab = window.ACTIVE_SETTINGS_TAB || '';
+        function bindEl(id, event, handler) {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener(event, handler);
+        }
+
+        async function fetchSettingsJson(url, options = {}) {
+            const headers = Object.assign({
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            }, options.headers || {});
+            if (options.method && options.method !== 'GET' && window.getCsrfToken) {
+                headers['X-CSRFToken'] = window.getCsrfToken();
+            }
+            const resp = await fetch(url, Object.assign({ credentials: 'same-origin' }, options, { headers }));
+            const contentType = resp.headers.get('content-type') || '';
+            let data = {};
+            if (resp.status === 401) {
+                data = { ok: false, error: 'Требуется повторный вход в панель' };
+            } else if (!contentType.includes('application/json')) {
+                data = { ok: false, error: resp.redirected ? 'Требуется повторный вход в панель' : `Некорректный ответ сервера (${resp.status})` };
+            } else {
+                try {
+                    data = await resp.json();
+                } catch (_) {
+                    data = { ok: false, error: `Некорректный ответ сервера (${resp.status})` };
+                }
+            }
+            if (!resp.ok && data.ok !== false) {
+                data = { ok: false, error: data.error || data.message || `Ошибка ${resp.status}` };
+            }
+            if (data.error === 'security_setup_required') {
+                data.error = data.message || 'Завершите настройку защиты аккаунта';
+            }
+            if (data.error === 'auth_required') {
+                data.error = data.message || 'Требуется повторный вход в панель';
+            }
+            return { resp, data };
+        }
+
+        const logsContainer = document.getElementById('logs-container');
+        const logsStatusDot = document.getElementById('logs-status-dot');
+        const logsStatusText = document.getElementById('logs-status-text');
+        const btnClearLogs = document.getElementById('btn-clear-logs');
+
+        async function copyLogsByLevel(level) {
+            if (!logsContainer) return;
+            const lines = Array.from(logsContainer.children);
+            let filteredText = "";
+
+            lines.forEach(line => {
+                const text = line.textContent;
+                if (level === 'ALL') {
+                    filteredText += text + "\n";
+                } else if (text.includes(level)) {
+                    filteredText += text + "\n";
+                }
+            });
+
+            if (!filteredText.trim()) {
+                window.showToast('warning', 'Нет логов с уровнем ' + level);
+                return;
+            }
+
+            try {
+                await navigator.clipboard.writeText(filteredText);
+                window.showToast('success', 'Логи (' + level + ') скопированы (' + filteredText.split('\n').length + ' стр.)');
+            } catch (err) {
+                console.error('Failed to copy logs:', err);
+                window.showToast('danger', 'Ошибка копирования');
+            }
+        }
+        window.copyLogsByLevel = copyLogsByLevel;
+
+        let logEventSource = null;
+        let logsOffset = 0;
+        let isLoadingHistory = false;
+        let isAutoScrolling = true;
+        let logReconnectTimer = null;
+        let logReconnectDelay = 5000;
+
+        window.showConfirm = function ({
+            title = 'Подтверждение',
+            message = 'Вы уверены?',
+            type = 'warning',
+            confirmText = 'Подтвердить',
+            cancelText = 'Отмена',
+            onConfirm = null
+        }) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('confirmModal');
+                const iconContainer = document.getElementById('confirm-icon-container');
+                const icon = document.getElementById('confirm-icon');
+                const titleEl = document.getElementById('confirm-title');
+                const messageEl = document.getElementById('confirm-message');
+                const confirmBtn = document.getElementById('btn-confirm-ok');
+                const cancelBtn = document.getElementById('btn-confirm-cancel');
+
+                const styles = {
+                    info: {
+                        iconBg: 'bg-blue-500/20',
+                        iconColor: 'text-blue-400',
+                        iconName: 'info',
+                        btnBg: 'bg-blue-500 hover:bg-blue-600 text-white'
+                    },
+                    warning: {
+                        iconBg: 'bg-yellow-500/20',
+                        iconColor: 'text-yellow-400',
+                        iconName: 'warning',
+                        btnBg: 'bg-yellow-500 hover:bg-yellow-600 text-white'
+                    },
+                    danger: {
+                        iconBg: 'bg-red-500/20',
+                        iconColor: 'text-red-400',
+                        iconName: 'dangerous',
+                        btnBg: 'bg-red-500 hover:bg-red-600 text-white'
+                    }
+                };
+
+                const style = styles[type] || styles.warning;
+
+                iconContainer.className = `w-16 h-16 rounded-full flex items-center justify-center ${style.iconBg}`;
+                icon.className = `material-symbols-outlined text-4xl ${style.iconColor}`;
+                icon.textContent = style.iconName;
+                titleEl.textContent = title;
+                messageEl.textContent = message;
+                confirmBtn.textContent = confirmText;
+                cancelBtn.textContent = cancelText;
+
+                if (!cancelText) {
+                    cancelBtn.style.display = 'none';
+                } else {
+                    cancelBtn.style.display = '';
+                }
+
+                confirmBtn.className = `flex-1 px-6 py-3 rounded-lg font-bold transition-colors ${style.btnBg}`;
+
+                modal.style.display = 'flex';
+                setTimeout(() => confirmBtn.focus(), 100);
+
+                const handleConfirm = async () => {
+                    modal.style.display = 'none';
+                    cleanup();
+                    if (onConfirm) await onConfirm();
+                    resolve(true);
+                };
+
+                const handleCancel = () => {
+                    modal.style.display = 'none';
+                    cleanup();
+                    resolve(false);
+                };
+
+                const handleKeyPress = (e) => {
+                    if (e.key === 'Escape') handleCancel();
+                    if (e.key === 'Enter') handleConfirm();
+                };
+
+                const cleanup = () => {
+                    confirmBtn.onclick = null;
+                    cancelBtn.onclick = null;
+                    document.removeEventListener('keydown', handleKeyPress);
+                };
+
+                confirmBtn.onclick = handleConfirm;
+                cancelBtn.onclick = handleCancel;
+                document.addEventListener('keydown', handleKeyPress);
+            });
+        };
+
+        function updateLogStatus(connected) {
+            if (!logsStatusDot || !logsStatusText) return;
+            if (connected) {
+                logsStatusDot.className = 'w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)] animate-pulse';
+                logsStatusText.textContent = 'Live';
+                logsStatusText.className = 'text-[10px] uppercase tracking-widest font-bold text-green-400';
+            } else {
+                logsStatusDot.className = 'w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]';
+                logsStatusText.textContent = 'Disconnected';
+                logsStatusText.className = 'text-[10px] uppercase tracking-widest font-bold text-white/40';
+            }
+        }
+
+        function createLogLine(text) {
+            const line = document.createElement('div');
+            if (text.includes('[ERROR]') || text.includes('ERROR')) {
+                line.className = 'whitespace-pre-wrap border-b border-white/5 pb-1 mb-1 hover:bg-red-500/20 bg-red-500/10 transition-colors px-1 text-red-300';
+            } else if (text.includes('[WARNING]') || text.includes('WARNING')) {
+                line.className = 'whitespace-pre-wrap border-b border-white/5 pb-1 mb-1 hover:bg-white/5 transition-colors px-1 text-yellow-300';
+            } else {
+                line.className = 'whitespace-pre-wrap border-b border-white/5 pb-1 mb-1 hover:bg-white/5 transition-colors px-1 text-white/80';
+            }
+            line.textContent = text;
+            return line;
+        }
+
+        function appendLog(text) {
+            if (!logsContainer) return;
+            const line = createLogLine(text);
+            line.classList.remove('log-line-cr');
+            logsContainer.appendChild(line);
+
+            if (isAutoScrolling) {
+                logsContainer.scrollTop = logsContainer.scrollHeight;
+            }
+
+            if (logsContainer.children.length > 200) {
+                logsContainer.removeChild(logsContainer.firstChild);
+            }
+        }
+
+        function appendLogCR(text) {
+            if (!logsContainer) return;
+            const lastChild = logsContainer.lastElementChild;
+            if (lastChild && lastChild.classList.contains('log-line-cr')) {
+                lastChild.textContent = text;
+                if (text.includes('[ERROR]') || text.includes('ERROR')) {
+                    lastChild.className = 'log-line-cr whitespace-pre-wrap border-b border-white/5 pb-1 mb-1 hover:bg-red-500/20 bg-red-500/10 transition-colors px-1 text-red-300';
+                } else if (text.includes('[WARNING]') || text.includes('WARNING')) {
+                    lastChild.className = 'log-line-cr whitespace-pre-wrap border-b border-white/5 pb-1 mb-1 hover:bg-white/5 transition-colors px-1 text-yellow-300';
+                } else {
+                    lastChild.className = 'log-line-cr whitespace-pre-wrap border-b border-white/5 pb-1 mb-1 hover:bg-white/5 transition-colors px-1 text-white/80';
+                }
+            } else {
+                const line = createLogLine(text);
+                line.classList.add('log-line-cr');
+                logsContainer.appendChild(line);
+            }
+
+            if (isAutoScrolling) {
+                logsContainer.scrollTop = logsContainer.scrollHeight;
+            }
+
+            if (logsContainer.children.length > 200) {
+                logsContainer.removeChild(logsContainer.firstChild);
+            }
+        }
+
+        let currentSearchIndex = -1;
+        let searchResults = [];
+
+        function performLogsSearch() {
+            const query = document.getElementById('logs-search-input').value.toLowerCase();
+            const countEl = document.getElementById('logs-search-count');
+            const lines = Array.from(logsContainer.querySelectorAll('div:not(.text-center)'));
+
+            searchResults = [];
+            currentSearchIndex = -1;
+
+            lines.forEach(line => {
+                line.classList.remove('bg-primary/20', 'border-primary/40');
+                const text = line.textContent.toLowerCase();
+                if (query && text.includes(query)) {
+                    searchResults.push(line);
+                }
+            });
+
+            if (query && searchResults.length > 0) {
+                countEl.classList.remove('hidden');
+                currentSearchIndex = 0;
+                updateSearchUI();
+                scrollToSearchResult();
+            } else {
+                countEl.classList.add('hidden');
+            }
+        }
+
+        function updateSearchUI() {
+            const query = document.getElementById('logs-search-input').value.toLowerCase();
+            const countEl = document.getElementById('logs-search-count');
+            countEl.textContent = `${currentSearchIndex + 1}/${searchResults.length}`;
+
+            searchResults.forEach((el, idx) => {
+                el.classList.toggle('bg-primary/30', idx === currentSearchIndex);
+                el.classList.toggle('bg-primary/10', idx !== currentSearchIndex && query && el.textContent.toLowerCase().includes(query));
+            });
+        }
+
+        function scrollToSearchResult() {
+            if (currentSearchIndex >= 0 && searchResults[currentSearchIndex]) {
+                isAutoScrolling = false;
+                searchResults[currentSearchIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                searchResults.forEach(el => el.classList.remove('bg-primary/30', 'ring-1', 'ring-primary'));
+                searchResults[currentSearchIndex].classList.add('bg-primary/30', 'ring-1', 'ring-primary');
+            }
+        }
+
+        bindEl('logs-search-input', 'input', performLogsSearch);
+        bindEl('btn-logs-search-next', 'click', () => {
+            if (searchResults.length > 0) {
+                currentSearchIndex = (currentSearchIndex + 1) % searchResults.length;
+                updateSearchUI();
+                scrollToSearchResult();
+            }
+        });
+        bindEl('btn-logs-search-prev', 'click', () => {
+            if (searchResults.length > 0) {
+                currentSearchIndex = (currentSearchIndex - 1 + searchResults.length) % searchResults.length;
+                updateSearchUI();
+                scrollToSearchResult();
+            }
+        });
+
+        function prependLog(text) {
+            if (!logsContainer) return;
+            const line = createLogLine(text);
+            logsContainer.insertBefore(line, logsContainer.firstChild);
+        }
+
+        async function loadHistory(linesCount = 50) {
+            if (!logsContainer || isLoadingHistory) return;
+            isLoadingHistory = true;
+
+            const currentLines = Array.from(logsContainer.children).filter(el => !el.classList.contains('history-loader-status')).length;
+
+            const loading = document.createElement('div');
+            loading.className = 'history-loader-status text-center text-xs text-white/30 py-1';
+            loading.innerHTML = '<span class="material-symbols-outlined animate-spin text-sm">progress_activity</span> <span class="text-[10px] uppercase font-bold tracking-widest">Загрузка истории...</span>';
+            logsContainer.insertBefore(loading, logsContainer.firstChild);
+
+            try {
+                const resp = await fetch(`/settings/logs/history?lines=${linesCount}&offset=${currentLines}`);
+                const data = await resp.json();
+
+                if (logsContainer.contains(loading)) logsContainer.removeChild(loading);
+
+                if (data.ok && data.lines && data.lines.length > 0) {
+                    const oldHeight = logsContainer.scrollHeight;
+                    const oldScroll = logsContainer.scrollTop;
+
+                    const fragment = document.createDocumentFragment();
+                    data.lines.forEach(lineText => {
+                        fragment.appendChild(createLogLine(lineText));
+                    });
+
+                    logsContainer.insertBefore(fragment, logsContainer.firstChild);
+
+                    if (linesCount <= 50) {
+                        const newHeight = logsContainer.scrollHeight;
+                        logsContainer.scrollTop = oldScroll + (newHeight - oldHeight);
+                    } else {
+                        window.showToast('success', `Загружено ${data.lines.length} строк истории`);
+                        performLogsSearch();
+                    }
+                } else if (linesCount > 50) {
+                    window.showToast('info', 'Больше нет доступной истории');
+                }
+            } catch (e) {
+                console.error("History error:", e);
+                if (logsContainer.contains(loading)) logsContainer.removeChild(loading);
+            } finally {
+                isLoadingHistory = false;
+            }
+        }
+
+        window.loadMoreLogsHistory = function () {
+            loadHistory(200);
+        };
+
+        if (logsContainer) {
+        logsContainer.addEventListener('scroll', () => {
+            if (logsContainer.scrollTop + logsContainer.clientHeight < logsContainer.scrollHeight - 50) {
+                isAutoScrolling = false;
+            } else {
+                isAutoScrolling = true;
+            }
+
+            if (logsContainer.scrollTop < 50) {
+                loadHistory();
+            }
+        });
+        }
+
+        function startLogStream() {
+            if (logEventSource) logEventSource.close();
+            if (logReconnectTimer) {
+                clearTimeout(logReconnectTimer);
+                logReconnectTimer = null;
+            }
+
+            if (logsContainer) logsContainer.innerHTML = '';
+            updateLogStatus(true);
+
+            logEventSource = new EventSource('/settings/logs/stream');
+
+            logEventSource.onmessage = function (event) {
+                logReconnectDelay = 5000;
+                const data = event.data;
+                if (data.startsWith('\x01CR\x01')) {
+                    appendLogCR(data.substring(4));
+                } else {
+                    appendLog(data);
+                }
+            };
+
+            logEventSource.onerror = function (err) {
+                console.warn("Log stream disconnected. Reconnecting...");
+                logEventSource.close();
+                logEventSource = null;
+                updateLogStatus(false);
+                appendLog(`[System] Connection lost. Reconnecting in ${Math.round(logReconnectDelay / 1000)}s...`);
+                logReconnectTimer = setTimeout(() => {
+                    logReconnectTimer = null;
+                    logReconnectDelay = Math.min(logReconnectDelay * 2, 60000);
+                    if (activeSettingsTab === 'logs') startLogStream();
+                }, logReconnectDelay);
+            };
+        }
+
+        let isLogsFullscreen = false;
+
+        window.toggleLogsFullscreen = function () {
+            const container = document.getElementById('logs-wrapper');
+            if (!container) return;
+
+            if (!isLogsFullscreen) {
+                if (container.requestFullscreen) {
+                    container.requestFullscreen().catch(err => {
+                        console.error(`Error attempting to enable fullscreen: ${err.message}`);
+                    });
+                } else {
+                    enterCssFullscreen(container);
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else {
+                    exitCssFullscreen(container);
+                }
+            }
+        };
+
+        function enterCssFullscreen(el) {
+            el.classList.add('fixed', 'inset-0', 'z-[100]', 'h-screen', 'w-screen', 'rounded-none', 'flex', 'flex-col', 'bg-[#0a1812]', 'overflow-hidden', 'p-6');
+            el.classList.remove('p-1.5', 'rounded-2xl', 'backdrop-blur-xl', 'bg-white/5');
+
+            const mainContainer = el.firstElementChild;
+            if (mainContainer) {
+                mainContainer.classList.remove('p-5');
+                mainContainer.classList.add('flex', 'flex-col', 'h-full', 'w-full');
+            }
+
+            const terminalWrapper = el.querySelector('.group\\/terminal');
+            if (terminalWrapper) {
+                terminalWrapper.classList.add('flex-1', 'flex', 'flex-col', 'min-h-0');
+            }
+
+            const inner = el.querySelector('#logs-container');
+            if (inner) {
+                inner.classList.add('flex-1', 'min-h-0', 'rounded-xl', 'border', 'border-white/5', 'overflow-y-auto');
+                inner.classList.remove('h-[55vh]');
+            }
+
+            const header = el.querySelector('.flex.flex-col');
+            if (header) {
+                header.classList.add('mb-4', 'flex-none');
+            }
+
+            const footer = el.querySelector('.mt-4.flex');
+            if (footer) {
+                footer.classList.add('hidden');
+            }
+
+            document.body.style.overflow = 'hidden';
+            isLogsFullscreen = true;
+            updateFullscreenIcon(true);
+        }
+
+        function exitCssFullscreen(el) {
+            el.classList.remove('fixed', 'inset-0', 'z-[100]', 'h-screen', 'w-screen', 'rounded-none', 'flex', 'flex-col', 'bg-[#0a1812]', 'overflow-hidden', 'p-6');
+            el.classList.add('p-1.5', 'rounded-2xl', 'backdrop-blur-xl', 'bg-white/5');
+
+            const mainContainer = el.firstElementChild;
+            if (mainContainer) {
+                mainContainer.classList.add('p-5');
+                mainContainer.classList.remove('flex', 'flex-col', 'h-full', 'w-full');
+            }
+
+            const terminalWrapper = el.querySelector('.group\\/terminal');
+            if (terminalWrapper) {
+                terminalWrapper.classList.remove('flex-1', 'flex', 'flex-col', 'min-h-0');
+            }
+
+            const inner = el.querySelector('#logs-container');
+            if (inner) {
+                inner.classList.remove('flex-1', 'min-h-0');
+                inner.classList.add('h-[55vh]', 'rounded-xl', 'border', 'border-white/5', 'overflow-y-auto');
+            }
+
+            const header = el.querySelector('.flex.flex-col');
+            if (header) {
+                header.classList.remove('mb-4', 'flex-none');
+            }
+
+            const footer = el.querySelector('.mt-4.flex');
+            if (footer) {
+                footer.classList.remove('hidden');
+            }
+
+            document.body.style.overflow = '';
+            isLogsFullscreen = false;
+            updateFullscreenIcon(false);
+        }
+
+        document.addEventListener('fullscreenchange', () => {
+            const container = document.getElementById('logs-wrapper');
+            if (!container) return;
+
+            if (document.fullscreenElement) {
+                enterCssFullscreen(container);
+            } else {
+                exitCssFullscreen(container);
+            }
+        });
+
+        function updateFullscreenIcon(isFullscreen) {
+            const btn = document.getElementById('btn-fullscreen-logs');
+            if (!btn) return;
+            const icon = btn.querySelector('.material-symbols-outlined');
+            if (isFullscreen) {
+                icon.textContent = 'close_fullscreen';
+                btn.title = 'Выйти из полноэкранного режима (F11 / Esc)';
+            } else {
+                icon.textContent = 'open_in_full';
+                btn.title = 'На весь экран (F11)';
+            }
+        }
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'F11' && activeSettingsTab === 'logs') {
+                    e.preventDefault();
+                    toggleLogsFullscreen();
+            }
+        });
+
+        let uploadedMediaFilename = null;
+
+        if (btnClearLogs) {
+            btnClearLogs.addEventListener('click', async () => {
+                const confirmed = await window.showConfirm({
+                    title: 'Очистка логов Docker',
+                    message: 'Вы уверены, что хотите очистить все логи Docker?\n\nЭто действие необратимо.',
+                    type: 'danger',
+                    confirmText: 'Очистить',
+                    cancelText: 'Отмена'
+                });
+                if (!confirmed) return;
+
+                try {
+                    const resp = await fetch('/settings/logs/clear', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': window.getCsrfToken()
+                        }
+                    });
+                    const data = await resp.json();
+
+                    if (data.ok) {
+                        window.showToast('success', 'Логи успешно очищены');
+                        if (logsContainer) logsContainer.innerHTML = '<div class="text-green-400 text-center my-4">--- Логи были очищены ---</div>';
+                    } else {
+                        window.showToast('danger', data.error || 'Ошибка очистки логов');
+                    }
+                } catch (e) {
+                    console.error(e);
+                    window.showToast('danger', 'Ошибка соединения');
+                }
+            });
+        }
+
+        let buttons = [];
+        const broadcastMainBotRunning = {{ 'true' if main_running else 'false' }};
+
+        async function readBroadcastError(resp, fallback) {
+            try {
+                const contentType = resp.headers.get('content-type') || '';
+                if (contentType.includes('application/json')) {
+                    const data = await resp.json();
+                    if (data.error) return data.error;
+                    if (data.message) return data.message;
+                }
+            } catch (_) { /* ignore parse errors */ }
+            return fallback;
+        }
+
+        function ensureBroadcastBotRunning() {
+            if (broadcastMainBotRunning) return true;
+            window.showToast('warning', 'Сначала запустите основного бота в панели управления');
+            return false;
+        }
+
+        function pluralUsers(count) {
+            const n = Math.abs(Number(count) || 0);
+            const mod10 = n % 10;
+            const mod100 = n % 100;
+            if (mod10 === 1 && mod100 !== 11) return `${n} пользователь`;
+            if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return `${n} пользователя`;
+            return `${n} пользователей`;
+        }
+
+        function getSelectedExpiringDays() {
+            const selected = document.querySelector('input[name="expiring_days"]:checked');
+            return selected ? parseInt(selected.value, 10) : 3;
+        }
+
+        function getBroadcastRecipientCount(mode, stats) {
+            if (!stats) return 0;
+            switch (mode) {
+                case 'all':
+                    return stats.total_users || 0;
+                case 'with_keys':
+                    return stats.users_with_keys || 0;
+                case 'expired_keys':
+                    return stats.users_with_expired_keys || 0;
+                case 'without_trial':
+                    return (stats.total_users || 0) - (stats.users_without_trial || 0);
+                case 'not_used_trial':
+                    return stats.users_without_trial || 0;
+                case 'test':
+                    return 1;
+                case 'expiring_keys': {
+                    const days = getSelectedExpiringDays();
+                    return stats.expiring_counts?.[days] ?? stats.expiring_counts?.[String(days)] ?? 0;
+                }
+                default:
+                    return 0;
+            }
+        }
+
+        const broadcastModeLabels = {
+            all: 'все пользователи',
+            with_keys: 'пользователи с активными ключами',
+            expired_keys: 'пользователи с истекшими ключами',
+            without_trial: 'пользователи, уже использовавшие триал',
+            not_used_trial: 'пользователи, не использовавшие триал',
+            test: 'только администратор (тестовая отправка)',
+            expiring_keys: 'пользователи с ключами, срок которых скоро истекает',
+        };
+
+        function updateExpiringModeCount() {
+            const stats = window.broadcastStats;
+            const el = document.getElementById('count-mode-expiring_keys');
+            if (!el || !stats) return;
+            const count = getBroadcastRecipientCount('expiring_keys', stats);
+            el.textContent = `(${count})`;
+        }
+
+        function updateBroadcastRecipientSummary() {
+            const summaryEl = document.getElementById('broadcast-recipient-summary-text');
+            if (!summaryEl) return;
+
+            const modeInput = document.querySelector('input[name="mode"]:checked');
+            const mode = modeInput ? modeInput.value : 'all';
+            const stats = window.broadcastStats;
+
+            if (!stats) {
+                summaryEl.textContent = 'Загрузка статистики…';
+                return;
+            }
+
+            let count = getBroadcastRecipientCount(mode, stats);
+            const skipBannedToggle = document.getElementById('skip-banned-toggle');
+            if (skipBannedToggle?.checked && mode !== 'test') {
+                const banned = window.currentBannedCount || 0;
+                count = Math.max(0, count - banned);
+            }
+
+            let audienceLabel = broadcastModeLabels[mode] || mode;
+            if (mode === 'expiring_keys') {
+                const days = getSelectedExpiringDays();
+                audienceLabel += ` (в ближайшие ${days} ${days === 1 ? 'день' : days < 5 ? 'дня' : 'дней'})`;
+            }
+
+            summaryEl.textContent = `${pluralUsers(count)} — ${audienceLabel}`;
+            const railSummary = document.getElementById('broadcast-recipient-summary-rail');
+            if (railSummary) railSummary.textContent = summaryEl.textContent;
+        }
+
+        const BROADCAST_SEND_BTN_HTML = '<span class="material-symbols-outlined">send</span><span class="brc-launch-btn__text">Запустить рассылку</span>';
+
+        let broadcastBlockedScope = 'last';
+
+        function setBroadcastBlockedScope(scope) {
+            broadcastBlockedScope = scope;
+            document.querySelectorAll('.broadcast-blocked-scope-btn').forEach((btn) => {
+                const active = btn.dataset.blockedScope === scope;
+                btn.classList.toggle('is-active', active);
+            });
+        }
+
+        function renderBroadcastBlockedUsers(users) {
+            const tbody = document.getElementById('broadcast-blocked-tbody');
+            const emptyEl = document.getElementById('broadcast-blocked-empty');
+            const countEl = document.getElementById('broadcast-blocked-count');
+            if (!tbody || !emptyEl) return;
+
+            tbody.innerHTML = '';
+            if (countEl) countEl.textContent = users.length ? `(${users.length})` : '';
+
+            if (!users.length) {
+                emptyEl.classList.remove('hidden');
+                return;
+            }
+            emptyEl.classList.add('hidden');
+
+            const usersPageBase = '{{ url_for("users_page") }}';
+            const escapeHtml = window.panelEscapeHtml || ((v) => String(v ?? ''));
+            tbody.innerHTML = users.map((u) => {
+                const username = u.username ? `@${escapeHtml(u.username)}` : '—';
+                const spent = typeof u.total_spent === 'number' ? `${u.total_spent.toFixed(0)} ₽` : '—';
+                const inDb = u.in_database
+                    ? '<span class="text-emerald-400">Да</span>'
+                    : '<span class="text-white/30">Нет</span>';
+                const userQ = encodeURIComponent(String(u.telegram_id));
+                return `
+                    <tr class="hover:bg-white/5 transition-colors">
+                        <td class="px-4 py-3 text-white/70 font-mono text-xs">${escapeHtml(u.telegram_id)}</td>
+                        <td class="px-4 py-3 text-white">${username}</td>
+                        <td class="px-4 py-3 text-xs">${inDb}</td>
+                        <td class="px-4 py-3 text-white/60 text-xs">${escapeHtml(spent)}</td>
+                        <td class="px-4 py-3 text-right">
+                            <a href="${usersPageBase}?q=${userQ}"
+                               class="text-primary hover:text-white text-xs font-bold uppercase tracking-wider">
+                                Открыть
+                            </a>
+                        </td>
+                    </tr>`;
+            }).join('');
+        }
+
+        async function loadBroadcastBlockedUsers(scope = broadcastBlockedScope) {
+            const panel = document.getElementById('broadcast-blocked-panel');
+            if (!panel) return;
+            setBroadcastBlockedScope(scope);
+            panel.classList.remove('hidden');
+            panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+            try {
+                const { data } = await fetchSettingsJson(`/settings/broadcast/blocked-users?scope=${encodeURIComponent(scope)}`);
+                if (!data.ok) {
+                    window.showToast?.('danger', data.error || 'Не удалось загрузить список');
+                    return;
+                }
+                renderBroadcastBlockedUsers(data.users || []);
+            } catch (e) {
+                console.error('Failed to load blocked users:', e);
+                window.showToast?.('danger', 'Ошибка загрузки списка заблокировавших');
+            }
+        }
+
+        const BROADCAST_HISTORY_MODAL_ID = 'broadcastHistoryModal';
+
+        const broadcastHistoryModeIcons = {
+            all: { icon: 'groups', cls: 'all' },
+            active: { icon: 'verified_user', cls: 'active' },
+            expired: { icon: 'schedule', cls: 'expired' },
+            not_used_trial: { icon: 'redeem', cls: 'trial' },
+            test: { icon: 'science', cls: 'test' },
+        };
+
+        const broadcastHistoryState = {
+            selectedId: null,
+            page: 1,
+            perPage: 50,
+            reasonLabels: {},
+            statusLabels: {},
+            view: 'list',
+        };
+
+        function setBroadcastHistoryLoading(isLoading) {
+            const loadingEl = document.getElementById('broadcast-history-loading');
+            const bodyEl = document.getElementById('broadcast-history-body');
+            if (loadingEl) loadingEl.classList.toggle('hidden', !isLoading);
+            bodyEl?.classList.toggle('is-loading', isLoading);
+        }
+
+        function setBroadcastHistoryModalHeader(mode = 'list', run = null) {
+            const titleEl = document.getElementById('broadcast-history-modal-title');
+            const subtitleEl = document.getElementById('broadcast-history-modal-subtitle');
+            const backBtn = document.getElementById('broadcast-history-back');
+            if (!titleEl || !subtitleEl || !backBtn) return;
+
+            if (mode === 'detail' && run) {
+                titleEl.textContent = run.mode_label || 'Рассылка';
+                subtitleEl.textContent = formatBroadcastDate(run.started_at);
+                backBtn.classList.remove('hidden');
+            } else {
+                titleEl.textContent = 'История рассылок';
+                subtitleEl.textContent = 'Нажмите на карточку, чтобы открыть детали';
+                backBtn.classList.add('hidden');
+            }
+        }
+
+        function resetBroadcastHistoryView(mode = 'list') {
+            broadcastHistoryState.view = mode;
+            const listWrap = document.getElementById('broadcast-history-list-wrap');
+            const detailEl = document.getElementById('broadcast-history-detail');
+            if (mode === 'detail') {
+                listWrap?.classList.add('hidden');
+                detailEl?.classList.remove('hidden');
+            } else {
+                listWrap?.classList.remove('hidden');
+                detailEl?.classList.add('hidden');
+                setBroadcastHistoryModalHeader('list');
+            }
+        }
+
+        function openBroadcastHistoryModal() {
+            if (typeof window.openModal === 'function') {
+                window.openModal(BROADCAST_HISTORY_MODAL_ID);
+            } else {
+                document.getElementById(BROADCAST_HISTORY_MODAL_ID)?.classList.add('open');
+            }
+        }
+
+        function closeBroadcastHistoryModal() {
+            if (typeof window.closeModal === 'function') {
+                window.closeModal(BROADCAST_HISTORY_MODAL_ID);
+            } else {
+                document.getElementById(BROADCAST_HISTORY_MODAL_ID)?.classList.remove('open');
+            }
+            setBroadcastHistoryLoading(false);
+            broadcastHistoryState.selectedId = null;
+            resetBroadcastHistoryView('list');
+        }
+
+        function openBroadcastHistoryPanel() {
+            openBroadcastHistoryModal();
+        }
+
+        function closeBroadcastHistoryPanel() {
+            closeBroadcastHistoryModal();
+        }
+
+        function broadcastDeliveryPercent(run) {
+            const total = Number(run?.total_recipients) || 0;
+            const sent = Number(run?.sent_count) || 0;
+            if (!total) return 0;
+            return Math.min(100, Math.round((sent / total) * 100));
+        }
+
+        function broadcastModeIconMeta(mode) {
+            return broadcastHistoryModeIcons[mode] || { icon: 'campaign', cls: 'all' };
+        }
+
+        function formatBroadcastDate(value) {
+            if (!value) return '—';
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return String(value);
+            return date.toLocaleString('ru-RU');
+        }
+
+        function statusBadgeClass(status) {
+            if (status === 'sent') return 'text-emerald-400';
+            if (status === 'skipped') return 'text-yellow-500';
+            return 'text-red-400';
+        }
+
+        function renderBroadcastHistoryList(items) {
+            const listEl = document.getElementById('broadcast-history-list');
+            const emptyEl = document.getElementById('broadcast-history-list-empty');
+            const detailEl = document.getElementById('broadcast-history-detail');
+            if (!listEl || !emptyEl) return;
+
+            detailEl?.classList.add('hidden');
+            listEl.innerHTML = '';
+
+            if (!items.length) {
+                emptyEl.classList.remove('hidden');
+                return;
+            }
+            emptyEl.classList.add('hidden');
+
+            listEl.innerHTML = items.map((item) => {
+                const meta = broadcastModeIconMeta(item.mode);
+                const pct = broadcastDeliveryPercent(item);
+                const activeCls = broadcastHistoryState.selectedId === item.id ? ' is-active' : '';
+                return `
+                <button type="button" role="listitem"
+                    class="broadcast-history-card${activeCls}"
+                    data-broadcast-id="${item.id}">
+                    <div class="broadcast-history-card__head">
+                        <span class="broadcast-history-card__mode-icon broadcast-history-card__mode-icon--${meta.cls}" aria-hidden="true">
+                            <span class="material-symbols-outlined">${meta.icon}</span>
+                        </span>
+                        <div class="broadcast-history-card__info">
+                            <p class="broadcast-history-card__title">${item.mode_label || item.mode || 'Рассылка'}</p>
+                            <p class="broadcast-history-card__date">${formatBroadcastDate(item.started_at)}</p>
+                        </div>
+                        <span class="material-symbols-outlined broadcast-history-card__chevron">chevron_right</span>
+                    </div>
+                    <p class="broadcast-history-card__preview">${item.text_preview || 'Без текста превью'}</p>
+                    <div class="broadcast-history-card__stats">
+                        <span class="broadcast-history-card__stat broadcast-history-card__stat--ok">${item.sent_count || 0} доставлено</span>
+                        <span class="broadcast-history-card__stat broadcast-history-card__stat--fail">${item.failed_count || 0} ошибок</span>
+                        <span class="broadcast-history-card__stat broadcast-history-card__stat--skip">${item.skipped_count || 0} пропущено</span>
+                    </div>
+                    <div class="broadcast-history-card__progress" aria-label="Доставлено ${pct}%">
+                        <div class="broadcast-history-card__progress-bar" style="width:${pct}%"></div>
+                    </div>
+                </button>`;
+            }).join('');
+
+            listEl.querySelectorAll('.broadcast-history-card').forEach((btn) => {
+                btn.addEventListener('click', () => openBroadcastHistoryDetail(btn.dataset.broadcastId));
+            });
+        }
+
+        function renderBroadcastHistoryBreakdown(breakdown, reasonLabels) {
+            const wrap = document.getElementById('broadcast-history-breakdown');
+            if (!wrap) return;
+            const chips = [];
+            Object.entries(breakdown || {}).forEach(([status, reasons]) => {
+                Object.entries(reasons || {}).forEach(([reason, count]) => {
+                    if (!count) return;
+                    const reasonLabel = reason === '_none'
+                        ? (status === 'sent' ? 'Доставлено' : '—')
+                        : (reasonLabels?.[reason] || reason);
+                    const filterStatus = status === 'sent' || status === 'failed' || status === 'skipped' ? status : 'all';
+                    const filterReason = reason === '_none' ? 'all' : reason;
+                    chips.push(
+                        `<button type="button" class="broadcast-history-chip" data-filter-status="${filterStatus}" data-filter-reason="${filterReason}">${reasonLabel}: ${count}</button>`
+                    );
+                });
+            });
+            wrap.innerHTML = chips.join('') || '<span class="broadcast-history-chip" style="cursor:default;opacity:0.6">Нет детализации</span>';
+
+            wrap.querySelectorAll('.broadcast-history-chip[data-filter-status]').forEach((chip) => {
+                chip.addEventListener('click', () => {
+                    const statusEl = document.getElementById('broadcast-history-filter-status');
+                    const reasonEl = document.getElementById('broadcast-history-filter-reason');
+                    if (statusEl) statusEl.value = chip.dataset.filterStatus || 'all';
+                    if (reasonEl) reasonEl.value = chip.dataset.filterReason || 'all';
+                    if (broadcastHistoryState.selectedId) {
+                        openBroadcastHistoryDetail(broadcastHistoryState.selectedId, 1);
+                    }
+                });
+            });
+        }
+
+        function renderBroadcastHistoryStats(run) {
+            const wrap = document.getElementById('broadcast-history-stats');
+            const bar = document.getElementById('broadcast-history-progress-bar');
+            if (!wrap) return;
+
+            const stats = [
+                { label: 'Получателей', value: run.total_recipients || 0, cls: '' },
+                { label: 'Доставлено', value: run.sent_count || 0, cls: 'ok' },
+                { label: 'Ошибки', value: run.failed_count || 0, cls: 'fail' },
+                { label: 'Пропущено', value: run.skipped_count || 0, cls: 'skip' },
+            ];
+
+            wrap.innerHTML = stats.map((s) => `
+                <div class="broadcast-history-stat broadcast-history-stat--${s.cls}">
+                    <span class="broadcast-history-stat__value">${s.value}</span>
+                    <span class="broadcast-history-stat__label">${s.label}</span>
+                </div>
+            `).join('');
+
+            if (bar) bar.style.width = `${broadcastDeliveryPercent(run)}%`;
+        }
+
+        function renderBroadcastHistoryDeliveries(deliveries) {
+            const tbody = document.getElementById('broadcast-history-tbody');
+            const emptyEl = document.getElementById('broadcast-history-empty');
+            if (!tbody || !emptyEl) return;
+
+            tbody.innerHTML = '';
+            if (!deliveries.length) {
+                emptyEl.classList.remove('hidden');
+                return;
+            }
+            emptyEl.classList.add('hidden');
+
+            const usersPageBase = '{{ url_for("users_page") }}';
+            tbody.innerHTML = deliveries.map((row) => {
+                const username = row.username ? `@${row.username}` : '—';
+                const statusCls = row.status === 'sent' ? 'sent' : (row.status === 'skipped' ? 'skipped' : 'failed');
+                return `
+                    <tr>
+                        <td class="font-mono text-xs">${row.telegram_id}</td>
+                        <td>${username}</td>
+                        <td class="bh-status--${statusCls}">${row.status_label || row.status}</td>
+                        <td>${row.reason_label || '—'}</td>
+                        <td class="text-right">
+                            <a href="${usersPageBase}?q=${row.telegram_id}" class="broadcast-history-table__link">Профиль</a>
+                        </td>
+                    </tr>`;
+            }).join('');
+        }
+
+        function renderBroadcastHistoryDetail(data) {
+            broadcastHistoryState.reasonLabels = data.reason_labels || {};
+            broadcastHistoryState.statusLabels = data.status_labels || {};
+
+            const run = data.run || {};
+            setBroadcastHistoryModalHeader('detail', run);
+            document.getElementById('broadcast-history-detail-title').textContent = run.mode_label || 'Рассылка';
+            const finished = run.finished_at ? ` · завершено ${formatBroadcastDate(run.finished_at)}` : '';
+            document.getElementById('broadcast-history-detail-meta').textContent =
+                `${formatBroadcastDate(run.started_at)}${finished} · аудитория: ${run.total_recipients || 0}`;
+            document.getElementById('broadcast-history-detail-preview').textContent = run.text_preview || '—';
+
+            renderBroadcastHistoryStats(run);
+            renderBroadcastHistoryBreakdown(data.breakdown, data.reason_labels);
+            renderBroadcastHistoryDeliveries(data.deliveries || []);
+
+            document.querySelectorAll('.broadcast-history-card').forEach((card) => {
+                card.classList.toggle('is-active', card.dataset.broadcastId === broadcastHistoryState.selectedId);
+            });
+
+            const infoEl = document.getElementById('broadcast-history-pagination-info');
+            if (infoEl) {
+                infoEl.textContent = `Страница ${data.page} из ${data.pages} · всего ${data.total}`;
+            }
+            const prevBtn = document.getElementById('broadcast-history-prev');
+            const nextBtn = document.getElementById('broadcast-history-next');
+            if (prevBtn) prevBtn.disabled = (data.page || 1) <= 1;
+            if (nextBtn) nextBtn.disabled = (data.page || 1) >= (data.pages || 1);
+        }
+
+        async function fetchBroadcastHistoryDetail(broadcastId, page = 1) {
+            const status = document.getElementById('broadcast-history-filter-status')?.value || 'all';
+            const reason = document.getElementById('broadcast-history-filter-reason')?.value || 'all';
+            const search = document.getElementById('broadcast-history-search')?.value?.trim() || '';
+            const params = new URLSearchParams({
+                page: String(page),
+                per_page: String(broadcastHistoryState.perPage),
+                status,
+                reason,
+            });
+            if (search) params.set('q', search);
+            return fetchSettingsJson(`/settings/broadcast/history/${encodeURIComponent(broadcastId)}?${params}`);
+        }
+
+        async function loadBroadcastHistoryList() {
+            openBroadcastHistoryPanel();
+            resetBroadcastHistoryView('list');
+            setBroadcastHistoryLoading(true);
+
+            try {
+                const { data } = await fetchSettingsJson('/settings/broadcast/history?limit=30');
+                setBroadcastHistoryLoading(false);
+                if (!data.ok) {
+                    window.showToast?.('danger', data.error || 'Не удалось загрузить историю');
+                    return;
+                }
+                renderBroadcastHistoryList(data.items || []);
+            } catch (e) {
+                setBroadcastHistoryLoading(false);
+                console.error('Failed to load broadcast history:', e);
+                window.showToast?.('danger', 'Ошибка загрузки истории рассылок');
+            }
+        }
+
+        async function openBroadcastHistoryDetail(broadcastId, page = 1) {
+            if (!broadcastId) return;
+            broadcastHistoryState.selectedId = broadcastId;
+            broadcastHistoryState.page = page;
+
+            openBroadcastHistoryModal();
+            resetBroadcastHistoryView('detail');
+            setBroadcastHistoryLoading(true);
+
+            try {
+                const { data } = await fetchBroadcastHistoryDetail(broadcastId, page);
+                setBroadcastHistoryLoading(false);
+                if (!data.ok) {
+                    window.showToast?.('danger', data.error || 'Не удалось загрузить детали');
+                    resetBroadcastHistoryView('list');
+                    await loadBroadcastHistoryList();
+                    return;
+                }
+                renderBroadcastHistoryDetail(data);
+            } catch (e) {
+                setBroadcastHistoryLoading(false);
+                console.error('Failed to load broadcast detail:', e);
+                window.showToast?.('danger', 'Ошибка загрузки деталей рассылки');
+                resetBroadcastHistoryView('list');
+            }
+        }
+
+        async function showBroadcastHistoryAfterComplete(broadcastId) {
+            if (!broadcastId) {
+                await loadBroadcastHistoryList();
+                return;
+            }
+
+            openBroadcastHistoryPanel();
+            resetBroadcastHistoryView('detail');
+            setBroadcastHistoryLoading(true);
+
+            for (let attempt = 0; attempt < 6; attempt++) {
+                try {
+                    const { data } = await fetchBroadcastHistoryDetail(broadcastId, 1);
+                    if (data.ok && data.run) {
+                        broadcastHistoryState.selectedId = broadcastId;
+                        broadcastHistoryState.page = 1;
+                        setBroadcastHistoryLoading(false);
+                        renderBroadcastHistoryDetail(data);
+                        return;
+                    }
+                } catch (e) {
+                    console.warn('Broadcast history retry', attempt + 1, e);
+                }
+                await new Promise((resolve) => setTimeout(resolve, 350 * (attempt + 1)));
+            }
+
+            setBroadcastHistoryLoading(false);
+            window.showToast?.('info', 'Открываем список рассылок…');
+            await loadBroadcastHistoryList();
+        }
+
+        async function loadStats() {
+            try {
+                const { resp, data } = await fetchSettingsJson('/settings/broadcast/stats');
+                if (!data.ok) {
+                    console.error('Broadcast stats failed:', data.error, resp.status);
+                    window.showToast?.('danger', data.error || 'Не удалось загрузить статистику рассылки');
+                    return;
+                }
+                    window.broadcastStats = data;
+                    if (document.getElementById('stat-total')) document.getElementById('stat-total').textContent = data.total_users;
+                    if (document.getElementById('stat-with-keys')) document.getElementById('stat-with-keys').textContent = data.users_with_keys;
+                    if (document.getElementById('stat-expired-keys')) document.getElementById('stat-expired-keys').textContent = data.users_with_expired_keys || 0;
+                    if (document.getElementById('stat-no-trial')) document.getElementById('stat-no-trial').textContent = data.users_without_trial;
+                    if (document.getElementById('stat-banned-count')) document.getElementById('stat-banned-count').textContent = data.banned_count || 0;
+
+                    if (document.getElementById('count-mode-all')) document.getElementById('count-mode-all').textContent = `(${data.total_users})`;
+                    if (document.getElementById('count-mode-with_keys')) document.getElementById('count-mode-with_keys').textContent = `(${data.users_with_keys})`;
+                    if (document.getElementById('count-mode-expired_keys')) document.getElementById('count-mode-expired_keys').textContent = `(${data.users_with_expired_keys || 0})`;
+                    if (document.getElementById('count-mode-without_trial')) document.getElementById('count-mode-without_trial').textContent = `(${data.total_users - data.users_without_trial})`;
+                    if (document.getElementById('count-mode-not_used_trial')) document.getElementById('count-mode-not_used_trial').textContent = `(${data.users_without_trial})`;
+                    if (document.getElementById('count-mode-test')) document.getElementById('count-mode-test').textContent = '(1)';
+                    updateExpiringModeCount();
+
+                    window.currentBannedCount = data.banned_count || 0;
+                    updateSkipBannedUI();
+
+                    if (data.last_results) {
+                        const results = data.last_results;
+                        if (document.getElementById('result-sent')) document.getElementById('result-sent').textContent = results.sent || 0;
+                        if (document.getElementById('result-blocked-bot')) document.getElementById('result-blocked-bot').textContent = results.blocked_bot || 0;
+                        if (document.getElementById('result-deactivated')) document.getElementById('result-deactivated').textContent = results.deactivated || 0;
+                        if (document.getElementById('result-added-to-banned')) document.getElementById('result-added-to-banned').textContent = results.added_to_banned || 0;
+                        if (document.getElementById('result-removed-from-banned')) document.getElementById('result-removed-from-banned').textContent = results.removed_from_banned || 0;
+
+                        if (results.timestamp) {
+                            const date = new Date(results.timestamp);
+                            if (document.getElementById('result-time')) document.getElementById('result-time').textContent = `Последняя рассылка: ${date.toLocaleString('ru-RU')} `;
+                        }
+
+                        const blockedCount = results.blocked_bot || 0;
+                    }
+
+                    if (data.expiring_counts) {
+                        const daySuffix = { 1: 'день', 3: 'дня', 5: 'дней', 10: 'дней' };
+                        for (const [day, count] of Object.entries(data.expiring_counts)) {
+                            const el = document.getElementById(`expiring-label-${day}`);
+                            if (el) {
+                                const suffix = daySuffix[day] || 'дней';
+                                el.innerHTML = `${day} ${suffix} <em>(${count})</em>`;
+                            }
+                        }
+                    }
+                    updateBroadcastRecipientSummary();
+                    if (typeof window.bcSyncKpi === 'function') window.bcSyncKpi();
+            } catch (e) {
+                console.error('Failed to load stats:', e);
+                window.showToast?.('danger', 'Ошибка загрузки статистики рассылки');
+            }
+        }
+
+        bindEl('btn-upload-media', 'click', () => {
+            document.getElementById('media-input')?.click();
+        });
+
+        bindEl('media-input', 'change', async function (e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const maxSize = 500 * 1024 * 1024;
+            if (file.size > maxSize) {
+                window.showToast('danger', `Файл слишком большой. Максимальный размер: 500 МБ. Размер вашего файла: ${(file.size / 1024 / 1024).toFixed(2)} МБ`);
+                e.target.value = '';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('csrf_token', window.getCsrfToken());
+
+            try {
+                const loading = document.createElement('p');
+                loading.textContent = 'Загрузка...';
+                loading.className = 'text-white/50 text-sm mt-2';
+                e.target.parentElement.appendChild(loading);
+
+                const resp = await fetch('/settings/broadcast/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                loading.remove();
+
+                if (!resp.ok) {
+                    if (resp.status === 413) {
+                        window.showToast('danger', 'Файл слишком большой для загрузки. Максимальный размер: 500 МБ');
+                    } else {
+                        window.showToast('danger', `Ошибка сервера: ${resp.status} ${resp.statusText}`);
+                    }
+                    e.target.value = '';
+                    return;
+                }
+
+                const data = await resp.json();
+
+                if (data.ok) {
+                    uploadedMediaFilename = data.filename;
+                    const preview = document.getElementById('media-preview');
+                    const img = document.getElementById('media-preview-img');
+                    const video = document.getElementById('media-preview-video');
+
+                    preview.classList.remove('hidden');
+
+                    if (data.media_type === 'photo' || data.media_type === 'animation') {
+                        img.src = URL.createObjectURL(file);
+                        img.classList.remove('hidden');
+                        video.classList.add('hidden');
+                    } else if (data.media_type === 'video') {
+                        video.src = URL.createObjectURL(file);
+                        video.classList.remove('hidden');
+                        img.classList.add('hidden');
+                    }
+
+                    window.showToast('success', 'Медиа загружено');
+                } else {
+                    window.showToast('danger', data.error || 'Ошибка загрузки');
+                }
+            } catch (err) {
+                console.error(err);
+                window.showToast('danger', 'Ошибка загрузки медиа');
+            }
+        });
+
+        bindEl('btn-remove-media', 'click', async () => {
+            if (uploadedMediaFilename) {
+                try {
+                    await fetch(`/settings/broadcast/delete-media/${uploadedMediaFilename}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRFToken': window.getCsrfToken()
+                        }
+                    });
+                } catch (e) {
+                    console.error('Failed to delete media:', e);
+                }
+                uploadedMediaFilename = null;
+            }
+            document.getElementById('media-preview')?.classList.add('hidden');
+            document.getElementById('media-input') && (document.getElementById('media-input').value = '');
+        });
+
+        function renderButtons() {
+            const list = document.getElementById('buttons-list');
+            if (!list) return;
+            list.innerHTML = '';
+            const colorOptions = [
+                { value: '', bg: 'bg-white/60', border: 'border-white/30', title: 'По умолчанию' },
+                { value: 'green', bg: 'bg-emerald-500', border: 'border-emerald-400', title: 'Зелёный' },
+                { value: 'red', bg: 'bg-red-500', border: 'border-red-400', title: 'Красный' },
+                { value: 'blue', bg: 'bg-blue-500', border: 'border-blue-400', title: 'Синий' },
+            ];
+            buttons.forEach((btn, idx) => {
+                const item = document.createElement('div');
+                item.className = 'bg-black/20 border border-white/5 rounded-xl p-3 space-y-2';
+
+                let inputField = '';
+                if (btn.type === 'promo') {
+                    inputField = `<input type="text" value="${btn.value || ''}" placeholder="Код промокода" class="flex-1 min-w-[100px] bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all placeholder:text-white/30" data-idx="${idx}" data-field="value" />`;
+                } else {
+                    inputField = `<input type="url" value="${btn.url || ''}" placeholder="https://..." class="flex-1 min-w-[100px] bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all placeholder:text-white/30" data-idx="${idx}" data-field="url" />`;
+                }
+
+                let colorDotsHtml = '';
+                colorOptions.forEach(c => {
+                    const isActive = (btn.color || '') === c.value;
+                    const ring = isActive ? 'ring-2 ring-primary ring-offset-1 ring-offset-black/80 scale-110' : 'hover:scale-110 opacity-60 hover:opacity-100';
+                    colorDotsHtml += `<button type="button" class="w-5 h-5 rounded-full ${c.bg} border ${c.border} transition-all duration-150 ${ring}" title="${c.title}" data-color-idx="${idx}" data-color-value="${c.value}"></button>`;
+                });
+
+                item.innerHTML = `
+                    <div class="flex gap-2 items-center flex-wrap">
+                        <input type="text" value="${btn.text || ''}" placeholder="Текст кнопки" class="flex-1 min-w-[100px] bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all placeholder:text-white/30" data-idx="${idx}" data-field="text" />
+                        <div class="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white/50 text-[10px] uppercase font-bold flex items-center justify-center min-w-[72px] select-none shrink-0">
+                            ${btn.type === 'promo' ? 'Callback' : 'URL'}
+                        </div>
+                        ${inputField}
+                        <button type="button" class="px-2.5 py-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 transition-colors shrink-0" data-remove="${idx}">
+                            <span class="material-symbols-outlined text-base">delete</span>
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-2.5 pl-1">
+                        <span class="text-[9px] text-white/30 font-bold uppercase tracking-wider select-none">Цвет:</span>
+                        ${colorDotsHtml}
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+
+            list.querySelectorAll('input').forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const idx = parseInt(e.target.dataset.idx);
+                    const field = e.target.dataset.field;
+                    buttons[idx][field] = e.target.value;
+                });
+            });
+
+            list.querySelectorAll('[data-color-idx]').forEach(dot => {
+                dot.addEventListener('click', (e) => {
+                    const idx = parseInt(e.currentTarget.dataset.colorIdx);
+                    const val = e.currentTarget.dataset.colorValue;
+                    buttons[idx].color = val;
+                    renderButtons();
+                });
+            });
+
+            list.querySelectorAll('[data-remove]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = parseInt(e.target.closest('[data-remove]').dataset.remove);
+                    buttons.splice(idx, 1);
+                    renderButtons();
+                });
+            });
+        }
+
+        bindEl('btn-add-button', 'click', () => {
+            if (buttons.length >= 6) {
+                window.showToast('warning', 'Максимум 6 кнопок');
+                return;
+            }
+            buttons.push({ type: 'url', text: '', url: '', color: '' });
+            renderButtons();
+        });
+
+        const btnAddPromo = document.getElementById('btn-add-promo-button');
+        if (btnAddPromo) {
+            btnAddPromo.addEventListener('click', () => {
+                if (buttons.length >= 6) {
+                    window.showToast('warning', 'Максимум 6 кнопок');
+                    return;
+                }
+                buttons.push({ type: 'promo', text: '🎁 Активировать промокод', value: '', color: '' });
+                renderButtons();
+            });
+        }
+
+        bindEl('btn-preview', 'click', async () => {
+            if (!ensureBroadcastBotRunning()) return;
+
+            const text = document.getElementById('broadcast-text').value.trim();
+            if (!text) {
+                window.showToast('warning', 'Введите текст сообщения');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('csrf_token', window.getCsrfToken());
+            formData.append('text', text);
+            formData.append('buttons', JSON.stringify(buttons));
+            if (uploadedMediaFilename) {
+                formData.append('media_filename', uploadedMediaFilename);
+            }
+
+            try {
+                const resp = await fetch('/settings/broadcast/preview', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (!resp.ok) {
+                    const errMsg = await readBroadcastError(resp, `Ошибка сервера: ${resp.status}`);
+                    window.showToast('danger', errMsg);
+                    return;
+                }
+                const data = await resp.json();
+                if (data.ok) {
+                    window.showToast('success', 'Предпросмотр отправлен вам в бот');
+                } else {
+                    window.showToast('danger', data.error || 'Ошибка отправки');
+                }
+            } catch (e) {
+                console.error(e);
+                window.showToast('danger', 'Ошибка отправки предпросмотра');
+            }
+        });
+
+        const skipBannedToggle = document.getElementById('skip-banned-toggle');
+        const skipBannedBadge = document.getElementById('skip-banned-count-badge');
+
+        function updateSkipBannedUI() {
+            if (!skipBannedToggle || !skipBannedBadge) return;
+            const count = window.currentBannedCount || 0;
+            if (skipBannedToggle.checked && count > 0) {
+                skipBannedBadge.textContent = `(-${count})`;
+                skipBannedBadge.classList.remove('hidden');
+                setTimeout(() => skipBannedBadge.classList.remove('opacity-0'), 10);
+            } else {
+                skipBannedBadge.classList.add('opacity-0');
+                setTimeout(() => skipBannedBadge.classList.add('hidden'), 300);
+            }
+        }
+
+        if (skipBannedToggle) {
+            skipBannedToggle.addEventListener('change', () => {
+                updateSkipBannedUI();
+                updateBroadcastRecipientSummary();
+            });
+        }
+
+        bindEl('btn-clear-banned', 'click', async function () {
+            if (!await window.showConfirm({
+                title: 'Очистка списка',
+                message: 'Вы уверены, что хотите очистить список забаненных пользователей?',
+                type: 'warning',
+                confirmText: 'Очистить'
+            })) return;
+
+            const btn = this;
+            btn.disabled = true;
+            try {
+                const resp = await fetch('/settings/broadcast/clear-banned', { method: 'POST', headers: { 'X-CSRFToken': window.getCsrfToken() } });
+                const data = await resp.json();
+                if (data.ok) {
+                    window.showToast('success', 'Список очищен');
+                    loadStats();
+                } else {
+                    window.showToast('danger', data.error || 'Ошибка');
+                }
+            } catch (e) { window.showToast('danger', 'Ошибка сети'); }
+            finally { btn.disabled = false; }
+        });
+
+        bindEl('btn-show-blocked-all', 'click', () => loadBroadcastBlockedUsers('all'));
+        bindEl('btn-show-broadcast-history', 'click', () => loadBroadcastHistoryList());
+        bindEl('broadcast-blocked-close', 'click', () => {
+            document.getElementById('broadcast-blocked-panel')?.classList.add('hidden');
+        });
+        bindEl('broadcast-history-close', 'click', () => closeBroadcastHistoryModal());
+        bindEl('broadcast-history-back', 'click', async () => {
+            broadcastHistoryState.selectedId = null;
+            resetBroadcastHistoryView('list');
+            setBroadcastHistoryLoading(false);
+            const listEl = document.getElementById('broadcast-history-list');
+            if (!listEl?.children.length) {
+                setBroadcastHistoryLoading(true);
+                try {
+                    const { data } = await fetchSettingsJson('/settings/broadcast/history?limit=30');
+                    setBroadcastHistoryLoading(false);
+                    if (data.ok) renderBroadcastHistoryList(data.items || []);
+                } catch (e) {
+                    setBroadcastHistoryLoading(false);
+                }
+            }
+        });
+
+        const broadcastHistorySearch = document.getElementById('broadcast-history-search');
+        if (broadcastHistorySearch) {
+            let searchTimer;
+            broadcastHistorySearch.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && broadcastHistoryState.selectedId) {
+                    openBroadcastHistoryDetail(broadcastHistoryState.selectedId, 1);
+                }
+            });
+            broadcastHistorySearch.addEventListener('input', () => {
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(() => {
+                    if (broadcastHistoryState.selectedId) {
+                        openBroadcastHistoryDetail(broadcastHistoryState.selectedId, 1);
+                    }
+                }, 450);
+            });
+        }
+
+        document.getElementById(BROADCAST_HISTORY_MODAL_ID)?.addEventListener('click', (e) => {
+            if (e.target.id === BROADCAST_HISTORY_MODAL_ID) closeBroadcastHistoryModal();
+        });
+        bindEl('broadcast-history-apply-filters', 'click', () => {
+            if (broadcastHistoryState.selectedId) {
+                openBroadcastHistoryDetail(broadcastHistoryState.selectedId, 1);
+            }
+        });
+        bindEl('broadcast-history-prev', 'click', () => {
+            if (broadcastHistoryState.selectedId && broadcastHistoryState.page > 1) {
+                openBroadcastHistoryDetail(broadcastHistoryState.selectedId, broadcastHistoryState.page - 1);
+            }
+        });
+        bindEl('broadcast-history-next', 'click', () => {
+            if (broadcastHistoryState.selectedId) {
+                openBroadcastHistoryDetail(broadcastHistoryState.selectedId, broadcastHistoryState.page + 1);
+            }
+        });
+        document.querySelectorAll('.broadcast-blocked-scope-btn').forEach((btn) => {
+            btn.addEventListener('click', () => loadBroadcastBlockedUsers(btn.dataset.blockedScope || 'last'));
+        });
+
+        const btnDeleteBanned = document.getElementById('btn-delete-banned-users');
+        if (btnDeleteBanned) {
+            btnDeleteBanned.addEventListener('click', async function () {
+                if (!await window.showConfirm({
+                    title: 'Удаление пользователей',
+                    message: 'Вы уверены, что хотите полностью удалить из базы данных всех пользователей, добавленных в список "В ЧС (У нас)"? Это действие необратимо.',
+                    type: 'danger',
+                    confirmText: 'Удалить'
+                })) return;
+
+                const btn = this;
+                btn.disabled = true;
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = '<span class="material-symbols-outlined text-sm animate-spin">sync</span>';
+
+                try {
+                    const resp = await fetch('/settings/broadcast/delete-banned-users', { method: 'POST', headers: { 'X-CSRFToken': window.getCsrfToken() } });
+                    const data = await resp.json();
+                    if (data.ok) {
+                        window.showToast('success', data.message);
+                        loadStats();
+                    } else {
+                        window.showToast('danger', data.error || 'Ошибка');
+                    }
+                } catch (e) { window.showToast('danger', 'Ошибка сети'); }
+                finally {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+            });
+        }
+
+        bindEl('broadcast-form', 'submit', async (e) => {
+            e.preventDefault();
+
+            if (!ensureBroadcastBotRunning()) return;
+
+            const text = document.getElementById('broadcast-text').value.trim();
+            if (!text) {
+                window.showToast('warning', 'Введите текст сообщения');
+                return;
+            }
+
+            const mode = document.querySelector('input[name="mode"]:checked').value;
+
+            let confirmMsg = 'Вы уверены, что хотите запустить рассылку?';
+            const stats = window.broadcastStats;
+            if (stats) {
+                let count = getBroadcastRecipientCount(mode, stats);
+                const skipBanned = document.getElementById('skip-banned-toggle')?.checked;
+                if (skipBanned && mode !== 'test') {
+                    count = Math.max(0, count - (window.currentBannedCount || 0));
+                }
+                let audienceLabel = broadcastModeLabels[mode] || mode;
+                if (mode === 'expiring_keys') {
+                    const days = getSelectedExpiringDays();
+                    audienceLabel += ` (в ближайшие ${days} ${days === 1 ? 'день' : days < 5 ? 'дня' : 'дней'})`;
+                }
+                confirmMsg = `Отправить сообщение ${pluralUsers(count)}?\n\nАудитория: ${audienceLabel}.`;
+            }
+
+            const confirmed = await window.showConfirm({
+                title: 'Отправка рассылки',
+                message: confirmMsg,
+                type: 'warning',
+                confirmText: 'Отправить',
+                cancelText: 'Отмена'
+            });
+            if (!confirmed) return;
+
+            const formData = new FormData();
+            formData.append('csrf_token', window.getCsrfToken());
+            formData.append('text', text);
+            formData.append('mode', mode);
+            const skipBanned = document.getElementById('skip-banned-toggle').checked;
+            formData.append('skip_banned', skipBanned);
+            formData.append('buttons', JSON.stringify(buttons));
+            if (uploadedMediaFilename) {
+                formData.append('media_filename', uploadedMediaFilename);
+            }
+            if (mode === 'expiring_keys') {
+                const days = document.querySelector('input[name="expiring_days"]:checked')?.value || '3';
+                formData.append('expiring_days', days);
+            }
+
+            const btn = document.getElementById('btn-send');
+            btn.disabled = true;
+            btn.innerHTML = `<svg class="animate-spin h-5 w-5 inline" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Отправка...`;
+
+            try {
+                const resp = await fetch('/settings/broadcast/send', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!resp.ok) {
+                    if (resp.status === 504) {
+                        window.showToast('warning', 'Рассылка запущена, но сервер не успел ответить вовремя. Проверьте результаты через несколько минут.');
+                    } else {
+                        const errMsg = await readBroadcastError(resp, `Ошибка сервера: ${resp.status}`);
+                        window.showToast('danger', errMsg);
+                    }
+                    btn.disabled = false;
+                    btn.innerHTML = BROADCAST_SEND_BTN_HTML;
+                    return;
+                }
+
+                const contentType = resp.headers.get("content-type");
+                if (!contentType || !contentType.includes("application/json")) {
+                    window.showToast('danger', 'Сервер вернул некорректный ответ');
+                    btn.disabled = false;
+                    btn.innerHTML = BROADCAST_SEND_BTN_HTML;
+                    return;
+                }
+
+                const data = await resp.json();
+
+                if (data.ok && data.task_id) {
+
+                    document.getElementById('broadcast-progress-container').classList.remove('hidden');
+
+                    const pollStatus = async (taskId) => {
+                        try {
+                            const statusResp = await fetch(`/settings/broadcast/status/${taskId}`);
+                            if (!statusResp.ok) return;
+
+                            const statusData = await statusResp.json();
+                            if (!statusData.ok) return;
+
+                            const progress = statusData.progress;
+
+                            document.getElementById('broadcast-progress-bar').style.width = `${progress.progress}%`;
+                            document.getElementById('broadcast-progress-percent').textContent = `${progress.progress}%`;
+                            document.getElementById('broadcast-progress-sent').textContent = progress.sent || 0;
+                            document.getElementById('broadcast-progress-failed').textContent = progress.failed || 0;
+                            document.getElementById('broadcast-progress-skipped').textContent = progress.skipped || 0;
+
+                            if (progress.status === 'completed') {
+                                setTimeout(async () => {
+                                    const progressLabel = document.querySelector('#broadcast-progress-container .brc-progress__head span');
+                                    const progressPulse = document.querySelector('#broadcast-progress-container .brc-progress__pulse');
+                                    if (progressLabel) progressLabel.textContent = 'Готово';
+                                    if (progressPulse) progressPulse.style.display = 'none';
+
+                                    btn.disabled = false;
+                                    btn.innerHTML = BROADCAST_SEND_BTN_HTML;
+
+                                    window.showToast('success',
+                                        `Рассылка завершена! Отправлено: ${progress.sent}, Заблокировали: ${progress.blocked_bot || 0}, Добавлено в ЧС: ${progress.added_to_banned || 0}`);
+
+                                    await loadStats();
+                                    if (typeof window.bcClearBroadcastDraft === 'function') window.bcClearBroadcastDraft();
+                                    if (typeof window.bcReloadRecentHistory === 'function') window.bcReloadRecentHistory();
+                                    if (progress.broadcast_id) {
+                                        await showBroadcastHistoryAfterComplete(progress.broadcast_id);
+                                    } else if ((progress.blocked_bot || 0) > 0) {
+                                        loadBroadcastBlockedUsers('last');
+                                    }
+                                    document.getElementById('broadcast-text').value = '';
+                                    document.getElementById('broadcast-text')?.dispatchEvent(new Event('input', { bubbles: true }));
+                                    buttons = [];
+                                    renderButtons();
+                                    if (uploadedMediaFilename) {
+                                        document.getElementById('media-preview').classList.add('hidden');
+                                        uploadedMediaFilename = null;
+                                    }
+                                }, 2000);
+                            } else {
+
+                                setTimeout(() => pollStatus(taskId), 2000);
+                            }
+                        } catch (e) {
+                            if (e.name === 'TypeError') {
+                                setTimeout(() => pollStatus(taskId), 5000);
+                                return;
+                            }
+                            console.error('Error polling broadcast status:', e);
+                        }
+                    };
+
+                    btn.innerHTML = '<span class="material-symbols-outlined text-base">schedule</span> Рассылка выполняется...';
+
+                    pollStatus(data.task_id);
+
+                    window.showToast('info', `Запущена рассылка для ${data.total_users} пользователей`);
+                } else if (data.ok && data.results) {
+
+                    btn.disabled = false;
+                    btn.innerHTML = BROADCAST_SEND_BTN_HTML;
+                    window.showToast('success', `Рассылка завершена! Отправлено: ${data.results.sent}, Добавлено в ЧС: ${data.results.added_to_banned || 0}`);
+                    loadStats();
+                    document.getElementById('broadcast-text').value = '';
+                    buttons = [];
+                    renderButtons();
+                    if (uploadedMediaFilename) {
+                        document.getElementById('media-preview').classList.add('hidden');
+                        uploadedMediaFilename = null;
+                    }
+                } else {
+                    btn.disabled = false;
+                    btn.innerHTML = BROADCAST_SEND_BTN_HTML;
+                    window.showToast('danger', data.error || 'Ошибка отправки рассылки');
+                }
+            } catch (e) {
+                console.error(e);
+                btn.disabled = false;
+                btn.innerHTML = BROADCAST_SEND_BTN_HTML;
+                window.showToast('danger', 'Ошибка отправки рассылки');
+            }
+        });
+
+
+        if (activeSettingsTab === 'broadcast') {
+            loadStats();
+        } else if (activeSettingsTab === 'logs') {
+            startLogStream();
+        }
+
+    });
+
+    window.insertTag = function (tag) {
+        const textarea = document.getElementById('broadcast-text');
+        if (!textarea) return;
+
+        if (tag === 'a') {
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            window._broadcastSelection = { start, end };
+
+            const linkInput = document.getElementById('link-url-input');
+            if (linkInput) {
+                linkInput.value = 'https://';
+                openModal('linkModal');
+                setTimeout(() => linkInput.focus(), 100);
+            }
+            return;
+        }
+
+        if (tag === 'tg-emoji') {
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            window._broadcastSelection = { start, end };
+
+            const emojiInput = document.getElementById('emoji-id-input');
+            if (emojiInput) {
+                emojiInput.value = '';
+                openModal('emojiModal');
+                setTimeout(() => emojiInput.focus(), 100);
+            }
+            return;
+        }
+
+        let startTag = `<${tag}>`;
+        let endTag = `</${tag}>`;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const text = textarea.value;
+        const selected = text.substring(start, end);
+
+        const replacement = startTag + selected + endTag;
+
+        textarea.setRangeText(replacement, start, end, 'select');
+        textarea.focus();
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const insertLinkBtn = document.getElementById('btn-insert-link');
+        if (insertLinkBtn) {
+            insertLinkBtn.addEventListener('click', () => {
+                const urlInput = document.getElementById('link-url-input');
+                const url = urlInput.value;
+                if (url) {
+                    const textarea = document.getElementById('broadcast-text');
+                    if (textarea && window._broadcastSelection) {
+                        const start = window._broadcastSelection.start;
+                        const end = window._broadcastSelection.end;
+                        const text = textarea.value;
+                        const selected = text.substring(start, end);
+
+                        const replacement = `<a href="${url}">` + selected + `</a>`;
+                        textarea.setRangeText(replacement, start, end, 'select');
+                        textarea.focus();
+                    }
+                }
+                closeModal('linkModal');
+            });
+        }
+
+        const insertEmojiBtn = document.getElementById('btn-insert-emoji');
+        if (insertEmojiBtn) {
+            insertEmojiBtn.addEventListener('click', () => {
+                const idInput = document.getElementById('emoji-id-input');
+                const emojiId = idInput.value.trim();
+                const textarea = document.getElementById('broadcast-text');
+                if (textarea && window._broadcastSelection) {
+                    const start = window._broadcastSelection.start;
+                    const end = window._broadcastSelection.end;
+                    const text = textarea.value;
+                    const selected = text.substring(start, end);
+                    const inner = selected || '🚀';
+
+                    const replacement = emojiId ? `<tg-emoji emoji-id="${emojiId}">${inner}</tg-emoji>` : inner;
+                    textarea.setRangeText(replacement, start, end, 'select');
+                    textarea.focus();
+                }
+                closeModal('emojiModal');
+            });
+        }
+
+        const btnSaveTheme = document.getElementById('btn-save-theme');
+        if (btnSaveTheme) {
+            btnSaveTheme.onclick = async function () {
+                const title = document.getElementById('modal-msg-title').value;
+                const content = document.getElementById('modal-msg-content').value;
+                if (!title || !content) {
+                    window.showToast('warning', 'Заполните все поля');
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('title', title);
+                formData.append('content', content);
+                formData.append('csrf_token', window.getCsrfToken());
+
+                try {
+                    const resp = await fetch('/settings/themes/save', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const data = await resp.json();
+                    if (data.ok) {
+                        window.showToast('success', 'Шаблон сохранен');
+                        closeModal('newMessageModal');
+                        document.getElementById('modal-msg-title').value = '';
+                        document.getElementById('modal-msg-content').value = '';
+                        loadBroadcastThemes();
+                    } else {
+                        window.showToast('danger', data.error || 'Ошибка сохранения');
+                    }
+                } catch (e) {
+                    window.showToast('danger', 'Ошибка сети');
+                }
+            };
+        }
+
+        window.loadBroadcastThemes = window.loadBroadcastThemes || async function () {
+            await window.BroadcastTemplates?.reload?.();
+        };
+
+        const webappLogoInput = document.getElementById('webapp_logo');
+        const webappLogoPreview = document.getElementById('webapp-logo-preview');
+        const webappLogoPlaceholder = document.getElementById('webapp-logo-placeholder');
+
+        if (webappLogoInput) {
+            webappLogoInput.addEventListener('input', (e) => {
+                const url = e.target.value.trim();
+                if (url) {
+                    webappLogoPreview.src = url;
+                    webappLogoPreview.style.display = 'block';
+                    webappLogoPreview.classList.remove('hidden');
+                    webappLogoPlaceholder.classList.add('hidden');
+                } else {
+                    webappLogoPreview.style.display = 'none';
+                    webappLogoPreview.classList.add('hidden');
+                    webappLogoPlaceholder.classList.remove('hidden');
+                }
+            });
+        }
+
+        const webappIconInput = document.getElementById('webapp_icon');
+        const webappIconPreview = document.getElementById('webapp-icon-preview');
+        const webappIconPlaceholder = document.getElementById('webapp-icon-placeholder');
+
+        if (webappIconInput) {
+            webappIconInput.addEventListener('input', (e) => {
+                const url = e.target.value.trim();
+                if (url) {
+                    webappIconPreview.src = url;
+                    webappIconPreview.style.display = 'block';
+                    webappIconPreview.classList.remove('hidden');
+                    webappIconPlaceholder.classList.add('hidden');
+                } else {
+                    webappIconPreview.style.display = 'none';
+                    webappIconPreview.classList.add('hidden');
+                    webappIconPlaceholder.classList.remove('hidden');
+                }
+            });
+        }
+
+        const webappForm = document.getElementById('webapp-settings-form');
+        const webappDefaultSelect = document.getElementById('webapp_default_design');
+
+        function syncWebappDesignCards() {
+            document.querySelectorAll('.webapp-panel-design-card').forEach((card) => {
+                const cb = card.querySelector('.webapp-design-checkbox');
+                card.classList.toggle('is-enabled', !!cb?.checked);
+            });
+            if (!webappDefaultSelect) return;
+            const enabled = Array.from(document.querySelectorAll('.webapp-design-checkbox:checked')).map((el) => el.value);
+            let hasVisible = false;
+            Array.from(webappDefaultSelect.options).forEach((opt) => {
+                const ok = enabled.includes(opt.value);
+                opt.hidden = !ok;
+                opt.disabled = !ok;
+                if (ok) hasVisible = true;
+            });
+            if (!enabled.includes(webappDefaultSelect.value) && enabled.length) {
+                webappDefaultSelect.value = enabled[0];
+            }
+            if (!hasVisible && webappDefaultSelect.options.length) {
+                webappDefaultSelect.selectedIndex = 0;
+            }
+        }
+
+        document.querySelectorAll('.webapp-design-checkbox').forEach((cb) => {
+            cb.addEventListener('change', () => {
+                if (!document.querySelector('.webapp-design-checkbox:checked')) {
+                    cb.checked = true;
+                    window.showToast?.('warning', 'Должен быть включён хотя бы один дизайн');
+                }
+                syncWebappDesignCards();
+            });
+        });
+        syncWebappDesignCards();
+
+        if (webappForm) {
+            webappForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const btn = document.getElementById('btn-save-webapp');
+                const originalHtml = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-sm">progress_activity</span> Сохранение...';
+
+                const formData = new FormData();
+                formData.append('csrf_token', window.getCsrfToken());
+                formData.append('enable', document.getElementById('webapp_enable').checked);
+                formData.append('tg_fullscreen', document.getElementById('tg_fullscreen').checked);
+                formData.append('theme_picker', document.getElementById('webapp_theme_picker').checked);
+                formData.append('title', document.getElementById('webapp_title').value);
+                formData.append('domen', document.getElementById('webapp_domen').value);
+                formData.append('logo', document.getElementById('webapp_logo').value);
+                formData.append('icon', document.getElementById('webapp_icon').value);
+                formData.append('default_design', webappDefaultSelect?.value || 'classic');
+                document.querySelectorAll('.webapp-design-checkbox:checked').forEach((el) => {
+                    formData.append('webapp_design_enabled', el.value);
+                });
+
+                try {
+                    const resp = await fetch('/settings/webapp/save', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const data = await resp.json();
+
+                    if (data.ok) {
+                        window.showToast('success', 'Настройки Web App сохранены');
+                    } else {
+                        window.showToast('danger', data.error || 'Ошибка сохранения');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    window.showToast('danger', 'Ошибка подключения');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+            });
+        };
+
+        if ((window.ACTIVE_SETTINGS_TAB || '') === 'broadcast') {
+            window.loadBroadcastThemes();
+        }
+    });
+</script>

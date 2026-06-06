@@ -1,0 +1,386 @@
+{% extends "base.html" %}
+{% block title %}Настройки — {{ active_tab | capitalize }}{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/settings-ios.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/webapp-panel-designs.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/settings-macos.css') }}" />
+{% if active_tab == 'broadcast' %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/settings-tool-pages.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/broadcast-history.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/broadcast-panel.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tool-surface.css') }}" />
+{% endif %}
+{% if active_tab == 'content' %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/settings-tool-pages.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/content-panel.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/mail-templates-panel.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tool-surface.css') }}" />
+{% endif %}
+{% if active_tab == 'promo' %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/settings-tool-pages.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/promo-panel.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tool-surface.css') }}" />
+{% endif %}
+{% if active_tab == 'bot' %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/bot-channels.css') }}" />
+{% endif %}
+{% if active_tab == 'database' %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/database-panel.css') }}" />
+{% endif %}
+{% if active_tab == 'payments' %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/payments-panel.css') }}" />
+{% endif %}
+{% if active_tab == 'stealth-login' %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/stealth-login-panel.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
+{% endif %}
+{% if active_tab == 'access' %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/access-panel.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
+{% endif %}
+{% if active_tab == 'audit' %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/settings-tool-pages.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/audit-panel.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tool-surface.css') }}" />
+{% endif %}
+{% if active_tab == 'referrals' %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/referrals-panel.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
+{% endif %}
+{% if active_tab == 'hosts' %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/hosts-panel.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
+{% endif %}
+<style>
+    .swatch-default { background: #55555520; color: #555; }
+    .swatch-danger  { background: #ef535020; color: #ef5350; }
+    .swatch-success { background: #66bb6a20; color: #66bb6a; }
+    .swatch-primary { background: #42a5f520; color: #42a5f5; }
+</style>
+{% endblock %}
+
+{% block content %}
+{% set needs_security_setup = security_info.needs_setup %}
+{% set form_tabs = ['panel', 'stealth-login', 'bot', 'payments', 'referrals', 'content'] %}
+{% set show_save_btn = active_tab in form_tabs %}
+{% set settings_nav_items = [
+    {'id': 'panel', 'label': 'Панель', 'desc': 'Доступ, база данных и системные функции', 'icon': 'dashboard', 'perm': 'settings_panel', 'group': 'system'},
+    {'id': 'database', 'label': 'База данных', 'desc': 'Состояние PostgreSQL, бэкапы и обслуживание', 'icon': 'database', 'perm': 'db_manage', 'group': 'system'},
+    {'id': 'stealth-login', 'label': 'Скрытый вход', 'desc': 'Маскировка страницы /login и способы разблокировки', 'icon': 'visibility_off', 'perm': 'settings_panel', 'group': 'system'},
+    {'id': 'bot', 'label': 'Настройка ботов' if not (all_settings_ok and support_settings_ok) else 'Боты', 'desc': 'Конфигурация основного бота и службы поддержки', 'icon': 'smart_toy', 'perm': 'settings_bot', 'group': 'system'},
+    {'id': 'access', 'label': 'Доступ', 'desc': 'Разграничение доступа к разделам панели', 'icon': 'shield_person', 'perm': 'settings_access', 'group': 'system'},
+    {'id': 'audit', 'label': 'Журнал аудита', 'desc': 'Audit Studio — действия администраторов, фильтры и экспорт', 'icon': 'policy', 'perm': 'settings_audit', 'group': 'system'},
+    {'id': 'payments', 'label': 'Платежи', 'desc': 'Методы оплаты и параметры транзакций', 'icon': 'payments', 'perm': 'settings_payments', 'group': 'services'},
+    {'id': 'hosts', 'label': 'Хосты', 'desc': 'Hosts Studio — панели, тарифы, SSH и устройства', 'icon': 'dns', 'perm': 'settings_hosts', 'group': 'services'},
+    {'id': 'referrals', 'label': 'Рефералы', 'desc': 'Referrals Studio — партнёрская программа', 'icon': 'group', 'perm': 'settings_referrals', 'group': 'services'},
+    {'id': 'content', 'label': 'Контент', 'desc': 'Notifications Studio — Telegram и почта', 'icon': 'forum', 'perm': 'settings_content', 'group': 'services'},
+    {'id': 'broadcast', 'label': 'Рассылка', 'desc': 'Broadcast Studio — шаблоны, сегменты и массовая отправка', 'icon': 'campaign', 'perm': 'other_broadcast', 'group': 'tools'},
+    {'id': 'promo', 'label': 'Промо коды', 'desc': 'Скидки и специальные предложения', 'icon': 'confirmation_number', 'perm': 'other_promo', 'group': 'tools'},
+    {'id': 'logs', 'label': 'Логи бота', 'desc': 'Системные события и ошибки в реальном времени', 'icon': 'article', 'perm': 'other_logs', 'group': 'tools'},
+    {'id': 'webapp', 'label': 'WebApp', 'desc': 'Персонализация и управление веб-приложением', 'icon': 'language', 'perm': 'other_webapp', 'needs_webapp': true, 'group': 'tools'},
+    {'id': 'remnawave', 'label': 'Remnawave', 'desc': 'Интеграция с панелью управления', 'icon': 'graphic_eq', 'perm': 'other_remnawave', 'group': 'tools'}
+] %}
+{% set active_nav = settings_nav_items | selectattr('id', 'equalto', active_tab) | first %}
+{% if active_tab == 'access' and not can('settings_access') %}
+{% set page_title = 'Доступ' %}
+{% set page_desc = 'Настройте выбранный способ защиты' %}
+{% else %}
+{% set page_title = active_nav.label if active_nav else 'Настройки' %}
+{% set page_desc = active_nav.desc if active_nav else '' %}
+{% endif %}
+
+<div class="settings-page">
+
+<header class="settings-header">
+    <div>
+        <p class="settings-breadcrumb">Настройки</p>
+        <h1 class="settings-title">{{ page_title }}</h1>
+        {% if page_desc %}
+        <p class="settings-subtitle">{{ page_desc }}</p>
+        {% endif %}
+    </div>
+    {% if show_save_btn %}
+    <button type="submit" form="settings-tab-form" id="save-settings-btn" class="settings-save-btn">
+        <span class="material-symbols-outlined">check_circle</span>
+        <span>Сохранить</span>
+    </button>
+    {% endif %}
+</header>
+
+<div class="settings-shell">
+<nav class="settings-sidebar settings-macos-sidebar no-scrollbar" id="settings-nav" aria-label="Разделы настроек">
+    <div class="settings-macos-search-wrap">
+        <span class="material-symbols-outlined" aria-hidden="true">search</span>
+        <input type="search" id="settings-macos-search" class="settings-macos-search" placeholder="Поиск" autocomplete="off" aria-label="Поиск разделов настроек" />
+    </div>
+    <div class="settings-macos-nav-rail" id="settings-macos-nav-rail">
+    {% set ns = namespace(last_group='') %}
+    {% for item in settings_nav_items %}
+    {% if (can(item.perm) or (item.id == 'content' and can('settings_mail_templates')) or (item.id == 'audit' and can('settings_access')) or (item.id == 'access' and needs_security_setup)) and (not item.get('needs_webapp') or webapp_exists) %}
+    {% if item.group != ns.last_group %}
+    {% if ns.last_group != '' %}</div>{% endif %}
+    <div class="settings-macos-nav-group" data-group="{{ item.group }}">
+    {% set group_meta = settings_nav_groups.get(item.group, {}) %}
+    <p class="settings-macos-nav-group__title">{{ group_meta.label or item.group }}</p>
+    {% set ns.last_group = item.group %}
+    {% endif %}
+    <a href="{{ url_for('settings_tab_page', tab=item.id) }}"
+       class="tab-link{% if item.id == active_tab %} settings-tab-active{% endif %}"
+       data-settings-label="{{ item.label | lower }}"
+       title="{{ item.label }}">
+        <span class="settings-nav-icon settings-nav-icon--{{ item.id }}" aria-hidden="true">
+            <span class="material-symbols-outlined">{{ item.icon }}</span>
+        </span>
+        <span class="settings-nav-label">{{ item.label }}</span>
+    </a>
+    {% endif %}
+    {% endfor %}
+    {% if ns.last_group != '' %}</div>{% endif %}
+    </div>
+</nav>
+
+<div class="settings-main">
+
+<div class="settings-macos-hero">
+    <div class="settings-macos-hero__row">
+        <div class="settings-macos-hero__main">
+            {% if active_nav %}
+            <span class="settings-nav-icon settings-macos-hero__icon settings-nav-icon--{{ active_nav.id }}" aria-hidden="true">
+                <span class="material-symbols-outlined">{{ active_nav.icon }}</span>
+            </span>
+            {% endif %}
+            <div>
+                <h1 class="settings-macos-hero__title">{{ page_title }}</h1>
+                {% if page_desc %}
+                <p class="settings-macos-hero__desc">{{ page_desc }}</p>
+                {% endif %}
+            </div>
+        </div>
+        {% if show_save_btn %}
+        <button type="submit" form="settings-tab-form" class="settings-save-btn settings-save-btn--macos">
+            <span class="material-symbols-outlined">check_circle</span>
+            <span>Сохранить</span>
+        </button>
+        {% endif %}
+    </div>
+    <p class="settings-macos-hero__embed-title">{{ page_title }}</p>
+    <div class="settings-macos-hero__chips">
+        <span class="settings-macos-chip {{ 'is-ok' if main_running else 'is-bad' }}" title="Основной бот">
+            <span class="settings-macos-chip__dot"></span> Бот
+        </span>
+        <span class="settings-macos-chip {{ 'is-ok' if support_running else 'is-bad' }}" title="Support-бот">
+            <span class="settings-macos-chip__dot"></span> Support
+        </span>
+        <button type="button" class="settings-macos-chip settings-macos-chip--btn" id="settings-hero-admins-online" title="Администраторы онлайн">
+            <span class="material-symbols-outlined">groups</span>
+            <span class="panel-admins-online-count">0</span> онлайн
+        </button>
+        {% if app_version %}
+        <span class="settings-macos-chip settings-macos-chip--muted" title="Версия панели">v{{ app_version }}</span>
+        {% endif %}
+    </div>
+</div>
+
+{% if not (all_settings_ok and support_settings_ok) %}
+<div class="settings-alert settings-alert--inline">
+    <div class="settings-alert-row">
+        <div class="settings-alert-icon">
+            <span class="material-symbols-outlined">info</span>
+        </div>
+        <div class="flex-1">
+            <h4 class="settings-alert-title">Требуется донастройка</h4>
+            <p class="settings-alert-desc">Заполните обязательные параметры ботов, чтобы запустить систему.</p>
+            <div class="settings-badge-row">
+                <a href="{{ url_for('settings_tab_page', tab='bot') }}" class="settings-badge {{ 'settings-badge--ok' if all_settings_ok else 'settings-badge--bad' }}">Основной бот</a>
+                <a href="{{ url_for('settings_tab_page', tab='bot') }}" class="settings-badge {{ 'settings-badge--ok' if support_settings_ok else 'settings-badge--bad' }}">Support бот</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if active_tab in form_tabs %}
+<form action="{{ url_for('settings_tab_page', tab=active_tab) }}" method="post" id="settings-tab-form" novalidate data-submit-mode="ajax">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    {% if active_tab == 'panel' %}{% include 'partials/settings/tabs/panel.html' %}{% endif %}
+    {% if active_tab == 'stealth-login' %}{% include 'partials/settings/tabs/stealth_login.html' %}{% endif %}
+    {% if active_tab == 'bot' %}{% include 'partials/settings/tabs/bot.html' %}{% endif %}
+    {% if active_tab == 'payments' %}{% include 'partials/settings/tabs/payments.html' %}{% endif %}
+    {% if active_tab == 'referrals' %}{% include 'partials/settings/tabs/referrals.html' %}{% endif %}
+    {% if active_tab == 'content' %}{% include 'partials/settings/tabs/content.html' %}{% endif %}
+</form>
+{% elif active_tab == 'hosts' %}
+{% include 'partials/settings/tabs/hosts.html' %}
+{% elif active_tab == 'database' %}
+{% include 'partials/settings/tabs/database.html' %}
+{% elif active_tab == 'access' and (can('settings_access') or needs_security_setup) %}
+{% include 'partials/settings_access_rbac.html' %}
+{% elif active_tab == 'audit' and (can('settings_audit') or can('settings_access')) %}
+{% include 'partials/settings/tabs/audit.html' %}
+{% elif active_tab in ['broadcast', 'promo', 'logs', 'webapp', 'remnawave'] %}
+{% include 'partials/settings_other_tabs.html' %}
+{% include 'partials/settings_other_modals.html' %}
+{% endif %}
+
+</div><!-- .settings-main -->
+</div><!-- .settings-shell -->
+</div><!-- .settings-page -->
+
+{% endblock %}
+
+{% block scripts %}
+<script>window.ACTIVE_SETTINGS_TAB = {{ active_tab | tojson }};</script>
+<script src="{{ url_for('static', filename='js/settings-page.js') }}"></script>
+<script>
+(function () {
+    const input = document.getElementById('settings-macos-search');
+    if (input) {
+        input.addEventListener('input', () => {
+            const q = input.value.trim().toLowerCase();
+            document.querySelectorAll('#settings-nav .tab-link').forEach((link) => {
+                const label = link.dataset.settingsLabel || link.textContent.toLowerCase();
+                link.classList.toggle('hidden', q.length > 0 && !label.includes(q));
+            });
+            document.querySelectorAll('#settings-nav .settings-macos-nav-group').forEach((group) => {
+                const visible = group.querySelector('.tab-link:not(.hidden)');
+                group.classList.toggle('hidden', !visible);
+            });
+        });
+    }
+    function openAdminsOnline() {
+        if (typeof window.PanelPresence?.open === 'function') {
+            window.PanelPresence.open();
+            return;
+        }
+        const parentPresence = window.parent?.PanelPresence;
+        if (typeof parentPresence?.open === 'function') {
+            parentPresence.open();
+            return;
+        }
+        window.PanelPresence?.refresh?.();
+        const btn = document.getElementById('panel-admins-online-btn')
+            || document.getElementById('panel-admins-online-btn-glass')
+            || window.parent?.document?.getElementById('panel-admins-online-btn')
+            || window.parent?.document?.getElementById('panel-admins-online-btn-glass');
+        btn?.click();
+    }
+    document.getElementById('settings-hero-admins-online')?.addEventListener('click', openAdminsOnline);
+    document.getElementById('settings-open-admins-online')?.addEventListener('click', openAdminsOnline);
+})();
+</script>
+{% include 'partials/settings/scripts.html' %}
+{% if active_tab == 'stealth-login' %}
+{% include 'partials/settings/stealth_login_scripts.html' %}
+{% endif %}
+{% if active_tab == 'payments' %}
+<script>
+window.PAYMENTS_PANEL = {
+    domain: {{ (settings.domain or '') | tojson }},
+    baseUrl: {{ (base_url or '') | tojson }},
+};
+</script>
+<script src="{{ url_for('static', filename='js/payments-panel.js') }}"></script>
+<script>
+(function () {
+    const orig = window.initInteractiveElements;
+    if (typeof orig === 'function') {
+        window.initInteractiveElements = function () {
+            orig.apply(this, arguments);
+            if (typeof window.initPaymentsPanel === 'function') window.initPaymentsPanel();
+        };
+    }
+})();
+</script>
+{% endif %}
+{% if active_tab == 'database' %}
+<script>
+window.DATABASE_PANEL = {
+    csrfToken: {{ csrf_token() | tojson }},
+    telegramBotUsername: {{ (telegram_bot_username or '') | tojson }},
+    remainingSec: {{ (database_gate.remaining_sec if database_gate and database_gate.unlocked else 0) | tojson }},
+    stepupMethod: {{ (database_gate.method if database_gate else none) | tojson }},
+    currentSource: {{ (database_source or 'shopbot') | tojson }},
+    remnawaveConfigured: {{ (remnawave_db_configured | default(false)) | tojson }},
+};
+</script>
+<script src="{{ url_for('static', filename='js/database-panel.js') }}"></script>
+{% endif %}
+{% if active_tab in ['broadcast', 'promo', 'logs', 'webapp'] %}
+{% include 'partials/settings_other_scripts.html' %}
+{% endif %}
+{% if active_tab == 'broadcast' %}
+<script src="{{ url_for('static', filename='js/broadcast-panel.js') }}"></script>
+<script src="{{ url_for('static', filename='js/broadcast-templates.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
+{% endif %}
+{% if active_tab == 'content' %}
+<script src="{{ url_for('static', filename='js/notifications-studio.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
+<script src="{{ url_for('static', filename='js/bot-messages-panel.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
+<script src="{{ url_for('static', filename='js/mail-templates-panel.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
+{% endif %}
+{% if active_tab == 'promo' %}
+<script>
+window.PROMO_PANEL_BOOT = {
+    botUsername: {{ (settings.telegram_bot_username or '') | tojson }},
+    broadcastUrl: {{ url_for('settings_tab_page', tab='broadcast') | tojson }}
+};
+</script>
+<script src="{{ url_for('static', filename='js/promo-panel.js') }}"></script>
+{% endif %}
+{% if active_tab == 'audit' %}
+<script src="{{ url_for('static', filename='js/audit-panel.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
+{% endif %}
+{% if active_tab == 'access' %}
+<script>
+window.ACCESS_AUTH = {
+    csrfToken: {{ csrf_token() | tojson }},
+    telegramBotUsername: {{ telegram_bot_username | tojson }},
+    telegramLinkUrl: {{ url_for('settings_telegram_link') | tojson }},
+    passkeyRegisterOptionsUrl: {{ url_for('settings_passkey_register_options') | tojson }},
+    passkeyRegisterCompleteUrl: {{ url_for('settings_passkey_register_complete') | tojson }}
+};
+window.ACCESS_PANEL_BOOT = {
+    rolePresets: {{ role_presets | tojson }},
+    dockCoverage: {{ dock_coverage | tojson }},
+};
+</script>
+<script src="{{ url_for('static', filename='js/access-auth.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
+<script src="{{ url_for('static', filename='js/access-panel.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
+{% endif %}
+{% if active_tab == 'referrals' %}
+<script>
+window.REF_PANEL_BOOT = {
+    defaultShare: "🔥 ТВОЯ ЛИЧНАЯ СКИДКА {discount}%!\\n\\nТебе открыт доступ к закрытому VPN. 🤫\\n🚀 YouTube 4K | 🌐 Много стран | 🛡 Анонимность\\n\\n👇 ЗАБИРАЙ, ПОКА НЕ СГОРЕЛО! 👇"
+};
+</script>
+<script src="{{ url_for('static', filename='js/referrals-panel.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
+{% endif %}
+{% if active_tab == 'hosts' %}
+<script src="{{ url_for('static', filename='js/hosts-panel.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
+{% endif %}
+{% if active_tab == 'bot' %}
+<script>
+(function () {
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+    document.querySelectorAll('[data-backup-test-channel]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+            const target = btn.getAttribute('data-backup-test-channel');
+            btn.disabled = true;
+            try {
+                const resp = await fetch('{{ url_for("backup_test_channel_route") }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf, 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ target }),
+                });
+                const data = await resp.json();
+                if (typeof window.showToast === 'function') {
+                    window.showToast(data.ok ? 'success' : 'danger', data.message || data.error || 'Ошибка');
+                }
+            } catch (_) {
+                if (typeof window.showToast === 'function') window.showToast('danger', 'Ошибка сети');
+            } finally {
+                btn.disabled = false;
+            }
+        });
+    });
+})();
+</script>
+{% endif %}
+{% endblock %}

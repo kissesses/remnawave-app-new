@@ -1,0 +1,45 @@
+<div id="mtmPreviewModal" class="modal-overlay mtm-modal" style="z-index: 1300;" hidden aria-hidden="true">
+    <div class="mtm-modal__window" role="dialog" aria-modal="true" aria-labelledby="mtm-preview-modal-title">
+        <div class="mtm-modal__titlebar">
+            <div class="mtm-modal__lights" aria-hidden="true"><span></span><span></span><span></span></div>
+            <h3 class="mtm-modal__title" id="mtm-preview-modal-title">Превью письма</h3>
+            <div class="mtm-modal__actions">
+                <div class="mtm-device-toggle" role="group">
+                    <button type="button" class="mtm-device-toggle__btn is-active" data-mtm-device-modal="desktop">
+                        <span class="material-symbols-outlined">desktop_windows</span>
+                    </button>
+                    <button type="button" class="mtm-device-toggle__btn" data-mtm-device-modal="mobile">
+                        <span class="material-symbols-outlined">smartphone</span>
+                    </button>
+                </div>
+                <select id="mtm-preview-zoom-modal" class="mtm-zoom-select">
+                    <option value="0.75">75%</option>
+                    <option value="1" selected>100%</option>
+                    <option value="1.25">125%</option>
+                </select>
+                <button type="button" class="mtm-icon-btn" id="mtm-copy-html-modal" title="Копировать">
+                    <span class="material-symbols-outlined">content_copy</span>
+                </button>
+                <button type="button" class="mtm-icon-btn" id="mtm-open-tab-modal" title="Новая вкладка">
+                    <span class="material-symbols-outlined">open_in_new</span>
+                </button>
+                <button type="button" class="mtm-icon-btn" id="mtm-preview-modal-close" title="Закрыть">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+        </div>
+        <div class="mtm-inbox mtm-inbox--modal" id="mtm-inbox-mock-modal">
+            <div class="mtm-inbox__row">
+                <span class="mtm-inbox__from" id="mtm-inbox-from-modal">—</span>
+                <span class="mtm-inbox__time">сейчас</span>
+            </div>
+            <div class="mtm-inbox__subject" id="mtm-inbox-subject-modal">—</div>
+            <div class="mtm-inbox__pre" id="mtm-inbox-preheader-modal">—</div>
+        </div>
+        <div class="mtm-modal__body">
+            <div class="mtm-mail-frame__device mtm-mail-frame__device--desktop" id="mtm-preview-device-modal">
+                <iframe id="mtm-preview-iframe-modal" title="Полноэкранное превью" sandbox=""></iframe>
+            </div>
+        </div>
+    </div>
+</div>

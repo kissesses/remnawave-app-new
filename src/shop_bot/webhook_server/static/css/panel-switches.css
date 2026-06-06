@@ -1,0 +1,116 @@
+/* Remnawave ShopBot — macOS-style toggles (green ON / red OFF) */
+
+body.panel-ios {
+    --switch-on: #34c759;
+    --switch-off: rgba(255, 59, 48, 0.52);
+    --switch-off-border: rgba(255, 59, 48, 0.28);
+    --switch-knob: #ffffff;
+    --switch-knob-shadow: 0 1px 4px rgba(0, 0, 0, 0.28);
+}
+
+html:not(.dark) body.panel-ios {
+    --switch-on: #34c759;
+    --switch-off: rgba(255, 59, 48, 0.42);
+    --switch-off-border: rgba(255, 59, 48, 0.25);
+    --switch-knob-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+}
+
+/* Pill toggle tracks — :has() is reliable when sibling selectors fail */
+body.panel-ios label:has(> input.peer[type="checkbox"]) > div.rounded-full,
+body.panel-ios label:has(> input.sr-only.peer[type="checkbox"]) > div.rounded-full,
+body.panel-ios input.peer[type="checkbox"] + div.rounded-full,
+body.panel-ios input.peer[type="checkbox"] ~ div.rounded-full {
+    background: var(--switch-off) !important;
+    border: 1px solid var(--switch-off-border) !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
+    transition: background 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease !important;
+}
+
+body.panel-ios label:has(> input.peer[type="checkbox"]:checked) > div.rounded-full,
+body.panel-ios label:has(> input.sr-only.peer[type="checkbox"]:checked) > div.rounded-full,
+body.panel-ios input.peer[type="checkbox"]:checked + div.rounded-full,
+body.panel-ios input.peer[type="checkbox"]:checked ~ div.rounded-full {
+    background: var(--switch-on) !important;
+    border-color: rgba(52, 199, 89, 0.45) !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12) !important;
+}
+
+body.panel-ios label:has(> input.peer[type="checkbox"]) > div.rounded-full::after,
+body.panel-ios input.peer[type="checkbox"] ~ div.rounded-full::after {
+    background: var(--switch-knob) !important;
+    box-shadow: var(--switch-knob-shadow) !important;
+}
+
+/* ===== User modal switches (udm-switch) ===== */
+.udm-switch__track {
+    position: relative;
+    box-sizing: border-box;
+    overflow: hidden;
+    background: var(--switch-off, rgba(255, 59, 48, 0.52)) !important;
+    border: 1px solid var(--switch-off-border, rgba(255, 59, 48, 0.28));
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    transition: background 0.22s ease, border-color 0.22s ease;
+}
+
+.udm-switch input:checked + .udm-switch__track {
+    background: var(--switch-on, #34c759) !important;
+    border-color: rgba(52, 199, 89, 0.45) !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+}
+
+.udm-switch__track::after {
+    top: 50% !important;
+    left: 2px !important;
+    right: auto !important;
+    transform: translateY(-50%) !important;
+    box-shadow: var(--switch-knob-shadow, 0 1px 3px rgba(0, 0, 0, 0.28)) !important;
+}
+
+.udm-switch input:checked + .udm-switch__track::after {
+    left: auto !important;
+    right: 2px !important;
+    transform: translateY(-50%) !important;
+}
+
+body.panel-ios input[type="checkbox"]:not(.peer):not(.sr-only) {
+    accent-color: var(--switch-on);
+}
+
+/* Fix toggle thumb vertical alignment (border on track was shifting ::after) */
+body.panel-ios label:has(> input.peer[type="checkbox"]) > div.rounded-full,
+body.panel-ios label:has(> input.sr-only.peer[type="checkbox"]) > div.rounded-full,
+body.panel-ios input.peer[type="checkbox"] + div.rounded-full,
+body.panel-ios input.peer[type="checkbox"] ~ div.rounded-full,
+body.auth-ios label:has(> input.peer[type="checkbox"]) > div.rounded-full,
+body.auth-ios label:has(> input.sr-only.peer[type="checkbox"]) > div.rounded-full {
+    position: relative !important;
+    box-sizing: border-box !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
+    flex-shrink: 0 !important;
+    overflow: hidden !important;
+}
+
+body.panel-ios label:has(> input.peer[type="checkbox"]) > div.rounded-full::after,
+body.panel-ios label:has(> input.sr-only.peer[type="checkbox"]) > div.rounded-full::after,
+body.panel-ios input.peer[type="checkbox"] + div.rounded-full::after,
+body.panel-ios input.peer[type="checkbox"] ~ div.rounded-full::after,
+body.auth-ios label:has(> input.peer[type="checkbox"]) > div.rounded-full::after,
+body.auth-ios label:has(> input.sr-only.peer[type="checkbox"]) > div.rounded-full::after {
+    top: 50% !important;
+    left: 2px !important;
+    right: auto !important;
+    margin-top: 0 !important;
+    transform: translateY(-50%) !important;
+}
+
+body.panel-ios label:has(> input.peer[type="checkbox"]:checked) > div.rounded-full::after,
+body.panel-ios label:has(> input.sr-only.peer[type="checkbox"]:checked) > div.rounded-full::after,
+body.panel-ios input.peer[type="checkbox"]:checked + div.rounded-full::after,
+body.panel-ios input.peer[type="checkbox"]:checked ~ div.rounded-full::after,
+body.auth-ios label:has(> input.peer[type="checkbox"]:checked) > div.rounded-full::after,
+body.auth-ios label:has(> input.sr-only.peer[type="checkbox"]:checked) > div.rounded-full::after {
+    left: auto !important;
+    right: 2px !important;
+    transform: translateY(-50%) !important;
+}

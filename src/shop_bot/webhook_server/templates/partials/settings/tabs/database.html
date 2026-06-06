@@ -1,0 +1,266 @@
+<section id="tab-database" class="tab-content db-panel">
+    {% set gate = database_gate or {} %}
+    {% set overview = database_overview or {} %}
+    {% set delivery = backup_delivery or {} %}
+
+    {% if gate.needs_2fa_setup %}
+    <div class="db-panel__gate db-panel__gate--warn">
+        <span class="material-symbols-outlined db-panel__gate-icon" aria-hidden="true">shield_lock</span>
+        <div>
+            <h2 class="db-panel__gate-title">Требуется двухфакторная защита</h2>
+            <p class="db-panel__gate-desc">Раздел «База данных» доступен только администраторам с настроенным 2FA (TOTP, Passkey или Telegram).</p>
+            <a href="{{ url_for('settings_tab_page', tab='access') }}" class="db-panel__gate-link">Настроить в разделе «Доступ»</a>
+        </div>
+    </div>
+    {% elif not gate.unlocked %}
+    <div class="db-panel__gate" id="db-stepup-gate">
+        <span class="material-symbols-outlined db-panel__gate-icon" aria-hidden="true">verified_user</span>
+        <div class="db-panel__gate-body">
+            <h2 class="db-panel__gate-title">Подтверждение доступа</h2>
+            <p class="db-panel__gate-desc">Для просмотра и обслуживания БД пройдите проверку: <strong>{{ gate.method_label }}</strong></p>
+
+            {% if gate.method == 'totp' %}
+            <form id="db-stepup-totp-form" class="db-panel__stepup-form" autocomplete="off">
+                <input type="text" id="db-stepup-totp-code" class="settings-macos-input db-panel__totp-input"
+                    inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="000000" aria-label="Код TOTP" />
+                <button type="submit" class="settings-macos-btn-secondary">Подтвердить</button>
+            </form>
+            {% elif gate.method == 'passkey' %}
+            <button type="button" id="db-stepup-passkey-btn" class="settings-macos-btn-secondary db-panel__passkey-btn">
+                <span class="material-symbols-outlined">passkey</span>
+                Подтвердить Passkey
+            </button>
+            {% elif gate.method == 'telegram' %}
+            <div id="db-stepup-telegram-wrap" class="db-panel__telegram-wrap"></div>
+            {% if not gate.telegram_linked %}
+            <p class="db-panel__gate-hint">Telegram не привязан — сначала привяжите аккаунт в «Доступ».</p>
+            {% endif %}
+            {% endif %}
+            <p class="db-panel__gate-error hidden" id="db-stepup-error" role="alert"></p>
+        </div>
+    </div>
+    {% else %}
+    <div class="db-panel__unlocked" id="db-panel-unlocked" data-source="{{ database_source or 'shopbot' }}">
+        <div class="db-panel__session">
+            <span class="material-symbols-outlined">lock_open</span>
+            <span>Сессия подтверждена · <span id="db-stepup-remaining">{{ gate.remaining_sec // 60 }}:{{ '%02d' % (gate.remaining_sec % 60) }}</span></span>
+            <button type="button" id="db-stepup-lock-btn" class="db-panel__lock-btn">Заблокировать</button>
+        </div>
+
+        <div class="db-panel__source" role="tablist" aria-label="Выбор базы данных">
+            {% for opt in database_sources or [] %}
+            <button type="button" class="db-panel__source-btn{% if opt.id == (database_source or 'shopbot') %} is-active{% endif %}"
+                data-source="{{ opt.id }}" role="tab" aria-selected="{{ 'true' if opt.id == (database_source or 'shopbot') else 'false' }}">
+                {{ opt.label }}
+            </button>
+            {% endfor %}
+        </div>
+
+        <div class="db-panel__rw-hint{% if remnawave_db_configured or database_source != 'remnawave' %} hidden{% endif %}" id="db-rw-hint">
+            <span class="material-symbols-outlined">info</span>
+            <span>Remnawave не настроен — укажите подключение в <a href="{{ url_for('backups_page') }}">центре бэкапов</a>.</span>
+        </div>
+
+        <div class="db-panel__error{% if not overview.error %} hidden{% endif %}" id="db-overview-error" role="alert">{{ overview.error or '' }}</div>
+
+        <nav class="db-panel__workspace-nav" aria-label="Разделы базы данных">
+            <button type="button" class="db-panel__workspace-btn is-active" data-workspace="overview">Обзор</button>
+            <button type="button" class="db-panel__workspace-btn" data-workspace="tables">Таблицы</button>
+            <button type="button" class="db-panel__workspace-btn" data-workspace="sql">SQL</button>
+            <button type="button" class="db-panel__workspace-btn" data-workspace="maintenance">Обслуживание</button>
+        </nav>
+
+        <div class="db-panel__workspace is-active" id="db-workspace-overview" data-workspace="overview">
+        <div class="settings-macos-group">
+            <p class="settings-macos-group__caption">Состояние · <span id="db-source-caption">{{ overview.source_label or 'ShopBot' }}</span></p>
+            <div class="settings-macos-list settings-macos-list--static" id="db-overview-status">
+                <div class="settings-macos-row settings-macos-row--info">
+                    <span class="settings-macos-row__title">Движок</span>
+                    <span class="settings-macos-row__value" data-field="engine">{{ overview.engine or '—' }}</span>
+                </div>
+                <div class="settings-macos-row settings-macos-row--info">
+                    <span class="settings-macos-row__title">Подключение</span>
+                    <span class="settings-macos-row__value" data-field="connected">{{ 'OK' if overview.connected else 'Ошибка' }}</span>
+                </div>
+                <div class="settings-macos-row settings-macos-row--info">
+                    <span class="settings-macos-row__title">Режим</span>
+                    <span class="settings-macos-row__value db-panel__mono" data-field="connection_mode">{{ overview.connection_mode or '—' }}</span>
+                </div>
+                <div class="settings-macos-row settings-macos-row--info">
+                    <span class="settings-macos-row__title">База</span>
+                    <span class="settings-macos-row__value db-panel__mono" data-field="db_name">{{ overview.db_name or '—' }}</span>
+                </div>
+                <div class="settings-macos-row settings-macos-row--info">
+                    <span class="settings-macos-row__title">Размер БД</span>
+                    <span class="settings-macos-row__value" data-field="db_size_label">{{ overview.db_size_label or '—' }}</span>
+                </div>
+                <div class="settings-macos-row settings-macos-row--info{% if not overview.postgres_version %} hidden{% endif %}" data-row="postgres_version">
+                    <span class="settings-macos-row__title">PostgreSQL</span>
+                    <span class="settings-macos-row__value db-panel__mono" data-field="postgres_version">{{ overview.postgres_version or '' }}</span>
+                </div>
+                <div class="settings-macos-row settings-macos-row--info">
+                    <span class="settings-macos-row__title">Записей (таблицы)</span>
+                    <span class="settings-macos-row__value" data-field="table_rows_total">{{ overview.table_rows_total or 0 }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-macos-group">
+            <p class="settings-macos-group__caption">Топ таблиц</p>
+            <div class="settings-macos-list settings-macos-list--static" id="db-overview-tables">
+                {% for t in overview.tables or [] %}
+                <div class="settings-macos-row settings-macos-row--info">
+                    <span class="settings-macos-row__title">{{ t.label }}</span>
+                    <span class="settings-macos-row__value db-panel__mono">{{ t.rows }}</span>
+                </div>
+                {% else %}
+                <div class="settings-macos-row settings-macos-row--info db-panel__empty-tables">
+                    <span class="settings-macos-row__value">Нет данных</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="settings-macos-group{% if database_source == 'remnawave' %} hidden{% endif %}" id="db-backups-group">
+            <p class="settings-macos-group__caption">Бэкапы</p>
+            <div class="settings-macos-list">
+                <div class="settings-macos-row settings-macos-row--info">
+                    <span class="settings-macos-row__title">Автобэкап</span>
+                    <span class="settings-macos-row__value">
+                        {% if (settings.backup_interval_days or '0') == '0' %}Выключен{% else %}Каждые {{ settings.backup_interval_days }} д.{% endif %}
+                    </span>
+                </div>
+                <div class="settings-macos-row settings-macos-row--info">
+                    <span class="settings-macos-row__title">Хранить архивов</span>
+                    <span class="settings-macos-row__value">{{ settings.backup_keep_count or '7' }}</span>
+                </div>
+                <a href="{{ url_for('backups_page') }}" class="settings-macos-row settings-macos-row--link">
+                    <span class="settings-macos-row__glyph material-symbols-outlined">backup</span>
+                    <span class="settings-macos-row__body">
+                        <span class="settings-macos-row__title">Центр бэкапов</span>
+                        <span class="settings-macos-row__sub">Создание, восстановление, отправка в Telegram</span>
+                    </span>
+                    <span class="material-symbols-outlined settings-macos-row__chevron">chevron_right</span>
+                </a>
+            </div>
+            {% if database_recent_backups %}
+            <div class="db-panel__backup-list">
+                {% for b in database_recent_backups %}
+                <div class="db-panel__backup-item">
+                    <span class="db-panel__backup-name">{{ b.name }}</span>
+                    <span class="db-panel__backup-meta">{{ b.mtime }} · {{ b.size_label }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        </div>
+
+        <div class="db-panel__workspace hidden" id="db-workspace-tables" data-workspace="tables">
+            <div class="settings-macos-group">
+                <p class="settings-macos-group__caption">Все таблицы</p>
+                <div class="db-panel__toolbar">
+                    <input type="search" id="db-table-search" class="settings-macos-input db-panel__search"
+                        placeholder="Поиск таблицы…" autocomplete="off" />
+                    <button type="button" id="db-tables-refresh" class="settings-macos-btn-secondary">Обновить</button>
+                </div>
+                <div class="settings-macos-list settings-macos-list--static" id="db-tables-list">
+                    <div class="settings-macos-row settings-macos-row--info db-panel__empty-tables">
+                        <span class="settings-macos-row__value">Загрузка…</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="db-panel__workspace hidden" id="db-workspace-sql" data-workspace="sql">
+            <div class="settings-macos-group">
+                <p class="settings-macos-group__caption">SQL-консоль · только SELECT</p>
+                <textarea id="db-sql-input" class="settings-macos-input db-panel__sql-input" rows="6"
+                    placeholder="SELECT * FROM users LIMIT 20" spellcheck="false"></textarea>
+                <div class="db-panel__toolbar">
+                    <button type="button" id="db-sql-run" class="settings-macos-btn-secondary">Выполнить</button>
+                    <span class="db-panel__sql-hint">Макс. 500 строк · один запрос</span>
+                </div>
+                <div class="db-panel__sql-result hidden" id="db-sql-result-wrap">
+                    <p class="db-panel__sql-meta" id="db-sql-meta"></p>
+                    <div class="db-panel__grid-wrap">
+                        <table class="db-panel__grid" id="db-sql-grid">
+                            <thead></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="db-panel__workspace hidden" id="db-workspace-maintenance" data-workspace="maintenance">
+            <div class="settings-macos-group">
+                <p class="settings-macos-group__caption">Обслуживание · <span id="db-maint-source">{{ overview.source_label or 'ShopBot' }}</span></p>
+                <div class="settings-macos-list">
+                    <div class="settings-macos-row settings-macos-row--field">
+                        <div class="settings-macos-row__body">
+                            <span class="settings-macos-row__title">ANALYZE</span>
+                            <span class="settings-macos-row__sub">Обновить статистику планировщика (безопасно)</span>
+                        </div>
+                        <button type="button" class="settings-macos-btn-secondary db-maint-btn" data-action="analyze">Выполнить</button>
+                    </div>
+                    <div class="settings-macos-row settings-macos-row--field">
+                        <div class="settings-macos-row__body">
+                            <span class="settings-macos-row__title">VACUUM ANALYZE</span>
+                            <span class="settings-macos-row__sub">Очистка мёртвых строк и обновление статистики</span>
+                        </div>
+                        <button type="button" class="settings-macos-btn-secondary db-maint-btn" data-action="vacuum">Выполнить</button>
+                    </div>
+                    <div class="settings-macos-row settings-macos-row--field">
+                        <div class="settings-macos-row__body">
+                            <span class="settings-macos-row__title">REINDEX</span>
+                            <span class="settings-macos-row__sub">Перестроить индексы всей базы</span>
+                        </div>
+                        <button type="button" class="settings-macos-btn-secondary db-maint-btn" data-action="reindex">Выполнить</button>
+                    </div>
+                </div>
+            </div>
+            <div class="settings-macos-group" id="db-conn-stats-group">
+                <p class="settings-macos-group__caption">Подключения PostgreSQL</p>
+                <div class="settings-macos-list settings-macos-list--static" id="db-conn-stats">
+                    <div class="settings-macos-row settings-macos-row--info">
+                        <span class="settings-macos-row__value">—</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="db-panel__modal hidden" id="db-table-modal" role="dialog" aria-modal="true" aria-labelledby="db-table-modal-title">
+            <div class="db-panel__modal-backdrop" data-close-modal></div>
+            <div class="db-panel__modal-card">
+                <header class="db-panel__modal-head">
+                    <div>
+                        <h3 id="db-table-modal-title" class="db-panel__modal-title">Таблица</h3>
+                        <p class="db-panel__modal-sub" id="db-table-modal-sub"></p>
+                    </div>
+                    <button type="button" class="db-panel__modal-close" data-close-modal aria-label="Закрыть">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </header>
+                <div class="db-panel__modal-actions">
+                    <button type="button" id="db-table-export" class="settings-macos-btn-secondary">CSV</button>
+                    <button type="button" id="db-table-vacuum" class="settings-macos-btn-secondary">VACUUM</button>
+                    <button type="button" id="db-table-truncate" class="settings-macos-btn-secondary db-panel__danger-btn">Очистить</button>
+                    <button type="button" id="db-table-delete-rows" class="settings-macos-btn-secondary db-panel__danger-btn" disabled>Удалить выбранные</button>
+                </div>
+                <div class="db-panel__grid-wrap db-panel__grid-wrap--modal">
+                    <table class="db-panel__grid" id="db-table-grid">
+                        <thead></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <footer class="db-panel__modal-foot">
+                    <button type="button" id="db-table-prev" class="settings-macos-btn-secondary">←</button>
+                    <span id="db-table-page-label" class="db-panel__page-label">1 / 1</span>
+                    <button type="button" id="db-table-next" class="settings-macos-btn-secondary">→</button>
+                </footer>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</section>

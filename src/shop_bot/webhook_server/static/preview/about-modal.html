@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Preview — About modal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <link href="../css/panel-about.css" rel="stylesheet" />
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Inter, system-ui, sans-serif;
+            background: #0a0a0c;
+            color: #fff;
+        }
+        html:not(.dark) body { background: #e8e8ed; color: #1c1c1e; }
+        .preview-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.65rem 1rem;
+            background: rgba(20, 20, 22, 0.92);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            backdrop-filter: blur(12px);
+        }
+        html:not(.dark) .preview-bar {
+            background: rgba(255,255,255,0.92);
+            border-bottom-color: rgba(0,0,0,0.08);
+        }
+        .preview-bar span { font-size: 0.75rem; opacity: 0.6; margin-right: 0.25rem; }
+        .preview-bar button {
+            padding: 0.35rem 0.65rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.06);
+            color: inherit;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+        .preview-bar button.is-active {
+            background: rgba(10, 132, 255, 0.25);
+            border-color: rgba(10, 132, 255, 0.45);
+            color: #6eb6ff;
+        }
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 1rem 1rem;
+            background: rgba(0, 0, 0, 0.55);
+        }
+        html:not(.dark) .modal-overlay { background: rgba(0, 0, 0, 0.25); }
+        .hidden { display: none !important; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+<body>
+    <div class="preview-bar">
+        <span>Превью:</span>
+        <button type="button" id="btn-theme" class="is-active">Тёмная тема</button>
+        <button type="button" id="btn-update">Баннер обновления</button>
+        <button type="button" id="btn-terminal">Команда обновления</button>
+        <button type="button" id="btn-avatar">Аватар автора</button>
+        <button type="button" id="btn-status">Статус: Live</button>
+    </div>
+
+    <div id="aboutModal" class="modal-overlay about-modal-overlay open">
+        <div class="about-mac-window modal-content" role="dialog" aria-modal="true">
+            <div class="about-mac-titlebar">
+                <div class="macos-traffic-lights about-mac-traffic" aria-hidden="true">
+                    <button type="button" class="about-mac-close" aria-label="Закрыть"></button>
+                    <span></span><span></span>
+                </div>
+                <span class="about-mac-titlebar__label">ReSTEAL v3 RW</span>
+            </div>
+
+            <div class="about-mac-body">
+                <div class="about-mac-hero">
+                    <div class="about-mac-hero__row">
+                        <img id="dev-avatar" class="about-mac-dev-avatar" src="https://github.com/kissesses.png" alt="kissesses" width="44" height="44" />
+                        <div class="about-mac-dev-avatar about-mac-dev-avatar--placeholder" id="dev-ph" aria-hidden="true">
+                            <span class="material-symbols-outlined">person</span>
+                        </div>
+                        <div class="about-mac-hero__text">
+                            <a href="https://github.com/kissesses" class="about-mac-dev-name">kissesses</a>
+                            <h2 class="about-mac-name">ReSTEAL v3 RW</h2>
+                            <p class="about-mac-meta">
+                                <span class="about-mac-version">v3.1.1</span>
+                                <span class="about-mac-meta__sep">·</span>
+                                <span class="about-mac-tagline">Telegram VPN shop с современной веб-панелью</span>
+                            </p>
+                            <p class="about-mac-dev-bio">Open-source · VPN automation</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="about-update-banner" class="about-mac-update">
+                    <div class="about-mac-update__icon">
+                        <span class="material-symbols-outlined">system_update</span>
+                    </div>
+                    <div class="about-mac-update__text">
+                        <strong>Доступно обновление</strong>
+                        <span> v3.1.0</span>
+                    </div>
+                    <a href="#" class="about-mac-update__btn">Обновить</a>
+                </div>
+
+                <dl class="about-mac-specs about-mac-specs--grid">
+                    <div class="about-mac-specs__row">
+                        <dt>Версия</dt><dd>3.0.11</dd>
+                    </div>
+                    <div class="about-mac-specs__row">
+                        <dt>Лицензия</dt><dd>MIT</dd>
+                    </div>
+                    <div class="about-mac-specs__row">
+                        <dt>Звёзды</dt><dd>⭐ 42</dd>
+                    </div>
+                    <div class="about-mac-specs__row">
+                        <dt>Обновлён</dt><dd>2 июня 2026</dd>
+                    </div>
+                    <div class="about-mac-specs__row">
+                        <dt>Статус бота</dt>
+                        <dd id="bot-status"><span class="about-mac-status about-mac-status--off">Stopped</span></dd>
+                    </div>
+                </dl>
+
+                <div id="about-install-block" class="about-mac-terminal hidden">
+                    <div class="about-mac-terminal__head">
+                        <span class="about-mac-terminal__dot"></span>
+                        <span>Установка обновления</span>
+                        <button type="button" class="about-mac-terminal__copy" title="Копировать">
+                            <span class="material-symbols-outlined">content_copy</span>
+                        </button>
+                    </div>
+                    <code class="about-mac-terminal__code">cd /opt/remnawave-app && docker compose pull && docker compose up -d --force-recreate</code>
+                </div>
+
+                <div class="about-mac-actions">
+                    <a href="#" class="about-mac-action"><span class="material-symbols-outlined">code</span><span>Репозиторий</span></a>
+                    <a href="#" class="about-mac-action"><span class="material-symbols-outlined">history</span><span>Релизы</span></a>
+                    <a href="#" class="about-mac-action"><span class="material-symbols-outlined">bug_report</span><span>Issues</span></a>
+                    <a href="#" class="about-mac-action"><span class="material-symbols-outlined">forum</span><span>Сообщество</span></a>
+                </div>
+
+                <div class="about-mac-donate">
+                    <div class="about-mac-donate__head">
+                        <span class="about-mac-donate__title">
+                            <span class="material-symbols-outlined">favorite</span>
+                            Поддержать
+                        </span>
+                        <span class="about-mac-donate__hint">TON · USDT</span>
+                        <button type="button" class="about-mac-donate__copy" title="Копировать">
+                            <span class="material-symbols-outlined">content_copy</span>
+                        </button>
+                    </div>
+                    <code class="about-mac-donate__addr">UQAIaNG4ccxBDViWi3hISWeZEHDM1LvBrV292USg_A0AERHF</code>
+                </div>
+
+                <div class="about-mac-footer">
+                    <button type="button" class="about-mac-footer__link">
+                        <span class="material-symbols-outlined">sync</span>
+                        Обновления
+                    </button>
+                    <span class="about-mac-footer__sep">·</span>
+                    <button type="button" class="about-mac-footer__link">Копировать версию</button>
+                    <span class="about-mac-footer__sep">·</span>
+                    <span class="about-mac-copyright">© kissesses</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const html = document.documentElement;
+        const statuses = [
+            ['Stopped', 'about-mac-status--off'],
+            ['Live', 'about-mac-status--ok'],
+            ['Limited', 'about-mac-status--warn'],
+        ];
+        let statusIdx = 0;
+
+        document.getElementById('btn-theme').onclick = function () {
+            html.classList.toggle('dark');
+            this.textContent = html.classList.contains('dark') ? 'Тёмная тема' : 'Светлая тема';
+        };
+        document.getElementById('btn-update').onclick = function () {
+            document.getElementById('about-update-banner').classList.toggle('hidden');
+            this.classList.toggle('is-active');
+        };
+        document.getElementById('btn-terminal').onclick = function () {
+            document.getElementById('about-install-block').classList.toggle('hidden');
+            this.classList.toggle('is-active');
+        };
+        document.getElementById('btn-avatar').onclick = function () {
+            const img = document.getElementById('dev-avatar');
+            const showAvatar = img.hasAttribute('hidden');
+            if (showAvatar) img.removeAttribute('hidden');
+            else img.setAttribute('hidden', '');
+            this.classList.toggle('is-active', !showAvatar);
+        };
+        document.getElementById('btn-status').onclick = function () {
+            statusIdx = (statusIdx + 1) % statuses.length;
+            const [label, cls] = statuses[statusIdx];
+            document.getElementById('bot-status').innerHTML =
+                '<span class="about-mac-status ' + cls + '">' + label + '</span>';
+            this.textContent = 'Статус: ' + label;
+        };
+    </script>
+</body>
+</html>

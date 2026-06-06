@@ -1,0 +1,67 @@
+{% if tickets %}
+{% for ticket in tickets %}
+{% set is_waiting = ticket.status == 'open' and ticket.last_sender == 'user' %}
+{% set is_important = (ticket.subject or '').startswith('⭐') %}
+{% set display_subject = ticket.subject %}
+{% if display_subject and display_subject.startswith('⭐ ') %}
+{% set display_subject = display_subject[2:] %}
+{% elif display_subject and display_subject.startswith('⭐') %}
+{% set display_subject = display_subject.lstrip('⭐').strip() %}
+{% endif %}
+<article class="support-inbox-item{% if is_waiting %} is-waiting{% endif %}{% if is_important %} is-important{% endif %}{% if ticket.status != 'open' %} is-closed{% endif %}{% if active_ticket_id == ticket.ticket_id %} is-selected{% endif %}"
+    data-ticket-id="{{ ticket.ticket_id }}">
+    <label class="support-inbox-item__check support-bulk-check hidden" onclick="event.stopPropagation()">
+        <input type="checkbox" class="support-row-check" value="{{ ticket.ticket_id }}" />
+    </label>
+    <button type="button" class="support-inbox-item__link" data-preview-ticket="{{ ticket.ticket_id }}">
+        <div class="support-inbox-item__avatar" aria-hidden="true">
+            {{ ticket.username[0]|upper if ticket.username else 'U' }}
+            {% if is_waiting %}<span class="support-inbox-item__dot"></span>{% endif %}
+        </div>
+        <div class="support-inbox-item__body">
+            <div class="support-inbox-item__top">
+                <span class="support-inbox-item__user demo-blur-username">
+                    {% if ticket.username %}@{{ ticket.username }}{% else %}User #{{ ticket.user_id }}{% endif %}
+                </span>
+                <span class="support-inbox-item__time mobile-relative-time" data-timestamp="{{ ticket.updated_at or ticket.created_at }}">
+                    {{ (ticket.updated_at or ticket.created_at or "").split(' ')[1][:5] }}
+                </span>
+            </div>
+            <div class="support-inbox-item__subject">
+                {% if is_important %}<span class="material-symbols-outlined support-inbox-item__star">star</span>{% endif %}
+                <span>{{ display_subject or 'Без темы' }}</span>
+            </div>
+            {% if ticket.last_message %}
+            <p class="support-inbox-item__preview">{{ ticket.last_message[:140] }}{% if ticket.last_message|length > 140 %}…{% endif %}</p>
+            {% endif %}
+            <div class="support-inbox-item__meta">
+                <span class="support-pill support-pill--id">#{{ ticket.ticket_id }}</span>
+                {% if ticket.message_count %}
+                <span class="support-pill support-pill--msgs">{{ ticket.message_count }} msg</span>
+                {% endif %}
+                {% if ticket.status == 'open' %}
+                <span class="support-pill {% if is_waiting %}support-pill--waiting{% else %}support-pill--open{% endif %}">
+                    {{ 'Ждёт ответа' if is_waiting else 'Открыт' }}
+                </span>
+                {% else %}
+                <span class="support-pill support-pill--closed">Закрыт</span>
+                {% endif %}
+            </div>
+        </div>
+    </button>
+    <div class="support-inbox-item__actions">
+        <a href="{{ url_for('support_ticket_page', ticket_id=ticket.ticket_id) }}" class="support-icon-btn" title="Полная страница">
+            <span class="material-symbols-outlined">open_in_new</span>
+        </a>
+        <a href="{{ url_for('users_page', q=ticket.user_id) }}" class="support-icon-btn" title="Профиль">
+            <span class="material-symbols-outlined">person</span>
+        </a>
+    </div>
+</article>
+{% endfor %}
+{% else %}
+<div class="support-empty">
+    <span class="material-symbols-outlined">inbox</span>
+    <p>Обращений не найдено</p>
+</div>
+{% endif %}

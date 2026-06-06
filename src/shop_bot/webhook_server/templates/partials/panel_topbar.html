@@ -1,0 +1,38 @@
+<header id="panel-topbar" class="panel-topbar panel-topbar--with-nav">
+    <div class="panel-topbar__inner max-w-7xl mx-auto">
+
+        <div class="panel-topbar__start">
+            <div class="macos-traffic-lights" aria-hidden="true">
+                <span></span><span></span><span></span>
+            </div>
+            <a href="{{ url_for('dashboard_page') }}" class="panel-topbar__brand">
+                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="" class="panel-topbar__logo" onerror="this.style.display='none'" />
+                <span id="brand-title" class="panel-topbar__brand-title" data-refresh-part="brand">{{ brand_title or 'Admin Panel' }}</span>
+            </a>
+            <button type="button" id="brand-edit" title="Сменить название" class="panel-topbar__btn panel-topbar__btn--muted">
+                <span class="material-symbols-outlined">edit</span>
+            </button>
+        </div>
+
+        <div id="panel-page-title" class="panel-topbar__page-title" aria-hidden="true"></div>
+
+        <nav class="panel-topbar__nav" aria-label="Основная навигация">
+            <div class="panel-topbar__nav-scroll no-scrollbar">
+                {{ nav_link_header('dashboard_page', 'Главная', 'home', perm='dashboard') }}
+                {{ nav_link_header('users_page', 'Пользователи', 'group', perm='users') }}
+                {{ nav_link_header('admin_keys_page', 'Ключи', 'key', perm='keys') }}
+                {{ nav_link_header('support_list_page', 'Поддержка', 'support_agent', ['support_ticket_page'], perm='support') }}
+                {{ nav_link_header('button_constructor_page', 'Кнопки', 'build', perm='button_constructor') }}
+                {{ nav_link_header('node_page', 'Ноды', 'dns', perm='node') }}
+                {% if can('db_manage') %}
+                {{ nav_link_header('backups_page', 'Бэкапы', 'database') }}
+                {% endif %}
+                {{ nav_link_header('settings_page', 'Настройки', 'settings', ['settings_tab_page'], perm='settings') }}
+            </div>
+        </nav>
+
+        <div class="panel-topbar__end">
+            {% include 'partials/panel_toolbar_actions.html' %}
+        </div>
+    </div>
+</header>

@@ -1,0 +1,508 @@
+<div id="editPromoModal" class="modal-overlay">
+    <div class="modal-content !max-w-3xl">
+        <div class="p-6 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">
+            <div class="flex items-center gap-3">
+                <div
+                    class="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary shadow-lg shadow-primary/10">
+                    <span class="material-symbols-outlined text-2xl">edit_document</span>
+                </div>
+                <div>
+                    <h5 class="text-white font-bold tracking-tight">Редактировать промокод</h5>
+                    <p class="text-[10px] text-white/40 uppercase tracking-widest font-medium">Обновление условий акции
+                    </p>
+                </div>
+            </div>
+            <button onclick="closeModal('editPromoModal')"
+                class="w-10 h-10 rounded-xl bg-white/5 text-white/50 hover:text-white hover:bg-white/10 flex items-center justify-center transition-all">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="p-6">
+            <form id="promo-edit-form" autocomplete="off" data-submit-mode="custom">
+                <input type="hidden" id="edit-promo-code" name="code" />
+
+                <div class="mb-6 group/input">
+                    <label class="block text-[10px] uppercase tracking-wider text-white/40 font-bold mb-2 ml-1">Код
+                        (только для чтения)</label>
+                    <div class="relative">
+                        <span
+                            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-white/20 text-lg">tag</span>
+                        <input type="text" id="edit-code-display" readonly
+                            class="w-full bg-black/40 border border-white/5 rounded-xl pl-10 pr-4 py-3 text-sm text-white/40 font-mono uppercase cursor-not-allowed italic" />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="group/input" id="edit-discount-type-container">
+                        <label class="block text-[10px] uppercase tracking-wider text-white/40 font-bold mb-2 ml-1">Тип
+                            скидки</label>
+                        <div class="grid grid-cols-2 gap-2 p-1 bg-black/40 rounded-xl border border-white/5">
+                            <label class="relative cursor-pointer">
+                                <input type="radio" name="edit_discount_type" value="percent" class="peer sr-only" />
+                                <div
+                                    class="py-2.5 text-center text-xs font-bold rounded-lg transition-all peer-checked:bg-primary peer-checked:text-background-dark text-white/40 hover:text-white">
+                                    % Процент</div>
+                            </label>
+                            <label class="relative cursor-pointer">
+                                <input type="radio" name="edit_discount_type" value="fixed" class="peer sr-only" />
+                                <div
+                                    class="py-2.5 text-center text-xs font-bold rounded-lg transition-all peer-checked:bg-primary peer-checked:text-background-dark text-white/40 hover:text-white">
+                                    RUB Фикс.</div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="group/input" id="edit-discount-value-container">
+                        <label
+                            class="block text-[10px] uppercase tracking-wider text-white/40 font-bold mb-2 ml-1">Значение
+                            скидки</label>
+                        <div class="relative">
+                            <span
+                                class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-lg group-focus-within/input:text-primary transition-all">payments</span>
+                            <input type="number" name="edit_discount_value" step="0.01" min="0"
+                                class="w-full bg-black/20 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all shadow-inner" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-6 mb-6 hidden" id="edit-reward-value-container">
+                    <div class="group/input col-span-1">
+                        <label
+                            class="block text-[10px] uppercase tracking-wider text-white/40 font-bold mb-2 ml-1">Бонус
+                            (дни)</label>
+                        <div class="relative">
+                            <span
+                                class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-lg group-focus-within/input:text-primary transition-all">calendar_add_on</span>
+                            <input type="number" name="edit_reward_value" min="1"
+                                class="w-full bg-black/20 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all shadow-inner" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-6 mb-6 hidden" id="edit-balance-value-container">
+                    <div class="group/input col-span-1">
+                        <label
+                            class="block text-[10px] uppercase tracking-wider text-white/40 font-bold mb-2 ml-1">Сумма
+                            (RUB)</label>
+                        <div class="relative">
+                            <span
+                                class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-lg group-focus-within/input:text-primary transition-all">account_balance_wallet</span>
+                            <input type="number" name="edit_balance_value" min="1"
+                                class="w-full bg-black/20 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all shadow-inner" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="group/input">
+                        <label
+                            class="block text-[10px] uppercase tracking-wider text-white/40 font-bold mb-2 ml-1">Всего
+                            активаций</label>
+                        <div class="relative">
+                            <span
+                                class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-lg group-focus-within/input:text-primary transition-all">groups</span>
+                            <input type="number" name="edit_usage_limit_total" min="1"
+                                class="w-full bg-black/20 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all shadow-inner" />
+                        </div>
+                    </div>
+
+                    <div class="group/input">
+                        <label
+                            class="block text-[10px] uppercase tracking-wider text-white/40 font-bold mb-2 ml-1">Лимит
+                            на юзера</label>
+                        <div class="relative">
+                            <span
+                                class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-lg group-focus-within/input:text-primary transition-all">person</span>
+                            <input type="number" name="edit_usage_limit_per_user" min="1"
+                                class="w-full bg-black/20 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all shadow-inner" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="group/input">
+                        <label
+                            class="block text-[10px] uppercase tracking-wider text-white/40 font-bold mb-2 ml-1">Действует
+                            с</label>
+                        <div class="relative">
+                            <span
+                                class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-lg group-focus-within/input:text-primary transition-all">event_available</span>
+                            <input type="datetime-local" name="edit_valid_from"
+                                class="w-full bg-black/20 border border-white/10 rounded-xl pl-10 pr-2 py-3 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all shadow-inner" />
+                        </div>
+                    </div>
+
+                    <div class="group/input">
+                        <label
+                            class="block text-[10px] uppercase tracking-wider text-white/40 font-bold mb-2 ml-1">Действует
+                            до</label>
+                        <div class="relative">
+                            <span
+                                class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-lg group-focus-within/input:text-primary transition-all">event_busy</span>
+                            <input type="datetime-local" name="edit_valid_until"
+                                class="w-full bg-black/20 border border-white/10 rounded-xl pl-10 pr-2 py-3 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all shadow-inner" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-8 group/input">
+                    <label class="block text-[10px] uppercase tracking-wider text-white/40 font-bold mb-2 ml-1">Описание
+                        (заметка)</label>
+                    <textarea name="edit_description" rows="2"
+                        class="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all shadow-inner resize-none"
+                        placeholder="Краткое описание для истории..."></textarea>
+                </div>
+
+                <div class="flex gap-3">
+                    <button type="button" onclick="closeModal('editPromoModal')"
+                        class="flex-1 px-8 py-4 rounded-2xl bg-white/5 border border-white/10 text-white font-bold uppercase tracking-widest text-xs hover:bg-white/10 transition-all">
+                        Отмена
+                    </button>
+                    <button type="submit"
+                        class="flex-[2] flex items-center justify-center gap-3 px-8 py-4 rounded-2xl bg-primary/10 text-white border border-primary/20 font-bold uppercase tracking-widest text-xs hover:bg-primary/20 active:scale-95 transition-all duration-300 shadow-lg shadow-black/20">
+                        <span class="material-symbols-outlined text-xl">save</span>
+                        <span>Сохранить изменения</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+<div id="confirmDeleteModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content max-w-lg">
+        <div class="p-6">
+            <div class="flex items-center justify-center mb-4">
+                <div class="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-4xl text-red-400">warning</span>
+                </div>
+            </div>
+
+            <h3 class="text-2xl font-bold text-white text-center mb-2">⚠️ ВНИМАНИЕ!</h3>
+            <p class="text-white/70 text-center mb-6">Вы собираетесь выполнить необратимую операцию</p>
+
+            <div class="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-6">
+                <p class="text-red-300 font-medium mb-3">Будет полностью удалено:</p>
+                <ul class="space-y-2 text-red-200 text-sm">
+                    <li class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-base">close</span>
+                        Нода Remnawave и все её данные
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-base">close</span>
+                        Docker полностью (все пакеты)
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-base">close</span>
+                        Все контейнеры, образы и тома
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-base">close</span>
+                        Конфигурационные файлы Docker
+                    </li>
+                </ul>
+            </div>
+
+            <div class="mb-6">
+                <label class="text-white text-sm font-medium mb-2 block">
+                    Для подтверждения введите название сервера: <span class="text-primary font-bold"
+                        id="confirm-server-name"></span>
+                </label>
+                <input type="text" id="confirm-delete-input"
+                    class="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-3 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                    placeholder="Введите название сервера">
+                <p class="text-white/50 text-xs mt-2">Регистр важен. Введите точное название без кавычек.</p>
+            </div>
+
+            <div class="flex gap-3">
+                <button id="btn-cancel-delete"
+                    class="flex-1 px-6 py-3 rounded-lg bg-white/10 text-white hover:bg-white/20 font-medium transition-colors">
+                    Отмена
+                </button>
+                <button id="btn-confirm-delete"
+                    class="flex-1 px-6 py-3 rounded-lg bg-red-500 text-white hover:bg-red-600 font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    Удалить всё
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="confirmModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content max-w-md">
+        <div class="p-6">
+            <div class="flex items-center justify-center mb-4">
+                <div id="confirm-icon-container" class="w-16 h-16 rounded-full flex items-center justify-center">
+                    <span id="confirm-icon" class="material-symbols-outlined text-4xl"></span>
+                </div>
+            </div>
+
+            <h3 id="confirm-title" class="text-xl font-bold text-white text-center mb-2"></h3>
+            <p id="confirm-message" class="text-white/70 text-center mb-6 whitespace-pre-line"></p>
+
+            <div class="flex gap-3">
+                <button id="btn-confirm-cancel"
+                    class="flex-1 px-6 py-3 rounded-lg bg-white/10 text-white hover:bg-white/20 font-medium transition-colors">
+                    Отмена
+                </button>
+                <button id="btn-confirm-ok" class="flex-1 px-6 py-3 rounded-lg font-bold transition-colors">
+                    Подтвердить
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<style>
+    .terminal-output::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .terminal-output::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 4px;
+    }
+
+    .terminal-output::-webkit-scrollbar-thumb {
+        background: rgba(16, 185, 129, 0.3);
+        border-radius: 4px;
+    }
+
+    .terminal-output::-webkit-scrollbar-thumb:hover {
+        background: rgba(16, 185, 129, 0.5);
+    }
+
+    .terminal-output {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(16, 185, 129, 0.3) rgba(0, 0, 0, 0.2);
+    }
+
+    .term-line {
+        min-height: 1.5em;
+        /* Ensure empty lines have height */
+        word-break: break-all;
+        /* Prevent horizontal overflow */
+    }
+</style>
+
+
+<script>
+    function toggleSchedulerCheckbox() {
+        const checkbox = document.getElementById('schedulerEnabled');
+        checkbox.checked = !checkbox.checked;
+    }
+</script>
+<div id="usagePromoModal" class="modal-overlay">
+    <div class="modal-content p-6 max-w-2xl w-full">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">analytics</span>
+                Активации промокода: <span id="usage-promo-name" class="text-primary"></span>
+            </h3>
+            <button onclick="closeModal('usagePromoModal')" class="text-white/50 hover:text-white transition-all">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="overflow-x-auto max-h-[60vh] custom-scrollbar mb-4 border border-white/10 rounded-xl bg-black/20">
+            <table class="w-full text-left border-separate border-spacing-0">
+                <thead class="sticky top-0 bg-[#0c1411] z-10 shadow-sm">
+                    <tr class="text-[10px] font-bold text-white/30 uppercase tracking-widest">
+                        <th class="px-4 py-3 border-b border-white/10">Пользователь</th>
+                        <th class="px-4 py-3 border-b border-white/10">ID</th>
+                        <th class="px-4 py-3 border-b border-white/10">Сумма</th>
+                        <th class="px-4 py-3 border-b border-white/10">Дата</th>
+                    </tr>
+                </thead>
+                <tbody id="usage-promo-table-body" class="text-sm">
+                    <!-- Данные будут здесь -->
+                </tbody>
+            </table>
+        </div>
+        <div class="flex justify-end gap-2">
+            <button type="button" id="prm-usage-export" class="prm-usage-export px-5 py-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20 font-bold text-sm uppercase tracking-widest hover:bg-primary/20 transition-all">
+                <span class="material-symbols-outlined text-sm align-middle">download</span>
+                CSV
+            </button>
+            <button type="button" onclick="closeModal('usagePromoModal')"
+                class="px-6 py-2.5 rounded-xl bg-white/5 text-white/70 hover:text-white hover:bg-white/10 font-bold transition-all text-sm uppercase tracking-widest border border-white/10">Закрыть</button>
+        </div>
+    </div>
+</div>
+<div id="linkModal" class="modal-overlay">
+    <div class="modal-content p-6 max-w-lg">
+        <h3 class="text-xl font-bold text-white mb-4">Вставить ссылку</h3>
+        <div class="mb-6">
+            <label class="block text-xs font-bold text-white/50 uppercase tracking-widest mb-2">URL адрес</label>
+            <input type="text" id="link-url-input" placeholder="https://example.com"
+                class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:ring-1 focus:ring-primary/50 focus:border-primary/50 transition-all outline-none" />
+        </div>
+        <div class="flex gap-3 justify-end">
+            <button type="button" onclick="closeModal('linkModal')"
+                class="px-5 py-2.5 rounded-xl text-sm font-bold text-white/60 hover:text-white hover:bg-white/5 transition-all">Отмена</button>
+            <button type="button" id="btn-insert-link"
+                class="px-5 py-2.5 rounded-xl bg-primary text-background-dark text-sm font-bold hover:bg-primary/90 transition-all">Вставить</button>
+        </div>
+    </div>
+</div>
+
+<div id="emojiModal" class="modal-overlay">
+    <div class="modal-content p-6 max-w-lg">
+        <h3 class="text-xl font-bold text-white mb-4">Вставить Premium Emoji</h3>
+        <div class="mb-6">
+            <label class="block text-xs font-bold text-white/50 uppercase tracking-widest mb-2">ID Emoji</label>
+            <input type="text" id="emoji-id-input" placeholder="Например: 5368324170671202286"
+                class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:ring-1 focus:ring-primary/50 focus:border-primary/50 transition-all outline-none" />
+        </div>
+        <div class="flex gap-3 justify-end">
+            <button type="button" onclick="closeModal('emojiModal')"
+                class="px-5 py-2.5 rounded-xl text-sm font-bold text-white/60 hover:text-white hover:bg-white/5 transition-all">Отмена</button>
+            <button type="button" id="btn-insert-emoji"
+                class="px-5 py-2.5 rounded-xl bg-primary text-background-dark text-sm font-bold hover:bg-primary/90 transition-all">Вставить</button>
+        </div>
+    </div>
+</div>
+
+<div id="newMessageModal" class="modal-overlay">
+    <div class="modal-content p-6 max-w-lg">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-bold text-white">Новый шаблон</h3>
+            <button onclick="closeModal('newMessageModal')" class="text-white/50 hover:text-white transition-all">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-white/50 uppercase tracking-widest mb-2">Название</label>
+                <input type="text" id="modal-msg-title" placeholder="Введите название..." maxlength="20"
+                    class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:ring-1 focus:ring-primary/50 focus:border-primary/50 transition-all outline-none" />
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-white/50 uppercase tracking-widest mb-2">Сообщение</label>
+                <textarea id="modal-msg-content" rows="4" placeholder="Введите текст сообщения..."
+                    class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:ring-1 focus:ring-primary/50 focus:border-primary/50 transition-all outline-none resize-none"></textarea>
+            </div>
+        </div>
+        <div class="flex gap-3 justify-end mt-6">
+            <button type="button" onclick="closeModal('newMessageModal')"
+                class="px-5 py-2.5 rounded-xl text-sm font-bold text-white/60 hover:text-white hover:bg-white/5 transition-all">Отмена</button>
+            <button type="button" id="btn-save-theme"
+                class="px-5 py-2.5 rounded-xl bg-primary text-background-dark text-sm font-bold hover:bg-primary/90 transition-all">Сохранить</button>
+        </div>
+    </div>
+</div>
+
+{# История рассылок — полноэкранное модальное окно #}
+<div id="broadcastHistoryModal" class="modal-overlay broadcast-history-modal-overlay" aria-hidden="true">
+    <div class="modal-content broadcast-history-modal" role="dialog" aria-labelledby="broadcast-history-modal-title" aria-modal="true">
+        <header class="broadcast-history-modal__header">
+            <div class="broadcast-history-modal__header-main">
+                <button type="button" id="broadcast-history-back" class="broadcast-history-modal__back hidden" aria-label="К списку рассылок">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </button>
+                <div class="broadcast-history-modal__title-wrap">
+                    <div class="broadcast-history-modal__icon" aria-hidden="true">
+                        <span class="material-symbols-outlined">history</span>
+                    </div>
+                    <div>
+                        <h2 id="broadcast-history-modal-title" class="broadcast-history-modal__title">История рассылок</h2>
+                        <p id="broadcast-history-modal-subtitle" class="broadcast-history-modal__subtitle">Последние массовые отправки</p>
+                    </div>
+                </div>
+            </div>
+            <button type="button" id="broadcast-history-close" class="broadcast-history-modal__close" aria-label="Закрыть">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </header>
+
+        <div id="broadcast-history-loading" class="broadcast-history-loading hidden" aria-live="polite">
+            <span class="material-symbols-outlined animate-spin">progress_activity</span>
+            <span>Загрузка…</span>
+        </div>
+
+        <div id="broadcast-history-body" class="broadcast-history-modal__body">
+            <div id="broadcast-history-list-wrap" class="broadcast-history-modal__view">
+                <div id="broadcast-history-list" class="broadcast-history-grid" role="list"></div>
+                <p id="broadcast-history-list-empty" class="broadcast-history-empty hidden">
+                    <span class="material-symbols-outlined">inbox</span>
+                    История пока пуста. После первой рассылки здесь появятся карточки.
+                </p>
+            </div>
+
+            <div id="broadcast-history-detail" class="broadcast-history-modal__view hidden">
+                <div class="broadcast-history-detail-hero">
+                    <div class="broadcast-history-detail-hero__head">
+                        <div>
+                            <p id="broadcast-history-detail-title" class="broadcast-history-detail-hero__title"></p>
+                            <p id="broadcast-history-detail-meta" class="broadcast-history-detail-hero__meta"></p>
+                        </div>
+                    </div>
+                    <p id="broadcast-history-detail-preview" class="broadcast-history-detail-hero__preview"></p>
+                    <div id="broadcast-history-stats" class="broadcast-history-stats" aria-label="Статистика рассылки"></div>
+                    <div class="broadcast-history-progress" aria-hidden="true">
+                        <div id="broadcast-history-progress-bar" class="broadcast-history-progress__bar"></div>
+                    </div>
+                    <div id="broadcast-history-breakdown" class="broadcast-history-breakdown"></div>
+                </div>
+
+                <div class="broadcast-history-filters">
+                    <select id="broadcast-history-filter-status" class="broadcast-history-filters__select" aria-label="Статус">
+                        <option value="all">Все статусы</option>
+                        <option value="sent">Доставлено</option>
+                        <option value="failed">Не доставлено</option>
+                        <option value="skipped">Пропущено</option>
+                    </select>
+                    <select id="broadcast-history-filter-reason" class="broadcast-history-filters__select" aria-label="Причина">
+                        <option value="all">Все причины</option>
+                        <option value="blocked_bot">Заблокировал бота</option>
+                        <option value="deactivated">Аккаунт удалён</option>
+                        <option value="skip_banned_list">В списке ЧС</option>
+                        <option value="user_banned">Забанен в системе</option>
+                        <option value="rate_limit">Лимит Telegram</option>
+                        <option value="error">Ошибка отправки</option>
+                        <option value="forbidden_other">Telegram запретил</option>
+                    </select>
+                    <input type="search" id="broadcast-history-search" class="broadcast-history-filters__search"
+                        placeholder="Поиск по ID или @username" autocomplete="off" />
+                    <button type="button" id="broadcast-history-apply-filters" class="broadcast-history-filters__apply">
+                        <span class="material-symbols-outlined">filter_alt</span>
+                        Применить
+                    </button>
+                </div>
+
+                <div class="broadcast-history-table-wrap">
+                    <table class="broadcast-history-table">
+                        <thead>
+                            <tr>
+                                <th>Telegram ID</th>
+                                <th>Username</th>
+                                <th>Статус</th>
+                                <th>Причина</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="broadcast-history-tbody"></tbody>
+                    </table>
+                    <p id="broadcast-history-empty" class="broadcast-history-empty hidden">
+                        <span class="material-symbols-outlined">search_off</span>
+                        Записей не найдено
+                    </p>
+                </div>
+
+                <footer class="broadcast-history-pagination">
+                    <p id="broadcast-history-pagination-info" class="broadcast-history-pagination__info"></p>
+                    <div class="broadcast-history-pagination__actions">
+                        <button type="button" id="broadcast-history-prev" class="broadcast-history-pagination__btn">Назад</button>
+                        <button type="button" id="broadcast-history-next" class="broadcast-history-pagination__btn">Далее</button>
+                    </div>
+                </footer>
+            </div>
+        </div>
+    </div>
+</div>

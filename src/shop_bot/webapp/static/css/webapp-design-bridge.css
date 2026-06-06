@@ -1,0 +1,96 @@
+/* WebApp design bridge — chrome isolation and FAB placement */
+
+/* Hide chrome that belongs to another design (before JS runs) */
+html:not([data-webapp-design="ios"]) #webapp-ios-tabbar {
+    display: none !important;
+}
+
+html:not([data-webapp-design="desktop"]) #webapp-desktop-sidebar,
+html:not([data-webapp-design="desktop"]) #webapp-desktop-quick-actions,
+html:not([data-webapp-design="desktop"]) #webapp-desktop-page-intro,
+html:not([data-webapp-design="desktop"]) #webapp-desktop-home-grid {
+    display: none !important;
+}
+
+html:not([data-webapp-design="stealth"]) #webapp-stealth-bg,
+html:not([data-webapp-design="stealth"]) #webapp-stealth-header,
+html:not([data-webapp-design="stealth"]) #webapp-stealth-tabbar {
+    display: none !important;
+}
+
+html:not([data-webapp-design="stealth-glass"]) #webapp-stealth-glass-topnav {
+    display: none !important;
+}
+
+html:not([data-webapp-design="glass-hub"]) #webapp-glass-hub-topnav,
+html:not([data-webapp-design="glass-hub"]) #webapp-glass-hub-dashboard {
+    display: none !important;
+}
+
+/* Classic: neutral page shell (no ios/desktop padding bleed) */
+html[data-webapp-design="classic"] #main-page,
+html[data-webapp-design="classic"] #purchase-page,
+html[data-webapp-design="classic"] #renew-page,
+html[data-webapp-design="classic"] #setup-page,
+html[data-webapp-design="classic"] #profile-page,
+html[data-webapp-design="classic"] #support-page {
+    max-width: 28rem !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding: max(env(safe-area-inset-top), 12px) 1rem calc(16px + env(safe-area-inset-bottom)) !important;
+    min-height: 100vh;
+    min-height: 100dvh;
+    box-sizing: border-box;
+}
+
+html[data-webapp-design="classic"] body {
+    display: flex !important;
+    justify-content: center !important;
+    min-height: 100vh;
+    min-height: 100dvh;
+}
+
+/* Theme picker FAB — avoid overlap with nav bars */
+html[data-webapp-design="classic"] #webapp-theme-fab {
+    bottom: calc(14px + env(safe-area-inset-bottom));
+}
+
+html[data-webapp-design="ios"] #webapp-theme-fab {
+    bottom: calc(130px + env(safe-area-inset-bottom));
+    right: max(14px, env(safe-area-inset-right));
+}
+
+html[data-webapp-design="stealth"] #webapp-theme-fab {
+    bottom: calc(88px + env(safe-area-inset-bottom));
+}
+
+html[data-webapp-design="stealth-glass"] #webapp-theme-fab,
+html[data-webapp-design="glass-hub"] #webapp-theme-fab {
+    bottom: calc(20px + env(safe-area-inset-bottom));
+}
+
+html[data-webapp-design="desktop"] #webapp-theme-fab {
+    bottom: calc(14px + env(safe-area-inset-bottom));
+    right: max(14px, env(safe-area-inset-right));
+}
+
+/* Desktop: hide classic page headers when sidebar owns navigation */
+html[data-webapp-design="desktop"] #main-page > header,
+html[data-webapp-design="desktop"] #profile-page > header {
+    visibility: hidden;
+    height: 0;
+    overflow: hidden;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Stealth-glass: suppress duplicate page titles from pseudo-elements on wrong pages */
+html:not([data-webapp-design="stealth-glass"]) #main-page::before,
+html:not([data-webapp-design="stealth-glass"]) #purchase-page::before,
+html:not([data-webapp-design="stealth-glass"]) #renew-page::before,
+html:not([data-webapp-design="stealth-glass"]) #setup-page::before,
+html:not([data-webapp-design="stealth-glass"]) #profile-page::before,
+html:not([data-webapp-design="stealth-glass"]) #support-page::before {
+    display: none !important;
+    content: none !important;
+}

@@ -1,0 +1,129 @@
+<section id="tab-content" class="tab-content bmsg-page cnt-panel" data-notify-can-telegram="{{ '1' if can('settings_content') else '0' }}" data-notify-can-mail="{{ '1' if can('settings_mail_templates') else '0' }}">
+    <header class="bmsg-hub">
+        <div class="bmsg-hub__intro">
+            <div class="bmsg-hub__icon" aria-hidden="true">
+                <span class="material-symbols-outlined" id="bmsg-hub-icon">forum</span>
+            </div>
+            <div>
+                <h2 class="bmsg-hub__title">Notifications Studio</h2>
+                <p class="bmsg-hub__desc" id="bmsg-hub-desc">Telegram-бот и SMTP-письма · HTML · переменные</p>
+            </div>
+        </div>
+        <nav class="bmsg-channel-tabs" role="tablist" aria-label="Канал уведомлений" id="bmsg-channel-tabs">
+            {% if can('settings_content') %}
+            <button type="button" class="bmsg-channel-tab is-active" data-notify-channel="telegram" role="tab">
+                <span class="material-symbols-outlined">forum</span> Telegram
+            </button>
+            {% endif %}
+            {% if can('settings_mail_templates') %}
+            <button type="button" class="bmsg-channel-tab{% if not can('settings_content') %} is-active{% endif %}" data-notify-channel="mail" role="tab">
+                <span class="material-symbols-outlined">mail</span> Почта
+            </button>
+            {% endif %}
+        </nav>
+        <div class="bmsg-hub__stats" id="bmsg-hub-stats-telegram"{% if not can('settings_content') %} hidden{% endif %}>
+            <span class="bmsg-stat" id="bmsg-stat-count">
+                <span class="material-symbols-outlined">chat</span>
+                <span>— шаблонов</span>
+            </span>
+        </div>
+        <div class="bmsg-hub__actions" id="bmsg-hub-actions-telegram"{% if not can('settings_content') %} hidden{% endif %}>
+            <a class="bmsg-link-chip" href="{{ url_for('button_constructor_page') }}#content">
+                <span class="material-symbols-outlined">edit_note</span> Тексты экранов
+            </a>
+            <a class="bmsg-link-chip" href="{{ url_for('button_constructor_page') }}#media">
+                <span class="material-symbols-outlined">photo_library</span> Медиа
+            </a>
+            <button type="button" class="bmsg-btn bmsg-btn--ghost" id="bmsg-reset-all" title="Сбросить все шаблоны">
+                <span class="material-symbols-outlined">restart_alt</span> Сбросить все
+            </button>
+        </div>
+    </header>
+
+    {% if can('settings_content') %}
+    <div id="bmsg-telegram-pane" class="bmsg-channel-pane">
+        <div class="bmsg-board">
+            <div class="bmsg-board__toolbar">
+                <div class="cnt-search bmsg-board__search">
+                    <span class="material-symbols-outlined">search</span>
+                    <input type="search" id="bmsg-search" class="cnt-search__input" placeholder="Поиск шаблона…" autocomplete="off" />
+                </div>
+                <div class="bmsg-filter-scroll">
+                    <div class="bmsg-filters" id="bmsg-filters">
+                        <button type="button" class="bmsg-filter is-active" data-filter="all">Все</button>
+                        <button type="button" class="bmsg-filter" data-filter="user">Пользователь</button>
+                        <button type="button" class="bmsg-filter bmsg-filter--admin" data-filter="admin">Админ</button>
+                    </div>
+                    <div class="bmsg-cat-filters" id="bmsg-cat-filters"></div>
+                </div>
+            </div>
+            <div class="bmsg-cards" id="bmsg-cards" aria-label="Шаблоны Telegram"></div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if can('settings_mail_templates') %}
+    {% include 'partials/settings/tabs/mail_studio_embed.html' %}
+    {% endif %}
+</section>
+
+{% if can('settings_mail_templates') %}
+{% include 'partials/settings/tabs/mail_preview_modal.html' %}
+{% endif %}
+
+{% if can('settings_content') %}
+<div id="bmsgEditorModal" class="modal-overlay modal-xl bmsg-modal-overlay" aria-hidden="true">
+    <div class="modal-content bmsg-modal" role="dialog" aria-modal="true" aria-labelledby="bmsg-editor-title">
+        <header class="bmsg-modal__head">
+            <div class="bmsg-modal__head-copy">
+                <span class="bmsg-audience-badge" id="bmsg-audience-badge">user</span>
+                <h3 class="bmsg-editor-title" id="bmsg-editor-title">—</h3>
+                <p class="bmsg-editor-desc" id="bmsg-editor-desc"></p>
+            </div>
+            <div class="bmsg-modal__head-actions">
+                <button type="button" class="bmsg-btn bmsg-btn--ghost" id="bmsg-reset-one">
+                    <span class="material-symbols-outlined">restart_alt</span> Сброс
+                </button>
+                <button type="button" class="bmsg-btn bmsg-btn--primary" id="bmsg-save">
+                    <span class="material-symbols-outlined">save</span> Сохранить
+                </button>
+                <button type="button" class="bmsg-btn bmsg-btn--ghost bmsg-modal__close" id="bmsg-modal-close" aria-label="Закрыть">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="bmsg-modal__body">
+            <div class="bmsg-modal__editor">
+                <div class="bmsg-vars-wrap">
+                    <span class="bmsg-vars-label">Переменные</span>
+                    <div class="bmsg-vars" id="bmsg-vars" aria-label="Переменные"></div>
+                </div>
+                <label class="bmsg-label" for="bmsg-text">Текст сообщения</label>
+                <textarea id="bmsg-text" class="bmsg-textarea" rows="14" maxlength="4096" spellcheck="false"></textarea>
+                <div class="bmsg-editor-footer">
+                    <span id="bmsg-char-count">0 / 4096</span>
+                    <span class="bmsg-format-hint">HTML: &lt;b&gt; &lt;i&gt; &lt;code&gt; &lt;a&gt; &lt;blockquote&gt;</span>
+                </div>
+            </div>
+
+            <aside class="bmsg-modal__preview" aria-label="Предпросмотр Telegram">
+                <p class="bmsg-preview-eyebrow">Предпросмотр Telegram</p>
+                <div class="bmsg-preview-stage">
+                    <div class="cnt-tg-phone bmsg-tg-phone">
+                        <div class="cnt-tg-phone__bar">
+                            <span class="material-symbols-outlined">arrow_back</span>
+                            <span id="bmsg-preview-brand">ShopBot</span>
+                        </div>
+                        <div class="cnt-tg-phone__body">
+                            <div class="cnt-tg-bubble" id="bmsg-preview-bubble">
+                                <span style="opacity:.45">Загрузка…</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+</div>
+{% endif %}

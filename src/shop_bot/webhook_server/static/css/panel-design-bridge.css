@@ -1,0 +1,163 @@
+/* Panel design bridge — layout isolation and cross-theme fixes */
+
+/* ── Classic / macOS: hide Glass chrome ── */
+html[data-design="classic"] .panel-glass-sidebar,
+html[data-design="macos"] .panel-glass-sidebar,
+html[data-design="macos-v2"] .panel-glass-sidebar,
+html[data-design="classic"] .panel-glass-mobile-bar,
+html[data-design="macos"] .panel-glass-mobile-bar,
+html[data-design="macos-v2"] .panel-glass-mobile-bar {
+    display: none !important;
+}
+
+html[data-design="classic"] .relative.flex.min-h-screen > .flex-1,
+html[data-design="macos"] .relative.flex.min-h-screen > .flex-1,
+html[data-design="macos-v2"] .relative.flex.min-h-screen > .flex-1 {
+    margin-left: 0 !important;
+    width: 100% !important;
+}
+
+/* ── Glass / Stealth: sidebar brand truncate ── */
+.panel-glass-sidebar__brand-text {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.panel-glass-sidebar__brand-text .panel-glass-sidebar__title,
+.panel-glass-sidebar__brand-text .panel-glass-sidebar__sub {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── Glass light mode ── */
+html:not(.dark)[data-design="glass"] .panel-glass-sidebar__link {
+    color: rgba(0, 0, 0, 0.72);
+}
+
+html:not(.dark)[data-design="glass"] .panel-glass-sidebar__link .material-symbols-outlined {
+    color: rgba(0, 0, 0, 0.45);
+}
+
+html:not(.dark)[data-design="glass"] .panel-glass-sidebar__link.is-active {
+    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+html:not(.dark)[data-design="glass"] .panel-glass-sidebar__group-title {
+    color: rgba(0, 0, 0, 0.35);
+}
+
+html:not(.dark)[data-design="glass"] .panel-glass-sidebar__footer {
+    border-top-color: rgba(0, 0, 0, 0.06);
+    color: rgba(0, 0, 0, 0.45);
+}
+
+html:not(.dark)[data-design="glass"] .panel-glass-sidebar__tool-btn,
+html:not(.dark)[data-design="glass"] .panel-admins-online-btn {
+    color: rgba(0, 0, 0, 0.65);
+    border-color: rgba(0, 0, 0, 0.08);
+    background: rgba(0, 0, 0, 0.03);
+}
+
+html:not(.dark)[data-design="glass"] .panel-glass-sidebar__cmdk kbd {
+    border-color: rgba(0, 0, 0, 0.1);
+    background: rgba(0, 0, 0, 0.04);
+    color: rgba(0, 0, 0, 0.45);
+}
+
+html:not(.dark)[data-design="glass"] .panel-glass-mobile-bar {
+    background: rgba(255, 255, 255, 0.92);
+    border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+html:not(.dark)[data-design="glass"] .panel-glass-mobile-bar__menu,
+html:not(.dark)[data-design="glass"] .panel-glass-mobile-bar__title {
+    color: #111;
+}
+
+/* Hardcoded Tailwind text-white on inner pages */
+html:not(.dark)[data-design="glass"] main .text-white,
+html:not(.dark)[data-design="glass"] main h2.text-white,
+html:not(.dark)[data-design="glass"] main h3.text-white {
+    color: #111 !important;
+}
+
+html:not(.dark)[data-design="glass"] main .text-white\/50,
+html:not(.dark)[data-design="glass"] main .text-white\/60,
+html:not(.dark)[data-design="glass"] main .text-white\/40 {
+    color: rgba(0, 0, 0, 0.5) !important;
+}
+
+html:not(.dark)[data-design="glass"] main .bg-white\/5.border.border-white\/10 {
+    background: rgba(255, 255, 255, 0.88) !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+html:not(.dark)[data-design="glass"] .backups-hero__title {
+    color: #111;
+}
+
+html:not(.dark)[data-design="glass"] .backups-hero__sub,
+html:not(.dark)[data-design="glass"] .backups-hero__crumb {
+    color: rgba(0, 0, 0, 0.45);
+}
+
+/* ── Settings on Glass / Stealth ── */
+html[data-design="glass"] .settings-page .settings-shell,
+html[data-design="stealth-admin"] .settings-page .settings-shell {
+    align-items: flex-start;
+    gap: 1.25rem;
+}
+
+@media (min-width: 901px) {
+    html[data-design="glass"] .settings-page .settings-sidebar,
+    html[data-design="stealth-admin"] .settings-page .settings-sidebar {
+        position: sticky;
+        top: 1rem;
+        max-height: calc(100vh - 2.5rem);
+        overflow-y: auto;
+        flex-shrink: 0;
+    }
+
+    html[data-design="glass"] .settings-page .settings-main,
+    html[data-design="stealth-admin"] .settings-page .settings-main {
+        min-width: 0;
+        flex: 1;
+    }
+}
+
+/* ── Layout shell ── */
+html[data-design="glass"] .relative.flex.min-h-screen,
+html[data-design="stealth-admin"] .relative.flex.min-h-screen {
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+html[data-design="glass"] main .max-w-7xl,
+html[data-design="stealth-admin"] main .max-w-7xl {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* ── Z-index stacking (sidebar 40, popover 50, cmdk/modals 110+) ── */
+html[data-design="glass"] .panel-glass-sidebar,
+html[data-design="stealth-admin"] .panel-glass-sidebar {
+    z-index: 40;
+}
+
+html[data-design="glass"] #panel-command-palette,
+html[data-design="stealth-admin"] #panel-command-palette {
+    z-index: 110;
+}
+
+html[data-design="glass"] .modal-overlay.open,
+html[data-design="stealth-admin"] .modal-overlay.open {
+    z-index: 120;
+}
+
+html[data-design="glass"] .panel-admins-popover:not(.hidden),
+html[data-design="stealth-admin"] .panel-admins-popover:not(.hidden) {
+    z-index: 55;
+}

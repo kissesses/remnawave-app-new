@@ -1,0 +1,482 @@
+{% set hst_ns = namespace(visible=0, plans=0) %}
+{% for h in hosts or [] %}
+{% if h.see is none or h.see == 1 %}{% set hst_ns.visible = hst_ns.visible + 1 %}{% endif %}
+{% set hst_ns.plans = hst_ns.plans + (h.plans|length) %}
+{% endfor %}
+
+<section id="tab-hosts" class="tab-content hst-panel">
+    <header class="hst-hub">
+        <div class="hst-hub__intro">
+            <div class="hst-hub__icon" aria-hidden="true">
+                <span class="material-symbols-outlined">dns</span>
+            </div>
+            <div>
+                <h2 class="hst-hub__title">Hosts Studio</h2>
+                <p class="hst-hub__desc">Панели Remnawave · тарифы · SSH · устройства</p>
+            </div>
+        </div>
+        <div class="hst-hub__stats">
+            <span class="hst-stat">
+                <span class="material-symbols-outlined">cloud</span>
+                <span>{{ hosts|length if hosts else 0 }} хостов</span>
+            </span>
+            <span class="hst-stat">
+                <span class="material-symbols-outlined">visibility</span>
+                <span>{{ hst_ns.visible }} видимых</span>
+            </span>
+            <span class="hst-stat">
+                <span class="material-symbols-outlined">category</span>
+                <span>{{ hst_ns.plans }} тарифов</span>
+            </span>
+        </div>
+        <button type="button" class="hst-btn hst-btn--primary" id="hst-add-host-btn">
+            <span class="material-symbols-outlined">add_circle</span>
+            Новый хост
+        </button>
+    </header>
+
+    <div class="hst-add-drawer">
+        <div class="hst-add-drawer__head" onclick="toggleAddHostForm()">
+            <div class="hst-hub__intro">
+                <div class="hst-hub__icon" aria-hidden="true">
+                    <span class="material-symbols-outlined">add_link</span>
+                </div>
+                <div>
+                    <h3 class="hst-hub__title">Подключить панель Remnawave</h3>
+                    <p class="hst-hub__desc">API token · squad UUID · базовый URL</p>
+                </div>
+            </div>
+            <span id="add-host-icon" class="material-symbols-outlined" style="color:var(--hst-dim);transition:transform .3s">expand_more</span>
+        </div>
+        <div id="add-host-form" class="hst-add-drawer__body hidden">
+            <form action="{{ url_for('add_host_route') }}" method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <div class="hst-grid-2">
+                    <div class="hst-field">
+                        <label class="hst-label">Название хоста</label>
+                        <input type="text" name="host_name" placeholder="server1" required class="hst-input" />
+                    </div>
+                    <div class="hst-field">
+                        <label class="hst-label">Базовый URL Remnawave</label>
+                        <input type="url" name="remnawave_base_url" placeholder="https://panel.example.com" required autocomplete="off" class="hst-input" />
+                    </div>
+                    <div class="hst-field">
+                        <label class="hst-label">API Token</label>
+                        <input type="password" name="remnawave_api_token" placeholder="••••••••••••••••" required autocomplete="new-password" class="hst-input" />
+                    </div>
+                    <div class="hst-field">
+                        <label class="hst-label">Squad UUID (опционально)</label>
+                        <input type="text" name="squad_uuid" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" class="hst-input" />
+                    </div>
+                </div>
+                <div style="margin-top:0.65rem;display:flex;justify-content:flex-end">
+                    <button type="submit" class="hst-btn hst-btn--primary">
+                        <span class="material-symbols-outlined">save</span>
+                        Сохранить хост
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="hst-studio">
+        <aside class="hst-picker">
+            <div class="hst-picker__toolbar">
+                <label class="hst-search">
+                    <span class="material-symbols-outlined" style="font-size:1rem;color:var(--hst-dim)">search</span>
+                    <input type="search" id="hst-search-input" class="hst-search__input" placeholder="Поиск хоста…" autocomplete="off" />
+                </label>
+            </div>
+            <div id="hosts-grid-container">
+                {% if hosts %}
+                {% for host in hosts %}
+                <div class="hst-tile host-card" draggable="true" data-host-name="{{ host.host_name }}">
+                    <span class="material-symbols-outlined hst-tile__drag drag-handle" onclick="event.stopPropagation()">drag_indicator</span>
+                    <div class="hst-tile__icon"><span class="material-symbols-outlined">dns</span></div>
+                    <div style="min-width:0">
+                        <p class="hst-tile__name">{{ host.host_name }}</p>
+                        <p class="hst-tile__meta">{{ host.plans|length }} тариф · {{ host.host_url or 'URL не задан' }}</p>
+                    </div>
+                    {% if host.see is not none and host.see != 1 %}
+                    <span class="hst-tile__badge hst-tile__badge--hidden">скрыт</span>
+                    {% else %}
+                    <span class="hst-tile__badge" data-plan-count="{{ host.plans|length }}">{{ host.plans|length }}</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="hst-empty-state">
+                    <span class="material-symbols-outlined" style="font-size:2rem;opacity:.35">dns</span>
+                    <p>Хосты ещё не добавлены</p>
+                </div>
+                {% endif %}
+            </div>
+        </aside>
+
+        <div class="hst-editor" id="hst-editor">
+            <div class="hst-editor__empty" id="hst-editor-empty"{% if hosts %} hidden{% endif %}>
+                <span class="material-symbols-outlined" style="font-size:2.5rem;opacity:.25">touch_app</span>
+                <p>Выберите хост слева для редактирования</p>
+            </div>
+
+            {% if hosts %}
+            {% for host in hosts %}
+            <div class="hst-host-pane" id="host-content-{{ host.host_name }}" hidden>
+                <div class="hst-host-head">
+                    <div>
+                        <h3 class="hst-host-head__title">{{ host.host_name }}</h3>
+                        <p class="hst-hub__desc">Remnawave · {{ host.plans|length }} тариф(ов)</p>
+                    </div>
+                    <div class="hst-host-head__actions" onclick="event.stopPropagation()">
+                        <form action="{{ url_for('toggle_host_visibility_route', host_name=host.host_name) }}" method="post" class="inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                            {% if host.see is none or host.see == 1 %}
+                            <input type="hidden" name="visible" value="0" />
+                            <button type="submit" class="hst-btn hst-btn--warn">
+                                <span class="material-symbols-outlined">visibility_off</span> Скрыть
+                            </button>
+                            {% else %}
+                            <input type="hidden" name="visible" value="1" />
+                            <button type="submit" class="hst-btn hst-btn--ok">
+                                <span class="material-symbols-outlined">visibility</span> Показать
+                            </button>
+                            {% endif %}
+                        </form>
+                        <form action="{{ url_for('delete_host_route', host_name=host.host_name) }}" method="post" class="inline" data-confirm="Удалить хост {{ host.host_name }} и все его тарифы?">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                            <button type="submit" class="hst-btn hst-btn--danger">
+                                <span class="material-symbols-outlined">delete</span> Удалить
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <nav class="hst-host-tabs" aria-label="Разделы хоста">
+                    <button type="button" class="hst-host-tab is-active" data-hst-tab="connection">
+                        <span class="material-symbols-outlined">link</span> Подключение
+                    </button>
+                    <button type="button" class="hst-host-tab" data-hst-tab="ssh">
+                        <span class="material-symbols-outlined">terminal</span> SSH
+                    </button>
+                    <button type="button" class="hst-host-tab" data-hst-tab="devices">
+                        <span class="material-symbols-outlined">devices</span> Устройства
+                    </button>
+                    <button type="button" class="hst-host-tab" data-hst-tab="plans">
+                        <span class="material-symbols-outlined">category</span> Тарифы
+                    </button>
+                    <button type="button" class="hst-host-tab" data-hst-tab="content">
+                        <span class="material-symbols-outlined">description</span> Контент
+                    </button>
+                </nav>
+
+                <!-- Connection -->
+                <div class="hst-host-section" data-hst-section="connection">
+                    <div class="hst-grid-5">
+                        <form action="{{ url_for('update_host_url_route') }}" method="post" class="hst-tile-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                            <input type="hidden" name="host_name" value="{{ host.host_name }}" />
+                            <span class="hst-tile-form__label"><span class="material-symbols-outlined">link</span> URL панели</span>
+                            <input type="text" name="host_url" value="{{ host.host_url or '' }}" placeholder="https://panel.example.com" class="hst-input" />
+                            <button type="submit" class="hst-btn hst-btn--primary">Сохранить</button>
+                        </form>
+
+                        <form action="{{ url_for('rename_host_route') }}" method="post" class="hst-tile-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                            <input type="hidden" name="old_host_name" value="{{ host.host_name }}" />
+                            <span class="hst-tile-form__label"><span class="material-symbols-outlined">badge</span> Имя хоста</span>
+                            <input type="text" name="new_host_name" value="{{ host.host_name }}" class="hst-input" />
+                            <button type="submit" class="hst-btn hst-btn--primary">Сменить имя</button>
+                        </form>
+
+                        <form action="{{ url_for('update_host_button_style_route') }}" method="post" class="hst-tile-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                            <input type="hidden" name="host_name" value="{{ host.host_name }}" />
+                            <span class="hst-tile-form__label"><span class="material-symbols-outlined">palette</span> Стиль кнопки</span>
+                            <div class="hst-swatch-row">
+                                {% set cur_style = host.button_style or '' %}
+                                {% for val, lbl, cls in [('', '—', 'swatch-default'), ('danger', '🔴', 'swatch-danger'), ('success', '🟢', 'swatch-success'), ('primary', '🔵', 'swatch-primary')] %}
+                                <label>
+                                    <input type="radio" name="button_style" value="{{ val }}" class="sr-only peer" {% if cur_style == val %}checked{% endif %} />
+                                    <span class="inline-flex items-center justify-center w-7 h-7 rounded-lg border-2 text-xs font-bold border-white/10 {{ cls }}">{{ lbl }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                            <input type="text" name="icon_emoji_id" value="{{ host.icon_emoji_id or '' }}" placeholder="Emoji ID (опц.)" class="hst-input" />
+                            <button type="submit" class="hst-btn hst-btn--primary">Сохранить</button>
+                        </form>
+
+                        <form action="{{ url_for('update_host_subscription_route') }}" method="post" class="hst-tile-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                            <input type="hidden" name="host_name" value="{{ host.host_name }}" />
+                            <span class="hst-tile-form__label"><span class="material-symbols-outlined">notifications</span> URL подписки</span>
+                            <input type="text" name="host_subscription_url" value="{{ host.subscription_url or '' }}" placeholder="URL для подписки" class="hst-input" />
+                            <button type="submit" class="hst-btn hst-btn--primary">Сохранить</button>
+                        </form>
+
+                        <form action="{{ url_for('update_host_traffic_settings_route') }}" method="post" class="hst-tile-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                            <input type="hidden" name="host_name" value="{{ host.host_name }}" />
+                            <input type="hidden" name="traffic_limit_strategy" id="traffic_limit_strategy_input_{{ host.host_name }}" value="{{ host.default_traffic_strategy }}" />
+                            <span class="hst-tile-form__label"><span class="material-symbols-outlined">restart_alt</span> Сброс трафика</span>
+                            {% set current_strategy = host.default_traffic_strategy or 'NO_RESET' %}
+                            {% set strategy_labels = {'NO_RESET': 'Никогда', 'DAY': 'Ежедневно', 'WEEK': 'Еженедельно', 'MONTH': 'Ежемесячно'} %}
+                            <div class="hst-strategy-select" tabindex="0">
+                                <div class="hst-input hst-strategy-trigger">
+                                    <span id="strategy_label_{{ host.host_name }}">{{ strategy_labels[current_strategy] }}</span>
+                                    <span class="material-symbols-outlined" style="font-size:1rem;color:var(--hst-dim)">expand_more</span>
+                                </div>
+                                <div class="hst-strategy-menu">
+                                    {% for key, lbl in strategy_labels.items() %}
+                                    <div class="hst-strategy-option" onclick="selectTrafficStrategy('{{ host.host_name }}', '{{ key }}', '{{ lbl }}')">{{ lbl }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <button type="submit" class="hst-btn hst-btn--primary">Применить</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- SSH -->
+                <div class="hst-host-section" data-hst-section="ssh" hidden>
+                    <div class="hst-block">
+                        <div class="hst-block__head">
+                            <h4 class="hst-block__title"><span class="material-symbols-outlined">terminal</span> SSH для Speedtest</h4>
+                        </div>
+                        <form action="{{ url_for('update_host_ssh_route') }}" method="post">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                            <input type="hidden" name="host_name" value="{{ host.host_name }}" />
+                            <div class="hst-grid-2">
+                                <div class="hst-field">
+                                    <label class="hst-label">Host</label>
+                                    <input type="text" name="ssh_host" value="{{ host.ssh_host or '' }}" placeholder="example.com" autocomplete="off" class="hst-input" />
+                                </div>
+                                <div class="hst-field">
+                                    <label class="hst-label">Port</label>
+                                    <input type="number" name="ssh_port" value="{{ host.ssh_port or '' }}" placeholder="22" class="hst-input" />
+                                </div>
+                                <div class="hst-field">
+                                    <label class="hst-label">User</label>
+                                    <input type="text" name="ssh_user" value="{{ host.ssh_user or '' }}" placeholder="root" autocomplete="off" class="hst-input" />
+                                </div>
+                                <div class="hst-field">
+                                    <label class="hst-label">Password</label>
+                                    <input type="password" name="ssh_password" value="{{ host.ssh_password or '' }}" placeholder="••••••" autocomplete="new-password" class="hst-input" />
+                                </div>
+                            </div>
+                            <div class="hst-form-row" style="margin-top:0.45rem">
+                                <div class="hst-field" style="flex:2">
+                                    <label class="hst-label">Путь к ключу</label>
+                                    <input type="text" name="ssh_key_path" value="{{ host.ssh_key_path or '' }}" placeholder="/app/keys/id_rsa" class="hst-input" />
+                                </div>
+                                <button type="submit" class="hst-btn hst-btn--primary">Сохранить SSH</button>
+                            </div>
+                        </form>
+                        <form action="{{ url_for('auto_install_speedtest_route', host_name=host.host_name) }}" method="post" style="margin-top:0.65rem;padding-top:0.65rem;border-top:1px solid var(--hst-border)">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                            <button type="submit" class="hst-btn speedtest-loading-btn" style="width:100%" data-label="Автоустановка Speedtest">
+                                <span class="material-symbols-outlined">rocket_launch</span>
+                                Автоустановка Speedtest
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Devices -->
+                <div class="hst-host-section" data-hst-section="devices" hidden>
+                    <div class="hst-block">
+                        <div class="hst-block__head">
+                            <div>
+                                <h4 class="hst-block__title"><span class="material-symbols-outlined">devices</span> Режим устройств</h4>
+                                <p class="hst-hub__desc">Как определяется лимит устройств при покупке</p>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:0.45rem">
+                                <span class="hst-label" style="margin:0" id="device-mode-label-{{ host.host_name }}">{{ 'Выбор' if host.device_mode == 'tiers' else 'По тарифу' }}</span>
+                                <label class="hst-toggle hst-toggle--cyan">
+                                    <input type="checkbox" {% if host.device_mode == 'tiers' %}checked{% endif %} onchange="toggleDeviceMode('{{ host.host_name }}', this.checked)" />
+                                    <span class="hst-toggle__track"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div id="device-tiers-block-{{ host.host_name }}" class="{% if host.device_mode != 'tiers' %}hidden{% endif %}">
+                            <div id="device-tiers-list-{{ host.host_name }}" class="hst-tier-list">
+                                {% set basen = settings.get('base_device_' ~ host.host_name, '1') %}
+                                <div id="base-tier-display-{{ host.host_name }}" class="hst-tier-chip hst-tier-chip--base flex" onclick="editBaseTier('{{ host.host_name }}')">
+                                    <span class="hst-tier-chip__count" id="base-tier-count-{{ host.host_name }}">{{ basen }} устр.</span>
+                                    <span style="color:var(--hst-dim);font-size:0.5625rem">базовое</span>
+                                    <span class="material-symbols-outlined" style="font-size:0.85rem;color:var(--hst-dim)">edit</span>
+                                </div>
+                                <div id="base-tier-edit-{{ host.host_name }}" class="hst-tier-edit hidden">
+                                    <input type="number" id="base-tier-input-{{ host.host_name }}" value="{{ basen }}" min="1" onkeydown="if(event.key==='Enter')saveBaseTier('{{ host.host_name }}')" />
+                                    <span style="font-size:0.5625rem;color:var(--hst-dim)">устр. — базовое</span>
+                                    <button type="button" onclick="saveBaseTier('{{ host.host_name }}')" class="hst-btn hst-btn--ok" style="padding:0.2rem 0.35rem"><span class="material-symbols-outlined">check</span></button>
+                                </div>
+                                {% for tier in host.device_tiers %}
+                                <div class="hst-tier-chip flex" id="tier-display-{{ tier.tier_id }}" onclick="editExtraTier('{{ tier.tier_id }}')">
+                                    <span class="hst-tier-chip__count" id="tier-display-count-{{ tier.tier_id }}">{{ tier.device_count }} устр.</span>
+                                    <span style="color:var(--hst-dim)">—</span>
+                                    <span style="font-weight:700;font-size:0.625rem" id="tier-display-price-{{ tier.tier_id }}">{{ '%.0f'|format(tier.price) }}₽/шт</span>
+                                    <button type="button" onclick="event.stopPropagation();deleteDeviceTier('{{ tier.tier_id }}', '{{ host.host_name }}')" class="hst-tier-chip__del"><span class="material-symbols-outlined" style="font-size:0.85rem">close</span></button>
+                                </div>
+                                <div id="tier-edit-{{ tier.tier_id }}" class="hst-tier-edit hidden">
+                                    <input type="number" id="tier-input-count-{{ tier.tier_id }}" value="{{ tier.device_count }}" min="2" />
+                                    <span style="color:var(--hst-dim);font-size:0.5625rem">—</span>
+                                    <input type="number" id="tier-input-price-{{ tier.tier_id }}" value="{{ '%.0f'|format(tier.price) }}" min="0" />
+                                    <span style="font-size:0.5625rem;color:var(--hst-dim)">₽/шт</span>
+                                    <button type="button" onclick="saveExtraTier('{{ tier.tier_id }}')" class="hst-btn hst-btn--ok" style="padding:0.2rem 0.35rem"><span class="material-symbols-outlined">check</span></button>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <div class="hst-form-row">
+                                <div class="hst-field">
+                                    <label class="hst-label">Кол-во устройств</label>
+                                    <input type="number" min="2" id="tier-count-{{ host.host_name }}" placeholder="3" class="hst-input" />
+                                </div>
+                                <div class="hst-field">
+                                    <label class="hst-label">Цена за устр. (₽)</label>
+                                    <input type="number" min="0" step="1" id="tier-price-{{ host.host_name }}" placeholder="40" class="hst-input" />
+                                </div>
+                                <button type="button" onclick="addDeviceTier('{{ host.host_name }}')" class="hst-btn hst-btn--primary">
+                                    <span class="material-symbols-outlined">add</span>
+                                </button>
+                            </div>
+                            <div class="hst-block__head" style="margin-top:0.65rem;padding-top:0.65rem;border-top:1px solid var(--hst-border);margin-bottom:0">
+                                <div>
+                                    <span style="font-size:0.6875rem;font-weight:700;color:var(--hst-muted)">Без выбора при продлении</span>
+                                    <p class="hst-hub__desc">Цена продления авто-включает текущие устройства</p>
+                                </div>
+                                <label class="hst-toggle hst-toggle--cyan">
+                                    <input type="checkbox" {% if host.tier_lock_extend %}checked{% endif %} onchange="toggleTierLockExtend('{{ host.host_name }}', this.checked)" />
+                                    <span class="hst-toggle__track"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Plans -->
+                <div class="hst-host-section" data-hst-section="plans" hidden>
+                    <div class="hst-block__head" style="padding:0 0 0.55rem">
+                        <h4 class="hst-block__title"><span class="material-symbols-outlined">category</span> Тарифы хоста</h4>
+                        <span class="hst-stat">{{ host.plans|length }} шт.</span>
+                    </div>
+
+                    {% if host.plans %}
+                    <div id="plans-grid-{{ host.host_name }}" class="hst-plans-grid">
+                        {% for plan in host.plans %}
+                        <div id="plan-card-{{ plan.plan_id }}" class="hst-plan-card">
+                            <div id="view-plan-{{ plan.plan_id }}">
+                                <div class="hst-plan-card__head">
+                                    <h5 class="hst-plan-card__name">{{ plan.plan_name }}</h5>
+                                    <span class="hst-plan-card__price">{{ plan.price|round(0) }}₽</span>
+                                </div>
+                                <div class="hst-plan-tags">
+                                    <span class="hst-plan-tag"><span class="material-symbols-outlined">calendar_today</span>{{ plan.months }} м</span>
+                                    <span class="hst-plan-tag"><span class="material-symbols-outlined">data_usage</span>{{ plan.traffic_limit_gb or '∞' }} G</span>
+                                    <span class="hst-plan-tag"><span class="material-symbols-outlined">devices</span>{{ plan.hwid_limit or '∞' }} HWID</span>
+                                </div>
+                                <div class="hst-plan-actions">
+                                    <button type="button" class="hst-btn" onclick="document.getElementById('view-plan-{{ plan.plan_id }}').classList.add('hidden');document.getElementById('edit-plan-{{ plan.plan_id }}').classList.remove('hidden')">
+                                        <span class="material-symbols-outlined">edit</span> Изменить
+                                    </button>
+                                    <form action="{{ url_for('delete_plan_route', plan_id=plan.plan_id) }}" method="post">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                                        <button type="submit" class="hst-btn hst-btn--danger" style="width:100%"><span class="material-symbols-outlined">delete</span> Удалить</button>
+                                    </form>
+                                </div>
+                            </div>
+                            <div id="edit-plan-{{ plan.plan_id }}" class="hidden">
+                                <form action="{{ url_for('update_plan_route', plan_id=plan.plan_id) }}" method="post">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                                    <div class="hst-field"><input type="text" name="plan_name" value="{{ plan.plan_name }}" placeholder="Название" required class="hst-input" /></div>
+                                    <div class="hst-grid-2">
+                                        <input type="number" name="months" value="{{ plan.months }}" placeholder="Мес." required class="hst-input" />
+                                        <input type="number" name="price" value="{{ plan.price }}" placeholder="Цена" required class="hst-input" />
+                                    </div>
+                                    <div class="hst-grid-2" style="margin-top:0.35rem">
+                                        <input type="number" name="traffic_limit_gb" value="{{ plan.traffic_limit_gb }}" placeholder="GB (0=∞)" class="hst-input" />
+                                        <input type="number" name="hwid_limit" value="{{ plan.hwid_limit }}" placeholder="HWID" class="hst-input" />
+                                    </div>
+                                    <div class="hst-swatch-row" style="margin:0.35rem 0">
+                                        {% set p_style = plan.button_style or '' %}
+                                        {% for val, lbl, cls in [('', '—', 'swatch-default'), ('danger', '🔴', 'swatch-danger'), ('success', '🟢', 'swatch-success'), ('primary', '🔵', 'swatch-primary')] %}
+                                        <label>
+                                            <input type="radio" name="button_style" value="{{ val }}" class="sr-only peer" {% if p_style == val %}checked{% endif %} />
+                                            <span class="inline-flex items-center justify-center w-6 h-6 rounded text-[10px] font-bold border border-white/10 {{ cls }}">{{ lbl }}</span>
+                                        </label>
+                                        {% endfor %}
+                                    </div>
+                                    <input type="text" name="icon_emoji_id" value="{{ plan.icon_emoji_id or '' }}" placeholder="Emoji ID" class="hst-input" />
+                                    <div class="hst-plan-actions" style="margin-top:0.45rem">
+                                        <button type="submit" class="hst-btn hst-btn--primary">ОК</button>
+                                        <button type="button" class="hst-btn" onclick="document.getElementById('edit-plan-{{ plan.plan_id }}').classList.add('hidden');document.getElementById('view-plan-{{ plan.plan_id }}').classList.remove('hidden')">Отмена</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="hst-empty-plans">
+                        <span class="material-symbols-outlined" style="font-size:2rem;opacity:.25">inventory_2</span>
+                        <p>Для этого хоста пока нет тарифов</p>
+                    </div>
+                    {% endif %}
+
+                    <div class="hst-add-plan">
+                        <form action="{{ url_for('add_plan_route') }}" method="post">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                            <input type="hidden" name="host_name" value="{{ host.host_name }}" />
+                            <div class="hst-grid-5" style="margin-bottom:0.45rem">
+                                <div class="hst-field"><label class="hst-label">Название</label><input type="text" name="plan_name" placeholder="Pro Plan" required class="hst-input" /></div>
+                                <div class="hst-field"><label class="hst-label">Месяцев</label><input type="number" name="months" placeholder="12" required class="hst-input" /></div>
+                                <div class="hst-field"><label class="hst-label">Цена (₽)</label><input type="number" name="price" placeholder="500" required class="hst-input" /></div>
+                                <div class="hst-field"><label class="hst-label">Трафик (GB)</label><input type="number" name="traffic_limit_gb" placeholder="100" class="hst-input" /></div>
+                                <div class="hst-field"><label class="hst-label">HWID</label><input type="number" name="hwid_limit" placeholder="1" class="hst-input" /></div>
+                            </div>
+                            <div class="hst-form-row">
+                                <div class="hst-swatch-row">
+                                    {% for val, lbl, cls in [('', '—', 'swatch-default'), ('danger', '🔴', 'swatch-danger'), ('success', '🟢', 'swatch-success'), ('primary', '🔵', 'swatch-primary')] %}
+                                    <label>
+                                        <input type="radio" name="button_style" value="{{ val }}" class="sr-only peer" {% if val == '' %}checked{% endif %} />
+                                        <span class="inline-flex items-center justify-center w-6 h-6 rounded text-[10px] font-bold border border-white/10 {{ cls }}">{{ lbl }}</span>
+                                    </label>
+                                    {% endfor %}
+                                </div>
+                                <input type="text" name="icon_emoji_id" placeholder="Emoji ID" class="hst-input" style="max-width:8rem" />
+                                <button type="submit" class="hst-btn hst-btn--primary"><span class="material-symbols-outlined">add</span> Добавить тариф</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Content -->
+                <div class="hst-host-section" data-hst-section="content" hidden>
+                    <div class="hst-block">
+                        <div class="hst-block__head">
+                            <div>
+                                <h4 class="hst-block__title"><span class="material-symbols-outlined">description</span> Своё описание (HTML)</h4>
+                                <p class="hst-hub__desc">Отображается в меню выбора тарифа в боте</p>
+                            </div>
+                            <label class="hst-toggle">
+                                <input type="checkbox" id="toggle-description-{{ host.host_name }}" onchange="toggleDescriptionForm('{{ host.host_name }}')" {% if host.description %}checked{% endif %} />
+                                <span class="hst-toggle__track"></span>
+                            </label>
+                        </div>
+                        <div id="description-form-{{ host.host_name }}" class="{% if not host.description %}hidden{% endif %}">
+                            <form action="{{ url_for('update_host_description_route') }}" method="post">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                                <input type="hidden" name="host_name" value="{{ host.host_name }}" />
+                                <textarea name="host_description" rows="6" placeholder="Введите HTML-описание для этого хоста…" class="hst-textarea">{{ host.description or '' }}</textarea>
+                                <div style="margin-top:0.45rem;display:flex;justify-content:flex-end">
+                                    <button type="submit" class="hst-btn hst-btn--primary">Сохранить описание</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+</section>

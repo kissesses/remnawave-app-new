@@ -1,0 +1,405 @@
+/**
+ * Tool Surface — единый минималистичный слой для страниц-инструментов:
+ * рассылка, промокоды, бэкапы, конструктор кнопок.
+ * Подключается после page-specific CSS.
+ */
+
+/* ── Tokens ── */
+.brc-page,
+.prx-page,
+.pms-page,
+.mtm-page,
+.bv-page,
+.btn-cstr-page,
+#tab-broadcast,
+#tab-promo,
+#tab-mail-templates,
+#mtm-page-root {
+    --ts-text: var(--panel-text, #f4f4f5);
+    --ts-muted: var(--panel-text-secondary, rgba(235, 235, 245, 0.55));
+    --ts-dim: var(--panel-text-tertiary, rgba(235, 235, 245, 0.38));
+    --ts-surface: rgba(255, 255, 255, 0.04);
+    --ts-surface-2: rgba(255, 255, 255, 0.06);
+    --ts-border: rgba(255, 255, 255, 0.09);
+    --ts-border-strong: rgba(255, 255, 255, 0.14);
+    --ts-accent: var(--primary, #0a84ff);
+    --ts-accent-rgb: var(--primary-rgb, 10, 132, 255);
+    --ts-accent-soft: rgba(var(--ts-accent-rgb), 0.12);
+    --ts-radius: 12px;
+    --ts-radius-lg: 14px;
+    --ts-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+html:not(.dark) .brc-page,
+html:not(.dark) .prx-page,
+html:not(.dark) .pms-page,
+html:not(.dark) .mtm-page,
+html:not(.dark) .bv-page,
+html:not(.dark) .btn-cstr-page,
+html:not(.dark) #tab-broadcast,
+html:not(.dark) #tab-promo {
+    --ts-text: #1c1c1e;
+    --ts-muted: rgba(0, 0, 0, 0.55);
+    --ts-dim: rgba(0, 0, 0, 0.42);
+    --ts-surface: rgba(0, 0, 0, 0.025);
+    --ts-surface-2: rgba(0, 0, 0, 0.04);
+    --ts-border: rgba(0, 0, 0, 0.08);
+    --ts-border-strong: rgba(0, 0, 0, 0.12);
+    --ts-accent-soft: rgba(var(--ts-accent-rgb), 0.08);
+}
+
+/* ── Убрать декоративные фоны ── */
+.brc-mesh,
+.prx-aurora,
+.prx-grid-bg,
+.bv-ambient,
+#tab-broadcast.brx-layout::before {
+    display: none !important;
+}
+
+/* ── Заголовки страниц ── */
+.brc-banner,
+.prx-hero,
+.bv-hero,
+.btn-cstr-hero {
+    margin-bottom: 1rem;
+    padding: 1rem 1.1rem;
+    border-radius: var(--ts-radius-lg);
+    border: 1px solid var(--ts-border);
+    background: var(--ts-surface);
+    box-shadow: var(--ts-shadow);
+}
+
+.brc-banner__tag,
+.prx-hero__crumb,
+.bv-hero__eyebrow,
+.btn-cstr-breadcrumb {
+    margin: 0 0 0.35rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: none;
+    color: var(--ts-dim);
+}
+
+.brc-banner__title,
+.prx-hero__title,
+.bv-hero__title,
+.btn-cstr-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 650;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+    color: var(--ts-text) !important;
+    background: none !important;
+    -webkit-text-fill-color: var(--ts-text) !important;
+}
+
+.brc-banner__desc,
+.prx-hero__sub,
+.bv-hero__sub,
+.btn-cstr-subtitle {
+    margin: 0.4rem 0 0;
+    max-width: 40rem;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--ts-muted);
+    font-weight: 400;
+}
+
+.bv-hero__orb {
+    display: none;
+}
+
+.bv-hero__title {
+    display: block;
+}
+
+/* ── KPI / chips / stats ── */
+.brx-layout .brc-kpi-strip,
+.prx-hero__hud,
+.backups-stats,
+.btn-cstr-stats,
+.bv-health {
+    gap: 0.5rem;
+}
+
+.brx-layout .brc-kpi,
+.prx-chip,
+.backups-stat-card,
+.btn-cstr-stat,
+.bv-health__item {
+    border-radius: var(--ts-radius);
+    border: 1px solid var(--ts-border);
+    background: var(--ts-surface);
+    box-shadow: none;
+}
+
+.brx-layout .brc-kpi {
+    border-radius: var(--ts-radius);
+    min-width: 7rem;
+    padding: 0.5rem 0.75rem;
+}
+
+.brx-layout .brc-kpi--accent {
+    border-color: rgba(var(--ts-accent-rgb), 0.28);
+    background: var(--ts-accent-soft);
+    box-shadow: none;
+}
+
+.prx-chip--mint,
+.prx-chip--pink,
+.prx-chip strong {
+    color: var(--ts-text);
+}
+
+.prx-chip--mint,
+.prx-chip--pink {
+    border-color: var(--ts-border);
+    box-shadow: none;
+}
+
+.btn-cstr-stat::before {
+    display: none;
+}
+
+.btn-cstr-stat {
+    background: var(--ts-surface);
+}
+
+/* ── Кнопки ── */
+.brc-btn,
+.prx-chip--btn,
+.prx-create,
+.brc-launch-btn,
+.bv-btn-glow,
+.backups-btn,
+.btn-cstr-btn {
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+    box-shadow: var(--ts-shadow);
+}
+
+.brc-launch-btn,
+.bv-btn-glow,
+.prx-create {
+    background: var(--ts-accent) !important;
+    border: 1px solid transparent !important;
+    color: #fff !important;
+    box-shadow: var(--ts-shadow) !important;
+}
+
+.brc-launch-btn:hover:not(:disabled),
+.bv-btn-glow:hover,
+.prx-create:hover {
+    filter: brightness(1.06);
+    transform: none;
+    box-shadow: var(--ts-shadow) !important;
+}
+
+.brc-btn--soft,
+.prx-preset,
+.pms-preset,
+.prx-pills button,
+.pms-toolbar-group button {
+    background: var(--ts-surface-2);
+    border-color: var(--ts-border);
+    color: var(--ts-muted);
+}
+
+/* ── Навигация / шаги ── */
+.brx-layout .brc-steps,
+.prx-seg,
+.pms-seg,
+.pms-tabs,
+.bv-nav {
+    border: 1px solid var(--ts-border);
+    background: var(--ts-surface);
+    box-shadow: none;
+}
+
+.brx-layout .brc-steps__item.is-active {
+    color: var(--ts-text);
+    background: var(--ts-accent-soft);
+    box-shadow: none;
+}
+
+.brx-layout .brc-steps__item.is-active .brc-steps__num {
+    color: var(--ts-dim);
+}
+
+.prx-seg__ind,
+.pms-seg__ind {
+    background: var(--ts-accent-soft);
+    border: 1px solid rgba(var(--ts-accent-rgb), 0.25);
+}
+
+.bv-nav__btn.is-active {
+    background: var(--ts-accent-soft);
+    color: var(--ts-text);
+    box-shadow: none;
+}
+
+/* ── Панели / карточки / листы ── */
+.brc-sheet,
+.prx-forge,
+.prx-vault,
+.bv-vault-card,
+.bv-health,
+.btn-cstr-workspace,
+.btn-cstr-inspector {
+    border: 1px solid var(--ts-border);
+    background: var(--ts-surface);
+    box-shadow: var(--ts-shadow);
+}
+
+html:not(.dark) .brc-sheet {
+    background: #fff;
+}
+
+.brc-sheet,
+.prx-forge,
+.prx-vault {
+    border-radius: var(--ts-radius-lg);
+}
+
+.prx-forge {
+    border-color: var(--ts-border);
+}
+
+.prx-vault {
+    border-color: var(--ts-border);
+}
+
+.prx-card::before {
+    height: 2px;
+    background: var(--ts-accent);
+    opacity: 1;
+}
+
+.prx-card {
+    background: var(--ts-surface);
+    border-color: var(--ts-border);
+}
+
+.prx-card:hover {
+    transform: none;
+    border-color: var(--ts-border-strong);
+    box-shadow: var(--ts-shadow);
+}
+
+.prx-card__reward {
+    color: var(--ts-text);
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.bv-stats .backups-stat-card {
+    background: var(--ts-surface);
+    border-color: var(--ts-border);
+}
+
+.bv-vault-card {
+    background: var(--ts-surface);
+}
+
+/* ── Поля ввода ── */
+.prx-inp,
+.pms-input,
+.pms-select,
+.brc-textarea,
+#broadcast-text.brc-textarea,
+.bv-search input,
+.prx-search input,
+.pms-search input {
+    border-color: var(--ts-border);
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: var(--ts-radius);
+}
+
+html:not(.dark) .prx-inp,
+html:not(.dark) .pms-input,
+html:not(.dark) .pms-select,
+html:not(.dark) #broadcast-text.brc-textarea,
+html:not(.dark) .bv-search input,
+html:not(.dark) .pms-search input {
+    background: #fff;
+}
+
+.prx-inp:focus,
+.pms-input:focus,
+.pms-select:focus,
+#broadcast-text.brc-textarea:focus {
+    border-color: rgba(var(--ts-accent-rgb), 0.45);
+    box-shadow: 0 0 0 3px var(--ts-accent-soft);
+}
+
+/* ── Inline var / tags ── */
+.brc-inline-var {
+    background: var(--ts-accent-soft);
+    color: var(--ts-accent);
+    border: 1px solid rgba(var(--ts-accent-rgb), 0.2);
+}
+
+/* ── Launchpad ── */
+.brx-layout .brc-launchpad__card {
+    border-color: var(--ts-border);
+    background: var(--ts-surface);
+    box-shadow: var(--ts-shadow);
+}
+
+/* ── Scope chips backups ── */
+.bv-scope-chip {
+    border-radius: var(--ts-radius);
+    background: var(--ts-surface-2);
+}
+
+/* ── Constructor phone chrome ── */
+.btn-cstr-phone {
+    border-color: var(--ts-border);
+}
+
+.btn-cstr-btn--primary {
+    background: var(--ts-accent-soft) !important;
+    border-color: rgba(var(--ts-accent-rgb), 0.35) !important;
+    color: var(--ts-accent) !important;
+}
+
+.btn-cstr-workspace__canvas,
+.btn-cstr-preview-pane {
+    border-color: var(--ts-border);
+    background: var(--ts-surface);
+}
+
+.brc-banner {
+    border-color: var(--ts-border) !important;
+    background: var(--ts-surface) !important;
+    box-shadow: var(--ts-shadow) !important;
+}
+
+.prx-hero {
+    border-color: var(--ts-border) !important;
+    background: var(--ts-surface) !important;
+}
+
+.bv-hero {
+    align-items: flex-end;
+}
+
+.brc-kpi--accent .brc-kpi__val {
+    font-size: 0.9375rem;
+}
+
+/* ── Таблицы ── */
+.prx-table th {
+    background: var(--ts-surface-2);
+}
+
+/* ── Сегменты promo pills ── */
+.prx-pills button.is-on,
+.prx-pills button.is-active {
+    background: var(--ts-accent-soft);
+    color: var(--ts-text);
+}

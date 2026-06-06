@@ -1,0 +1,13 @@
+{# tab_sections: list of {id, label, icon} #}
+{% if tab_sections and tab_sections | length > 1 %}
+<nav class="settings-section-nav no-scrollbar" aria-label="Разделы настроек">
+    {% for sec in tab_sections %}
+    <a href="#{{ sec.id }}" class="settings-section-nav__link{% if loop.first %} is-active{% endif %}" data-section-nav="{{ sec.id }}">
+        {% if sec.icon %}
+        <span class="material-symbols-outlined settings-section-nav__icon" aria-hidden="true">{{ sec.icon }}</span>
+        {% endif %}
+        <span>{{ sec.label }}</span>
+    </a>
+    {% endfor %}
+</nav>
+{% endif %}

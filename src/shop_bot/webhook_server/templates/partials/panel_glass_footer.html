@@ -1,0 +1,59 @@
+<div class="panel-glass-sidebar__bot-status">
+    {% if main_running and support_running %}
+    <span class="panel-glass-sidebar__live panel-glass-sidebar__live--ok" title="Система работает">
+        <span class="panel-glass-sidebar__live-dot"></span>
+        Live
+    </span>
+    {% elif main_running or support_running %}
+    <span class="panel-glass-sidebar__live panel-glass-sidebar__live--warn" title="Частичный запуск">
+        <span class="panel-glass-sidebar__live-dot"></span>
+        Limited
+    </span>
+    {% else %}
+    <span class="panel-glass-sidebar__live panel-glass-sidebar__live--off" title="Система остановлена">
+        <span class="panel-glass-sidebar__live-dot"></span>
+        Off
+    </span>
+    {% endif %}
+</div>
+
+<div class="panel-glass-sidebar__toolbar">
+    {% if main_running or support_running %}
+    <form action="{{ url_for('stop_both_bots_route') }}" method="post" class="inline" data-confirm="Остановить работу всех модулей?">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <button type="submit" title="Остановить систему" class="panel-glass-sidebar__tool-btn panel-glass-sidebar__tool-btn--danger">
+            <span class="material-symbols-outlined">stop_circle</span>
+        </button>
+    </form>
+    {% elif all_settings_ok and support_settings_ok %}
+    <form action="{{ url_for('start_both_bots_route') }}" method="post" class="inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <button type="submit" title="Запустить систему" class="panel-glass-sidebar__tool-btn panel-glass-sidebar__tool-btn--accent">
+            <span class="material-symbols-outlined">play_circle</span>
+        </button>
+    </form>
+    {% endif %}
+
+    <button type="button" id="btn-restart-bot-glass" title="Полная перезагрузка" class="panel-glass-sidebar__tool-btn">
+        <span class="material-symbols-outlined">restart_alt</span>
+    </button>
+
+    {% with btn_id='panel-admins-online-btn-glass', btn_class='panel-glass-sidebar__tool-btn' %}
+    {% include 'partials/panel_admins_online_btn.html' %}
+    {% endwith %}
+
+    <button type="button" id="about-info-btn-glass" title="О проекте" class="panel-glass-sidebar__tool-btn">
+        <span class="material-symbols-outlined">info</span>
+    </button>
+
+    <button type="button" id="theme-toggle-btn-glass" title="Оформление панели" class="panel-glass-sidebar__tool-btn">
+        <span class="material-symbols-outlined">palette</span>
+    </button>
+
+    <form action="{{ url_for('logout_page') }}" method="post" class="inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <button type="submit" title="Выйти" class="panel-glass-sidebar__tool-btn">
+            <span class="material-symbols-outlined">logout</span>
+        </button>
+    </form>
+</div>

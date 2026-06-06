@@ -1,0 +1,999 @@
+/* Remnawave ShopBot — macOS layout (floating dock + compact header) */
+
+html[data-design|="macos"] {
+    --macos-dock-height: 4.25rem;
+    --macos-dock-gap: 1.25rem;
+}
+
+/* ===== Compact top header ===== */
+html[data-design|="macos"] .panel-topbar {
+    min-height: 44px;
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+    background: rgba(18, 18, 20, 0.72);
+}
+
+html[data-design|="macos"] .panel-topbar__inner {
+    min-height: 44px;
+    padding: 0 1rem;
+}
+
+html[data-design|="macos"] .panel-topbar__nav {
+    display: none !important;
+}
+
+html[data-design|="macos"] .panel-topbar__brand-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    max-width: 18rem;
+}
+
+html[data-design|="macos"] .panel-topbar__start {
+    gap: 0.65rem;
+}
+
+html[data-design|="macos"] main {
+    padding-bottom: calc(var(--macos-dock-height) + var(--macos-dock-gap) + 1.5rem) !important;
+}
+
+/* Traffic lights (decorative) */
+.macos-traffic-lights {
+    display: none;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+}
+
+html[data-design|="macos"] .macos-traffic-lights {
+    display: flex;
+}
+
+.macos-traffic-lights span {
+    width: 0.72rem;
+    height: 0.72rem;
+    border-radius: 50%;
+    border: 0.5px solid rgba(0, 0, 0, 0.15);
+}
+
+.macos-traffic-lights span:nth-child(1) { background: #ff5f57; }
+.macos-traffic-lights span:nth-child(2) { background: #febc2e; }
+.macos-traffic-lights span:nth-child(3) { background: #28c840; }
+
+html[data-design|="macos"] .panel-topbar--with-nav .panel-topbar__inner {
+    flex-wrap: nowrap;
+}
+
+html[data-design|="macos"] .panel-topbar__page-title {
+    display: block;
+    flex: 1;
+    min-width: 0;
+    text-align: center;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--panel-text-secondary);
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0 0.75rem;
+}
+
+.panel-topbar__page-title {
+    display: none;
+}
+
+/* ===== Floating Dock ===== */
+.panel-dock {
+    display: none;
+    position: fixed;
+    left: 50%;
+    bottom: 0.85rem;
+    transform: translateX(-50%);
+    z-index: 50;
+    pointer-events: none;
+}
+
+html[data-design|="macos"] .panel-dock {
+    display: block;
+}
+
+.panel-dock__inner {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.35rem;
+    padding: 0.45rem 0.65rem;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(38, 38, 42, 0.62);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    box-shadow:
+        0 12px 40px rgba(0, 0, 0, 0.45),
+        0 0 0 0.5px rgba(255, 255, 255, 0.06) inset;
+    pointer-events: auto;
+}
+
+.panel-dock__divider {
+    width: 1px;
+    align-self: stretch;
+    margin: 0.35rem 0.15rem;
+    background: rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+}
+
+.panel-dock__item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    padding: 0.35rem 0.45rem;
+    border-radius: 12px;
+    text-decoration: none;
+    color: var(--panel-text-secondary);
+    transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.15s ease;
+    transform-origin: bottom center;
+}
+
+.panel-dock__item:hover {
+    transform: translateY(-6px) scale(1.12);
+    color: var(--panel-text);
+}
+
+.panel-dock__item.is-active {
+    color: var(--panel-accent);
+}
+
+.panel-dock__icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.panel-dock__item:hover .panel-dock__icon {
+    background: rgba(255, 255, 255, 0.14);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.panel-dock__item.is-active .panel-dock__icon {
+    background: rgba(10, 132, 255, 0.2);
+    border-color: rgba(10, 132, 255, 0.35);
+    box-shadow: 0 0 0 1px rgba(10, 132, 255, 0.15);
+}
+
+.panel-dock__item .material-symbols-outlined {
+    font-size: 1.35rem;
+}
+
+.panel-dock__label {
+    position: absolute;
+    bottom: calc(100% + 0.45rem);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    padding: 0.25rem 0.55rem;
+    border-radius: 7px;
+    background: rgba(28, 28, 30, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.panel-dock__item:hover .panel-dock__label {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.panel-dock__dot {
+    position: absolute;
+    bottom: 0.15rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--panel-accent);
+    opacity: 0;
+}
+
+.panel-dock__item.is-active .panel-dock__dot {
+    opacity: 1;
+}
+
+.panel-dock__badge {
+    position: absolute;
+    top: 0.1rem;
+    right: 0.15rem;
+    min-width: 1rem;
+    height: 1rem;
+    padding: 0 0.2rem;
+    border-radius: 999px;
+    background: #ff453a;
+    color: #fff;
+    font-size: 0.5625rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid rgba(38, 38, 42, 0.9);
+}
+
+.panel-dock__badge.hidden {
+    display: none;
+}
+
+/* Per-app dock icon colors (macOS style) */
+.panel-dock__item[data-dock="home"] .panel-dock__icon { background: linear-gradient(145deg, #0a84ff, #0066cc); color: #fff; border: none; }
+.panel-dock__item[data-dock="users"] .panel-dock__icon { background: linear-gradient(145deg, #5e5ce6, #4240b0); color: #fff; border: none; }
+.panel-dock__item[data-dock="keys"] .panel-dock__icon { background: linear-gradient(145deg, #30d158, #248a3d); color: #fff; border: none; }
+.panel-dock__item[data-dock="support"] .panel-dock__icon { background: linear-gradient(145deg, #ff9f0a, #c93400); color: #fff; border: none; }
+.panel-dock__item[data-dock="buttons"] .panel-dock__icon { background: linear-gradient(145deg, #64d2ff, #0a84ff); color: #fff; border: none; }
+.panel-dock__item[data-dock="nodes"] .panel-dock__icon { background: linear-gradient(145deg, #bf5af2, #8944ab); color: #fff; border: none; }
+.panel-dock__item[data-dock="backups"] .panel-dock__icon { background: linear-gradient(145deg, #ffd60a, #ff9f0a); color: #3a3000; border: none; }
+.panel-dock__item[data-dock="settings"] .panel-dock__icon { background: linear-gradient(145deg, #8e8e93, #636366); color: #fff; border: none; }
+
+/* Light brightness overrides for macOS layout */
+html:not(.dark)[data-design|="macos"] .panel-topbar {
+    background: rgba(246, 246, 248, 0.78);
+    border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+html:not(.dark)[data-design|="macos"] .panel-dock__inner {
+    background: rgba(255, 255, 255, 0.72);
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12), 0 0 0 0.5px rgba(0, 0, 0, 0.04) inset;
+}
+
+html:not(.dark)[data-design|="macos"] .panel-dock__label {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(0, 0, 0, 0.08);
+    color: #1c1c1e;
+}
+
+/* ===== Theme picker modal ===== */
+.theme-modal-overlay {
+    padding: 1rem;
+    overflow-y: auto;
+    align-items: flex-start;
+}
+
+.theme-modal-overlay .theme-modal {
+    max-width: 720px;
+    width: min(920px, 96vw);
+    max-height: min(90vh, 880px);
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    overflow: hidden;
+    margin: auto;
+    border-radius: 16px;
+    background: rgba(22, 22, 24, 0.98);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 32px 64px rgba(0, 0, 0, 0.55);
+}
+
+.theme-modal__header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1.1rem 1.25rem 0.85rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
+}
+
+.theme-modal__lights {
+    display: flex !important;
+    margin-top: 0.35rem;
+}
+
+.theme-modal__header-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.theme-modal__title {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--panel-text);
+}
+
+.theme-modal__subtitle {
+    margin: 0.25rem 0 0;
+    font-size: 0.75rem;
+    color: var(--panel-text-tertiary);
+}
+
+.theme-modal__close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border: none;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--panel-text-secondary);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.theme-modal__close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--panel-text);
+}
+
+.theme-modal__body {
+    padding: 1.25rem;
+    overflow-y: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+.theme-modal__section + .theme-modal__section {
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.theme-modal__section-title {
+    margin: 0 0 0.75rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--panel-text-tertiary);
+}
+
+.theme-modal__previews {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.theme-modal__previews--3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.theme-modal__previews--5 {
+    grid-template-columns: repeat(5, 1fr);
+}
+
+@media (max-width: 900px) {
+    .theme-modal__previews--5 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 720px) {
+    .theme-modal__previews--3 {
+        grid-template-columns: 1fr;
+    }
+
+    .theme-modal__previews--5 {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 560px) {
+    .theme-modal__previews {
+        grid-template-columns: 1fr;
+    }
+}
+
+.theme-preview-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    padding: 0.65rem;
+    border-radius: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+    cursor: pointer;
+    text-align: left;
+    color: inherit;
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+}
+
+.theme-preview-card:hover {
+    background: rgba(255, 255, 255, 0.06);
+    transform: translateY(-2px);
+}
+
+.theme-preview-card.is-active {
+    border-color: color-mix(in srgb, var(--primary, #0a84ff) 55%, transparent);
+    background: color-mix(in srgb, var(--primary, #0a84ff) 8%, transparent);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary, #0a84ff) 20%, transparent);
+}
+
+.theme-preview-card__check {
+    position: absolute;
+    top: 0.55rem;
+    right: 0.55rem;
+    font-size: 1.25rem;
+    color: var(--primary, #0a84ff);
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.theme-preview-card.is-active .theme-preview-card__check {
+    opacity: 1;
+}
+
+.theme-preview-card--featured {
+    border-color: rgba(255, 69, 58, 0.22);
+}
+
+.theme-preview-card--featured.is-active {
+    border-color: rgba(10, 132, 255, 0.55);
+}
+
+.theme-preview-card__new {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    z-index: 2;
+    padding: 0.08rem 0.35rem;
+    border-radius: 5px;
+    background: #ff453a;
+    color: #fff;
+    font-size: 0.5625rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    line-height: 1.3;
+}
+
+.theme-preview-card__frame {
+    aspect-ratio: 16 / 11;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: #0a0a0c;
+    display: flex;
+    flex-direction: column;
+}
+
+.theme-preview-card__info strong {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--panel-text);
+}
+
+.theme-preview-card__info span {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.6875rem;
+    color: var(--panel-text-tertiary);
+}
+
+/* Mini UI mockups inside preview cards */
+.tpc-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.35rem 0.45rem;
+    background: rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.tpc-bar--slim { padding: 0.28rem 0.45rem; }
+
+.tpc-dot {
+    width: 0.35rem;
+    height: 0.35rem;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.tpc-dot:nth-child(1) { background: #ff5f57; }
+.tpc-dot:nth-child(2) { background: #febc2e; }
+.tpc-dot:nth-child(3) { background: #28c840; }
+
+.tpc-brand {
+    width: 2rem;
+    height: 0.35rem;
+    margin-left: 0.35rem;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.tpc-brand--center {
+    flex: 1;
+    max-width: 3rem;
+    margin: 0 auto;
+}
+
+.tpc-nav {
+    display: flex;
+    gap: 0.2rem;
+    margin-left: auto;
+}
+
+.tpc-nav i {
+    display: block;
+    width: 1.1rem;
+    height: 0.35rem;
+    border-radius: 3px;
+    background: rgba(10, 132, 255, 0.35);
+}
+
+.tpc-body {
+    flex: 1;
+    padding: 0.45rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.tpc-body--macos { padding-bottom: 0.25rem; }
+
+.theme-preview-card__frame--macos-v2 {
+    background: linear-gradient(145deg, #1a1a2e, #0f3460);
+}
+
+.tpc-body--macos-v2 {
+    position: relative;
+    padding-bottom: 0.25rem;
+    min-height: 3.5rem;
+}
+
+.tpc-win {
+    position: absolute;
+    border-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(22, 22, 28, 0.92);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.tpc-win::before {
+    content: '';
+    display: block;
+    height: 0.35rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 5px 5px 0 0;
+}
+
+.tpc-win--lg {
+    inset: 0.35rem 0.55rem 0.55rem 0.35rem;
+}
+
+.tpc-win--sm {
+    width: 42%;
+    height: 48%;
+    right: 0.45rem;
+    top: 0.55rem;
+    z-index: 1;
+}
+
+.tpc-line {
+    height: 0.3rem;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.1);
+    width: 60%;
+}
+
+.tpc-line--lg { width: 45%; height: 0.4rem; }
+
+.tpc-card {
+    flex: 1;
+    min-height: 1.5rem;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.tpc-card--sm { flex: 0.6; min-height: 1rem; }
+
+.tpc-dock {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    margin: 0.2rem 0.45rem 0.35rem;
+    padding: 0.25rem 0.35rem;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(4px);
+}
+
+.tpc-dock i {
+    display: block;
+    width: 0.65rem;
+    height: 0.65rem;
+    border-radius: 4px;
+    background: linear-gradient(145deg, #0a84ff, #5e5ce6);
+}
+
+.tpc-dock i:nth-child(2) { background: linear-gradient(145deg, #30d158, #248a3d); }
+.tpc-dock i:nth-child(3) { background: linear-gradient(145deg, #ff9f0a, #c93400); }
+.tpc-dock i:nth-child(4) { background: linear-gradient(145deg, #bf5af2, #8944ab); }
+.tpc-dock i:nth-child(6) { background: linear-gradient(145deg, #8e8e93, #636366); }
+
+.tpc-dock-sep {
+    width: 1px;
+    height: 0.5rem;
+    background: rgba(255, 255, 255, 0.15);
+    margin: 0 0.1rem;
+}
+
+.theme-segment {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    padding: 0.25rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.theme-segment__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--panel-text-secondary);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.theme-segment__btn .material-symbols-outlined {
+    font-size: 1.125rem;
+}
+
+.theme-segment__btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--panel-text);
+}
+
+.theme-segment__btn.is-active {
+    background: rgba(10, 132, 255, 0.16);
+    border-color: rgba(10, 132, 255, 0.35);
+    color: #0a84ff;
+}
+
+.theme-modal__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 0.85rem 1.25rem 1.1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(0, 0, 0, 0.15);
+    flex-shrink: 0;
+}
+
+.theme-modal__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0.55rem 1.1rem;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.theme-modal__btn--ghost {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.08);
+    color: var(--panel-text-secondary);
+}
+
+.theme-modal__btn--ghost:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--panel-text);
+}
+
+.theme-modal__btn--primary {
+    background: #0a84ff;
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(10, 132, 255, 0.35);
+}
+
+.theme-modal__btn--primary:hover {
+    opacity: 0.92;
+}
+
+html:not(.dark) .theme-modal-overlay .theme-modal {
+    background: rgba(255, 255, 255, 0.98);
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+html:not(.dark) .theme-preview-card__frame {
+    background: #f2f2f7;
+}
+
+html:not(.dark) .theme-modal__footer {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+/* ===== macOS global page styling ===== */
+html[data-design|="macos"] body.panel-ios {
+    background: radial-gradient(ellipse 120% 80% at 50% -20%, rgba(10, 132, 255, 0.08), transparent 50%),
+        radial-gradient(ellipse 80% 60% at 100% 100%, rgba(94, 92, 230, 0.06), transparent 45%),
+        #0a0a0c !important;
+}
+
+html[data-design|="macos"] .neon-ambient {
+    display: none !important;
+}
+
+html[data-design|="macos"] main {
+    padding-top: 0.75rem !important;
+}
+
+html[data-design|="macos"] main .max-w-7xl {
+    background: rgba(22, 22, 24, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 18px;
+    padding: 1.35rem 1.5rem !important;
+    backdrop-filter: blur(40px) saturate(160%);
+    -webkit-backdrop-filter: blur(40px) saturate(160%);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    min-height: calc(100vh - var(--macos-dock-height) - 7rem);
+}
+
+html:not(.dark)[data-design|="macos"] body.panel-ios {
+    background: radial-gradient(ellipse 120% 80% at 50% -20%, rgba(10, 132, 255, 0.06), transparent 50%), #f2f2f7 !important;
+}
+
+html:not(.dark)[data-design|="macos"] main .max-w-7xl {
+    background: rgba(255, 255, 255, 0.82);
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* Page headers — unified macOS typography */
+html[data-design|="macos"] .users-title,
+html[data-design|="macos"] .support-title,
+html[data-design|="macos"] .settings-title,
+html[data-design|="macos"] main h2.text-3xl {
+    font-size: clamp(1.625rem, 3vw, 2rem) !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.035em !important;
+}
+
+html[data-design|="macos"] .users-breadcrumb,
+html[data-design|="macos"] .support-breadcrumb,
+html[data-design|="macos"] .settings-breadcrumb {
+    font-size: 0.625rem;
+    opacity: 0.7;
+}
+
+/* Filters & search — macOS pill style */
+html[data-design|="macos"] .users-filters,
+html[data-design|="macos"] .support-filters {
+    padding: 0.25rem;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+html[data-design|="macos"] .users-search,
+html[data-design|="macos"] .support-search {
+    border-radius: 14px;
+    background: rgba(118, 118, 128, 0.14);
+}
+
+html[data-design|="macos"] .users-filter.is-active,
+html[data-design|="macos"] .support-filter.is-active {
+    box-shadow: 0 1px 4px rgba(10, 132, 255, 0.2);
+}
+
+/* User/support cards */
+html[data-design|="macos"] .users-card,
+html[data-design|="macos"] .support-inbox-item {
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.07);
+    transition: transform 0.15s ease, background 0.15s ease;
+}
+
+html[data-design|="macos"] .users-card:hover,
+html[data-design|="macos"] .support-inbox-item:hover {
+    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+/* Dashboard */
+html[data-design|="macos"] #dash-tabs {
+    border-radius: 14px !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+    border-color: rgba(255, 255, 255, 0.07) !important;
+    padding: 0.3rem !important;
+}
+
+html[data-design|="macos"] .dash-tab {
+    border-radius: 10px !important;
+    font-size: 0.75rem !important;
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+}
+
+html[data-design|="macos"] .dash-tab.is-active {
+    background: rgba(10, 132, 255, 0.18) !important;
+    color: #0a84ff !important;
+}
+
+html[data-design|="macos"] [class*="bg-[#0c0818]"] {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border-color: rgba(255, 255, 255, 0.07) !important;
+    border-radius: 14px !important;
+}
+
+/* Settings */
+html[data-design|="macos"] .settings-sidebar {
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+html[data-design|="macos"] .settings-main {
+    border-radius: 14px;
+}
+
+html[data-design|="macos"] .settings-sidebar .tab-link.settings-tab-active {
+    background: rgba(10, 132, 255, 0.14);
+    color: #0a84ff;
+}
+
+/* Node / keys tabs */
+html[data-design|="macos"] #node-nav,
+html[data-design|="macos"] .tab-btn.is-active {
+    border-radius: 12px;
+}
+
+html[data-design|="macos"] #node-nav {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border-radius: 14px !important;
+}
+
+html[data-design|="macos"] .tab-btn.is-active,
+html[data-design|="macos"] #node-nav .tab-btn.active {
+    background: rgba(10, 132, 255, 0.16) !important;
+    color: #0a84ff !important;
+}
+
+/* Modals — macOS window chrome */
+html[data-design|="macos"] .modal-content {
+    border-radius: 14px !important;
+    background: rgba(28, 28, 30, 0.96) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55) !important;
+}
+
+html[data-design|="macos"] .users-modal {
+    border-radius: 16px !important;
+}
+
+html:not(.dark)[data-design|="macos"] .modal-content {
+    background: rgba(255, 255, 255, 0.98) !important;
+}
+
+/* Tables */
+html[data-design|="macos"] table thead {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+html[data-design|="macos"] .udm-table thead {
+    background: rgba(14, 14, 18, 0.9);
+}
+
+/* Toast */
+html[data-design|="macos"] .toast-container {
+    bottom: calc(var(--macos-dock-height) + 1.5rem);
+    top: auto;
+    right: 1.25rem;
+}
+
+@media (max-width: 639px) {
+    html[data-design|="macos"] .panel-dock__inner {
+        gap: 0.15rem;
+        padding: 0.4rem 0.45rem;
+        max-width: calc(100vw - 1rem);
+        overflow-x: auto;
+    }
+
+    .panel-dock__icon {
+        width: 2.25rem;
+        height: 2.25rem;
+    }
+
+    .panel-dock__item {
+        padding: 0.25rem 0.3rem;
+    }
+}
+
+/* ===== Workspace desktop host ===== */
+html[data-design="macos-v2"] body.workspace-host .neon-main-bg {
+    background: transparent !important;
+}
+
+html[data-design="macos-v2"] body.workspace-host .neon-ambient {
+    display: none !important;
+}
+
+html[data-design="macos-v2"] body.workspace-host .panel-dock {
+    z-index: 9500;
+}
+
+html[data-design="macos-v2"] body.workspace-host .toast-container {
+    z-index: 9600;
+}
+
+html[data-design="macos-v2"] body.workspace-host .modal-overlay,
+html[data-design="macos-v2"] body.workspace-host .modal-overlay.open {
+    z-index: 9800 !important;
+}
+
+html[data-design="macos-v2"] body.workspace-host .theme-modal-overlay {
+    z-index: 9850 !important;
+}
+
+html[data-design="macos"] .panel-dock__footer {
+    display: none !important;
+}
+
+.panel-dock__footer {
+    display: none;
+    align-items: center;
+    gap: 0.35rem;
+    flex-shrink: 0;
+    margin-left: 0.25rem;
+}
+
+html[data-design="macos-v2"] .panel-dock__footer {
+    display: flex;
+}
+
+.panel-dock__edit-btn {
+    position: relative;
+    z-index: 2;
+    pointer-events: auto;
+}
+
+html[data-design="macos-v2"] body.workspace-host .panel-dock__edit-btn {
+    position: relative;
+    z-index: 2;
+    pointer-events: auto;
+    flex-shrink: 0;
+}
+
+html[data-design="macos-v2"] body.workspace-host .panel-dock__footer {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-shrink: 0;
+    margin-left: 0.25rem;
+}
+
+html[data-design="macos-v2"] #theme-workspace-section {
+    display: block;
+}
+
+html:not([data-design="macos-v2"]) #theme-workspace-section {
+    display: none;
+}

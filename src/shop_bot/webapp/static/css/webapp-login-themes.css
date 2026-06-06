@@ -1,0 +1,57 @@
+/* Login page — iOS & desktop theme overrides */
+
+html[data-webapp-design="ios"] body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", sans-serif !important;
+    background: #000 !important;
+}
+
+html[data-webapp-design="ios"] #auth-container h1,
+html[data-webapp-design="ios"] #loader h2 {
+    text-transform: none !important;
+    letter-spacing: -0.02em !important;
+}
+
+html[data-webapp-design="ios"] #auth-link,
+html[data-webapp-design="ios"] #email-login-btn {
+    border-radius: 14px !important;
+    background: #0A84FF !important;
+    color: #fff !important;
+}
+
+html[data-webapp-design="ios"] #show-email-btn,
+html[data-webapp-design="ios"] #email-register-btn {
+    border-radius: 14px !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+html[data-webapp-design="ios"] input {
+    border-radius: 12px !important;
+    background: #1C1C1E !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+html[data-webapp-design="ios"] .text-primary,
+html[data-webapp-design="ios"] svg.text-primary {
+    color: #0A84FF !important;
+}
+
+html[data-webapp-design="desktop"] body {
+    background: radial-gradient(1200px 600px at 20% -10%, rgba(16, 185, 129, 0.12), transparent 55%), #0a0a0a !important;
+}
+
+html[data-webapp-design="desktop"] #auth-container,
+html[data-webapp-design="desktop"] #loader {
+    max-width: 420px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 24px;
+    border-radius: 20px;
+    background: rgba(20, 20, 20, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(16px);
+}
+
+html[data-webapp-design="desktop"] #auth-container {
+    padding: 28px 32px;
+}

@@ -1,0 +1,195 @@
+{# Mail Studio — embedded in Notifications Studio #}
+<div id="mtm-page-root" class="mtm-page bmsg-mail-pane" hidden>
+    <header class="mtm-hub">
+        <div class="mtm-hub__intro">
+            <div class="mtm-hub__icon" aria-hidden="true">
+                <span class="material-symbols-outlined">mail</span>
+            </div>
+            <div>
+                <h2 class="mtm-hub__title">Mail Studio</h2>
+                <p class="mtm-hub__desc">SMTP-письма · переменные <code>{{ '{{brand}}' }}</code></p>
+            </div>
+        </div>
+        <div class="mtm-hub__stats">
+            <span class="mtm-stat" id="mtm-stat-count">
+                <span class="material-symbols-outlined">draft</span>
+                <span>— шаблонов</span>
+            </span>
+            <span class="mtm-stat mtm-stat--muted" id="mtm-stat-brand">
+                <span class="material-symbols-outlined">storefront</span>
+                <span>—</span>
+            </span>
+        </div>
+        <div class="mtm-hub__actions">
+            <div class="mtm-accent-wrap">
+                <span class="mtm-accent-wrap__label">Акцент</span>
+                <div class="mtm-accent-presets" id="mtm-accent-presets" aria-label="Быстрые цвета"></div>
+                <input type="color" id="mtm-accent" class="mtm-accent-input" value="#0A84FF" aria-label="Цвет акцента" />
+            </div>
+            <button type="button" class="mtm-btn mtm-btn--ghost" id="mtm-reset-all" title="Сбросить все шаблоны">
+                <span class="material-symbols-outlined">restart_alt</span>
+                Сбросить все
+            </button>
+        </div>
+    </header>
+
+    <div class="mtm-studio">
+        <div class="mtm-preview-pane" aria-label="Превью письма">
+            <div class="mtm-preview-pane__head">
+                <div>
+                    <p class="mtm-preview-pane__eyebrow">Предпросмотр</p>
+                    <h3 class="mtm-preview-pane__title" id="mtm-preview-title">—</h3>
+                </div>
+                <div class="mtm-preview-pane__actions">
+                    <div class="mtm-device-toggle" role="group" aria-label="Ширина">
+                        <button type="button" class="mtm-device-toggle__btn is-active" data-mtm-device="desktop" title="Десктоп">
+                            <span class="material-symbols-outlined">desktop_windows</span>
+                        </button>
+                        <button type="button" class="mtm-device-toggle__btn" data-mtm-device="mobile" title="Мобильный">
+                            <span class="material-symbols-outlined">smartphone</span>
+                        </button>
+                    </div>
+                    <select id="mtm-preview-zoom" class="mtm-zoom-select" aria-label="Масштаб">
+                        <option value="0.75">75%</option>
+                        <option value="1" selected>100%</option>
+                        <option value="1.25">125%</option>
+                    </select>
+                    <button type="button" class="mtm-icon-btn" id="mtm-copy-html" title="Копировать HTML" disabled>
+                        <span class="material-symbols-outlined">content_copy</span>
+                    </button>
+                    <button type="button" class="mtm-icon-btn" id="mtm-preview-expand" title="На весь экран" disabled>
+                        <span class="material-symbols-outlined">open_in_full</span>
+                    </button>
+                    <button type="button" class="mtm-icon-btn" id="mtm-open-tab" title="Новая вкладка" disabled>
+                        <span class="material-symbols-outlined">open_in_new</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="mtm-inbox" id="mtm-inbox-mock">
+                <div class="mtm-inbox__row">
+                    <span class="mtm-inbox__from" id="mtm-inbox-from">—</span>
+                    <span class="mtm-inbox__time">сейчас</span>
+                </div>
+                <div class="mtm-inbox__subject" id="mtm-inbox-subject">—</div>
+                <div class="mtm-inbox__pre" id="mtm-inbox-preheader">—</div>
+            </div>
+
+            <div class="mtm-preview-body">
+                <div class="mtm-preview-empty" id="mtm-preview-empty">
+                    <span class="material-symbols-outlined">touch_app</span>
+                    <p>Выберите шаблон — превью появится здесь</p>
+                </div>
+                <div class="mtm-preview-loading" id="mtm-preview-loading" hidden>
+                    <span class="mtm-preview-loading__spin"></span>
+                    <span>Рендер…</span>
+                </div>
+                <div class="mtm-mail-frame" id="mtm-mail-frame" hidden>
+                    <div class="mtm-mail-frame__device mtm-mail-frame__device--desktop" id="mtm-preview-device">
+                        <iframe id="mtm-preview-iframe" title="Превью HTML-письма" sandbox=""></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mtm-picker" aria-label="Шаблоны">
+            <div class="mtm-picker__toolbar">
+                <div class="mtm-search">
+                    <span class="material-symbols-outlined">search</span>
+                    <input type="search" id="mtm-search" class="mtm-search__input" placeholder="Поиск…" autocomplete="off" />
+                </div>
+                <div class="mtm-picker__filters" role="tablist">
+                    <button type="button" class="mtm-filter is-active" data-mtm-filter="all" role="tab">Все</button>
+                    <button type="button" class="mtm-filter" data-mtm-filter="user" role="tab">Юзер</button>
+                    <button type="button" class="mtm-filter" data-mtm-filter="admin" role="tab">Админ</button>
+                </div>
+            </div>
+            <p class="mtm-picker__count">Показано: <strong id="mtm-count">0</strong></p>
+            <div class="mtm-tile-grid" id="mtm-gallery" role="tablist"></div>
+        </div>
+    </div>
+
+    <div class="mtm-composer" id="mtm-composer">
+        <div class="mtm-composer__head">
+            <div class="mtm-composer__meta" id="mtm-editor-meta"></div>
+            <div class="mtm-composer__actions">
+                <button type="button" class="mtm-btn mtm-btn--ghost" id="mtm-reset-one" title="Сбросить шаблон">
+                    <span class="material-symbols-outlined">restart_alt</span>
+                </button>
+                <button type="button" class="mtm-btn mtm-btn--primary" id="mtm-save-btn">
+                    <span class="material-symbols-outlined">save</span>
+                    Сохранить
+                </button>
+            </div>
+        </div>
+
+        <div class="mtm-composer__grid">
+            <div class="mtm-field">
+                <label class="mtm-label" for="mtm-subject">
+                    Тема
+                    <span class="mtm-hint-inline" id="mtm-subject-hint"></span>
+                </label>
+                <input type="text" id="mtm-subject" class="mtm-input" autocomplete="off" />
+            </div>
+            <div class="mtm-field">
+                <label class="mtm-label" for="mtm-preheader">
+                    Прехедер
+                    <span class="mtm-hint-inline" id="mtm-preheader-hint"></span>
+                </label>
+                <input type="text" id="mtm-preheader" class="mtm-input" autocomplete="off" />
+            </div>
+            <div class="mtm-field mtm-field--full">
+                <label class="mtm-label" for="mtm-headline">Заголовок в письме</label>
+                <input type="text" id="mtm-headline" class="mtm-input" autocomplete="off" />
+            </div>
+            <div class="mtm-field mtm-field--full">
+                <div class="mtm-label-row">
+                    <label class="mtm-label" for="mtm-body">Тело (HTML)</label>
+                    <div class="mtm-snippet-bar" id="mtm-snippet-bar" aria-label="Быстрые вставки"></div>
+                </div>
+                <textarea id="mtm-body" class="mtm-textarea" rows="9" spellcheck="false"></textarea>
+            </div>
+            <div class="mtm-field">
+                <label class="mtm-label" for="mtm-cta-label">Кнопка — текст</label>
+                <input type="text" id="mtm-cta-label" class="mtm-input" placeholder="Необязательно" />
+            </div>
+            <div class="mtm-field">
+                <label class="mtm-label" for="mtm-cta-url">
+                    Кнопка — ссылка
+                    <span class="mtm-hint-inline mtm-hint-inline--status" id="mtm-cta-url-hint"></span>
+                </label>
+                <input type="text" id="mtm-cta-url" class="mtm-input" placeholder="https://… или {{ '{{webapp_url}}' }}" />
+            </div>
+            <div class="mtm-field mtm-field--full mtm-field--footer">
+                <div class="mtm-label-row">
+                    <label class="mtm-label" for="mtm-footer">
+                        Подвал письма
+                        <span class="mtm-hint-inline">общий для всех · <code>{{ '{{brand}}' }}</code></span>
+                    </label>
+                    <button type="button" class="mtm-text-btn" id="mtm-reset-footer" title="Заводской подвал">
+                        <span class="material-symbols-outlined">restart_alt</span>
+                        Сбросить
+                    </button>
+                </div>
+                <textarea id="mtm-footer" class="mtm-textarea mtm-textarea--footer" rows="3" spellcheck="false"></textarea>
+            </div>
+        </div>
+
+        <div class="mtm-composer__foot">
+            <div class="mtm-vars-block">
+                <p class="mtm-vars-block__label">
+                    <span class="material-symbols-outlined">data_object</span>
+                    Переменные — клик вставит в активное поле
+                </p>
+                <div class="mtm-vars__chips" id="mtm-vars-chips"></div>
+            </div>
+            <div class="mtm-test-bar">
+                <input type="email" id="mtm-test-email" class="mtm-input" placeholder="test@example.com" />
+                <button type="button" class="mtm-btn mtm-btn--ghost" id="mtm-send-test">
+                    <span class="material-symbols-outlined">send</span>
+                    Тест на почту
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

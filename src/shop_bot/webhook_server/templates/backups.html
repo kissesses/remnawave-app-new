@@ -1,0 +1,535 @@
+{% extends "base.html" %}
+{% block title %}Резервные копии{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/backups-panel.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tool-surface.css') }}" />
+{% endblock %}
+
+{% block content %}
+<div class="bv-page backups-page" id="backups-page">
+    <div class="bv-ambient" aria-hidden="true"></div>
+
+    <header class="bv-hero">
+        <div class="bv-hero__main">
+            <p class="bv-hero__eyebrow">Система</p>
+            <h1 class="bv-hero__title">Резервные копии</h1>
+            <p class="bv-hero__sub">База бота, файлы и Remnawave — шифрование, расписание и отправка в Telegram.</p>
+        </div>
+        <div class="bv-hero__actions">
+            <button type="button" class="backups-btn backups-btn--ghost" id="backups-refresh-btn">
+                <span class="material-symbols-outlined">refresh</span>
+                Обновить
+            </button>
+            <button type="button" class="backups-btn backups-btn--ghost" id="backups-create-open">
+                <span class="material-symbols-outlined">add_circle</span>
+                Создать
+            </button>
+            <form method="post" action="{{ url_for('backup_db_route') }}" class="inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <button type="submit" class="backups-btn bv-btn-glow">
+                    <span class="material-symbols-outlined">download</span>
+                    Создать и скачать
+                </button>
+            </form>
+        </div>
+    </header>
+
+    {% if backup_config.autobackup_delivery_blocked %}
+    <div class="backups-delivery-alert bv-alert" id="backups-delivery-alert" data-static-alert="1" role="alert">
+        <span class="material-symbols-outlined">warning</span>
+        <div>
+            <strong>Автобэкап в Telegram не будет выполняться</strong>
+            <ul class="backups-delivery-alert__list">
+                {% for msg in backup_config.delivery_alerts %}
+                <li>{{ msg }}</li>
+                {% endfor %}
+            </ul>
+            <p class="backups-delivery-alert__link">
+                <a href="{{ url_for('settings_page', tab='bot') }}#bot-channels">Настройки → Боты → Каналы и топики</a>
+            </p>
+        </div>
+    </div>
+    {% elif autobackup_telegram and autobackup_enabled and not backup_config.archive_channel_configured %}
+    <div class="backups-delivery-alert backups-delivery-alert--warn bv-alert" id="backups-delivery-alert" data-static-alert="1" role="alert">
+        <span class="material-symbols-outlined">info</span>
+        <div>
+            <strong>Канал архивов не настроен</strong>
+            <p>При ручной отправке в Telegram архив не уйдёт, пока не укажете Chat ID в <a href="{{ url_for('settings_page', tab='bot') }}#bot-channels" class="backups-link">Настройки → Боты</a>.</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="bv-health" id="bv-health-rail">
+        <div class="bv-health__item bv-health__item--{% if autobackup_enabled %}ok{% else %}off{% endif %}" data-bv-health="autobackup">
+            <span class="material-symbols-outlined">autorenew</span>
+            <span class="bv-health__label">Автобэкап</span>
+            <span class="bv-health__val" id="bv-health-autobackup">{% if autobackup_enabled %}{{ backup_interval_days }} дн.{% else %}Выкл{% endif %}</span>
+        </div>
+        <div class="bv-health__item bv-health__item--{% if backup_config.encrypt_enabled %}ok{% else %}warn{% endif %}">
+            <span class="material-symbols-outlined">lock</span>
+            <span class="bv-health__label">Шифрование</span>
+            <span class="bv-health__val">{% if backup_config.encrypt_enabled %}AES{% else %}Выкл{% endif %}</span>
+        </div>
+        <div class="bv-health__item bv-health__item--{% if backup_config.remnawave_configured %}ok{% else %}warn{% endif %}">
+            <span class="material-symbols-outlined">cloud_sync</span>
+            <span class="bv-health__label">Remnawave</span>
+            <span class="bv-health__val">{% if backup_config.remnawave_configured %}OK{% else %}Настроить{% endif %}</span>
+        </div>
+        <div class="bv-health__item bv-health__item--{% if backup_config.archive_channel_configured %}ok{% else %}warn{% endif %}">
+            <span class="material-symbols-outlined">send</span>
+            <span class="bv-health__label">Telegram</span>
+            <span class="bv-health__val">{% if backup_config.archive_channel_configured %}Канал{% else %}Нет{% endif %}</span>
+        </div>
+        <div class="bv-health__item" id="bv-health-next-wrap">
+            <span class="material-symbols-outlined">event_upcoming</span>
+            <span class="bv-health__label">След. автобэкап</span>
+            <span class="bv-health__val" id="bv-health-next">—</span>
+        </div>
+    </div>
+
+    <div class="backups-stats bv-stats">
+        <article class="backups-stat-card bv-stat">
+            <span class="material-symbols-outlined">inventory_2</span>
+            <div>
+                <p class="backups-stat-card__label">Архивов</p>
+                <p class="backups-stat-card__value" id="backups-stat-count">{{ backup_summary.count }}</p>
+            </div>
+        </article>
+        <article class="backups-stat-card bv-stat">
+            <span class="material-symbols-outlined">data_usage</span>
+            <div>
+                <p class="backups-stat-card__label">Общий размер</p>
+                <p class="backups-stat-card__value" id="backups-stat-size">{{ backup_summary.total_human }}</p>
+            </div>
+        </article>
+        <article class="backups-stat-card bv-stat">
+            <span class="material-symbols-outlined">schedule</span>
+            <div>
+                <p class="backups-stat-card__label">Последний</p>
+                <p class="backups-stat-card__value backups-stat-card__value--sm" id="backups-stat-latest">
+                    {% if backup_summary.latest_modified %}{{ backup_summary.latest_modified }}{% else %}—{% endif %}
+                </p>
+            </div>
+        </article>
+        <article class="backups-stat-card backups-stat-card--{% if autobackup_enabled %}ok{% else %}off{% endif %} bv-stat" id="backups-stat-autobackup">
+            <span class="material-symbols-outlined">encrypted</span>
+            <div>
+                <p class="backups-stat-card__label">Зашифровано</p>
+                <p class="backups-stat-card__value" id="backups-stat-encrypted">{{ backup_summary.encrypted_count|default(0) }}</p>
+            </div>
+        </article>
+    </div>
+
+    <div class="bv-scope-bar" id="bv-scope-bar" aria-label="Состав хранилища"></div>
+
+    <nav class="bv-nav" aria-label="Разделы бэкапов" data-bv-nav>
+        <button type="button" class="bv-nav__btn is-active" data-bv-target="archives" aria-current="page">
+            <span class="material-symbols-outlined">folder_zip</span>
+            Хранилище
+        </button>
+        <button type="button" class="bv-nav__btn" data-bv-target="automation">
+            <span class="material-symbols-outlined">tune</span>
+            Автоматизация
+        </button>
+        <button type="button" class="bv-nav__btn" data-bv-target="restore">
+            <span class="material-symbols-outlined">settings_backup_restore</span>
+            Восстановление
+        </button>
+        <button type="button" class="bv-nav__btn" data-bv-target="remnawave">
+            <span class="material-symbols-outlined">dns</span>
+            Remnawave
+        </button>
+    </nav>
+
+    <div class="bv-panels">
+        <section class="bv-panel is-active" data-bv-panel="archives">
+            <div class="bv-vault-card">
+                <header class="bv-vault-card__head">
+                    <div>
+                        <h2>Архивы на сервере</h2>
+                        <p><code>src/</code>, <code>data/</code>, <code>.env</code> · каталог <code>backups/</code> исключён</p>
+                    </div>
+                    <div class="bv-toolbar">
+                        <label class="bv-search">
+                            <span class="material-symbols-outlined">search</span>
+                            <input type="search" id="bv-archive-search" placeholder="Поиск по имени или заметке…" autocomplete="off" />
+                        </label>
+                        <select id="bv-filter-scope" class="bv-select" title="Состав">
+                            <option value="">Все типы</option>
+                            <option value="database">База данных</option>
+                            <option value="files">Проект</option>
+                            <option value="full">БД + проект</option>
+                            <option value="remnawave">Remnawave</option>
+                        </select>
+                        <select id="bv-filter-source" class="bv-select" title="Источник">
+                            <option value="">Все источники</option>
+                            <option value="manual">Вручную</option>
+                            <option value="auto">Автобэкап</option>
+                            <option value="pre_restore">Pre-restore</option>
+                            <option value="telegram">Telegram</option>
+                        </select>
+                        <select id="bv-sort" class="bv-select" title="Сортировка">
+                            <option value="newest">Сначала новые</option>
+                            <option value="oldest">Сначала старые</option>
+                            <option value="size_desc">По размеру ↓</option>
+                            <option value="size_asc">По размеру ↑</option>
+                        </select>
+                        <div class="bv-view-toggle" role="group" aria-label="Вид">
+                            <button type="button" class="bv-view-toggle__btn is-active" data-bv-view="grid" title="Сетка"><span class="material-symbols-outlined">grid_view</span></button>
+                            <button type="button" class="bv-view-toggle__btn" data-bv-view="list" title="Список"><span class="material-symbols-outlined">view_list</span></button>
+                            <button type="button" class="bv-view-toggle__btn" data-bv-view="timeline" title="Таймлайн"><span class="material-symbols-outlined">timeline</span></button>
+                        </div>
+                        <button type="button" class="backups-btn backups-btn--ghost backups-btn--sm" id="backups-cleanup-btn" title="Применить лимит хранения">
+                            <span class="material-symbols-outlined">cleaning_services</span>
+                        </button>
+                    </div>
+                </header>
+                <div class="bv-vault-card__body">
+                    <div id="backups-list-loading" class="backups-inline-loading hidden">
+                        <span class="material-symbols-outlined animate-spin">progress_activity</span>
+                    </div>
+                    <div id="backups-list-root">
+                        {% if backups %}
+                        <div class="backups-grid" id="backups-grid">
+                            {% for b in backups %}
+                            <button type="button" class="backups-archive-card" data-backup-name="{{ b.name }}"
+                                data-source="{{ b.source }}" data-scope="{{ b.scope }}"
+                                data-size="{{ b.size }}" data-mtime="{{ b.mtime }}"
+                                data-note="{{ b.note|e }}" data-encrypted="{{ '1' if b.encrypted else '0' }}">
+                                <div class="backups-archive-card__head">
+                                    <span class="backups-archive-card__badge backups-archive-card__badge--scope-{{ b.scope }}">{{ b.scope_label }}</span>
+                                    <span class="backups-archive-card__badge backups-archive-card__badge--{{ b.source }}">{{ b.source_label }}</span>
+                                    {% if b.encrypted %}<span class="bv-lock-badge" title="AES-256"><span class="material-symbols-outlined">lock</span></span>{% endif %}
+                                    {% if loop.first %}<span class="backups-badge-new">Новый</span>{% endif %}
+                                </div>
+                                <p class="backups-archive-card__name">{{ b.name }}</p>
+                                {% if b.note %}<p class="backups-archive-card__note">{{ b.note }}</p>{% endif %}
+                                <p class="backups-archive-card__meta">{{ b.modified }} · {{ b.size_human }}</p>
+                            </button>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="backups-empty-state bv-empty" id="backups-empty-state">
+                            <div class="bv-empty__icon"><span class="material-symbols-outlined">cloud_off</span></div>
+                            <p>Хранилище пусто</p>
+                            <span>Создайте первый архив — кнопка «Создать» или быстрые шаблоны ниже</span>
+                            <div class="bv-quick-create">
+                                <button type="button" class="bv-quick-create__btn" data-bv-quick-scope="database">
+                                    <span class="material-symbols-outlined">database</span> БД
+                                </button>
+                                <button type="button" class="bv-quick-create__btn" data-bv-quick-scope="full">
+                                    <span class="material-symbols-outlined">deployed_code</span> Полный
+                                </button>
+                                <button type="button" class="bv-quick-create__btn" data-bv-quick-scope="remnawave">
+                                    <span class="material-symbols-outlined">dns</span> Remnawave
+                                </button>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <p class="bv-list-meta hidden" id="bv-list-meta"></p>
+                </div>
+            </div>
+
+            <aside class="bv-side-tools">
+                <div class="bv-side-card">
+                    <h3><span class="material-symbols-outlined">send</span> Telegram</h3>
+                    <p>Новый dump или выбранный архив из карточки</p>
+                    <button type="button" id="backup-send-telegram-new" class="backups-btn backups-btn--telegram backups-btn--block">
+                        <span class="material-symbols-outlined">send</span>
+                        Создать и отправить
+                    </button>
+                </div>
+                <div class="bv-side-card bv-side-card--info">
+                    <h3><span class="material-symbols-outlined">info</span> Безопасность</h3>
+                    <ul class="backups-info-list">
+                        <li>Pre-restore перед каждым restore</li>
+                        <li>Проект без каталога <code>backups/</code></li>
+                        <li><code>.env</code> — по настройке</li>
+                        <li>Остановите бота на время restore</li>
+                    </ul>
+                </div>
+            </aside>
+        </section>
+
+        <section class="bv-panel" data-bv-panel="automation">
+            <div class="backups-card bv-form-card">
+                <header class="backups-card__head">
+                    <span class="backups-card__icon material-symbols-outlined">tune</span>
+                    <div>
+                        <h2>Автобэкап и шифрование</h2>
+                        <p>Интервал, хранение, состав и пароли</p>
+                    </div>
+                </header>
+                <form class="backups-card__body backups-settings-form" id="backups-settings-form">
+                    <div class="bv-form-grid">
+                        <label class="backups-field">
+                            <span>Интервал (дней)</span>
+                            <input type="number" name="backup_interval_days" min="0" max="365"
+                                value="{{ backup_interval_days }}" class="backups-input" />
+                            <small>0 — выключить</small>
+                        </label>
+                        <label class="backups-field">
+                            <span>Хранить архивов</span>
+                            <input type="number" name="backup_keep_count" min="1" max="100"
+                                value="{{ backup_keep_count }}" class="backups-input" />
+                        </label>
+                        <label class="backups-field">
+                            <span>Сжатие ZIP (0–9)</span>
+                            <input type="number" name="backup_compress_level" min="0" max="9"
+                                value="{{ backup_config.compress_level }}" class="backups-input" />
+                        </label>
+                    </div>
+                    <label class="backups-field backups-field--row">
+                        <span>Отправлять в Telegram при автобэкапе</span>
+                        <input type="checkbox" name="backup_autobackup_telegram" value="1"
+                            {% if autobackup_telegram %}checked{% endif %} class="backups-checkbox" />
+                    </label>
+                    <label class="backups-field">
+                        <span>Состав автобэкапа</span>
+                        <select name="backup_autobackup_scope" class="backups-select backups-input">
+                            <option value="database" {% if backup_config.autobackup_scope == 'database' %}selected{% endif %}>Только база данных</option>
+                            <option value="files" {% if backup_config.autobackup_scope == 'files' %}selected{% endif %}>Весь проект (файлы)</option>
+                            <option value="full" {% if backup_config.autobackup_scope == 'full' %}selected{% endif %}>БД + весь проект</option>
+                            <option value="remnawave" {% if backup_config.autobackup_scope == 'remnawave' %}selected{% endif %}>Remnawave Panel</option>
+                        </select>
+                    </label>
+                    <label class="backups-field backups-field--row">
+                        <span>Включать <code>.env</code> в файловый бэкап</span>
+                        <input type="checkbox" name="backup_include_env" value="1"
+                            {% if backup_config.include_env %}checked{% endif %} class="backups-checkbox" />
+                    </label>
+                    <label class="backups-field backups-field--row">
+                        <span>Шифровать архивы (AES-256)</span>
+                        <input type="checkbox" name="backup_encrypt_enabled" value="1"
+                            {% if backup_config.encrypt_enabled %}checked{% endif %} class="backups-checkbox" />
+                    </label>
+                    <label class="backups-field">
+                        <span>Пароль архива</span>
+                        <select name="backup_password_mode" class="backups-select backups-input">
+                            <option value="random" {% if backup_config.password_mode != 'master' %}selected{% endif %}>Новый на каждый бэкап</option>
+                            <option value="master" {% if backup_config.password_mode == 'master' %}selected{% endif %}>Один мастер-пароль</option>
+                        </select>
+                    </label>
+                    <label class="backups-field">
+                        <span>Мастер-пароль (если выбран)</span>
+                        <input type="password" name="backup_master_password" autocomplete="new-password"
+                            placeholder="Пусто — не менять" class="backups-input" />
+                    </label>
+                    <p class="backups-hint backups-hint--ok">Пароль → секретный топик в <a href="{{ url_for('settings_page', tab='bot') }}#bot-channels" class="backups-link">Настройки → Боты</a></p>
+                    <button type="submit" class="backups-btn backups-btn--primary backups-btn--block">
+                        <span class="material-symbols-outlined">save</span>
+                        Сохранить настройки
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <section class="bv-panel" data-bv-panel="restore">
+            <div class="backups-card bv-form-card">
+                <header class="backups-card__head">
+                    <span class="backups-card__icon material-symbols-outlined">settings_backup_restore</span>
+                    <div>
+                        <h2>Восстановление</h2>
+                        <p>Перезапишет выбранные компоненты · pre-restore создаётся автоматически</p>
+                    </div>
+                </header>
+                {% if destructive_gate and destructive_gate.needs_2fa_setup %}
+                <p class="backups-hint backups-hint--warn">Настройте 2FA в разделе «Доступ», чтобы восстанавливать бэкапы.</p>
+                {% elif destructive_gate and not destructive_gate.unlocked %}
+                <p class="backups-hint backups-hint--warn">Для восстановления подтвердите 2FA в <a href="{{ url_for('settings_tab_page', tab='database') }}" class="backups-link">Настройки → База данных</a> (сессия 15 мин).</p>
+                {% endif %}
+                <form method="post" action="{{ url_for('restore_db_route') }}" enctype="multipart/form-data"
+                    class="backups-card__body backups-restore-form" id="backups-restore-form"{% if destructive_gate and not destructive_gate.unlocked and not destructive_gate.needs_2fa_setup %} data-restore-locked="1"{% endif %}>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <input type="hidden" name="existing_backup" id="restore-existing-hidden" value="" />
+
+                    <label class="backups-field">
+                        <span>Из хранилища</span>
+                        <select id="restore-existing-select" class="backups-select">
+                            <option value="">— Выберите архив —</option>
+                            {% for b in backups %}
+                            <option value="{{ b.name }}">{{ b.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+
+                    <div class="backups-or"><span>или загрузите файл</span></div>
+
+                    <label class="backups-drop bv-drop" id="backups-drop-zone">
+                        <input type="file" name="db_file" id="backups-file-input" accept=".zip,.sql" class="backups-file-input" />
+                        <span class="material-symbols-outlined">upload_file</span>
+                        <span class="backups-drop__title">Перетащите архив</span>
+                        <span class="backups-drop__sub" id="backups-file-label">.zip или .sql</span>
+                    </label>
+
+                    <div class="backups-restore-options bv-restore-options">
+                        <label class="backups-field backups-field--row">
+                            <span>База данных</span>
+                            <input type="hidden" name="restore_database" value="0" />
+                            <input type="checkbox" name="restore_database" value="1" checked class="backups-checkbox" />
+                        </label>
+                        <label class="backups-field backups-field--row">
+                            <span>Файлы проекта</span>
+                            <input type="hidden" name="restore_files" value="0" />
+                            <input type="checkbox" name="restore_files" value="1" class="backups-checkbox" />
+                        </label>
+                        <label class="backups-field backups-field--row">
+                            <span>Remnawave Panel</span>
+                            <input type="hidden" name="restore_remnawave" value="0" />
+                            <input type="checkbox" name="restore_remnawave" value="1" class="backups-checkbox" />
+                        </label>
+                        <label class="backups-field">
+                            <span>Пароль архива (AES)</span>
+                            <input type="password" name="backup_password" autocomplete="off"
+                                placeholder="Для зашифрованных ZIP" class="backups-input" />
+                        </label>
+                    </div>
+
+                    <button type="submit" class="backups-btn backups-btn--warn backups-btn--block" id="backups-restore-submit">
+                        <span class="material-symbols-outlined">restore</span>
+                        Восстановить выбранное
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <section class="bv-panel" data-bv-panel="remnawave">
+            <div class="backups-card bv-form-card">
+                <header class="backups-card__head">
+                    <span class="backups-card__icon material-symbols-outlined">cloud_sync</span>
+                    <div>
+                        <h2>Remnawave Panel</h2>
+                        <p>PostgreSQL + docker compose на сервере панели</p>
+                    </div>
+                </header>
+                <form class="backups-card__body backups-settings-form" id="backups-remnawave-form">
+                    {% set rw = backup_config.remnawave or {} %}
+                    <label class="backups-field">
+                        <span>Режим доступа</span>
+                        <select name="backup_remnawave_mode" class="backups-select backups-input">
+                            <option value="local" {% if (rw.mode or 'local') == 'local' %}selected{% endif %}>Локально (Docker)</option>
+                            <option value="ssh" {% if rw.mode == 'ssh' %}selected{% endif %}>SSH на сервер панели</option>
+                        </select>
+                    </label>
+                    <label class="backups-field">
+                        <span>Каталог установки</span>
+                        <input type="text" name="backup_remnawave_compose_dir" class="backups-input"
+                            value="{{ rw.compose_dir or '/opt/remnawave' }}" placeholder="/opt/remnawave" />
+                    </label>
+                    <label class="backups-field">
+                        <span>SSH-цель (раздел «Нода»)</span>
+                        <select name="backup_remnawave_ssh_target" class="backups-select backups-input">
+                            <option value="">— не выбрана —</option>
+                            {% for t in ssh_targets %}
+                            <option value="{{ t.target_name }}" {% if rw.ssh_target == t.target_name %}selected{% endif %}>{{ t.target_name }} ({{ t.ssh_host }})</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label class="backups-field">
+                        <span>Сервис PostgreSQL</span>
+                        <input type="text" name="backup_remnawave_pg_service" class="backups-input"
+                            value="{{ rw.pg_service or 'remnawave-db' }}" />
+                    </label>
+                    <label class="backups-field">
+                        <span>URL БД (опционально)</span>
+                        <input type="text" name="backup_remnawave_database_url" class="backups-input"
+                            value="{{ rw.database_url or '' }}" placeholder="postgresql://…" autocomplete="off" />
+                    </label>
+                    <p class="backups-hint {% if backup_config.remnawave_configured %}backups-hint--ok{% else %}backups-hint--warn{% endif %}">
+                        {% if backup_config.remnawave_configured %}Remnawave настроен{% else %}Укажите каталог, SSH или URL БД{% endif %}
+                    </p>
+                    <button type="submit" class="backups-btn backups-btn--primary backups-btn--block">
+                        <span class="material-symbols-outlined">save</span>
+                        Сохранить Remnawave
+                    </button>
+                </form>
+            </div>
+        </section>
+    </div>
+</div>
+
+<div id="backupCreateModal" class="modal-overlay backups-submodal bv-modal">
+    <div class="modal-content backups-submodal__content bv-modal__content">
+        <header class="backups-submodal__header">
+            <h3>Новый архив</h3>
+            <button type="button" class="backups-submodal__close" data-close-modal="backupCreateModal">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </header>
+        <div class="backups-submodal__body">
+            <fieldset class="backups-scope-picker bv-scope-picker">
+                <legend class="backups-field"><span>Что включить</span></legend>
+                <label class="backups-scope-option bv-scope-option">
+                    <input type="radio" name="backup-create-scope" value="database" checked />
+                    <span class="material-symbols-outlined">database</span>
+                    <span>База данных</span>
+                </label>
+                <label class="backups-scope-option bv-scope-option">
+                    <input type="radio" name="backup-create-scope" value="files" />
+                    <span class="material-symbols-outlined">folder</span>
+                    <span>Весь проект</span>
+                </label>
+                <label class="backups-scope-option bv-scope-option">
+                    <input type="radio" name="backup-create-scope" value="full" />
+                    <span class="material-symbols-outlined">deployed_code</span>
+                    <span>БД + проект</span>
+                </label>
+                <label class="backups-scope-option bv-scope-option">
+                    <input type="radio" name="backup-create-scope" value="remnawave" />
+                    <span class="material-symbols-outlined">dns</span>
+                    <span>Remnawave</span>
+                </label>
+            </fieldset>
+            <label class="backups-field">
+                <span>Заметка</span>
+                <input type="text" id="backup-create-note" maxlength="500" placeholder="Перед обновлением v3…"
+                    class="backups-input" />
+            </label>
+            <button type="button" id="backup-create-confirm" class="backups-btn bv-btn-glow backups-btn--block">
+                <span class="material-symbols-outlined">save</span>
+                Создать на сервере
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="backupDetailModal" class="modal-overlay backups-submodal bv-modal">
+    <div class="modal-content backups-submodal__content backups-submodal__content--wide bv-modal__content">
+        <header class="backups-submodal__header">
+            <div>
+                <h3 id="backup-detail-title">Архив</h3>
+                <p class="backups-submodal__sub" id="backup-detail-sub"></p>
+            </div>
+            <button type="button" class="backups-submodal__close" data-close-modal="backupDetailModal">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </header>
+        <div class="backups-submodal__body" id="backup-detail-body">
+            <p class="backups-detail-loading">Загрузка…</p>
+        </div>
+        <footer class="backups-detail-actions" id="backup-detail-actions"></footer>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/backups-panel.js') }}"></script>
+<script>
+window.BackupsPanel.init({
+    initialSummary: {{ backup_summary | tojson }},
+    listUrl: {{ url_for('backup_list_json')|tojson }},
+    createUrl: {{ url_for('backup_create_server_route')|tojson }},
+    deleteUrl: {{ url_for('backup_delete_route')|tojson }},
+    detailUrl: {{ url_for('backup_detail_json', name='__NAME__')|replace('__NAME__.json', '')|tojson }},
+    settingsUrl: {{ url_for('backup_settings_save')|tojson }},
+    cleanupUrl: {{ url_for('backup_cleanup_route')|tojson }},
+    duplicateUrl: {{ url_for('backup_duplicate_route')|tojson }},
+    downloadUrlBase: {{ url_for('backup_download_route', name='__')|replace('__', '')|tojson }},
+    restoreConfirm: 'Восстановление перезапишет данные. Будет создан pre-restore бэкап. Продолжить?',
+    deleteConfirm: 'Удалить архив без возможности восстановления?',
+    telegramUrl: {{ url_for('backup_send_telegram_route')|tojson }},
+});
+</script>
+{% endblock %}

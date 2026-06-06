@@ -1,0 +1,367 @@
+{% set ref_type = settings.referral_reward_type or 'percent_purchase' %}
+{% set ref_meta = referral_meta or {} %}
+{% set ref_enabled = settings.enable_referrals == 'true' %}
+
+<section id="tab-referrals" class="tab-content ref-panel" data-ref-default-tab="overview">
+    <header class="ref-hub">
+        <div class="ref-hub__intro">
+            <div class="ref-hub__icon" aria-hidden="true">
+                <span class="material-symbols-outlined">groups</span>
+            </div>
+            <div>
+                <h2 class="ref-hub__title">Referrals Studio</h2>
+                <p class="ref-hub__desc">Партнёрская программа · начисления · аналитика</p>
+            </div>
+        </div>
+        <div class="ref-hub__stats">
+            <span class="ref-stat{% if ref_enabled %} ref-stat--ok{% else %} ref-stat--warn{% endif %}" id="ref-status-pill">
+                <span class="material-symbols-outlined">{% if ref_enabled %}verified{% else %}pause_circle{% endif %}</span>
+                <span class="ref-stat__text">{% if ref_enabled %}Активна{% else %}Выключена{% endif %}</span>
+            </span>
+            <span class="ref-stat">
+                <span class="material-symbols-outlined">person_add</span>
+                <span>{{ ref_meta.referred_users or 0 }} рефералов</span>
+            </span>
+            <span class="ref-stat">
+                <span class="material-symbols-outlined">emoji_events</span>
+                <span>{{ ref_meta.active_referrers or 0 }} рефереров</span>
+            </span>
+            <span class="ref-stat">
+                <span class="material-symbols-outlined">payments</span>
+                <span>{{ '%.0f' | format(ref_meta.total_earned or 0) }} ₽ выплачено</span>
+            </span>
+        </div>
+        <div class="ref-hub__enable">
+            <span class="ref-hub__enable-label">Программа</span>
+            <input type="hidden" name="enable_referrals" value="false" />
+            <label class="settings-macos-switch" title="Включить реферальную программу">
+                <input type="checkbox" name="enable_referrals" value="true" id="enable_referrals" {% if ref_enabled %}checked{% endif %} />
+                <span class="settings-macos-switch__track"></span>
+            </label>
+        </div>
+    </header>
+
+    <nav class="ref-tabs" role="tablist" aria-label="Разделы рефералов">
+        <button type="button" class="ref-tab is-active" data-ref-tab="overview" role="tab">
+            <span class="material-symbols-outlined">dashboard</span> Обзор
+        </button>
+        <button type="button" class="ref-tab" data-ref-tab="rewards" role="tab">
+            <span class="material-symbols-outlined">payments</span> Начисления
+        </button>
+        <button type="button" class="ref-tab" data-ref-tab="invitee" role="tab">
+            <span class="material-symbols-outlined">redeem</span> Бонус другу
+        </button>
+        <button type="button" class="ref-tab" data-ref-tab="messages" role="tab">
+            <span class="material-symbols-outlined">chat</span> Сообщения
+        </button>
+        <button type="button" class="ref-tab" data-ref-tab="analytics" role="tab">
+            <span class="material-symbols-outlined">analytics</span> Аналитика
+        </button>
+        <button type="button" class="ref-tab" data-ref-tab="advanced" role="tab">
+            <span class="material-symbols-outlined">tune</span> Дополнительно
+        </button>
+    </nav>
+
+    <!-- Overview -->
+    <div class="ref-pane" data-ref-pane="overview">
+        <div class="ref-kpi-row">
+            <div class="ref-kpi">
+                <div class="ref-kpi__val">{{ ref_meta.conversion_pct or 0 }}%</div>
+                <div class="ref-kpi__lbl">Конверсия в покупку</div>
+            </div>
+            <div class="ref-kpi">
+                <div class="ref-kpi__val">{{ ref_meta.converted_users or 0 }}</div>
+                <div class="ref-kpi__lbl">Купили после ref</div>
+            </div>
+            <div class="ref-kpi">
+                <div class="ref-kpi__val">{{ ref_meta.bonus_payouts or 0 }}</div>
+                <div class="ref-kpi__lbl">Начислений</div>
+            </div>
+            <div class="ref-kpi">
+                <div class="ref-kpi__val">{{ '%.0f' | format(ref_meta.pending_withdrawal or 0) }}</div>
+                <div class="ref-kpi__lbl">На выводе (ref balance)</div>
+            </div>
+        </div>
+
+        <div class="ref-overview-grid">
+            <button type="button" class="ref-overview-card" data-ref-goto="rewards">
+                <span class="material-symbols-outlined ref-overview-card__icon">payments</span>
+                <span class="ref-overview-card__title">Модель начислений</span>
+                <span class="ref-overview-card__meta">{% if ref_type == 'percent_purchase' %}% с покупки{% elif ref_type == 'fixed_purchase' %}Фикс за покупку{% else %}Бонус за старт{% endif %}</span>
+            </button>
+            <button type="button" class="ref-overview-card" data-ref-goto="invitee">
+                <span class="material-symbols-outlined ref-overview-card__icon">redeem</span>
+                <span class="ref-overview-card__title">Скидка другу</span>
+                <span class="ref-overview-card__meta">{{ settings.referral_discount or '5' }}% на первую покупку</span>
+            </button>
+            <button type="button" class="ref-overview-card" data-ref-goto="messages">
+                <span class="material-symbols-outlined ref-overview-card__icon">share</span>
+                <span class="ref-overview-card__title">Share-текст</span>
+                <span class="ref-overview-card__meta">Кнопка «Поделиться» в боте</span>
+            </button>
+            <button type="button" class="ref-overview-card" data-ref-goto="analytics">
+                <span class="material-symbols-outlined ref-overview-card__icon">leaderboard</span>
+                <span class="ref-overview-card__title">Топ рефереров</span>
+                <span class="ref-overview-card__meta">Live из базы</span>
+            </button>
+        </div>
+
+        <div class="ref-card" style="margin-top:0.65rem">
+            <h3 class="ref-card__title">Как работает программа</h3>
+            <p class="ref-card__desc">Пользователь делится ссылкой <code>t.me/bot?start=ref_ID</code>. Новый клиент получает скидку на первую покупку, реферер — вознаграждение по выбранной модели. Начисления идут на основной или реферальный баланс.</p>
+            <div class="ref-flow">
+                <span class="ref-flow__step"><span class="material-symbols-outlined" style="font-size:.85rem">link</span> Ссылка</span>
+                <span class="ref-flow__arrow">→</span>
+                <span class="ref-flow__step"><span class="material-symbols-outlined" style="font-size:.85rem">person_add</span> /start ref</span>
+                <span class="ref-flow__arrow">→</span>
+                <span class="ref-flow__step"><span class="material-symbols-outlined" style="font-size:.85rem">shopping_cart</span> Покупка</span>
+                <span class="ref-flow__arrow">→</span>
+                <span class="ref-flow__step"><span class="material-symbols-outlined" style="font-size:.85rem">account_balance_wallet</span> Бонус</span>
+            </div>
+        </div>
+
+        <div class="ref-calc" style="margin-top:0.65rem">
+            <h3 class="ref-card__title" style="margin-bottom:0.35rem">Калькулятор вознаграждения</h3>
+            <div class="ref-field" style="margin-bottom:0.45rem">
+                <label class="ref-label" for="ref-calc-amount">Сумма покупки / пополнения, ₽</label>
+                <input type="number" id="ref-calc-amount" class="ref-input" value="1000" min="0" step="50" />
+            </div>
+            <div class="ref-calc__result">
+                <span class="ref-calc__pill ref-calc__pill--accent">Реферер: <strong id="ref-calc-referrer">—</strong></span>
+                <span class="ref-calc__pill ref-calc__pill--ok">Экономия друга: <strong id="ref-calc-friend">—</strong></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rewards -->
+    <div class="ref-pane" data-ref-pane="rewards" hidden>
+        <div class="ref-card">
+            <h3 class="ref-card__title">Модель вознаграждения реферера</h3>
+            <p class="ref-card__desc">Выберите, когда и сколько получает пригласивший пользователь</p>
+            <div class="ref-type-grid" style="margin-top:0.55rem">
+                {% for t in [
+                    {'id': 'percent_purchase', 'title': '% с покупки', 'desc': 'Процент от каждой внешней оплаты реферала'},
+                    {'id': 'fixed_purchase', 'title': 'Фикс за покупку', 'desc': 'Фиксированная сумма за каждую оплату'},
+                    {'id': 'fixed_start_referrer', 'title': 'Бонус за старт', 'desc': 'Разовая выплата при регистрации по ссылке'}
+                ] %}
+                <label class="ref-type-card{% if ref_type == t.id %} is-active{% endif %}" data-ref-type="{{ t.id }}">
+                    <input type="radio" name="referral_reward_type" value="{{ t.id }}" {% if ref_type == t.id %}checked{% endif %} />
+                    <div class="ref-type-card__title">{{ t.title }}</div>
+                    <div class="ref-type-card__desc">{{ t.desc }}</div>
+                </label>
+                {% endfor %}
+            </div>
+
+            <div class="ref-grid-2" style="margin-top:0.75rem">
+                <div class="ref-reward-pane" data-ref-reward="percent_purchase"{% if ref_type != 'percent_purchase' %} hidden{% endif %}>
+                    <label class="ref-label" for="ref-percent">Процент рефереру</label>
+                    <input type="number" id="ref-percent" name="referral_percentage" class="ref-input"
+                        value="{{ settings.referral_percentage or '10' }}" min="0" max="100" step="0.1" />
+                </div>
+                <div class="ref-reward-pane" data-ref-reward="fixed_purchase"{% if ref_type != 'fixed_purchase' %} hidden{% endif %}>
+                    <label class="ref-label" for="ref-fixed">Бонус за оплату, ₽</label>
+                    <input type="number" id="ref-fixed" name="fixed_referral_bonus_amount" class="ref-input" step="0.01"
+                        value="{{ settings.fixed_referral_bonus_amount or '50' }}" />
+                </div>
+                <div class="ref-reward-pane" data-ref-reward="fixed_start_referrer"{% if ref_type != 'fixed_start_referrer' %} hidden{% endif %}>
+                    <label class="ref-label" for="ref-start">Бонус за регистрацию, ₽</label>
+                    <input type="number" id="ref-start" name="referral_on_start_referrer_amount" class="ref-input" step="0.01"
+                        value="{{ settings.referral_on_start_referrer_amount or '20' }}" />
+                </div>
+            </div>
+        </div>
+
+        <div class="ref-card">
+            <h3 class="ref-card__title">Куда зачислять бонусы</h3>
+            <p class="ref-card__desc">Основной баланс — сразу доступен для покупок. Реферальный — для ручного вывода через /approve_withdraw</p>
+            {% set payout = settings.referral_payout_mode or 'main_balance' %}
+            <input type="hidden" name="referral_payout_mode" id="referral_payout_mode" value="{{ payout }}" />
+            <div class="ref-seg" style="margin-top:0.45rem">
+                <button type="button" class="ref-seg__btn{% if payout == 'main_balance' %} is-active{% endif %}" data-ref-payout="main_balance">Основной баланс</button>
+                <button type="button" class="ref-seg__btn{% if payout == 'referral_balance' %} is-active{% endif %}" data-ref-payout="referral_balance">Реф. баланс (вывод)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invitee -->
+    <div class="ref-pane" data-ref-pane="invitee" hidden>
+        <div class="ref-card">
+            <h3 class="ref-card__title">Скидка приглашённому</h3>
+            <p class="ref-card__desc">Применяется на первую реальную покупку (нет трат, нет платных ключей). Работает в боте и WebApp.</p>
+            <div class="ref-field" style="margin-top:0.55rem">
+                <label class="ref-label" for="ref-discount">Скидка, %</label>
+                <input type="number" id="ref-discount" name="referral_discount" class="ref-input"
+                    value="{{ settings.referral_discount or '5' }}" min="0" max="100" step="0.1" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Messages -->
+    <div class="ref-pane" data-ref-pane="messages" hidden>
+        <div class="ref-grid-2">
+            <div class="ref-card">
+                <h3 class="ref-card__title">Текст «Поделиться»</h3>
+                <p class="ref-card__desc">Плейсхолдер <code>{discount}</code> — скидка друга. Пусто = шаблон по умолчанию.</p>
+                <textarea name="referral_share_message" class="ref-textarea" rows="6"
+                    placeholder="🔥 ТВОЯ ЛИЧНАЯ СКИДКА {discount}%!…">{{ settings.referral_share_message or '' }}</textarea>
+            </div>
+            <div class="ref-card">
+                <h3 class="ref-card__title">Предпросмотр share</h3>
+                <div class="ref-preview-share" id="ref-share-preview"></div>
+            </div>
+        </div>
+        <div class="ref-card">
+            <h3 class="ref-card__title">Дополнительный текст в программе</h3>
+            <p class="ref-card__desc">Добавляется в конец экрана «Реферальная программа» в боте (HTML)</p>
+            <textarea name="referral_program_extra" class="ref-textarea" rows="4"
+                placeholder="Например: условия акции, сроки…">{{ settings.referral_program_extra or '' }}</textarea>
+        </div>
+        <p class="ref-card__desc" style="margin-top:0.45rem">
+            Изображение раздела — в <a href="{{ url_for('button_constructor_page') }}#media" class="text-primary">Конструктор → Медиа → Рефералы</a>.
+            Подпись кнопки меню — там же, вкладка «Кнопки».
+        </p>
+    </div>
+
+    <!-- Analytics -->
+    <div class="ref-pane" data-ref-pane="analytics" hidden>
+        <div class="ref-card">
+            <h3 class="ref-card__title">Топ рефереров</h3>
+            <div class="ref-table-wrap">
+                <table class="ref-table">
+                    <thead>
+                        <tr><th>#</th><th>Пользователь</th><th>Реф.</th><th>Заработано</th><th>Оборот реф.</th></tr>
+                    </thead>
+                    <tbody id="ref-leaderboard-body">
+                        <tr><td colspan="5" class="ref-empty">Откройте вкладку для загрузки</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="ref-analytics-split" style="margin-top:0.65rem">
+            <div class="ref-card">
+                <h3 class="ref-card__title">Новые рефералы</h3>
+                <div class="ref-table-wrap">
+                    <table class="ref-table">
+                        <thead><tr><th>Дата</th><th>Кто</th><th>От кого</th><th>Потратил</th></tr></thead>
+                        <tbody id="ref-signups-body"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="ref-card">
+                <h3 class="ref-card__title">Последние начисления</h3>
+                <div class="ref-table-wrap">
+                    <table class="ref-table">
+                        <thead><tr><th>Дата</th><th>Реферер</th><th>Сумма</th><th>Meta</th></tr></thead>
+                        <tbody id="ref-bonuses-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced -->
+    <div class="ref-pane" data-ref-pane="advanced" hidden>
+        <div class="ref-card">
+            <div class="ref-toggle-row">
+                <div>
+                    <div class="ref-card__title" style="margin:0">Уведомлять о бонусах</div>
+                    <div class="ref-toggle-row__hint">Telegram-сообщение рефереру при каждом начислении</div>
+                </div>
+                <input type="hidden" name="referral_notify_bonus" value="false" />
+                <label class="settings-macos-switch">
+                    <input type="checkbox" name="referral_notify_bonus" value="true"
+                        {% if (settings.referral_notify_bonus or 'true') == 'true' %}checked{% endif %} />
+                    <span class="settings-macos-switch__track"></span>
+                </label>
+            </div>
+            <div class="ref-field" style="margin-top:0.65rem">
+                <label class="ref-label" for="ref-min-wd">Минимальная сумма вывода, ₽</label>
+                <input type="number" id="ref-min-wd" name="minimum_withdrawal" class="ref-input" step="1"
+                    value="{{ settings.minimum_withdrawal or '100' }}" />
+                <p class="ref-card__desc" style="margin-top:0.35rem">Команды в боте: <code>/approve_withdraw_ID</code> или <code>/approve_withdraw ID</code> (только для админов)</p>
+            </div>
+        </div>
+        <div class="ref-card ref-seller-card">
+            <div class="ref-seller-head">
+                <div>
+                    <h3 class="ref-card__title">Seller-override</h3>
+                    <p class="ref-card__desc" style="margin:0.2rem 0 0">
+                        Индивидуальный <code>seller_ref</code> для активных seller-ов перекрывает глобальные правила
+                        {% if ref_type == 'percent_purchase' %}
+                        (сейчас <b>{{ settings.referral_percentage or '0' }}%</b> для всех)
+                        {% endif %}
+                    </p>
+                </div>
+                {% set seller_overrides = seller_ref_overrides or [] %}
+                <span class="ref-stat{% if seller_overrides %} ref-stat--ok{% endif %}">
+                    <span class="material-symbols-outlined">{% if seller_overrides %}groups{% else %}person_off{% endif %}</span>
+                    {{ seller_overrides|length }} seller
+                </span>
+            </div>
+
+            {% if seller_overrides %}
+            <div class="ref-seller-grid">
+                {% for seller in seller_overrides %}
+                <a class="ref-seller-profile" href="{{ url_for('users_page') }}?q={{ seller.telegram_id }}" title="Открыть в Пользователях">
+                    <div class="ref-seller-profile__avatar-wrap">
+                        <img
+                            class="ref-seller-profile__avatar"
+                            src="{{ url_for('user_avatar', user_id=seller.telegram_id) }}"
+                            alt=""
+                            loading="lazy"
+                            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+                        />
+                        <span class="ref-seller-profile__avatar-fallback" style="display:none" aria-hidden="true">
+                            <span class="material-symbols-outlined">person</span>
+                        </span>
+                    </div>
+                    <div class="ref-seller-profile__body">
+                        <div class="ref-seller-profile__top">
+                            <span class="ref-seller-profile__name">{{ seller.display_name }}</span>
+                            <span class="ref-seller-profile__pct">{{ '%.0f'|format(seller.seller_ref) }}%</span>
+                        </div>
+                        <span class="ref-seller-profile__id">ID {{ seller.telegram_id }}</span>
+                        <div class="ref-seller-profile__stats">
+                            <span class="ref-seller-profile__chip">
+                                <span class="material-symbols-outlined">group</span>{{ seller.ref_count }} реф.
+                            </span>
+                            <span class="ref-seller-profile__chip">
+                                <span class="material-symbols-outlined">payments</span>{{ '%.0f'|format(seller.earned) }} ₽
+                            </span>
+                            {% if seller.seller_sale and seller.seller_sale > 0 %}
+                            <span class="ref-seller-profile__chip ref-seller-profile__chip--muted">
+                                <span class="material-symbols-outlined">sell</span>−{{ '%.0f'|format(seller.seller_sale) }}% sale
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <span class="ref-seller-profile__arrow material-symbols-outlined">chevron_right</span>
+                </a>
+                {% endfor %}
+            </div>
+            <p class="ref-seller-foot">
+                <span class="material-symbols-outlined">edit</span>
+                Изменить — в карточке пользователя → Seller (включить seller и задать «Реф %»)
+            </p>
+            {% else %}
+            <div class="ref-seller-empty">
+                <div class="ref-seller-empty__icon" aria-hidden="true">
+                    <span class="material-symbols-outlined">person_search</span>
+                </div>
+                <p class="ref-seller-empty__title">Пока никого с индивидуальным %</p>
+                <p class="ref-seller-empty__desc">
+                    Активные seller-ы с <code>seller_ref &gt; 0</code> появятся здесь автоматически.
+                    Глобальные настройки применяются ко всем остальным.
+                </p>
+                <a class="ref-seller-empty__link" href="{{ url_for('users_page') }}">
+                    <span class="material-symbols-outlined">open_in_new</span>
+                    Перейти к пользователям
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <input type="hidden" id="enable_fixed_referral_bonus" name="enable_fixed_referral_bonus"
+        value="{% if settings.enable_fixed_referral_bonus == 'true' %}true{% else %}false{% endif %}" />
+</section>

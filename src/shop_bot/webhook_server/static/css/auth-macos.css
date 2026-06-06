@@ -1,0 +1,834 @@
+/* macOS / macOS v2 login screen */
+
+.auth-macos-chrome {
+    display: none;
+}
+
+html[data-design="macos"] .auth-macos-chrome,
+html[data-design="macos-v2"] .auth-macos-chrome {
+    display: block;
+}
+
+.auth-macos-wallpaper {
+    position: fixed;
+    inset: -12px;
+    z-index: 0;
+    background-color: #0a0a0c;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transform-origin: center;
+}
+
+.auth-macos-vignette {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse 80% 60% at 50% 45%, transparent 0%, rgba(0, 0, 0, 0.35) 100%),
+        linear-gradient(180deg, rgba(0, 0, 0, 0.18) 0%, transparent 18%, transparent 82%, rgba(0, 0, 0, 0.28) 100%);
+}
+
+html:not(.dark)[data-design="macos"] .auth-macos-vignette,
+html:not(.dark)[data-design="macos-v2"] .auth-macos-vignette {
+    background:
+        radial-gradient(ellipse 80% 60% at 50% 45%, transparent 0%, rgba(255, 255, 255, 0.12) 100%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, transparent 18%, transparent 82%, rgba(0, 0, 0, 0.08) 100%);
+}
+
+.auth-macos-menubar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 28px;
+    padding: 0.35rem 1rem 0.35rem 0.85rem;
+    background: rgba(0, 0, 0, 0.22);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+}
+
+html:not(.dark)[data-design="macos"] .auth-macos-menubar,
+html:not(.dark)[data-design="macos-v2"] .auth-macos-menubar {
+    background: rgba(255, 255, 255, 0.55);
+    border-bottom-color: rgba(0, 0, 0, 0.08);
+    color: rgba(0, 0, 0, 0.85);
+}
+
+.auth-macos-menubar__left,
+.auth-macos-menubar__right {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-width: 0;
+}
+
+.auth-macos-menubar__right {
+    flex-shrink: 0;
+}
+
+.auth-macos-menubar__icon {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 22%;
+    object-fit: cover;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+
+.auth-macos-menubar__menu {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.auth-macos-menubar__status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    opacity: 0.88;
+}
+
+.auth-macos-menubar__status .material-symbols-outlined {
+    font-size: 1rem;
+}
+
+.auth-macos-menubar__clock {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.auth-macos-dock {
+    display: none;
+    position: fixed;
+    left: 50%;
+    bottom: 0.85rem;
+    z-index: 3;
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+html[data-design="macos-v2"] .auth-macos-dock {
+    display: block;
+    pointer-events: auto;
+    z-index: 50;
+}
+
+.auth-macos-dock__panel {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.45rem;
+    padding: 0.45rem 0.65rem;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    backdrop-filter: blur(28px) saturate(160%);
+    -webkit-backdrop-filter: blur(28px) saturate(160%);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
+}
+
+.auth-macos-dock__stage {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.45rem;
+}
+
+.auth-macos-dock__stage.hidden {
+    display: none;
+}
+
+.auth-macos-dock__stage--methods {
+    align-items: center;
+}
+
+.auth-macos-dock__item {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.35rem;
+    height: 2.35rem;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 11px;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.08));
+    color: #fff;
+    cursor: pointer;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.auth-macos-dock__item .material-symbols-outlined {
+    font-size: 1.2rem;
+}
+
+.auth-macos-dock__item:hover {
+    transform: translateY(-2px) scale(1.04);
+    border-color: rgba(255, 255, 255, 0.38);
+}
+
+.auth-macos-dock__item--method {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.12));
+}
+
+.auth-macos-dock__item--method.auth-macos-dock__item--selected {
+    border-color: rgba(255, 255, 255, 0.55);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.35),
+        0 0 0 2px rgba(255, 255, 255, 0.18);
+    transform: translateY(-2px) scale(1.04);
+}
+
+.auth-macos-dock__back {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.85rem;
+    height: 1.85rem;
+    margin-right: 0.1rem;
+    padding: 0;
+    border: none;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.14);
+    color: rgba(255, 255, 255, 0.92);
+    cursor: pointer;
+}
+
+.auth-macos-dock__back .material-symbols-outlined {
+    font-size: 1rem;
+}
+
+.auth-macos-dock__methods {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.45rem;
+}
+
+.auth-macos-v2-picker .auth-field--username,
+.auth-macos-v2-picker .auth-alt-login {
+    display: none !important;
+}
+
+.auth-macos-v2-picker .auth-macos-password-panel {
+    display: none;
+}
+
+.auth-macos-v2-picker.auth-macos-v2-password-ready .auth-macos-password-panel {
+    display: block;
+}
+
+html[data-design="macos-v2"] .auth-macos-hint {
+    margin-bottom: 0;
+}
+
+.auth-macos-telegram-mount {
+    display: flex;
+    justify-content: center;
+    margin-top: 0.85rem;
+    min-height: 2.75rem;
+}
+
+.auth-macos-telegram-mount.hidden {
+    display: none;
+}
+
+.auth-macos-telegram-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: min(100%, 15.5rem);
+    height: 2.75rem;
+    padding: 0 1.15rem;
+    border-radius: 12px;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.08));
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+        0 8px 24px rgba(0, 0, 0, 0.22);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.auth-macos-telegram-btn:hover {
+    transform: translateY(-1px);
+    border-color: rgba(255, 255, 255, 0.32);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.26),
+        0 10px 28px rgba(0, 0, 0, 0.28);
+}
+
+.auth-macos-telegram-btn:active {
+    transform: translateY(0);
+}
+
+.auth-macos-telegram-btn__visual {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    pointer-events: none;
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+.auth-macos-telegram-btn__icon {
+    width: 1.15rem;
+    height: 1.15rem;
+    flex-shrink: 0;
+}
+
+.auth-macos-telegram-btn iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+    margin: 0;
+    padding: 0;
+    opacity: 0.001;
+    cursor: pointer;
+    z-index: 2;
+}
+
+html:not(.dark) .auth-macos-telegram-btn {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.48));
+    border-color: rgba(0, 0, 0, 0.1);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.95),
+        0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+html:not(.dark) .auth-macos-telegram-btn:hover {
+    border-color: rgba(0, 0, 0, 0.14);
+}
+
+html:not(.dark) .auth-macos-telegram-btn__visual {
+    color: rgba(0, 0, 0, 0.82);
+}
+
+.auth-macos-telegram-mount__error {
+    margin: 0;
+    font-size: 0.8125rem;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.auth-telegram-dock-popup {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(8px);
+}
+
+.auth-telegram-dock-popup.open {
+    display: flex;
+}
+
+.auth-telegram-dock-popup__card {
+    position: relative;
+    min-width: min(100%, 18rem);
+    padding: 1.25rem 1rem 1rem;
+    border-radius: 16px;
+    background: rgba(28, 28, 30, 0.94);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+    text-align: center;
+}
+
+.auth-telegram-dock-popup__title {
+    margin: 0 0 0.75rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.auth-telegram-dock-popup__close {
+    position: absolute;
+    top: 0.45rem;
+    right: 0.55rem;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 1.35rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+#auth-telegram-dock-mount {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 2.75rem;
+    margin-top: 0.35rem;
+}
+
+#auth-telegram-dock-mount iframe {
+    border: none;
+}
+
+.auth-telegram-dock-popup__error {
+    margin: 0.35rem 0 0;
+    font-size: 0.8125rem;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.auth-macos-dock__inner {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.45rem;
+    padding: 0.45rem 0.65rem;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    backdrop-filter: blur(28px) saturate(160%);
+    -webkit-backdrop-filter: blur(28px) saturate(160%);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
+}
+
+.auth-macos-dock__inner span {
+    width: 2.1rem;
+    height: 2.1rem;
+    border-radius: 10px;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.08));
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.auth-macos-dock__inner span:first-child {
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.1)),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23fff'%3E%3Cpath d='M12 2L4 6v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V6l-8-4z'/%3E%3C/svg%3E") center/55% no-repeat;
+}
+
+.auth-macos-dock__sep {
+    width: 1px;
+    height: 2rem;
+    margin: 0 0.15rem;
+    background: rgba(255, 255, 255, 0.22);
+    list-style: none;
+}
+
+/* ===== macOS layout overrides ===== */
+html[data-design="macos"] body.auth-ios,
+html[data-design="macos-v2"] body.auth-ios {
+    align-items: stretch;
+    justify-content: stretch;
+    padding: 0;
+    background: #000;
+}
+
+html[data-design="macos"] .auth-page,
+html[data-design="macos-v2"] .auth-page {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: none;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4.5rem 1.5rem 2.5rem;
+    animation: auth-macos-in 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes auth-macos-in {
+    from {
+        opacity: 0;
+        transform: scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+html[data-design="macos"] .auth-card,
+html[data-design="macos-v2"] .auth-card {
+    display: block;
+    width: min(100%, 22rem);
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    overflow: visible;
+}
+
+html[data-design="macos"] .auth-brand,
+html[data-design="macos-v2"] .auth-brand,
+html[data-design="macos"] .auth-mobile-brand,
+html[data-design="macos-v2"] .auth-mobile-brand,
+html[data-design="macos"] .auth-mobile-new-pill,
+html[data-design="macos-v2"] .auth-mobile-new-pill,
+html[data-design="macos"] .auth-form-header,
+html[data-design="macos-v2"] .auth-form-header {
+    display: none !important;
+}
+
+html[data-design="macos"] .auth-form-panel,
+html[data-design="macos-v2"] .auth-form-panel {
+    padding: 0;
+}
+
+html[data-design="macos"] .auth-form-wrap,
+html[data-design="macos-v2"] .auth-form-wrap {
+    max-width: none;
+    width: 100%;
+}
+
+/* Profile block */
+.auth-macos-profile {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 1.35rem;
+}
+
+html[data-design="macos"] .auth-macos-profile,
+html[data-design="macos-v2"] .auth-macos-profile {
+    display: flex;
+}
+
+.auth-macos-avatar {
+    width: 5.5rem;
+    height: 5.5rem;
+    border-radius: 50%;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.12);
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    box-shadow:
+        0 12px 40px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    margin-bottom: 0.85rem;
+}
+
+html:not(.dark)[data-design="macos"] .auth-macos-avatar,
+html:not(.dark)[data-design="macos-v2"] .auth-macos-avatar {
+    border-color: rgba(255, 255, 255, 0.65);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+}
+
+.auth-macos-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.auth-macos-display-name {
+    margin: 0;
+    font-size: 1.625rem;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    color: #fff;
+    text-shadow: 0 2px 16px rgba(0, 0, 0, 0.45);
+}
+
+html:not(.dark)[data-design="macos"] .auth-macos-display-name,
+html:not(.dark)[data-design="macos-v2"] .auth-macos-display-name {
+    color: #fff;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.55);
+}
+
+.auth-macos-hint {
+    margin: 0.35rem 0 0;
+    font-size: 0.8125rem;
+    color: rgba(255, 255, 255, 0.72);
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
+}
+
+/* Fields — macOS login style */
+html[data-design="macos"] .auth-label,
+html[data-design="macos-v2"] .auth-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+html[data-design="macos"] .auth-field,
+html[data-design="macos-v2"] .auth-field {
+    margin-bottom: 0.65rem;
+}
+
+html[data-design="macos"] .auth-field--username.auth-field--collapsed,
+html[data-design="macos-v2"] .auth-field--username.auth-field--collapsed {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+    pointer-events: none;
+}
+
+html[data-design="macos"] .auth-field--username,
+html[data-design="macos-v2"] .auth-field--username {
+    margin-bottom: 0.5rem;
+}
+
+html[data-design="macos"] .auth-input-wrap,
+html[data-design="macos-v2"] .auth-input-wrap {
+    display: flex;
+    align-items: center;
+}
+
+html[data-design="macos"] .auth-input-icon,
+html[data-design="macos-v2"] .auth-input-icon {
+    display: none;
+}
+
+html[data-design="macos"] .auth-input,
+html[data-design="macos-v2"] .auth-input {
+    padding: 0.72rem 2.5rem 0.72rem 1rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    color: #fff;
+    font-size: 0.9375rem;
+    text-align: center;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+html[data-design="macos"] .auth-input::placeholder,
+html[data-design="macos-v2"] .auth-input::placeholder {
+    color: rgba(255, 255, 255, 0.55);
+}
+
+html[data-design="macos"] .auth-input:focus,
+html[data-design="macos-v2"] .auth-input:focus {
+    border-color: rgba(255, 255, 255, 0.55);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.18),
+        0 0 0 3px rgba(255, 255, 255, 0.12);
+}
+
+html[data-design="macos"] .auth-field--password .auth-input,
+html[data-design="macos-v2"] .auth-field--password .auth-input {
+    padding-right: 2.85rem;
+}
+
+html[data-design="macos"] .auth-input-toggle,
+html[data-design="macos-v2"] .auth-input-toggle {
+    right: 0.45rem;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+html[data-design="macos"] .auth-input-toggle:hover,
+html[data-design="macos-v2"] .auth-input-toggle:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+html[data-design="macos"] input:-webkit-autofill,
+html[data-design="macos-v2"] input:-webkit-autofill,
+html[data-design="macos"] input:-webkit-autofill:focus,
+html[data-design="macos-v2"] input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #fff !important;
+    -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.12) inset !important;
+    caret-color: #fff;
+}
+
+html[data-design="macos"] .auth-remember,
+html[data-design="macos-v2"] .auth-remember {
+    justify-content: center;
+    margin: 0.85rem 0 1rem;
+}
+
+html[data-design="macos"] .auth-remember-text,
+html[data-design="macos-v2"] .auth-remember-text {
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 0.75rem;
+}
+
+html[data-design="macos"] .auth-submit,
+html[data-design="macos-v2"] .auth-submit {
+    width: auto;
+    min-width: 8.5rem;
+    margin: 0 auto;
+    padding: 0.65rem 1.35rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.92);
+    color: #1c1c1e;
+    font-size: 0.875rem;
+    font-weight: 600;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.22);
+}
+
+html[data-design="macos"] .auth-submit:hover,
+html[data-design="macos-v2"] .auth-submit:hover {
+    opacity: 1;
+    background: #fff;
+}
+
+html[data-design="macos"] .auth-submit .material-symbols-outlined,
+html[data-design="macos-v2"] .auth-submit .material-symbols-outlined {
+    font-size: 1rem;
+}
+
+html[data-design="macos"] .auth-version,
+html[data-design="macos-v2"] .auth-version {
+    margin-top: 1.5rem;
+    color: rgba(255, 255, 255, 0.45);
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+}
+
+html[data-design="macos"] .auth-alert,
+html[data-design="macos-v2"] .auth-alert {
+    border-radius: 12px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+html[data-design="macos"] .auth-alt-login__divider,
+html[data-design="macos-v2"] .auth-alt-login__divider {
+    color: rgba(255, 255, 255, 0.55);
+}
+
+html[data-design="macos"] .auth-alt-icon-btn,
+html[data-design="macos-v2"] .auth-alt-icon-btn {
+    border-color: rgba(255, 255, 255, 0.28);
+    background: rgba(255, 255, 255, 0.14);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    color: #fff;
+}
+
+html[data-design="macos"] .auth-alt-icon-btn:hover:not(:disabled),
+html[data-design="macos-v2"] .auth-alt-icon-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.22);
+    border-color: rgba(255, 255, 255, 0.38);
+    color: #fff;
+}
+
+html[data-design="macos"] .auth-alt-login__divider::before,
+html[data-design="macos-v2"] .auth-alt-login__divider::before,
+html[data-design="macos"] .auth-alt-login__divider::after,
+html[data-design="macos-v2"] .auth-alt-login__divider::after {
+    background: rgba(255, 255, 255, 0.22);
+}
+
+html[data-design="macos"] .auth-alt-btn,
+html[data-design="macos-v2"] .auth-alt-btn {
+    border-radius: 999px;
+    border-color: rgba(255, 255, 255, 0.28);
+    background: rgba(255, 255, 255, 0.14);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    color: #fff;
+}
+
+html[data-design="macos"] .auth-blocked__title,
+html[data-design="macos-v2"] .auth-blocked__title,
+html[data-design="macos"] .auth-blocked__text,
+html[data-design="macos-v2"] .auth-blocked__text {
+    color: rgba(255, 255, 255, 0.88);
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
+}
+
+/* Theme button integrated into macOS menubar (left, after app name) */
+html[data-design="macos"] .auth-theme-btn-slot > .auth-theme-btn,
+html[data-design="macos-v2"] .auth-theme-btn-slot > .auth-theme-btn {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.auth-theme-btn.auth-theme-btn--menubar {
+    position: static;
+    top: auto;
+    right: auto;
+    z-index: auto;
+    visibility: visible;
+    pointer-events: auto;
+    width: 1.5rem;
+    height: 1.5rem;
+    margin-left: 0.15rem;
+    border-radius: 5px;
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+
+.auth-theme-btn.auth-theme-btn--menubar:hover {
+    transform: none;
+    background: rgba(255, 255, 255, 0.22);
+    border-color: rgba(255, 255, 255, 0.35);
+    color: #fff;
+}
+
+.auth-theme-btn.auth-theme-btn--menubar .material-symbols-outlined {
+    font-size: 0.95rem;
+}
+
+.auth-theme-btn.auth-theme-btn--menubar .auth-theme-btn__new {
+    top: -0.28rem;
+    right: -0.32rem;
+    transform: scale(0.82);
+    transform-origin: top right;
+}
+
+html:not(.dark) .auth-theme-btn.auth-theme-btn--menubar {
+    background: rgba(0, 0, 0, 0.08);
+    border-color: rgba(0, 0, 0, 0.12);
+    color: rgba(0, 0, 0, 0.65);
+}
+
+html:not(.dark) .auth-theme-btn.auth-theme-btn--menubar:hover {
+    background: rgba(0, 0, 0, 0.12);
+    border-color: rgba(0, 0, 0, 0.18);
+    color: rgba(0, 0, 0, 0.85);
+}
+
+@media (max-width: 420px) {
+    html[data-design="macos"] .auth-page,
+    html[data-design="macos-v2"] .auth-page {
+        padding: 4rem 1rem 1.5rem;
+    }
+
+    html[data-design="macos"] .auth-macos-avatar,
+    html[data-design="macos-v2"] .auth-macos-avatar {
+        width: 4.75rem;
+        height: 4.75rem;
+    }
+
+    html[data-design="macos"] .auth-macos-display-name,
+    html[data-design="macos-v2"] .auth-macos-display-name {
+        font-size: 1.375rem;
+    }
+
+    html[data-design="macos"] .auth-macos-menubar__status,
+    html[data-design="macos-v2"] .auth-macos-menubar__status {
+        display: none;
+    }
+}

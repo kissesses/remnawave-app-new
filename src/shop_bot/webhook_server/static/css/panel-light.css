@@ -1,0 +1,668 @@
+/* Remnawave ShopBot — Light mode (iOS / macOS) */
+
+html:not(.dark) body.panel-ios {
+    --panel-bg: #f2f2f7;
+    --panel-bg-elevated: #ffffff;
+    --panel-bg-sidebar: rgba(255, 255, 255, 0.94);
+    --panel-bg-grouped: rgba(0, 0, 0, 0.04);
+    --panel-bg-grouped-hover: rgba(0, 0, 0, 0.06);
+    --panel-bg-input: rgba(118, 118, 128, 0.12);
+    --panel-separator: rgba(0, 0, 0, 0.08);
+    --panel-text: #1c1c1e;
+    --panel-text-secondary: rgba(60, 60, 67, 0.72);
+    --panel-text-tertiary: rgba(60, 60, 67, 0.48);
+    --panel-accent-soft: rgba(10, 132, 255, 0.12);
+
+    --sp-bg: var(--panel-bg);
+    --sp-bg-elevated: var(--panel-bg-elevated);
+    --sp-bg-grouped: var(--panel-bg-grouped);
+    --sp-bg-grouped-hover: var(--panel-bg-grouped-hover);
+    --sp-bg-input: var(--panel-bg-input);
+    --sp-separator: var(--panel-separator);
+    --sp-text: var(--panel-text);
+    --sp-text-secondary: var(--panel-text-secondary);
+    --sp-text-tertiary: var(--panel-text-tertiary);
+    --sp-accent-soft: var(--panel-accent-soft);
+
+    background: var(--panel-bg) !important;
+    color: var(--panel-text) !important;
+}
+
+/* ===== Text remaps (Tailwind text-white on light bg) ===== */
+html:not(.dark) body.panel-ios .text-white {
+    color: #1c1c1e !important;
+}
+
+html:not(.dark) body.panel-ios .text-white\/90 {
+    color: rgba(28, 28, 30, 0.92) !important;
+}
+
+html:not(.dark) body.panel-ios .text-white\/80 {
+    color: rgba(28, 28, 30, 0.82) !important;
+}
+
+html:not(.dark) body.panel-ios .text-white\/70 {
+    color: rgba(60, 60, 67, 0.78) !important;
+}
+
+html:not(.dark) body.panel-ios .text-white\/60 {
+    color: rgba(60, 60, 67, 0.65) !important;
+}
+
+html:not(.dark) body.panel-ios .text-white\/50 {
+    color: rgba(60, 60, 67, 0.55) !important;
+}
+
+html:not(.dark) body.panel-ios .text-white\/40 {
+    color: rgba(60, 60, 67, 0.45) !important;
+}
+
+html:not(.dark) body.panel-ios .text-white\/30 {
+    color: rgba(60, 60, 67, 0.38) !important;
+}
+
+html:not(.dark) body.panel-ios .text-white\/20 {
+    color: rgba(60, 60, 67, 0.28) !important;
+}
+
+/* ===== Surface remaps ===== */
+html:not(.dark) body.panel-ios [class*="bg-white/5"],
+html:not(.dark) body.panel-ios [class*="bg-white/\\5"],
+html:not(.dark) body.panel-ios .bg-white\/5 {
+    background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+html:not(.dark) body.panel-ios [class*="bg-white/10"],
+html:not(.dark) body.panel-ios .bg-white\/10 {
+    background-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+html:not(.dark) body.panel-ios [class*="bg-black/"],
+html:not(.dark) body.panel-ios .bg-black\/20,
+html:not(.dark) body.panel-ios .bg-black\/30,
+html:not(.dark) body.panel-ios .bg-black\/40 {
+    background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+html:not(.dark) body.panel-ios [class*="bg-[#0c0818]"],
+html:not(.dark) body.panel-ios [class*="bg-[#102219]"],
+html:not(.dark) body.panel-ios [class*="bg-[#0a0612]"] {
+    background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+html:not(.dark) body.panel-ios [class*="border-white/"],
+html:not(.dark) body.panel-ios .border-white\/5,
+html:not(.dark) body.panel-ios .border-white\/10,
+html:not(.dark) body.panel-ios .border-white\/20 {
+    border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+html:not(.dark) body.panel-ios .hover\:text-white:hover {
+    color: #1c1c1e !important;
+}
+
+html:not(.dark) body.panel-ios .hover\:bg-white\/10:hover {
+    background-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+html:not(.dark) body.panel-ios .hover\:bg-white\/5:hover {
+    background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+/* ===== Topbar ===== */
+html:not(.dark) body.panel-ios .panel-topbar {
+    background: rgba(255, 255, 255, 0.82) !important;
+    border-bottom-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+html:not(.dark) body.panel-ios .panel-topbar__more-menu {
+    background: rgba(255, 255, 255, 0.98) !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* ===== Modals ===== */
+html:not(.dark) body.panel-ios .modal-content {
+    background: rgba(255, 255, 255, 0.98) !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.15) !important;
+    color: #1c1c1e !important;
+}
+
+html:not(.dark) body.panel-ios .modal-overlay {
+    background: rgba(0, 0, 0, 0.35) !important;
+}
+
+html:not(.dark) body.panel-ios .soft-select-menu {
+    background: rgba(255, 255, 255, 0.98) !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* ===== Cards & premium surfaces ===== */
+html:not(.dark) body.panel-ios .premium-card,
+html:not(.dark) body.panel-ios [class*="rounded-2xl"][class*="bg-white/5"],
+html:not(.dark) body.panel-ios [class*="rounded-3xl"][class*="bg-white/5"],
+html:not(.dark) body.panel-ios .stat-card-neon {
+    background: #ffffff !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* ===== Users modal (light) ===== */
+html:not(.dark) body.panel-ios .users-modal-overlay .users-modal {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(246, 246, 248, 0.99) 100%) !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 32px 64px rgba(0, 0, 0, 0.15) !important;
+}
+
+html:not(.dark) body.panel-ios .users-modal__hero-bg {
+    background: radial-gradient(ellipse 80% 100% at 20% -20%, rgba(10, 132, 255, 0.1), transparent 60%),
+        radial-gradient(ellipse 60% 80% at 90% 0%, rgba(94, 92, 230, 0.08), transparent 55%) !important;
+}
+
+html:not(.dark) body.panel-ios .udm-meta-chip {
+    background: rgba(0, 0, 0, 0.04) !important;
+    border-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+html:not(.dark) body.panel-ios .users-modal__stat,
+html:not(.dark) body.panel-ios .udm-card,
+html:not(.dark) body.panel-ios .udm-sub-card,
+html:not(.dark) body.panel-ios .udm-ref-item,
+html:not(.dark) body.panel-ios .udm-ref-chip {
+    background: rgba(0, 0, 0, 0.03) !important;
+    border-color: rgba(0, 0, 0, 0.07) !important;
+}
+
+html:not(.dark) body.panel-ios .udm-table thead {
+    background: rgba(246, 246, 248, 0.98) !important;
+}
+
+html:not(.dark) body.panel-ios .users-modal__toolbar {
+    background: rgba(0, 0, 0, 0.03) !important;
+    border-bottom-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+html:not(.dark) body.panel-ios .udm-tool-btn {
+    background: rgba(0, 0, 0, 0.03) !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+    color: rgba(60, 60, 67, 0.75) !important;
+}
+
+html:not(.dark) body.panel-ios .udm-tool-btn:hover {
+    background: rgba(0, 0, 0, 0.06) !important;
+    color: #1c1c1e !important;
+}
+
+/* ===== Theme modal ===== */
+html:not(.dark) body.panel-ios .theme-preview-card {
+    background: rgba(0, 0, 0, 0.02) !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+html:not(.dark) body.panel-ios .theme-preview-card.is-active {
+    background: rgba(10, 132, 255, 0.08) !important;
+    border-color: rgba(10, 132, 255, 0.4) !important;
+}
+
+html:not(.dark) body.panel-ios .theme-segment {
+    background: rgba(0, 0, 0, 0.03) !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+html:not(.dark) body.panel-ios .theme-modal__footer {
+    background: rgba(0, 0, 0, 0.02) !important;
+    border-top-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+html:not(.dark) body.panel-ios .theme-modal__section + .theme-modal__section {
+    border-top-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+html:not(.dark) body.panel-ios .theme-modal__header {
+    border-bottom-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+html:not(.dark) body.panel-ios .theme-modal__close {
+    background: rgba(0, 0, 0, 0.05) !important;
+    color: rgba(60, 60, 67, 0.65) !important;
+}
+
+/* ===== macOS light extras ===== */
+html:not(.dark)[data-design|="macos"] body.panel-ios {
+    background: #ebebef !important;
+}
+
+html:not(.dark)[data-design|="macos"] body.panel-ios main .max-w-7xl {
+    background: rgba(255, 255, 255, 0.92) !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 1) !important;
+}
+
+html:not(.dark)[data-design|="macos"] body.panel-ios .panel-dock__inner {
+    background: rgba(255, 255, 255, 0.78) !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12) !important;
+}
+
+html:not(.dark)[data-design|="macos"] body.panel-ios .panel-dock__label {
+    background: rgba(255, 255, 255, 0.96) !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+    color: #1c1c1e !important;
+}
+
+html:not(.dark)[data-design|="macos"] body.panel-ios .panel-dock__item:hover .panel-dock__icon {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* ===== Scrollbar ===== */
+html:not(.dark) body.panel-ios ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.15) !important;
+}
+
+html:not(.dark) body.panel-ios ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.25) !important;
+}
+
+html:not(.dark) body.panel-ios * {
+    scrollbar-color: rgba(0, 0, 0, 0.15) rgba(0, 0, 0, 0.03) !important;
+}
+
+/* ===== Toast ===== */
+html:not(.dark) body.panel-ios .toast-container .toast {
+    background: rgba(255, 255, 255, 0.96) !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+    color: #1c1c1e !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* ===== Inputs placeholder ===== */
+html:not(.dark) body.panel-ios main input::placeholder,
+html:not(.dark) body.panel-ios main textarea::placeholder {
+    color: rgba(60, 60, 67, 0.4) !important;
+}
+
+/* ===== Chart.js / canvas labels stay readable ===== */
+html:not(.dark) body.panel-ios canvas {
+    filter: none;
+}
+
+/* ===== Catch-all for inline light text colors ===== */
+html:not(.dark) body.panel-ios [class*="text-[#f5f5f7]"],
+html:not(.dark) body.panel-ios [class*="text-[#e0e0e0]"] {
+    color: #1c1c1e !important;
+}
+
+html:not(.dark) body.panel-ios .text-\[\#f5f5f7\] {
+    color: #1c1c1e !important;
+}
+
+html:not(.dark) body.panel-ios .text-\[\#e0e0e0\] {
+    color: #1c1c1e !important;
+}
+
+/* Support & users cards use CSS vars — ensure hover states */
+html:not(.dark) body.panel-ios .users-card,
+html:not(.dark) body.panel-ios .support-inbox-item {
+    background: #ffffff !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+
+html:not(.dark) body.panel-ios .users-card:hover,
+html:not(.dark) body.panel-ios .support-inbox-item:hover {
+    background: #fafafa !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+html:not(.dark) body.panel-ios .users-search,
+html:not(.dark) body.panel-ios .support-search {
+    background: rgba(118, 118, 128, 0.1) !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+html:not(.dark) body.panel-ios .settings-sidebar {
+    background: #ffffff !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+html:not(.dark) body.panel-ios .settings-page .settings-alert {
+    background: rgba(255, 159, 10, 0.08) !important;
+    border-color: rgba(255, 159, 10, 0.2) !important;
+}
+
+/* Dashboard tabs */
+html:not(.dark) body.panel-ios #dash-tabs {
+    background: rgba(0, 0, 0, 0.04) !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+html:not(.dark) body.panel-ios .dash-tab {
+    color: rgba(60, 60, 67, 0.65) !important;
+}
+
+html:not(.dark) body.panel-ios .dash-tab.is-active {
+    color: #0a84ff !important;
+    background: rgba(10, 132, 255, 0.12) !important;
+}
+
+/* ===== Button constructor (light) ===== */
+html:not(.dark) body.panel-ios .btn-cstr-page .button-item,
+html:not(.dark) body.panel-ios .button-item {
+    background: #ffffff !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+html:not(.dark) body.panel-ios .button-item.selected {
+    background: rgba(10, 132, 255, 0.1) !important;
+    border-color: #0a84ff !important;
+}
+
+html:not(.dark) body.panel-ios .btn-cstr-grid,
+html:not(.dark) body.panel-ios #button-grid,
+html:not(.dark) body.panel-ios #hidden-button-grid {
+    border-color: rgba(0, 0, 0, 0.12) !important;
+    background: rgba(0, 0, 0, 0.02) !important;
+}
+
+html:not(.dark) body.panel-ios .soft-select-toggle {
+    background: rgba(118, 118, 128, 0.1) !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+    color: #1c1c1e !important;
+}
+
+html:not(.dark) body.panel-ios .soft-select-menu {
+    background: #ffffff !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1) !important;
+}
+
+html:not(.dark) body.panel-ios .soft-select-item {
+    color: rgba(60, 60, 67, 0.85) !important;
+}
+
+html:not(.dark) body.panel-ios .soft-select-item:hover {
+    background: rgba(0, 0, 0, 0.04) !important;
+}
+
+html:not(.dark) body.panel-ios .color-swatch {
+    border-color: rgba(0, 0, 0, 0.12) !important;
+    background: rgba(0, 0, 0, 0.04) !important;
+    color: rgba(60, 60, 67, 0.45) !important;
+}
+
+html:not(.dark) body.panel-ios main input[class*="bg-white/5"] {
+    background: rgba(118, 118, 128, 0.1) !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+    color: #1c1c1e !important;
+}
+
+/* ===== Settings — toggle rows, cards, tab panels ===== */
+html:not(.dark) body.panel-ios .settings-page [class*="group/toggle"],
+html:not(.dark) body.panel-ios .settings-page .host-card,
+html:not(.dark) body.panel-ios .settings-page .rounded-\[2rem\],
+html:not(.dark) body.panel-ios .settings-page .rounded-3xl {
+    background: #ffffff !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+html:not(.dark) body.panel-ios .settings-page table th,
+html:not(.dark) body.panel-ios .settings-page table td {
+    color: rgba(28, 28, 30, 0.88) !important;
+    border-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+html:not(.dark) body.panel-ios .settings-page .tab-content {
+    color: #1c1c1e !important;
+}
+
+/* ===== Form inputs (admin keys, nodes, settings…) ===== */
+html:not(.dark) body.panel-ios main input[class*="bg-black"],
+html:not(.dark) body.panel-ios main select[class*="bg-black"],
+html:not(.dark) body.panel-ios main textarea[class*="bg-black"],
+html:not(.dark) body.panel-ios main .soft-select-toggle[class*="bg-black"] {
+    background: rgba(118, 118, 128, 0.1) !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+    color: #1c1c1e !important;
+}
+
+html:not(.dark) body.panel-ios main input[class*="bg-black"]:focus,
+html:not(.dark) body.panel-ios main select[class*="bg-black"]:focus,
+html:not(.dark) body.panel-ios main textarea[class*="bg-black"]:focus {
+    background: rgba(118, 118, 128, 0.14) !important;
+    border-color: rgba(10, 132, 255, 0.35) !important;
+}
+
+html:not(.dark) body.panel-ios main .material-symbols-outlined[class*="text-white"] {
+    color: rgba(60, 60, 67, 0.38) !important;
+}
+
+html:not(.dark) body.panel-ios main .group-focus-within\:text-primary:focus-within .material-symbols-outlined,
+html:not(.dark) body.panel-ios main .group-focus-within\/input\:text-primary:focus-within .material-symbols-outlined {
+    color: #0a84ff !important;
+}
+
+html:not(.dark) body.panel-ios .text-white\/15,
+html:not(.dark) body.panel-ios .placeholder\:text-white\/15::placeholder,
+html:not(.dark) body.panel-ios .placeholder\:text-white\/20::placeholder {
+    color: rgba(60, 60, 67, 0.35) !important;
+}
+
+html:not(.dark) body.panel-ios [class*="bg-black/40"][class*="rounded-xl"][class*="flex"] {
+    background: rgba(0, 0, 0, 0.05) !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+html:not(.dark) body.panel-ios [class*="bg-black/40"][class*="rounded-xl"] button.text-white\/60 {
+    color: rgba(60, 60, 67, 0.55) !important;
+}
+
+html:not(.dark) body.panel-ios [class*="bg-black/40"][class*="rounded-xl"] button.text-white {
+    color: #1c1c1e !important;
+}
+
+html:not(.dark) body.panel-ios main table {
+    border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+html:not(.dark) body.panel-ios main table thead {
+    background: rgba(0, 0, 0, 0.03) !important;
+}
+
+html:not(.dark) body.panel-ios main table tbody tr:hover {
+    background: rgba(0, 0, 0, 0.02) !important;
+}
+
+html:not(.dark) body.panel-ios .text-primary {
+    color: #0a84ff !important;
+}
+
+html:not(.dark) body.panel-ios .text-green-400,
+html:not(.dark) body.panel-ios .text-emerald-400 {
+    color: #248a3d !important;
+}
+
+html:not(.dark) body.panel-ios .text-red-400,
+html:not(.dark) body.panel-ios .text-rose-400 {
+    color: #d70015 !important;
+}
+
+html:not(.dark) body.panel-ios .text-amber-400,
+html:not(.dark) body.panel-ios .text-yellow-400 {
+    color: #b25000 !important;
+}
+
+html:not(.dark) body.panel-ios .text-cyan-400 {
+    color: #0071a4 !important;
+}
+
+/* ===== Extra text opacities ===== */
+html:not(.dark) body.panel-ios .text-white\/35 {
+    color: rgba(60, 60, 67, 0.42) !important;
+}
+
+html:not(.dark) body.panel-ios .text-white\/25 {
+    color: rgba(60, 60, 67, 0.32) !important;
+}
+
+html:not(.dark) body.panel-ios .placeholder\:text-white\/10::placeholder {
+    color: rgba(60, 60, 67, 0.32) !important;
+}
+
+/* Light tints used on dashboard finance cards */
+html:not(.dark) body.panel-ios .text-emerald-300 {
+    color: #248a3d !important;
+}
+
+html:not(.dark) body.panel-ios .text-sky-300 {
+    color: #0077b3 !important;
+}
+
+html:not(.dark) body.panel-ios .text-cyan-300 {
+    color: #0071a4 !important;
+}
+
+html:not(.dark) body.panel-ios .text-blue-400 {
+    color: #0066cc !important;
+}
+
+html:not(.dark) body.panel-ios .text-red-300 {
+    color: #d70015 !important;
+}
+
+html:not(.dark) body.panel-ios .text-yellow-300 {
+    color: #9a6700 !important;
+}
+
+/* ===== Dashboard period selector ===== */
+html:not(.dark) body.panel-ios .dash-period-btn {
+    color: rgba(60, 60, 67, 0.55) !important;
+}
+
+html:not(.dark) body.panel-ios .dash-period-btn.is-active,
+html:not(.dark) body.panel-ios .dash-period-btn:hover {
+    background: rgba(10, 132, 255, 0.14) !important;
+    color: #0a84ff !important;
+}
+
+html:not(.dark) body.panel-ios #dash-tabs {
+    background: rgba(0, 0, 0, 0.04) !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Dashboard section cards */
+html:not(.dark) body.panel-ios main section > div[class*="rounded-[1.4rem]"][class*="border-white"] {
+    background: #ffffff !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+html:not(.dark) body.panel-ios main section [class*="bg-black/25"] {
+    background: rgba(0, 0, 0, 0.03) !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+html:not(.dark) body.panel-ios main [class*="bg-black/30"] {
+    background: rgba(0, 0, 0, 0.04) !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+html:not(.dark) body.panel-ios main [class*="from-cyan-500"][class*="bg-gradient"] {
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(255, 255, 255, 0.98)) !important;
+    border-color: rgba(6, 182, 212, 0.2) !important;
+}
+
+html:not(.dark) body.panel-ios main [class*="from-sky-500"][class*="bg-gradient"] {
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(255, 255, 255, 0.98)) !important;
+    border-color: rgba(14, 165, 233, 0.2) !important;
+}
+
+/* ===== Bot logs terminal ===== */
+html:not(.dark) body.panel-ios #logs-container {
+    background: #f5f5f7 !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+    color: #1c1c1e !important;
+}
+
+html:not(.dark) body.panel-ios #logs-container .text-yellow-300 {
+    color: #9a6700 !important;
+    background: rgba(255, 204, 0, 0.1) !important;
+}
+
+html:not(.dark) body.panel-ios #logs-container .text-red-300 {
+    color: #d70015 !important;
+}
+
+html:not(.dark) body.panel-ios #logs-container .text-white\/80 {
+    color: rgba(28, 28, 30, 0.88) !important;
+}
+
+html:not(.dark) body.panel-ios #logs-wrapper {
+    background: #ffffff !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* ===== Settings content / broadcast cards ===== */
+html:not(.dark) body.panel-ios .settings-page textarea,
+html:not(.dark) body.panel-ios .settings-page [class*="bg-black/50"] {
+    background: rgba(118, 118, 128, 0.1) !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+    color: #1c1c1e !important;
+}
+
+html:not(.dark) body.panel-ios .settings-page [class*="bg-black/20"] {
+    background: rgba(0, 0, 0, 0.03) !important;
+    border-color: rgba(0, 0, 0, 0.07) !important;
+}
+
+html:not(.dark) body.panel-ios .settings-save-btn,
+html:not(.dark) body.panel-ios .settings-page button[type="submit"]:not(.settings-save-btn) {
+    opacity: 1 !important;
+}
+
+html:not(.dark) body.panel-ios .settings-page .border-dashed {
+    border-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Access page checkboxes visibility */
+html:not(.dark) body.panel-ios .settings-page input[type="checkbox"]:not(.peer) {
+    border: 1px solid rgba(0, 0, 0, 0.2) !important;
+    background: #fff !important;
+}
+
+/* ===== Workspace windows (light) ===== */
+html:not(.dark) body.panel-ios .ws-window {
+    background: rgba(255, 255, 255, 0.94) !important;
+    box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.08),
+        0 24px 64px rgba(0, 0, 0, 0.15) !important;
+}
+
+html:not(.dark) body.panel-ios .ws-window__titlebar {
+    background: rgba(0, 0, 0, 0.04) !important;
+    border-bottom-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+html:not(.dark) body.panel-ios .ws-window__title {
+    color: rgba(60, 60, 67, 0.65) !important;
+}
+
+html:not(.dark) body.panel-ios .ws-window.is-focused .ws-window__title {
+    color: #1c1c1e !important;
+}
+
+html:not(.dark) body.panel-ios .ws-window__body {
+    background: rgba(242, 242, 247, 0.98) !important;
+}
+
+html:not(.dark) body.panel-ios .ws-dock-editor-item {
+    background: rgba(0, 0, 0, 0.03) !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+html:not(.dark) body.panel-ios .ws-dock-editor-item .text-white {
+    color: #1c1c1e !important;
+}
+

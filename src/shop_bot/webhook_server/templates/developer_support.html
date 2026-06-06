@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% block title %}Поддержка разработчика{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/developer-support.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
+{% endblock %}
+
+{% block content %}
+<div class="ds-page" id="dev-support-app"
+     data-enabled="{{ '1' if dev_support_enabled else '0' }}"
+     data-state-url="{{ url_for('developer_support_state_json') }}"
+     data-pair-start="{{ url_for('developer_support_pairing_start') }}"
+     data-pair-poll="{{ url_for('developer_support_pairing_poll') }}"
+     data-pair-revoke="{{ url_for('developer_support_pairing_revoke') }}"
+     data-tickets-url="{{ url_for('developer_support_tickets_json') }}"
+     data-ticket-create="{{ url_for('developer_support_ticket_create') }}"
+     data-csrf="{{ csrf_token() }}"
+     data-bind-url="{{ dev_support_state.bind_url if dev_support_enabled else '' }}"
+     data-status="{{ dev_support_state.status if dev_support_enabled else 'disabled' }}"
+     data-installation-id="{{ dev_support_state.installation_id or '' }}"
+     data-fingerprint="{{ dev_support_state.panel_fingerprint if dev_support_enabled else '' }}"
+     data-user-code="{{ dev_support_state.user_code or '' }}"
+     data-panel-domain="{{ panel_domain or '' }}"
+     data-version="{{ app_version or '' }}">
+
+    <div class="ds-mesh" aria-hidden="true"></div>
+
+    <header class="ds-hero">
+        <div class="ds-hero__copy">
+            <p class="ds-breadcrumb">Remnawave App · Developer Support</p>
+            <h1 class="ds-title">Поддержка разработчика</h1>
+            <p class="ds-subtitle">Безопасная привязка панели и тикеты напрямую автору проекта — с подписью Ed25519 и без передачи секретов API</p>
+        </div>
+        <div class="ds-hero__badge" id="ds-status-badge" data-status="{{ dev_support_state.status if dev_support_enabled else 'disabled' }}">
+            <span class="material-symbols-outlined">verified_user</span>
+            <span id="ds-status-label">{% if not dev_support_enabled %}Отключено{% elif dev_support_state.status == 'active' %}Привязано{% elif dev_support_state.status == 'pending' %}Ожидание{% else %}Не привязано{% endif %}</span>
+        </div>
+    </header>
+
+    {% if not dev_support_enabled %}
+    <section class="ds-card ds-card--warn">
+        <span class="material-symbols-outlined ds-card__icon">info</span>
+        <div>
+            <h2>Функция не активна на этом сервере</h2>
+            <p>Администратор должен задать в <code>.env</code>:</p>
+            <pre class="ds-code">DEVELOPER_SUPPORT_ENABLED=1
+DEVELOPER_SUPPORT_HUB_URL=https://support.example.com</pre>
+            <p>URL хаба задаётся только через окружение — защита от фишинга.</p>
+        </div>
+    </section>
+    {% else %}
+
+    <div class="ds-grid">
+        <!-- Привязка -->
+        <section class="ds-card ds-card--pairing" id="ds-panel-pairing">
+            <header class="ds-card__head">
+                <span class="material-symbols-outlined">link</span>
+                <div>
+                    <h2>Привязка установки</h2>
+                    <p>Device Authorization — код переносите вручную, MITM не завершит привязку без доступа к панели и хабу</p>
+                </div>
+            </header>
+
+            <div class="ds-meta-grid">
+                <div class="ds-meta">
+                    <span class="ds-meta__lbl">Fingerprint панели</span>
+                    <code class="ds-meta__val" id="ds-fingerprint">{{ dev_support_state.panel_fingerprint }}</code>
+                </div>
+                <div class="ds-meta">
+                    <span class="ds-meta__lbl">Installation ID</span>
+                    <code class="ds-meta__val" id="ds-installation-id">{{ dev_support_state.installation_id or '—' }}</code>
+                </div>
+                <div class="ds-meta">
+                    <span class="ds-meta__lbl">Домен</span>
+                    <code class="ds-meta__val">{{ panel_domain }}</code>
+                </div>
+                <div class="ds-meta">
+                    <span class="ds-meta__lbl">Версия</span>
+                    <code class="ds-meta__val">v{{ app_version }}</code>
+                </div>
+            </div>
+
+            <div id="ds-pairing-active" class="ds-pairing-box {% if dev_support_state.status != 'pending' %}hidden{% endif %}">
+                <p class="ds-pairing-code-label">Код для страницы привязки</p>
+                <div class="ds-pairing-code" id="ds-user-code">{{ dev_support_state.user_code or '····-····' }}</div>
+                <p class="ds-pairing-hint">Откройте <a id="ds-bind-link" href="{{ dev_support_state.bind_url }}" target="_blank" rel="noopener">{{ dev_support_state.bind_url }}</a> и введите код</p>
+                <p class="ds-pairing-expires" id="ds-pairing-expires"></p>
+            </div>
+
+            <div class="ds-actions">
+                <button type="button" class="ds-btn ds-btn--primary" id="ds-btn-pair-start" {% if dev_support_state.status == 'active' %}disabled{% endif %}>
+                    <span class="material-symbols-outlined">qr_code_2</span> Создать код привязки
+                </button>
+                <button type="button" class="ds-btn ds-btn--ghost" id="ds-btn-pair-revoke" {% if dev_support_state.status != 'active' %}disabled{% endif %}>
+                    <span class="material-symbols-outlined">link_off</span> Отозвать привязку
+                </button>
+            </div>
+
+            <ol class="ds-steps">
+                <li>Нажмите «Создать код привязки» — в панели генерируется ключ Ed25519</li>
+                <li>Откройте страницу хаба и подтвердите код</li>
+                <li>Дождитесь статуса «Привязано» (авто-polling)</li>
+                <li>Отправляйте тикеты — каждый запрос подписывается вашим приватным ключом</li>
+            </ol>
+        </section>
+
+        <!-- Новый тикет -->
+        <section class="ds-card ds-card--ticket {% if dev_support_state.status != 'active' %}ds-card--locked{% endif %}" id="ds-panel-ticket">
+            <header class="ds-card__head">
+                <span class="material-symbols-outlined">support_agent</span>
+                <div>
+                    <h2>Новое обращение</h2>
+                    <p>Тема, описание и опциональное вложение. API-ключи и пароли <strong>не отправляются</strong></p>
+                </div>
+            </header>
+
+            <form id="ds-ticket-form" class="ds-form" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <label class="ds-field">
+                    <span>Тема</span>
+                    <input type="text" name="subject" maxlength="120" required placeholder="Кратко опишите проблему" />
+                </label>
+                <label class="ds-field">
+                    <span>Описание</span>
+                    <textarea name="description" rows="6" required placeholder="Шаги воспроизведения, ожидаемое и фактическое поведение…"></textarea>
+                </label>
+                <label class="ds-field ds-field--file">
+                    <span>Вложение (png, jpg, pdf, txt, log, zip — до 10 MB)</span>
+                    <div class="ds-file-drop" id="ds-create-file-drop">
+                        <span class="material-symbols-outlined">cloud_upload</span>
+                        <span class="ds-file-drop__text">Перетащите файл или нажмите для выбора</span>
+                        <span class="ds-file-drop__name" id="ds-create-file-name"></span>
+                        <input type="file" name="attachment" accept=".png,.jpg,.jpeg,.gif,.webp,.pdf,.txt,.log,.zip" />
+                    </div>
+                </label>
+                <label class="ds-check">
+                    <input type="checkbox" name="include_diagnostics" value="1" />
+                    <span>Приложить диагностический пакет (настройки с маскировкой секретов *** )</span>
+                </label>
+                <div class="ds-preview" id="ds-ticket-preview">
+                    <p><strong>Метаданные:</strong> {{ panel_domain }} · v{{ app_version }} · {{ panel_admin_login }} · {{ panel_role_name or 'Superadmin' }}</p>
+                </div>
+                <button type="submit" class="ds-btn ds-btn--accent" id="ds-btn-submit" {% if dev_support_state.status != 'active' %}disabled{% endif %}>
+                    <span class="material-symbols-outlined">send</span> Отправить тикет
+                </button>
+            </form>
+        </section>
+    </div>
+
+    <!-- Список тикетов -->
+    <section class="ds-card ds-card--list ds-card--my-tickets" id="ds-panel-list">
+        <header class="ds-card__head">
+            <span class="material-symbols-outlined">forum</span>
+            <div>
+                <h2>Мои обращения</h2>
+                <p>Переписка с разработчиком и история тикетов</p>
+            </div>
+            <button type="button" class="ds-btn ds-btn--ghost ds-btn--sm" id="ds-btn-refresh-tickets" title="Обновить">
+                <span class="material-symbols-outlined">refresh</span>
+            </button>
+        </header>
+        <div id="ds-tickets-list" class="ds-my-tickets">
+            <div class="ds-my-tickets__loading">
+                <span class="material-symbols-outlined ds-spin">progress_activity</span>
+                <span>Загрузка…</span>
+            </div>
+        </div>
+    </section>
+
+    <div id="ds-ticket-modal" class="ds-modal hidden" aria-hidden="true" role="dialog" aria-labelledby="ds-modal-title">
+        <div class="ds-modal__backdrop" data-close-modal></div>
+        <div class="ds-modal__panel ds-modal__panel--ticket">
+            <header class="ds-modal__head">
+                <div>
+                    <p class="ds-modal__eyebrow">Обращение</p>
+                    <h3 id="ds-modal-title">Тикет</h3>
+                </div>
+                <button type="button" class="ds-modal__close" data-close-modal aria-label="Закрыть">&times;</button>
+            </header>
+            <div id="ds-modal-status" class="ds-modal__status"></div>
+            <div id="ds-modal-body" class="ds-modal__body ds-thread"></div>
+            <div id="ds-modal-attachments" class="ds-modal__attachments hidden"></div>
+            <form id="ds-reply-form" class="ds-form ds-modal__reply">
+                <label class="ds-field">
+                    <span>Дополнительное сообщение</span>
+                    <textarea name="message" rows="3" placeholder="Уточнение, лог, комментарий…"></textarea>
+                </label>
+                <label class="ds-field ds-field--file">
+                    <span>Вложение к ответу</span>
+                    <div class="ds-file-drop ds-file-drop--sm" id="ds-reply-file-drop">
+                        <span class="material-symbols-outlined">attach_file</span>
+                        <span class="ds-file-drop__text">Файл (до 10 MB)</span>
+                        <span class="ds-file-drop__name" id="ds-reply-file-name"></span>
+                        <input type="file" name="attachment" accept=".png,.jpg,.jpeg,.gif,.webp,.pdf,.txt,.log,.zip" />
+                    </div>
+                </label>
+                <button type="submit" class="ds-btn ds-btn--primary">
+                    <span class="material-symbols-outlined">send</span> Отправить
+                </button>
+            </form>
+        </div>
+    </div>
+
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if dev_support_enabled %}
+<script src="{{ url_for('static', filename='js/developer-support.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
+{% endif %}
+{% endblock %}

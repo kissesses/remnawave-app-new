@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="utf-8" />
+    <!-- ===== МАСШТАБ СТРАНИЦЫ ===== -->
+    <!-- Управление начальным зумом сайта через viewport -->
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <!-- ===== Конец блока масштабирования ===== -->
+    <title>{% block title %}Панель управления Ботом{% endblock %}</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/favicon.svg') }}" />
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='img/favicon-32x32.png') }}" />
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='img/favicon-16x16.png') }}" />
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/apple-touch-icon.png') }}" />
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon-32x32.png') }}" />
+    <meta name="theme-color" content="#0a84ff" />
+    <meta name="csrf-token" content="{{ csrf_token() }}" />
+
+
+    <script>
+        // Блокировка предупреждения Tailwind CSS о продакшене
+        (function () {
+            const originalWarn = console.warn;
+            console.warn = function (...args) {
+                if (args[0] && typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com should not be used in production')) return;
+                originalWarn.apply(console, args);
+            };
+        })();
+    </script>
+
+    <script src="https://unpkg.com/tailwindcss-cdn@3.4.10/tailwindcss.js"></script>
+
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0a84ff",
+                        "accent": "#5e5ce6",
+                        "background-light": "#f6f8f7",
+                        "background-dark": "#000000",
+                    },
+                    fontFamily: {
+                        "display": ["-apple-system", "BlinkMacSystemFont", "SF Pro Display", "SF Pro Text", "Inter", "system-ui", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        };
+        // Инициализация темы перед рендерингом
+        (function () {
+            const theme = localStorage.getItem('theme') || 'dark';
+            if (theme === 'dark') document.documentElement.classList.add('dark');
+            else document.documentElement.classList.remove('dark');
+            const allowedDesigns = ['classic', 'macos', 'macos-v2', 'glass', 'stealth-admin'];
+            const rawDesign = localStorage.getItem('design-theme') || 'classic';
+            const design = allowedDesigns.includes(rawDesign) ? rawDesign : 'classic';
+            document.documentElement.dataset.design = design;
+            if (design === 'stealth-admin') {
+                document.documentElement.classList.add('dark');
+            }
+            const accentMap = {
+                blue: { c: '#0a84ff', rgb: '10, 132, 255' },
+                violet: { c: '#8b5cf6', rgb: '139, 92, 246' },
+                rose: { c: '#f43f5e', rgb: '244, 63, 94' },
+                emerald: { c: '#10b981', rgb: '16, 185, 129' },
+                cyan: { c: '#06b6d4', rgb: '6, 182, 212' },
+                amber: { c: '#f59e0b', rgb: '245, 158, 11' },
+                red: { c: '#ef4444', rgb: '239, 68, 68' },
+            };
+            const accentKey = localStorage.getItem('panel-accent') || 'blue';
+            if (design !== 'stealth-admin' && accentMap[accentKey]) {
+                const a = accentMap[accentKey];
+                const root = document.documentElement;
+                root.style.setProperty('--primary', a.c);
+                root.style.setProperty('--primary-rgb', a.rgb);
+                root.style.setProperty('--panel-accent', a.c);
+                root.style.setProperty('--panel-accent-soft', 'rgba(' + a.rgb + ', 0.16)');
+                root.style.setProperty('--accent', a.c);
+                root.style.setProperty('--accent-rgb', a.rgb);
+            }
+        })();
+    </script>
+
+    <style>
+        /* ========================================== */
+        /* ИЗМЕНЕНИЕ ЗУМА ВСЕГО САЙТА */
+        /* ========================================== */
+        /* Используйте CSS-переменную --site-scale для изменения масштаба */
+        /* Этот метод корректно работает с диаграммами и модальными окнами */
+
+        :root {
+            --site-scale: 0.85;
+            --primary: #0a84ff;
+            --primary-rgb: 10, 132, 255;
+            --accent: #5e5ce6;
+            --accent-rgb: 94, 92, 230;
+        }
+
+        .demo-username-blur {
+            filter: blur(4px);
+            user-select: none;
+        }
+
+        html {
+            font-size: calc(15px * var(--site-scale));
+        }
+
+        /* Force Emoji Font for Inputs */
+        input,
+        textarea,
+        select {
+            font-family: "Inter", "Apple Color Emoji", "Segoe UI Emoji", sans-serif !important;
+        }
+
+        canvas {
+            font-size: 15px;
+        }
+
+        /* ИНСТРУКЦИЯ ПО ИЗМЕНЕНИЮ МАСШТАБА: */
+        /* 1. Измените значение --site-scale в блоке :root выше */
+        /* 2. Доступные значения: */
+        /*    0.85 - уменьшить сайт до 85% */
+        /*    0.9  - уменьшить сайт до 90% */
+        /*    1.0  - стандартный масштаб 100% (по умолчанию) */
+        /*    1.1  - увеличить сайт до 110% */
+        /*    1.15 - увеличить сайт до 115% */
+        /* 3. Сохраните файл и обновите страницу */
+        /* ========================================== */
+
+        .max-w-7xl {
+            max-width: 100rem !important;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings:
+                'FILL' 0,
+                'wght' 400,
+                'GRAD' 0,
+                'opsz' 24
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        body.has-modal-open {
+            overflow: hidden;
+        }
+
+        .modal-content {
+            background: rgba(16, 34, 25, 0.95);
+            /* #0a0612 with opacity */
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 1rem;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            color: #e0e0e0;
+        }
+
+        .dark .modal-content {
+            background: rgba(0, 0, 0, 0.95);
+            /* #000000 with opacity */
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            color: #e0e0e0;
+        }
+
+        .modal-xl .modal-content {
+            max-width: 1000px;
+        }
+
+        .modal-about-scale .modal-content {
+            max-width: 700px;
+            /* Было 600px, стало шире */
+            transform-origin: center;
+            zoom: 1.1;
+            /* Приближаем масштаб на 10% */
+        }
+
+        @keyframes modalIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .toast-container {
+            position: fixed;
+            top: 1.5rem;
+            right: 1.5rem;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .toast {
+            padding: 1rem 1.25rem;
+            border-radius: 0.75rem;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            animation: toastIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            max-width: 400px;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            border: 1px solid transparent;
+        }
+
+        .toast-success {
+            background: rgba(34, 211, 238, 0.15);
+            border-color: rgba(34, 211, 238, 0.2);
+            color: #4ade80;
+        }
+
+        .toast-danger {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+        }
+
+        .toast-warning {
+            background: rgba(245, 158, 11, 0.15);
+            border-color: rgba(245, 158, 11, 0.2);
+            color: #fcd34d;
+        }
+
+        @keyframes toastIn {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .soft-select {
+            position: relative;
+        }
+
+        .soft-select-toggle {
+            width: 100%;
+            text-align: left;
+            padding: 0.5rem 1rem;
+            background: var(--panel-bg-input, rgba(255, 255, 255, 0.05));
+            border: 1px solid var(--panel-separator, rgba(255, 255, 255, 0.1));
+            border-radius: 0.5rem;
+            color: var(--panel-text, #f5f5f7);
+            cursor: pointer;
+        }
+
+        .soft-select-toggle:hover {
+            background: var(--panel-bg-grouped-hover, rgba(255, 255, 255, 0.1));
+        }
+
+        .soft-select-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin-top: 0.25rem;
+            background: var(--panel-bg-elevated, #1c1c1e);
+            border: 1px solid var(--panel-separator, rgba(255, 255, 255, 0.1));
+            border-radius: 0.5rem;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .soft-select.open {
+            z-index: 60;
+            position: relative;
+        }
+
+        .soft-select.open .soft-select-menu {
+            display: block;
+        }
+
+        .dark .soft-select-menu,
+        .dark .modal-content {
+            background: rgba(0, 0, 0, 0.98) !important;
+            backdrop-filter: blur(20px) !important;
+        }
+
+        .soft-select-item {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            color: var(--panel-text-secondary, rgba(255, 255, 255, 0.7));
+        }
+
+        .soft-select-item:hover,
+        .soft-select-item.is-active {
+            background: var(--panel-accent-soft, rgba(34, 211, 238, 0.1));
+            color: var(--panel-accent, #22d3ee);
+        }
+
+        .soft-select-group-label {
+            padding: 0.4rem 1rem 0.15rem;
+            font-size: 0.6875rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--panel-text-tertiary, rgba(255, 255, 255, 0.42));
+            pointer-events: none;
+            user-select: none;
+        }
+
+        html:not(.dark) .soft-select-menu {
+            background: #ffffff;
+            border-color: rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+
+        html:not(.dark) .soft-select-item {
+            color: #1c1c1e;
+        }
+
+        html:not(.dark) .soft-select-item:hover,
+        html:not(.dark) .soft-select-item.is-active {
+            background: rgba(10, 132, 255, 0.1);
+            color: #0071e3;
+        }
+
+        html:not(.dark) .soft-select-group-label {
+            color: rgba(60, 60, 67, 0.55);
+        }
+
+        html:not(.dark) .soft-select-toggle {
+            color: #1c1c1e;
+        }
+
+        .soft-select select {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .status-dot-animated {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes glow-pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                filter: drop-shadow(0 0 5px rgba(34, 211, 238, 0.8));
+            }
+
+            50% {
+                opacity: 0.6;
+                filter: drop-shadow(0 0 15px rgba(34, 211, 238, 0.4));
+            }
+        }
+
+        .animate-glow-pulse {
+            animation: glow-pulse 1.5s infinite ease-in-out;
+        }
+
+        @keyframes spin-slow {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .animate-spin-slow {
+            animation: spin-slow 3s linear infinite;
+        }
+
+        @keyframes bg-pulse-warning {
+
+            0%,
+            0% {
+                background-color: #22d3ee;
+                color: #000;
+            }
+
+            33% {
+                background-color: #fbbf24;
+                color: #000;
+            }
+
+            66% {
+                background-color: #ffffff;
+                color: #000;
+            }
+
+            100% {
+                background-color: #22d3ee;
+                color: #000;
+            }
+        }
+
+        .animate-bg-pulse {
+            animation: bg-pulse-warning 0.9s infinite ease-in-out;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px !important;
+            height: 6px !important;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02) !important;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15) !important;
+            border-radius: 10px !important;
+            transition: background 0.3s ease !important;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.25) !important;
+        }
+
+        /* Firefox */
+        * {
+            scrollbar-width: thin !important;
+            scrollbar-color: rgba(255, 255, 255, 0.15) rgba(255, 255, 255, 0.02) !important;
+        }
+    </style>
+    <link href="{{ url_for('static', filename='css/neon-theme.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/panel-ios.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/panel-macos.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/panel-light.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/panel-switches.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/panel-workspace.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/panel-workspace-embed.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/panel-about.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/panel-brand.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/panel-glass.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/panel-stealth-admin.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/panel-cmdk.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/panel-presence.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/panel-design-bridge.css') }}" rel="stylesheet" />
+    {% block head %}{% endblock %}
+</head>
+
+<body
+    class="neon-theme panel-ios bg-[#f2f2f7] dark:bg-black font-display text-[#1c1c1e] dark:text-[#f5f5f7] transition-colors duration-300{% if workspace_embed %} workspace-embed{% endif %}{% if workspace_host %} workspace-host{% endif %}"
+    data-workspace-host="{{ '1' if workspace_host else '0' }}"
+    data-presence-url="{{ url_for('admin_presence_json') }}">
+    <script>
+        (function () {
+            if (window.self !== window.top) document.body.classList.add('workspace-embed');
+            var d = document.documentElement.getAttribute('data-design') || 'classic';
+            var ids = ['classic', 'macos', 'macos-v2', 'glass', 'stealth-admin'];
+            ids.forEach(function (id) {
+                document.body.classList.toggle('design-' + id, d === id);
+            });
+            document.body.classList.toggle('design-macos', d === 'macos' || d === 'macos-v2');
+            document.body.classList.toggle('design-glass', d === 'glass' || d === 'stealth-admin');
+            var accentMap = {
+                blue: { c: '#0a84ff', rgb: '10, 132, 255' },
+                violet: { c: '#8b5cf6', rgb: '139, 92, 246' },
+                rose: { c: '#f43f5e', rgb: '244, 63, 94' },
+                emerald: { c: '#10b981', rgb: '16, 185, 129' },
+                cyan: { c: '#06b6d4', rgb: '6, 182, 212' },
+                amber: { c: '#f59e0b', rgb: '245, 158, 11' },
+                red: { c: '#ef4444', rgb: '239, 68, 68' }
+            };
+            var accentKey = localStorage.getItem('panel-accent') || 'blue';
+            if (d !== 'stealth-admin' && accentMap[accentKey]) {
+                var a = accentMap[accentKey];
+                var soft = 'rgba(' + a.rgb + ', 0.16)';
+                ['--primary', '--panel-accent', '--accent', '--sp-accent'].forEach(function (k) {
+                    document.body.style.setProperty(k, a.c);
+                });
+                document.body.style.setProperty('--primary-rgb', a.rgb);
+                document.body.style.setProperty('--accent-rgb', a.rgb);
+                document.body.style.setProperty('--panel-accent-soft', soft);
+                document.body.style.setProperty('--sp-accent-soft', soft);
+            }
+        })();
+    </script>
+    <div class="neon-ambient" aria-hidden="true"></div>
+    {% if not workspace_embed %}
+    {% include 'partials/panel_glass_sidebar.html' %}
+    {% include 'partials/panel_admins_presence.html' %}
+    {% include 'partials/panel_command_palette.html' %}
+    {% endif %}
+    {% macro nav_link_header(endpoint, label, icon, group=[], perm=none) %}
+    {% if perm is none or can(perm) %}
+    {% set is_active = request.endpoint == endpoint or request.endpoint in group %}
+    <a href="{{ url_for(endpoint) }}"
+        class="panel-topbar__nav-link{% if is_active %} is-active{% endif %}">
+        <span class="material-symbols-outlined">{{ icon }}</span>
+        <span class="panel-topbar__nav-label">{{ label }}</span>
+        {% if endpoint == 'support_list_page' %}
+        <span id="sidebar-support-badge" class="panel-topbar__nav-badge hidden"></span>
+        {% endif %}
+    </a>
+    {% endif %}
+    {% endmacro %}
+
+    <div class="relative flex min-h-screen w-full flex-col">
+
+        {% if not workspace_embed %}
+        <div id="workspace-desktop" aria-hidden="true">
+            <div id="workspace-desktop__wallpaper"></div>
+            <div id="workspace-desktop__logo" class="size-md">
+                <img id="workspace-desktop__logo-img" src="" alt="" />
+            </div>
+            <p id="workspace-desktop__hint" class="absolute bottom-28 left-0 right-0 text-center text-white/25 text-[10px] font-bold uppercase tracking-[0.2em] pointer-events-none hidden">
+                Выберите приложение в Dock
+            </p>
+        </div>
+        <div id="workspace-window-layer" aria-live="polite"></div>
+        {% endif %}
+
+        <div class="flex-1 flex flex-col neon-main-bg bg-transparent dark:bg-transparent transition-colors duration-300">
+
+            {% if not workspace_embed %}
+            {% include 'partials/panel_topbar.html' %}
+            {% endif %}
+
+            {% if workspace_embed %}
+            <main class="workspace-embed-main flex-1 relative">
+            {% else %}
+            <main class="flex-1 p-6 lg:p-8 relative">
+                <div class="max-w-7xl mx-auto">
+            {% endif %}
+                    {% block content %}{% endblock %}
+            {% if not workspace_embed %}
+                </div>
+            {% endif %}
+            </main>
+        </div>
+
+    </div>
+
+    {% if not workspace_embed %}
+    {% include 'partials/panel_dock.html' %}
+    {% include 'partials/theme_menu.html' %}
+    {% include 'partials/workspace_dock_editor.html' %}
+    {% endif %}
+
+        <div id="toast-container" class="toast-container"></div>
+
+        {% include 'partials/brand_modal.html' %}
+
+        {% include 'partials/about_modal.html' %}
+        {% include 'partials/about_update_wizard.html' %}
+
+        <!-- Global Custom Confirmation Modal -->
+        <div id="custom-confirm-modal" class="modal-overlay">
+            <div class="modal-content p-6 max-w-md text-center">
+                <div
+                    class="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-500 mx-auto mb-4 border border-red-500/10 shadow-[0_0_30px_rgba(239,68,68,0.15)]">
+                    <span class="material-symbols-outlined text-3xl">warning</span>
+                </div>
+                <h3 id="confirm-modal-title" class="text-xl font-bold text-white mb-2">Вы уверены?</h3>
+                <p id="confirm-modal-text" class="text-white/60 text-sm leading-relaxed mb-8">Это действие необратимо.
+                    Пожалуйста, подтвердите выполнение.</p>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <button type="button" onclick="closeConfirmModal(false)"
+                        class="px-5 py-3 rounded-xl bg-white/5 text-white font-bold hover:bg-white/10 transition-all border border-white/5">
+                        Отмена
+                    </button>
+                    <button type="button" onclick="closeConfirmModal(true)"
+                        class="px-5 py-3 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 shadow-lg shadow-red-500/20 transition-all">
+                        Да, выполнить
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <script id="flash-messages" type="application/json">{{ messages|tojson }}</script>
+        {% endif %}
+        {% endwith %}
+
+        <script src="{{ url_for('static', filename='js/panel-dom-safe.js') }}"></script>
+        <script>
+            // ===== УВЕДОМЛЕНИЯ TOAST =====
+            // Функция для отображения всплывающих сообщений
+            window.showToast = function (type, message, duration = 4000) {
+                const normalized = window.SettingsPage?.normalizeToastArgs(type, message) || { type, message };
+                const mapped = normalized.type === 'error' ? 'danger' : normalized.type;
+                const container = document.getElementById('toast-container');
+                if (!container) return;
+                const toast = document.createElement('div');
+                toast.className = `toast toast-${mapped}`;
+                toast.innerHTML = `<span>${window.panelEscapeHtml ? window.panelEscapeHtml(normalized.message) : normalized.message}</span><button onclick="this.parentElement.remove()" class="ml-2 hover:opacity-70">×</button>`;
+                container.appendChild(toast);
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateX(100%)';
+                    setTimeout(() => toast.remove(), 300);
+                }, duration);
+            };
+            // ===== Конец функции showToast =====
+
+            // ===== ОБРАБОТКА СИСТЕМНЫХ СООБЩЕНИЙ =====
+            // Вывод уведомлений от сервера при загрузке страницы
+            document.addEventListener('DOMContentLoaded', () => {
+                const flashEl = document.getElementById('flash-messages');
+                if (flashEl) try {
+                    JSON.parse(flashEl.textContent || '[]').forEach(item => {
+                        const type = item[0] === 'danger' ? 'danger' : (item[0] === 'success' ? 'success' : 'warning');
+                        window.showToast(type, item[1] || '');
+                    });
+                } catch (e) { }
+            });
+            // ===== Конец обработки сообщений =====
+
+            // ===== УПРАВЛЕНИЕ МОДАЛЬНЫМИ ОКНАМИ =====
+            // Функции открытия, закрытия и обработки кликов вне окон
+            window.openModal = function (modalId) {
+                const modal = document.getElementById(modalId);
+                if (!modal) return;
+                /* Модалки внутри .settings-main (macOS v2): перенос в body, если предок с filter/transform */
+                if (
+                    modal.classList.contains('modal-overlay')
+                    && modal.parentElement
+                    && modal.parentElement !== document.body
+                    && modal.closest('.settings-main, .settings-page')
+                ) {
+                    document.body.appendChild(modal);
+                }
+                modal.classList.add('open');
+                document.body.classList.add('has-modal-open');
+            };
+
+            window.closeModal = function (modalId) {
+                const modal = document.getElementById(modalId);
+                if (modal) modal.classList.remove('open');
+                if (!document.querySelector('.modal-overlay.open')) {
+                    document.body.classList.remove('has-modal-open');
+                }
+            };
+
+            document.addEventListener('click', (e) => {
+                if (e.target.classList.contains('modal-overlay')) {
+                    e.target.classList.remove('open');
+                    if (!document.querySelector('.modal-overlay.open')) {
+                        document.body.classList.remove('has-modal-open');
+                    }
+                }
+            });
+            // ===== Конец блока модальных окон =====
+
+            // ===== ГЛОБАЛЬНЫЕ ОБРАБОТЧИКИ КЛАВИАТУРЫ =====
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+                    if (!document.querySelector('.modal-overlay.open')) {
+                        document.body.classList.remove('has-modal-open');
+                    }
+                }
+            });
+            // ===== Конец обработчиков клавиатуры =====
+
+            window.getCsrfToken = function () {
+                const meta = document.querySelector('meta[name="csrf-token"]');
+                return meta?.getAttribute('content')
+                    || document.querySelector('input[name="csrf_token"]')?.value || '';
+            };
+
+            window.setCsrfToken = function (token) {
+                if (!token) return;
+                const meta = document.querySelector('meta[name="csrf-token"]');
+                if (meta) meta.setAttribute('content', token);
+                document.querySelectorAll('input[name="csrf_token"]').forEach((el) => {
+                    el.value = token;
+                });
+            };
+
+            // ===== ФУНКЦИЯ: Асинхронное обновление бейджей =====
+            // Загружает количество тикетов без перезагрузки всей страницы
+            const updateGlobalBadges = async () => {
+                let controller = null;
+                let timeoutId = null;
+                try {
+                    const badge = document.getElementById('sidebar-support-badge');
+                    const dockBadge = document.getElementById('dock-support-badge');
+                    const glassBadge = document.getElementById('glass-support-badge');
+                    if (!badge && !dockBadge && !glassBadge) return;
+
+                    controller = new AbortController();
+                    timeoutId = setTimeout(() => controller.abort(), 8000);
+                    const res = await fetch("{{ url_for('support_badge_counts_json') }}", { signal: controller.signal });
+
+                    if (res.ok) {
+                        const data = await res.json();
+                        const badges = [badge, dockBadge, glassBadge].filter(Boolean);
+                        if (data.ok && data.open_count > 0) {
+                            badges.forEach(b => {
+                                b.textContent = data.open_count;
+                                b.classList.remove('hidden');
+                                b.style.display = 'flex';
+                                if (data.waiting_tickets_count > 0) {
+                                    b.classList.add('animate-bg-pulse');
+                                } else {
+                                    b.classList.remove('animate-bg-pulse');
+                                }
+                            });
+                        } else {
+                            badges.forEach(b => {
+                                b.classList.add('hidden');
+                                b.style.display = 'none';
+                            });
+                        }
+                    }
+                } catch (e) {
+                    if (e.name === 'AbortError' || e.name === 'TypeError') return;
+                    console.error('Badge update error:', e);
+                } finally {
+                    if (timeoutId) clearTimeout(timeoutId);
+                }
+            };
+
+            // Запускаем сразу и периодически обновляем
+            document.addEventListener('DOMContentLoaded', () => {
+                updateGlobalBadges();
+                // Обновляем раз в 2 минуты (120000 мс), чтобы не спамить БД
+                setInterval(updateGlobalBadges, 120000);
+            });
+            window.isLoginPage = (html, url) => {
+                if (url && url.includes('/login')) return true;
+                return typeof html === 'string' && html.includes('id' + '="login-identifier-v2"');
+            };
+
+            window.handleSessionExpiry = function () {
+                if (window._isExpiring) return;
+                window._isExpiring = true;
+                showToast('danger', 'Сессия прервана. Нужна повторная авторизация.', 10000);
+                setTimeout(() => { window.location.href = '/login'; }, 1500);
+            };
+
+            // ===== ГЛОБАЛЬНЫЙ ПЕРЕХВАТ FETCH =====
+            const originalFetch = window.fetch;
+
+            window.refreshCsrfToken = async function () {
+                try {
+                    const resp = await originalFetch('{{ url_for("csrf_token_json") }}', {
+                        credentials: 'same-origin',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+                    });
+                    if (!resp.ok) return false;
+                    const data = await resp.json();
+                    if (data.ok && data.csrf_token) {
+                        window.setCsrfToken(data.csrf_token);
+                        return true;
+                    }
+                } catch (_) { /* ignore */ }
+                return false;
+            };
+
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible' && typeof window.refreshCsrfToken === 'function') {
+                    window.refreshCsrfToken();
+                }
+            });
+
+            async function shouldExpireSession(response) {
+                if (response.status === 401) return true;
+                if (response.status !== 403) return false;
+                const contentType = response.headers.get('content-type') || '';
+                if (!contentType.includes('application/json')) return false;
+                try {
+                    const data = await response.clone().json();
+                    return data && data.error === 'auth_required';
+                } catch (_) {
+                    return false;
+                }
+            }
+
+            window.fetch = async function (...args) {
+                let response;
+                try {
+                    response = await originalFetch.apply(this, args);
+                } catch (err) {
+                    throw err;
+                }
+
+                if (await shouldExpireSession(response)) {
+                    if (window.handleSessionExpiry) window.handleSessionExpiry();
+                    return response;
+                }
+
+                // Перехват HTML-ответа с авторизацией (если бэкенд возвращает 200 OK со страницей входа)
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('text/html')) {
+                    const clone = response.clone();
+                    try {
+                        const text = await clone.text();
+                        if (window.isLoginPage && window.isLoginPage(text, response.url)) {
+                            if (window.handleSessionExpiry) window.handleSessionExpiry();
+                            return new Response('Session expired', { status: 401, statusText: 'Unauthorized' });
+                        }
+                    } catch (e) {
+                        console.error('Fetch intercept error:', e);
+                    }
+                }
+                return response;
+            };
+
+            // ===== СЕТЕВЫЕ ЗАПРОСЫ API =====
+            // Универсальная функция для выполнения HTTP-запросов с CSRF
+            window.apiRequest = async function (url, options = {}) {
+                const defaults = {
+                    method: options.body ? 'POST' : 'GET',
+                    credentials: 'same-origin',
+                    headers: { 'X-CSRFToken': getCsrfToken() }
+                };
+                const config = { ...defaults, ...options };
+                if (config.body && typeof config.body === 'object' && !(config.body instanceof FormData)) {
+                    const fd = new FormData();
+                    fd.append('csrf_token', getCsrfToken());
+                    for (const k in config.body) fd.append(k, config.body[k]);
+                    config.body = fd;
+                }
+                const resp = await fetch(url, config);
+                if (!resp.ok) {
+                    if (resp.status === 401) { handleSessionExpiry(); return null; }
+                    throw new Error(resp.statusText);
+                }
+                const contentType = resp.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) return await resp.json();
+                const text = await resp.text();
+                if (isLoginPage(text, resp.url)) { handleSessionExpiry(); return null; }
+                return text;
+            };
+            // ===== Конец функции apiRequest =====
+
+            // ===== ДИАЛОГ ПОДТВЕРЖДЕНИЯ (MODAL) =====
+            let confirmResolver = null;
+            window.showCustomConfirm = function (message, title = 'Вы уверены?') {
+                return new Promise((resolve) => {
+                    const modal = document.getElementById('custom-confirm-modal');
+                    const titleEl = document.getElementById('confirm-modal-title');
+                    const textEl = document.getElementById('confirm-modal-text');
+                    if (titleEl) titleEl.textContent = title;
+                    if (textEl) textEl.textContent = message;
+                    modal.classList.add('open');
+                    confirmResolver = resolve;
+                });
+            }
+            window.closeConfirmModal = function (result) {
+                const modal = document.getElementById('custom-confirm-modal');
+                modal.classList.remove('open');
+                if (confirmResolver) confirmResolver(result);
+                confirmResolver = null;
+            }
+
+
+            window.showConfirmModal = async function (titleOrMessage, messageOrCallback, callback) {
+                let title = 'Подтверждение';
+                let message = '';
+                let cb = null;
+
+                if (typeof messageOrCallback === 'function') {
+                    // Вызов: showConfirmModal(message, callback)
+                    message = titleOrMessage;
+                    cb = messageOrCallback;
+                } else {
+                    // Вызов: showConfirmModal(title, message, callback)
+                    title = titleOrMessage;
+                    message = messageOrCallback;
+                    cb = callback;
+                }
+
+                const confirmed = await showCustomConfirm(message, title);
+                if (confirmed && cb) cb();
+            };
+
+            document.addEventListener('submit', async (e) => {
+                const form = e.target;
+                const action = form.action || '';
+                const isBotControl = action.includes('/stop-both-bots') || action.includes('/start-both-bots');
+
+                if (isBotControl) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const confirmMsg = form.getAttribute('data-confirm');
+                    if (confirmMsg) {
+                        const confirmed = await showCustomConfirm(confirmMsg);
+                        if (!confirmed) return;
+                    }
+
+                    try {
+                        const formData = new FormData(form);
+                        const res = await fetch(action, {
+                            method: 'POST',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: formData
+                        });
+
+                        const data = await res.json();
+                        const messageType = data.ok ? 'success' : 'warning';
+                        showToast(messageType, data.message || 'Выполнено');
+
+                        if (data.ok) {
+                            setTimeout(() => window.location.reload(), 500);
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        showToast('danger', 'Ошибка отправки');
+                    }
+                    return;
+                }
+                // Если у формы есть свой confirm в onclick или она сама обрабатывает AJAX - не трогаем
+                if (form.classList.contains('ajax-form') || form.getAttribute('data-ajax') === 'true') return;
+                if (form.querySelector('[onclick*="confirm("]')) return;
+
+                const confirmMsg = form.getAttribute('data-confirm');
+                if (confirmMsg && !form.__standard_confirmed) {
+                    e.preventDefault();
+                    const confirmed = await showCustomConfirm(confirmMsg);
+                    if (confirmed) {
+                        form.__standard_confirmed = true;
+                        form.submit();
+                    }
+                }
+            });
+            // ===== Конец блока подтверждения =====
+
+            // ===== КАСТОМНЫЙ SELECT =====
+            // Инициализация стилизованного выпадающего списка
+            window.initSoftSelect = function (selectId, placeholder) {
+                const sel = document.getElementById(selectId);
+                const wrap = document.querySelector(`.soft-select[data-target="${selectId}"]`);
+                if (!sel || !wrap) return;
+                const toggle = wrap.querySelector('.soft-select-toggle');
+                const menu = wrap.querySelector('.soft-select-menu');
+                if (!toggle || !menu) return;
+                function render() {
+                    menu.innerHTML = '';
+                    function appendOption(opt) {
+                        const div = document.createElement('div');
+                        div.className = 'soft-select-item' + (opt.selected ? ' is-active' : '');
+                        div.dataset.value = opt.value;
+                        div.textContent = opt.textContent || '';
+                        div.addEventListener('click', () => {
+                            sel.value = opt.value;
+                            menu.querySelectorAll('.soft-select-item').forEach(el => el.classList.remove('is-active'));
+                            div.classList.add('is-active');
+                            const textSpan = toggle.querySelector('.soft-select-text');
+                            if (textSpan) textSpan.textContent = opt.textContent || placeholder || '';
+                            else toggle.textContent = opt.textContent || placeholder || '';
+                            wrap.classList.remove('open');
+                            sel.dispatchEvent(new Event('change', { bubbles: true }));
+                        });
+                        menu.appendChild(div);
+                    }
+                    Array.from(sel.children || []).forEach(child => {
+                        if (child.tagName === 'OPTGROUP') {
+                            const label = document.createElement('div');
+                            label.className = 'soft-select-group-label';
+                            label.textContent = child.label || '';
+                            menu.appendChild(label);
+                            Array.from(child.options || []).forEach(appendOption);
+                        } else if (child.tagName === 'OPTION') {
+                            appendOption(child);
+                        }
+                    });
+                    const selOpt = Array.from(sel.options || []).find(o => o.selected) || sel.options[0];
+                    const textSpan = toggle.querySelector('.soft-select-text');
+                    if (textSpan) textSpan.textContent = (selOpt && selOpt.textContent) || placeholder || '';
+                    else toggle.textContent = (selOpt && selOpt.textContent) || placeholder || '';
+                }
+                render();
+                if (wrap.dataset.initialized === 'true') return;
+                sel.addEventListener('change', render);
+                toggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    wrap.classList.toggle('open');
+                });
+                document.addEventListener('click', (e) => {
+                    if (!wrap.contains(e.target)) wrap.classList.remove('open');
+                });
+                wrap.dataset.initialized = 'true';
+            };
+            // ===== Конец инициализации select =====
+
+            (function () {
+                const demoModeEnabled = "{{ settings.demo_mode_enabled or '0' }}" === "1";
+                if (!demoModeEnabled) return;
+
+                const maskDigits = (value) => String(value || '').replace(/[1-5]/g, '9');
+                const ignoredTags = new Set(['SCRIPT', 'STYLE', 'TEXTAREA', 'INPUT', 'SELECT', 'OPTION']);
+                const blurUsername = (el) => {
+                    if (!el || el.dataset.demoUsernameBlurred === '1') return;
+                    const text = (el.textContent || '').trim();
+                    if (!text.startsWith('@') || text.length < 2) return;
+                    el.innerHTML = '@<span class="demo-username-blur">' + text.slice(1).replace(/[&<>"']/g, ch => ({
+                        '&': '&amp;',
+                        '<': '&lt;',
+                        '>': '&gt;',
+                        '"': '&quot;',
+                        "'": '&#39;'
+                    }[ch])) + '</span>';
+                    el.dataset.demoUsernameBlurred = '1';
+                };
+                const blurUsernames = (root) => {
+                    if (!root) return;
+                    if (root.nodeType === Node.ELEMENT_NODE && root.classList && root.classList.contains('demo-blur-username')) blurUsername(root);
+                    if (root.querySelectorAll) root.querySelectorAll('.demo-blur-username').forEach(blurUsername);
+                };
+                const blurSensitive = (el) => {
+                    if (!el || el.dataset.demoSensitiveBlurred === '1') return;
+                    el.classList.add('demo-username-blur');
+                    el.dataset.demoSensitiveBlurred = '1';
+                };
+                const blurSensitiveValues = (root) => {
+                    if (!root) return;
+                    if (root.nodeType === Node.ELEMENT_NODE && root.classList && root.classList.contains('demo-blur-sensitive')) blurSensitive(root);
+                    if (root.querySelectorAll) root.querySelectorAll('.demo-blur-sensitive').forEach(blurSensitive);
+                };
+                const blurAmount = (el) => {
+                    if (!el || el.dataset.demoAmountBlurred === '1') return;
+                    const text = (el.textContent || '').trim();
+                    const match = text.match(/^([\d\s,.]+)(\s*\S+)$/);
+                    if (!match) return;
+                    const [, numPart, currencyPart] = match;
+                    el.innerHTML = '<span class="demo-username-blur">' + numPart.replace(/[&<>"']/g, ch => ({
+                        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+                    })[ch]) + '</span>' + currencyPart;
+                    el.dataset.demoAmountBlurred = '1';
+                };
+                const blurAmounts = (root) => {
+                    if (!root) return;
+                    if (root.nodeType === Node.ELEMENT_NODE && root.classList && root.classList.contains('demo-blur-amount')) blurAmount(root);
+                    if (root.querySelectorAll) root.querySelectorAll('.demo-blur-amount').forEach(blurAmount);
+                };
+                const maskTextNode = (node) => {
+                    const next = maskDigits(node.nodeValue);
+                    if (node.nodeValue !== next) node.nodeValue = next;
+                };
+                const maskElement = (root) => {
+                    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+                        acceptNode(node) {
+                            const parent = node.parentElement;
+                            if (!parent || ignoredTags.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
+                            return /[1-5]/.test(node.nodeValue || '') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+                        }
+                    });
+                    const nodes = [];
+                    while (walker.nextNode()) nodes.push(walker.currentNode);
+                    nodes.forEach(maskTextNode);
+                };
+                const patchCanvasText = (proto) => {
+                    if (!proto || proto.__demoModePatched) return;
+                    proto.__demoModePatched = true;
+                    ['fillText', 'strokeText'].forEach(method => {
+                        const original = proto[method];
+                        if (typeof original !== 'function') return;
+                        proto[method] = function (text, ...args) {
+                            return original.call(this, maskDigits(text), ...args);
+                        };
+                    });
+                };
+
+                patchCanvasText(window.CanvasRenderingContext2D && CanvasRenderingContext2D.prototype);
+                document.addEventListener('DOMContentLoaded', () => {
+                    blurUsernames(document.body);
+                    blurSensitiveValues(document.body);
+                    blurAmounts(document.body);
+                    maskElement(document.body);
+                    const observer = new MutationObserver((mutations) => {
+                        mutations.forEach(mutation => {
+                            mutation.addedNodes.forEach(node => {
+                                if (node.nodeType === Node.TEXT_NODE) maskTextNode(node);
+                                else if (node.nodeType === Node.ELEMENT_NODE) {
+                                    blurUsernames(node);
+                                    blurSensitiveValues(node);
+                                    blurAmounts(node);
+                                    maskElement(node);
+                                }
+                            });
+                            if (mutation.type === 'characterData') {
+                                const parent = mutation.target.parentElement;
+                                if (parent && parent.classList && parent.classList.contains('demo-blur-username')) blurUsername(parent);
+                                maskTextNode(mutation.target);
+                            }
+                        });
+                    });
+                    observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+                });
+            })();
+
+            // ===== ОБНОВЛЕНИЕ КОНТЕЙНЕРОВ ДАННЫХ =====
+            // Функция для динамической перезагрузки контента по ID
+            window.refreshContainerById = async function (id) {
+                const el = document.getElementById(id);
+                if (!el || !el.getAttribute('data-fetch-url')) return;
+                try {
+                    const html = await apiRequest(el.getAttribute('data-fetch-url'), { headers: { 'Accept': 'text/html' } });
+                    if (html) el.innerHTML = html;
+                } catch (e) { }
+            };
+            // ===== Конец функции обновления =====
+
+            // ===== УПРАВЛЕНИЕ НАЗВАНИЕМ ПАНЕЛИ (brand-modal.js) =====
+
+            // ===== О ПРОЕКТЕ (about-modal.js) =====
+
+            // ===== ПЕРЕЗАГРУЗКА СЕРВИСОВ =====
+            // Функция для полного перезапуска бота
+            (function () {
+                const btn = document.getElementById('btn-restart-bot');
+                if (!btn) return;
+                btn.addEventListener('click', async () => {
+                    if (await showCustomConfirm('Перезагрузить систему? Это действие прервет работу бота на 10-20 секунд.')) {
+                        try {
+                            const data = await apiRequest('/settings/restart', { method: 'POST' });
+                            if (data && data.ok) {
+                                showToast('success', data.message || 'Перезапуск инициирован');
+                                btn.disabled = true; btn.classList.add('opacity-50');
+                            } else { showToast('danger', (data && data.error) || 'Ошибка при перезагрузке'); }
+                        } catch (e) { showToast('danger', 'Ошибка при попытке связи с сервером'); }
+                    }
+                });
+            })();
+
+            // ===== УНИВЕРСАЛЬНЫЙ AJAX ОБРАБОТЧИК =====
+            // Позволяет отправлять формы без перезагрузки страницы
+            async function handleGlobalAjax(e) {
+                const form = e.target.closest('form[data-ajax="true"], form.ajax-form');
+                if (!form) return;
+
+                // Блокируем всплытие, чтобы другие обработчики (например, в users.html) не перехватили запрос без подтверждения
+                e.stopImmediatePropagation();
+
+                // Проверка на подтверждение
+                const confirmMsg = form.getAttribute('data-confirm');
+                if (confirmMsg && !form.__confirmed) {
+                    e.preventDefault();
+                    (async () => {
+                        const confirmed = await showCustomConfirm(confirmMsg);
+                        if (confirmed) {
+                            form.__confirmed = true;
+                            form.dispatchEvent(new Event('submit', { bubbles: true }));
+                            form.__confirmed = false;
+                        }
+                    })();
+                    return;
+                }
+
+                e.preventDefault();
+                const btn = form.querySelector('button[type="submit"]');
+                const originalContent = btn ? btn.innerHTML : null;
+
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-sm">sync</span>';
+                }
+
+                try {
+                    const formData = new FormData(form);
+                    if (e.submitter && e.submitter.name) {
+                        formData.append(e.submitter.name, e.submitter.value);
+                    }
+                    const response = await fetch(form.action, {
+                        method: form.method || 'POST',
+                        body: formData,
+                        headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': getCsrfToken() }
+                    });
+
+                    const contentType = response.headers.get('content-type');
+                    const isJson = contentType && contentType.includes('application/json');
+                    const data = isJson ? await response.json() : null;
+                    const htmlStr = !isJson ? await response.text() : null;
+
+                    if (htmlStr && isLoginPage(htmlStr, response.url)) {
+                        handleSessionExpiry();
+                        return;
+                    }
+
+                    if (response.ok) {
+                        const successMsg = form.getAttribute('data-success-msg') || form.getAttribute('data-success') || (data && (data.message || data.msg)) || 'Выполнено';
+                        showToast('success', successMsg);
+
+                        // Обновление контента
+                        const refreshPart = form.getAttribute('data-refresh') || form.getAttribute('data-refresh-target');
+                        if (refreshPart === 'page') {
+                            const res = await fetch(window.location.href);
+                            const html = await res.text();
+                            if (isLoginPage(html, res.url)) { handleSessionExpiry(); return; }
+                            const doc = new DOMParser().parseFromString(html, 'text/html');
+                            document.querySelectorAll('[data-refresh-part]').forEach(el => {
+                                const partId = el.getAttribute('data-refresh-part');
+                                const newEl = doc.querySelector(`[data-refresh-part="${partId}"]`);
+                                if (newEl) el.innerHTML = newEl.innerHTML;
+                            });
+                        } else if (refreshPart) {
+                            const target = document.getElementById(refreshPart);
+                            if (target && target.getAttribute('data-fetch-url')) {
+                                const res = await fetch(target.getAttribute('data-fetch-url'));
+                                if (res.ok) {
+                                    const contentType = res.headers.get('content-type');
+                                    if (contentType && contentType.includes('application/json')) {
+                                        const json = await res.json();
+                                        if (json.table_html) {
+                                            target.innerHTML = json.table_html;
+                                            // Если есть пагинация рядом - обновляем и её
+                                            const pagId = target.id.replace('tbody', 'pagination').replace('list', 'pagination');
+                                            const pagEl = document.getElementById(pagId);
+                                            if (pagEl && json.pagination_html) pagEl.innerHTML = json.pagination_html;
+                                        }
+                                    } else {
+                                        const html = await res.text();
+                                        if (isLoginPage(html, res.url)) { handleSessionExpiry(); return; }
+                                        target.innerHTML = html;
+                                    }
+                                }
+                            }
+                        }
+
+                        // Закрытие модалок
+                        if (!form.hasAttribute('data-keep-modal')) {
+                            const modal = form.closest('.modal-overlay');
+                            if (modal) closeModal(modal.id);
+                        }
+
+                        if (form.hasAttribute('data-reset')) form.reset();
+
+                        // Вызов кастомного колбэка если есть
+                        const callback = form.getAttribute('data-callback');
+                        if (callback && typeof window[callback] === 'function') window[callback](data);
+
+                    } else {
+                        const errorMsg = (data && (data.error || data.message)) || 'Ошибка сервера';
+                        showToast('danger', errorMsg);
+                    }
+                } catch (err) {
+                    console.error('AJAX Error:', err);
+                    showToast('danger', 'Ошибка сети');
+                } finally {
+                    if (btn && originalContent !== null) {
+                        btn.disabled = false;
+                        btn.innerHTML = originalContent;
+                    }
+                }
+            }
+
+            // ===== ПЕРЕКЛЮЧЕНИЕ ТЕМЫ (theme-manager.js) =====
+
+            document.addEventListener('submit', handleGlobalAjax);
+        </script>
+
+        <script src="{{ url_for('static', filename='js/workspace-embed.js') }}"></script>
+        {% if not workspace_embed %}
+        <script src="{{ url_for('static', filename='js/brand-modal.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/theme-manager.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/panel-command-palette.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/panel-presence.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/panel-glass.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/about-modal.js') }}"></script>
+        <script>
+            window.WORKSPACE_DOCK_ITEMS = {{ workspace_dock_items | tojson }};
+            window.APP_ICON_URL = {{ url_for('static', filename='img/app-icon-512.png') | tojson }};
+        </script>
+        <script src="{{ url_for('static', filename='js/workspace-manager.js') }}"></script>
+        {% endif %}
+
+        {% block scripts %}{% endblock %}
+</body>
+
+</html>

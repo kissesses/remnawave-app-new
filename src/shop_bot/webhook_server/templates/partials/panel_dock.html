@@ -1,0 +1,43 @@
+<nav class="panel-dock" aria-label="Навигация macOS">
+    <div class="panel-dock__inner">
+        {% macro dock_item(item) %}
+        {% set is_active = request.endpoint == item.endpoint or request.endpoint in item.active_group %}
+        <a href="{{ item.route }}"
+           class="panel-dock__item{% if is_active %} is-active{% endif %}"
+           data-dock="{{ item.id }}"
+           data-dock-id="{{ item.id }}"
+           data-route="{{ item.route }}"
+           data-window-title="{{ item.label }}"
+           aria-label="{{ item.label }}"
+           title="{{ item.label }}">
+            <span class="panel-dock__icon">
+                <span class="material-symbols-outlined">{{ item.icon }}</span>
+                {% if item.id == 'support' %}
+                <span id="dock-support-badge" class="panel-dock__badge hidden"></span>
+                {% endif %}
+            </span>
+            <span class="panel-dock__label">{{ item.label }}</span>
+            <span class="panel-dock__dot" aria-hidden="true"></span>
+        </a>
+        {% endmacro %}
+
+        {% for item in workspace_dock_items if item.id != 'settings' %}
+        {{ dock_item(item) }}
+        {% endfor %}
+
+        <span class="panel-dock__divider" aria-hidden="true"></span>
+
+        {% for item in workspace_dock_items if item.id == 'settings' %}
+        {{ dock_item(item) }}
+        {% endfor %}
+
+        <div class="panel-dock__footer">
+            <button type="button" id="workspace-dock-edit-btn" class="panel-dock__edit-btn" title="Изменить Dock (перетаскивание)" aria-label="Изменить Dock">
+                <span class="material-symbols-outlined text-lg">edit</span>
+            </button>
+            <button type="button" id="workspace-dock-editor-open" class="panel-dock__edit-btn" title="Настроить пункты Dock" aria-label="Настроить пункты Dock">
+                <span class="material-symbols-outlined text-lg">tune</span>
+            </button>
+        </div>
+    </div>
+</nav>

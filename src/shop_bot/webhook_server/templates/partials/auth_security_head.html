@@ -1,0 +1,41 @@
+{# Auth CSS for mandatory security setup — same stack as login.html #}
+{% set av = (project_info.version if project_info else '') or '' %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet" />
+<link href="{{ url_for('static', filename='css/auth-ios.css') }}{% if av %}?v={{ av }}{% endif %}" rel="stylesheet" />
+<link href="{{ url_for('static', filename='css/auth-classic.css') }}{% if av %}?v={{ av }}{% endif %}" rel="stylesheet" />
+<link href="{{ url_for('static', filename='css/auth-macos.css') }}{% if av %}?v={{ av }}{% endif %}" rel="stylesheet" />
+<link href="{{ url_for('static', filename='css/auth-glass-stealth.css') }}{% if av %}?v={{ av }}{% endif %}" rel="stylesheet" />
+<link href="{{ url_for('static', filename='css/auth-security-setup.css') }}{% if av %}?v={{ av }}{% endif %}" rel="stylesheet" />
+
+<script>
+    (function () {
+        const theme = localStorage.getItem('theme') || 'dark';
+        if (theme === 'dark') document.documentElement.classList.add('dark');
+        else document.documentElement.classList.remove('dark');
+        const design = localStorage.getItem('design-theme') || 'macos-v2';
+        document.documentElement.dataset.design = design;
+        if (design !== 'stealth-admin') {
+            const accents = {
+                blue: { c: '#0a84ff', r: '10, 132, 255' },
+                violet: { c: '#8b5cf6', r: '139, 92, 246' },
+                rose: { c: '#f43f5e', r: '244, 63, 94' },
+                emerald: { c: '#10b981', r: '16, 185, 129' },
+                cyan: { c: '#06b6d4', r: '6, 182, 212' },
+                amber: { c: '#f59e0b', r: '245, 158, 11' },
+                red: { c: '#ef4444', r: '239, 68, 68' },
+            };
+            const key = localStorage.getItem('panel-accent') || 'blue';
+            const a = accents[key] || accents.blue;
+            const root = document.documentElement;
+            const soft = 'rgba(' + a.r + ', 0.16)';
+            root.style.setProperty('--primary', a.c);
+            root.style.setProperty('--primary-rgb', a.r);
+            root.style.setProperty('--panel-accent', a.c);
+            root.style.setProperty('--panel-accent-soft', soft);
+            root.style.setProperty('--auth-accent', a.c);
+            root.style.setProperty('--auth-accent-soft', soft);
+        }
+    })();
+</script>

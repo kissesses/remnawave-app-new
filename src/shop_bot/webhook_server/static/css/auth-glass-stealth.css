@@ -1,0 +1,415 @@
+/* Glass & Stealth — login pages matching admin panel layouts */
+
+@import url('https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&display=swap');
+
+/* ===== Chrome layer ===== */
+.auth-glass-chrome {
+    display: none;
+}
+
+html[data-design="glass"] .auth-glass-chrome,
+html[data-design="stealth-admin"] .auth-glass-chrome {
+    display: block;
+}
+
+.auth-glass-chrome__ambient {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse 55% 45% at 15% 20%, color-mix(in srgb, var(--primary, #0a84ff) 22%, transparent), transparent 58%),
+        radial-gradient(ellipse 40% 35% at 85% 75%, color-mix(in srgb, var(--primary, #0a84ff) 12%, transparent), transparent 55%);
+}
+
+html:not(.dark)[data-design="glass"] .auth-glass-chrome__ambient {
+    background:
+        radial-gradient(ellipse 55% 45% at 15% 20%, color-mix(in srgb, var(--primary, #0a84ff) 14%, transparent), transparent 58%),
+        radial-gradient(ellipse 40% 35% at 85% 75%, color-mix(in srgb, var(--primary, #0a84ff) 8%, transparent), transparent 55%);
+}
+
+.auth-glass-chrome__grid {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.35;
+    background-image:
+        linear-gradient(rgba(255, 35, 87, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 35, 87, 0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, black, transparent);
+}
+
+html[data-design="stealth-admin"] .auth-glass-chrome__grid {
+    display: block;
+}
+
+/* ===== Body & page layout ===== */
+html[data-design="glass"] body.auth-ios,
+html[data-design="stealth-admin"] body.auth-ios {
+    align-items: stretch;
+    justify-content: flex-start;
+    padding: 0;
+    background: #050508;
+}
+
+html[data-design="stealth-admin"] body.auth-ios {
+    background: #020202;
+    --auth-accent: #ff2357;
+    --auth-accent-soft: rgba(255, 35, 87, 0.16);
+    --auth-bg: #020202;
+    --auth-elevated: rgba(8, 8, 10, 0.92);
+    --auth-separator: rgba(255, 35, 87, 0.14);
+}
+
+html:not(.dark)[data-design="glass"] body.auth-ios {
+    --auth-bg: #eef0f5;
+    --auth-elevated: rgba(255, 255, 255, 0.82);
+    --auth-grouped: rgba(0, 0, 0, 0.04);
+    --auth-input: rgba(118, 118, 128, 0.12);
+    --auth-separator: rgba(0, 0, 0, 0.08);
+    --auth-text: #1c1c1e;
+    --auth-text-secondary: rgba(60, 60, 67, 0.72);
+    --auth-text-tertiary: rgba(60, 60, 67, 0.48);
+    background: #eef0f5;
+}
+
+html[data-design="glass"] body.auth-ios {
+    --auth-accent: var(--primary, #0a84ff);
+    --auth-accent-soft: var(--panel-accent-soft, rgba(10, 132, 255, 0.16));
+}
+
+html[data-design="glass"] .auth-page,
+html[data-design="stealth-admin"] .auth-page {
+    position: relative;
+    z-index: 10;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-width: none;
+    width: 100%;
+    min-height: 100vh;
+    padding: 2rem;
+    margin-left: 0;
+    box-sizing: border-box;
+}
+
+html[data-design="glass"] .auth-card,
+html[data-design="stealth-admin"] .auth-card {
+    grid-template-columns: 1fr;
+    width: 100%;
+    max-width: 440px;
+    border-radius: 1.35rem;
+    backdrop-filter: blur(28px) saturate(1.35);
+    -webkit-backdrop-filter: blur(28px) saturate(1.35);
+    overflow: hidden;
+}
+
+html[data-design="glass"] .auth-card {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.04),
+        0 32px 80px rgba(0, 0, 0, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+html:not(.dark)[data-design="glass"] .auth-card {
+    background: rgba(255, 255, 255, 0.78);
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.8),
+        0 32px 64px rgba(0, 0, 0, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+html[data-design="stealth-admin"] .auth-card {
+    background: rgba(8, 8, 10, 0.92);
+    border: 1px solid rgba(255, 35, 87, 0.22);
+    box-shadow:
+        0 0 0 1px rgba(255, 35, 87, 0.08),
+        0 32px 80px rgba(0, 0, 0, 0.65),
+        0 0 48px rgba(255, 35, 87, 0.06);
+}
+
+html[data-design="glass"] .auth-brand,
+html[data-design="stealth-admin"] .auth-brand {
+    display: none !important;
+}
+
+html[data-design="glass"] .auth-macos-profile,
+html[data-design="stealth-admin"] .auth-macos-profile,
+html[data-design="glass"] .auth-form-header,
+html[data-design="stealth-admin"] .auth-form-header,
+html[data-design="glass"] .auth-mobile-brand,
+html[data-design="stealth-admin"] .auth-mobile-brand,
+html[data-design="glass"] .auth-classic-pill,
+html[data-design="stealth-admin"] .auth-classic-pill,
+html[data-design="glass"] .auth-mobile-new-pill,
+html[data-design="stealth-admin"] .auth-mobile-new-pill {
+    display: none !important;
+}
+
+html[data-design="glass"] .auth-form-panel,
+html[data-design="stealth-admin"] .auth-form-panel {
+    padding: 2rem 1.75rem 1.75rem;
+}
+
+html[data-design="glass"] .auth-form-wrap,
+html[data-design="stealth-admin"] .auth-form-wrap {
+    max-width: none;
+}
+
+/* ===== Glass login header ===== */
+.auth-glass-head {
+    display: none;
+    text-align: center;
+    margin-bottom: 1.75rem;
+}
+
+html[data-design="glass"] .auth-glass-head,
+html[data-design="stealth-admin"] .auth-glass-head {
+    display: block;
+}
+
+.auth-glass-head__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.25rem;
+    height: 3.25rem;
+    margin: 0 auto 1rem;
+    border-radius: 1rem;
+    background: var(--auth-accent-soft);
+    border: 1px solid color-mix(in srgb, var(--auth-accent) 35%, transparent);
+    box-shadow: 0 0 24px color-mix(in srgb, var(--auth-accent) 18%, transparent);
+}
+
+.auth-glass-head__badge .material-symbols-outlined {
+    font-size: 1.65rem;
+    color: var(--auth-accent);
+}
+
+.auth-glass-head__title {
+    margin: 0;
+    font-size: 1.375rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--auth-text);
+}
+
+html[data-design="stealth-admin"] .auth-glass-head__title {
+    font-family: 'Syncopate', 'Inter', sans-serif;
+    font-size: 1.125rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.auth-glass-head__sub {
+    margin: 0.45rem 0 0;
+    font-size: 0.75rem;
+    color: var(--auth-text-tertiary);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    letter-spacing: 0.04em;
+}
+
+html[data-design="stealth-admin"] .auth-glass-head__sub {
+    color: rgba(255, 35, 87, 0.55);
+}
+
+/* ===== Form controls ===== */
+html[data-design="glass"] .auth-input:focus,
+html[data-design="stealth-admin"] .auth-input:focus {
+    border-color: color-mix(in srgb, var(--auth-accent) 55%, transparent);
+    box-shadow: 0 0 0 3px var(--auth-accent-soft);
+}
+
+html[data-design="glass"] .auth-submit,
+html[data-design="stealth-admin"] .auth-submit {
+    background: var(--auth-accent);
+    box-shadow: 0 4px 20px color-mix(in srgb, var(--auth-accent) 35%, transparent);
+}
+
+html[data-design="glass"] .auth-submit:hover,
+html[data-design="stealth-admin"] .auth-submit:hover {
+    filter: brightness(1.08);
+    box-shadow: 0 6px 28px color-mix(in srgb, var(--auth-accent) 42%, transparent);
+}
+
+html[data-design="stealth-admin"] .auth-submit {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-size: 0.8125rem;
+}
+
+html[data-design="glass"] .auth-remember-track,
+html[data-design="stealth-admin"] .auth-remember-track {
+    border-color: var(--auth-separator);
+}
+
+html[data-design="glass"] .auth-remember input:checked + .auth-remember-track,
+html[data-design="stealth-admin"] .auth-remember input:checked + .auth-remember-track {
+    background: var(--auth-accent);
+    border-color: var(--auth-accent);
+}
+
+html[data-design="glass"] .auth-alt-icon-btn:hover,
+html[data-design="stealth-admin"] .auth-alt-icon-btn:hover {
+    border-color: color-mix(in srgb, var(--auth-accent) 40%, transparent);
+    color: var(--auth-accent);
+}
+
+html[data-design="glass"] .auth-theme-btn:hover,
+html[data-design="stealth-admin"] .auth-theme-btn:hover {
+    border-color: color-mix(in srgb, var(--auth-accent) 40%, transparent);
+    background: var(--auth-accent-soft);
+    color: var(--auth-accent);
+}
+
+html[data-design="stealth-admin"] .auth-theme-btn {
+    border-color: rgba(255, 35, 87, 0.2);
+    background: rgba(8, 8, 10, 0.82);
+}
+
+html[data-design="stealth-admin"] .auth-input-icon .material-symbols-outlined {
+    color: rgba(255, 35, 87, 0.65);
+}
+
+html[data-design="stealth-admin"] .auth-label {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+html[data-design="stealth-admin"] .auth-version {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: rgba(255, 35, 87, 0.35);
+}
+
+/* ===== Mobile ===== */
+@media (max-width: 900px) {
+    html[data-design="glass"] .auth-page,
+    html[data-design="stealth-admin"] .auth-page {
+        padding: 1.25rem;
+        padding-top: max(4.5rem, calc(env(safe-area-inset-top, 0px) + 3.5rem));
+    }
+
+    html[data-design="glass"] .auth-card,
+    html[data-design="stealth-admin"] .auth-card {
+        max-width: 100%;
+    }
+}
+
+/* ===== Theme modal extras on login ===== */
+body.auth-ios .theme-modal__section + .theme-modal__section {
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--auth-separator);
+}
+
+.theme-accent-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.theme-accent-btn {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s;
+}
+
+.theme-accent-btn.is-active {
+    border-color: #fff;
+    box-shadow: 0 0 0 2px var(--primary, #0a84ff), 0 0 0 4px rgba(0, 0, 0, 0.35);
+    transform: scale(1.08);
+}
+
+html:not(.dark) .theme-accent-btn.is-active {
+    box-shadow: 0 0 0 2px var(--primary, #0a84ff), 0 0 0 4px rgba(255, 255, 255, 0.5);
+}
+
+.theme-accent-live {
+    margin: 0.65rem 0 0;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.theme-accent-live__swatch {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.15rem 0.55rem 0.15rem 0.35rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    font-weight: 600;
+}
+
+.theme-accent-live__swatch::before {
+    content: '';
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 50%;
+    background: var(--primary, #0a84ff);
+}
+
+html:not(.dark) .theme-accent-live {
+    color: rgba(0, 0, 0, 0.45);
+}
+
+html:not(.dark) .theme-accent-live__swatch {
+    background: rgba(0, 0, 0, 0.06);
+    color: #111;
+}
+
+.theme-preview-card__frame--glass {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.04) 100%);
+    display: grid;
+    grid-template-columns: 28% 1fr;
+    gap: 3px;
+    padding: 4px;
+}
+
+.theme-preview-card__frame--glass::before {
+    content: '';
+    grid-row: 1 / -1;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.theme-preview-card__frame--glass::after {
+    content: '';
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.theme-preview-card__frame--stealth-admin {
+    background: #020202;
+    display: grid;
+    grid-template-columns: 30% 1fr;
+    gap: 2px;
+    padding: 4px;
+    box-shadow: inset 0 0 0 1px rgba(255, 35, 87, 0.25);
+}
+
+.theme-preview-card__frame--stealth-admin::before {
+    content: '';
+    grid-row: 1 / -1;
+    border-radius: 2px;
+    background: rgba(255, 35, 87, 0.2);
+}
+
+.theme-preview-card__frame--stealth-admin::after {
+    content: '';
+    border-radius: 2px;
+    background: rgba(255, 35, 87, 0.06);
+}

@@ -1,0 +1,650 @@
+/* Payments settings — modern provider hub */
+
+#tab-payments.pay-panel {
+    --pay-text: var(--panel-text, #f4f4f5);
+    --pay-muted: var(--panel-text-secondary, rgba(235, 235, 245, 0.55));
+    --pay-dim: var(--panel-text-tertiary, rgba(235, 235, 245, 0.38));
+    --pay-surface: rgba(255, 255, 255, 0.04);
+    --pay-surface-2: rgba(255, 255, 255, 0.06);
+    --pay-border: rgba(255, 255, 255, 0.09);
+    --pay-accent: var(--primary, #0a84ff);
+    --pay-accent-rgb: var(--primary-rgb, 10, 132, 255);
+    --pay-accent-soft: rgba(var(--pay-accent-rgb), 0.14);
+    --pay-ok: #30d158;
+    --pay-ok-soft: rgba(48, 209, 88, 0.14);
+    --pay-warn: #ff9f0a;
+    --pay-warn-soft: rgba(255, 159, 10, 0.12);
+    width: 100%;
+    max-width: none;
+    padding-bottom: 2rem;
+}
+
+html:not(.dark) #tab-payments.pay-panel {
+    --pay-text: #1c1c1e;
+    --pay-muted: rgba(0, 0, 0, 0.55);
+    --pay-dim: rgba(0, 0, 0, 0.4);
+    --pay-surface: rgba(0, 0, 0, 0.02);
+    --pay-surface-2: rgba(0, 0, 0, 0.035);
+    --pay-border: rgba(0, 0, 0, 0.08);
+    --pay-accent-soft: rgba(var(--pay-accent-rgb), 0.08);
+}
+
+.pay-panel__hero {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1rem 1.5rem;
+    align-items: end;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1.1rem;
+    border-bottom: 1px solid var(--pay-border);
+}
+
+@media (max-width: 720px) {
+    .pay-panel__hero {
+        grid-template-columns: 1fr;
+    }
+}
+
+.pay-panel__hero-title {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 650;
+    letter-spacing: -0.02em;
+    color: var(--pay-text);
+}
+
+.pay-panel__hero-desc {
+    margin: 0.35rem 0 0;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    color: var(--pay-muted);
+    max-width: 36rem;
+}
+
+.pay-panel__stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+
+.pay-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    border: 1px solid var(--pay-border);
+    background: var(--pay-surface);
+    color: var(--pay-muted);
+}
+
+.pay-stat--on {
+    border-color: rgba(48, 209, 88, 0.35);
+    background: var(--pay-ok-soft);
+    color: var(--pay-ok);
+}
+
+.pay-stat .material-symbols-outlined {
+    font-size: 0.95rem;
+}
+
+/* Cards grid */
+.pay-grid {
+    display: grid;
+    gap: 0.85rem;
+}
+
+.pay-grid--2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.pay-grid--3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 1100px) {
+    .pay-grid--3 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 720px) {
+    .pay-grid--2,
+    .pay-grid--3 {
+        grid-template-columns: 1fr;
+    }
+}
+
+.pay-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    padding: 1rem 1.05rem;
+    border-radius: 14px;
+    border: 1px solid var(--pay-border);
+    background: var(--pay-surface);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pay-card:hover {
+    border-color: rgba(var(--pay-accent-rgb), 0.22);
+}
+
+.pay-card--wide {
+    grid-column: 1 / -1;
+}
+
+.pay-card--accent-yk { --pay-card-accent: #8b5cf6; }
+.pay-card--accent-pl { --pay-card-accent: #3b82f6; }
+.pay-card--accent-ym { --pay-card-accent: #f59e0b; }
+.pay-card--accent-hk { --pay-card-accent: #10b981; }
+.pay-card--accent-ton { --pay-card-accent: #0ea5e9; }
+.pay-card--accent-cb { --pay-card-accent: #14b8a6; }
+.pay-card--accent-stars { --pay-card-accent: #eab308; }
+
+.pay-card__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.pay-card__brand {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-width: 0;
+}
+
+.pay-card__icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: color-mix(in srgb, var(--pay-card-accent, var(--pay-accent)) 18%, transparent);
+    color: var(--pay-card-accent, var(--pay-accent));
+}
+
+.pay-card__icon .material-symbols-outlined {
+    font-size: 1.2rem;
+}
+
+.pay-card__title {
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: var(--pay-text);
+    line-height: 1.2;
+}
+
+.pay-card__sub {
+    margin: 0.15rem 0 0;
+    font-size: 0.6875rem;
+    color: var(--pay-dim);
+    line-height: 1.35;
+}
+
+.pay-card__toggles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    justify-content: flex-end;
+}
+
+.pay-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    flex: 1;
+}
+
+.pay-card__foot {
+    margin-top: auto;
+    padding-top: 0.65rem;
+    border-top: 1px solid var(--pay-border);
+}
+
+/* Domain highlight card */
+.pay-domain-card {
+    padding: 1rem 1.1rem;
+    margin-bottom: 0.85rem;
+    border-radius: 14px;
+    border: 1px solid rgba(var(--pay-accent-rgb), 0.28);
+    background: var(--pay-accent-soft);
+}
+
+.pay-domain-card__label {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0 0 0.5rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--pay-muted);
+}
+
+.pay-domain-card__hint {
+    margin: 0.5rem 0 0;
+    font-size: 0.75rem;
+    line-height: 1.45;
+    color: var(--pay-dim);
+}
+
+.pay-domain-card__hint code {
+    font-size: 0.9em;
+    padding: 0.1em 0.35em;
+    border-radius: 4px;
+    background: var(--pay-surface-2);
+}
+
+/* Form fields */
+.pay-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.pay-field__label {
+    font-size: 0.6875rem;
+    font-weight: 650;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--pay-muted);
+}
+
+.pay-field__wrap {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+}
+
+.pay-field__icon {
+    position: absolute;
+    left: 0.65rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1rem;
+    color: var(--pay-dim);
+    pointer-events: none;
+    transition: color 0.15s ease;
+}
+
+.pay-field__wrap:focus-within .pay-field__icon {
+    color: var(--pay-accent);
+}
+
+.pay-field__input {
+    width: 100%;
+    padding: 0.55rem 0.7rem 0.55rem 2.15rem;
+    border-radius: 10px;
+    border: 1px solid var(--pay-border);
+    background: var(--pay-surface-2);
+    color: var(--pay-text);
+    font-size: 0.8125rem;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.pay-field__input:focus {
+    border-color: rgba(var(--pay-accent-rgb), 0.45);
+    box-shadow: 0 0 0 3px rgba(var(--pay-accent-rgb), 0.12);
+}
+
+.pay-field__input--plain {
+    padding-left: 0.7rem;
+}
+
+.pay-field__input--secret {
+    padding-right: 2.35rem;
+}
+
+.pay-field__reveal {
+    position: absolute;
+    right: 0.35rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.75rem;
+    height: 1.75rem;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--pay-dim);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pay-field__reveal:hover {
+    color: var(--pay-text);
+    background: var(--pay-surface);
+}
+
+.pay-field__reveal .material-symbols-outlined {
+    font-size: 1rem;
+}
+
+.pay-field__hint {
+    margin: 0;
+    font-size: 0.6875rem;
+    color: var(--pay-dim);
+    line-height: 1.4;
+}
+
+/* Toggle pill */
+.pay-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.55rem;
+    border-radius: 999px;
+    border: 1px solid var(--pay-border);
+    background: var(--pay-surface-2);
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.pay-pill:hover {
+    border-color: rgba(var(--pay-accent-rgb), 0.25);
+}
+
+.pay-pill__label {
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--pay-muted);
+    white-space: nowrap;
+}
+
+.pay-pill__input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+}
+
+.pay-pill__track {
+    position: relative;
+    width: 2rem;
+    height: 1.125rem;
+    border-radius: 999px;
+    background: rgba(128, 128, 128, 0.25);
+    transition: background 0.2s ease;
+    flex-shrink: 0;
+}
+
+.pay-pill__track::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: calc(1.125rem - 4px);
+    height: calc(1.125rem - 4px);
+    border-radius: 50%;
+    background: #fff;
+    transition: transform 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.pay-pill__input:checked + .pay-pill__track {
+    background: var(--pay-accent);
+}
+
+.pay-pill__input:checked + .pay-pill__track::after {
+    transform: translateX(0.875rem);
+}
+
+.pay-pill__input:focus-visible + .pay-pill__track {
+    outline: 2px solid rgba(var(--pay-accent-rgb), 0.5);
+    outline-offset: 2px;
+}
+
+/* Pay-info chips */
+.pay-info-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.5rem;
+}
+
+@media (max-width: 900px) {
+    .pay-info-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.pay-info-chip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: 10px;
+    border: 1px solid var(--pay-border);
+    background: var(--pay-surface-2);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.pay-info-chip:hover {
+    border-color: rgba(var(--pay-accent-rgb), 0.22);
+}
+
+.pay-info-chip__text {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--pay-muted);
+}
+
+.pay-info-chip:has(.pay-info-toggle:checked) {
+    border-color: rgba(var(--pay-accent-rgb), 0.35);
+    background: var(--pay-accent-soft);
+}
+
+.pay-info-chip:has(.pay-info-toggle:checked) .pay-info-chip__text {
+    color: var(--pay-text);
+}
+
+/* Feature row (skip email) */
+.pay-feature {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.85rem 1rem;
+    border-radius: 12px;
+    border: 1px solid var(--pay-border);
+    background: var(--pay-surface-2);
+}
+
+.pay-feature__main {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.pay-feature__icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--pay-surface);
+    color: var(--pay-accent);
+    flex-shrink: 0;
+}
+
+.pay-feature__title {
+    margin: 0;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--pay-text);
+}
+
+.pay-feature__desc {
+    margin: 0.15rem 0 0;
+    font-size: 0.6875rem;
+    color: var(--pay-dim);
+    line-height: 1.35;
+}
+
+/* Webhook row */
+.pay-webhook {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0.65rem;
+    border-radius: 10px;
+    border: 1px solid var(--pay-border);
+    background: rgba(0, 0, 0, 0.15);
+}
+
+html:not(.dark) .pay-webhook {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+.pay-webhook__meta {
+    flex: 1;
+    min-width: 0;
+}
+
+.pay-webhook__label {
+    margin: 0;
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--pay-dim);
+}
+
+.pay-webhook__url {
+    margin: 0.15rem 0 0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.6875rem;
+    color: var(--pay-accent);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pay-webhook__hint {
+    margin: 0.25rem 0 0;
+    font-size: 0.625rem;
+    color: var(--pay-dim);
+    line-height: 1.35;
+}
+
+.pay-webhook__copy {
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
+    border: 1px solid var(--pay-border);
+    border-radius: 8px;
+    background: var(--pay-surface);
+    color: var(--pay-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.pay-webhook__copy:hover {
+    color: var(--pay-accent);
+    border-color: rgba(var(--pay-accent-rgb), 0.35);
+}
+
+.pay-webhook__copy.is-copied {
+    color: var(--pay-ok);
+    border-color: rgba(48, 209, 88, 0.35);
+}
+
+.pay-webhook__copy .material-symbols-outlined {
+    font-size: 1rem;
+}
+
+.pay-webhooks {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.pay-webhooks--2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 640px) {
+    .pay-webhooks--2 {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Actions */
+.pay-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding-top: 0.65rem;
+    border-top: 1px solid var(--pay-border);
+}
+
+.pay-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.9rem;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 650;
+    text-decoration: none;
+    cursor: pointer;
+    border: 1px solid var(--pay-border);
+    background: var(--pay-surface);
+    color: var(--pay-text);
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+.pay-btn:hover {
+    border-color: rgba(var(--pay-accent-rgb), 0.3);
+    background: var(--pay-surface-2);
+}
+
+.pay-btn:active {
+    transform: scale(0.98);
+}
+
+.pay-btn--primary {
+    border-color: rgba(var(--pay-accent-rgb), 0.35);
+    background: var(--pay-accent-soft);
+    color: var(--pay-accent);
+}
+
+.pay-btn--primary:hover {
+    background: rgba(var(--pay-accent-rgb), 0.22);
+}
+
+.pay-btn .material-symbols-outlined {
+    font-size: 1.05rem;
+}
+
+/* Section body spacing */
+.pay-panel .settings-form-section__body {
+    padding-top: 0.25rem;
+}
+
+.pay-panel .settings-form-section__body > .pay-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}

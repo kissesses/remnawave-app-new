@@ -1,0 +1,102 @@
+.webapp-panel-design-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    padding: 0.75rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(0, 0, 0, 0.25);
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+
+.webapp-panel-design-card:hover {
+    border-color: rgba(255, 255, 255, 0.14);
+    background: rgba(0, 0, 0, 0.35);
+}
+
+.webapp-panel-design-card.is-enabled {
+    border-color: color-mix(in srgb, var(--wdc-accent, #10b981) 35%, transparent);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--wdc-accent, #10b981) 15%, transparent);
+}
+
+.webapp-panel-design-card__preview {
+    height: 3.5rem;
+    border-radius: 0.65rem;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+}
+
+.webapp-panel-design-card__preview--classic {
+    background: linear-gradient(180deg, #171717 0%, #0a0a0a 100%);
+}
+
+.webapp-panel-design-card__preview--ios {
+    background: linear-gradient(180deg, #111 0%, #000 100%);
+    box-shadow: inset 0 -8px 0 rgba(16, 185, 129, 0.25);
+}
+
+.webapp-panel-design-card__preview--desktop {
+    background: linear-gradient(90deg, #1a1a1a 0%, #1a1a1a 28%, #111 28%, #111 100%);
+}
+
+.webapp-panel-design-card__preview--stealth {
+    background: #020202 radial-gradient(circle at 70% 20%, rgba(255, 35, 87, 0.25), transparent 55%);
+}
+
+.webapp-panel-design-card__preview--stealth-glass {
+    background: linear-gradient(180deg, rgba(139, 92, 246, 0.15), #0b0f19);
+    backdrop-filter: blur(4px);
+}
+
+.webapp-panel-design-card__preview--glass-hub {
+    background: linear-gradient(180deg, rgba(59, 130, 246, 0.2) 0%, #0b0e14 45%, #0b0e14 100%);
+    position: relative;
+}
+
+.webapp-panel-design-card__preview--glass-hub::after {
+    content: "";
+    position: absolute;
+    bottom: 6px;
+    left: 8px;
+    right: 8px;
+    height: 18px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, rgba(59, 130, 246, 0.35) 0%, rgba(59, 130, 246, 0.35) 32%, rgba(255, 255, 255, 0.06) 32%, rgba(255, 255, 255, 0.06) 66%, rgba(255, 255, 255, 0.06) 66%);
+}
+
+.webapp-panel-design-card__body p {
+    margin: 0.2rem 0 0;
+    font-size: 0.65rem;
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.webapp-panel-design-card__title {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: #fff;
+    font-size: 0.75rem;
+}
+
+.webapp-panel-design-card__title .material-symbols-outlined {
+    color: var(--wdc-accent, #10b981);
+    font-size: 1rem;
+}
+
+.webapp-panel-design-card__check {
+    position: absolute;
+    top: 0.55rem;
+    right: 0.55rem;
+    font-size: 1.1rem;
+    color: var(--wdc-accent, #10b981);
+    opacity: 0;
+    transform: scale(0.85);
+    transition: opacity 0.15s, transform 0.15s;
+}
+
+.webapp-panel-design-card.is-enabled .webapp-panel-design-card__check {
+    opacity: 1;
+    transform: scale(1);
+}

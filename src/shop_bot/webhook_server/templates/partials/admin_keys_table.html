@@ -1,0 +1,102 @@
+{% for k in keys %}
+<tr class="keys-table__row" data-key-id="{{ k.key_id }}">
+    <td class="keys-table__check">
+        <input type="checkbox" class="keys-row-check keys-check" value="{{ k.key_id }}" aria-label="Выбрать ключ #{{ k.key_id }}" />
+    </td>
+    <td><span class="keys-table__id">#{{ k.key_id }}</span></td>
+    <td>
+        {% set st = k.key_status or 'active' %}
+        <span class="keys-badge keys-badge--{{ st }}">
+            {% if st == 'active' %}Активен
+            {% elif st == 'expiring' %}≤7 дн.
+            {% elif st == 'expired' %}Истёк
+            {% else %}Gift{% endif %}
+        </span>
+    </td>
+    <td class="keys-table__user">
+        {% if k.username %}
+        <span class="demo-blur-username">@{{ k.username }}</span>
+        {% elif k.user_id %}
+        {{ k.user_id }}
+        {% else %}
+        <span class="keys-table__date-sub">без user</span>
+        {% endif %}
+    </td>
+    <td><span class="keys-table__host">{{ k.host_name }}</span></td>
+    <td><span class="keys-table__email demo-blur-sensitive" title="{{ k.key_email }}">{{ k.key_email }}</span></td>
+    <td>
+        {% if k.expiry_date %}
+        <div class="keys-table__date">{{ k.expiry_date }}</div>
+        <div class="keys-table__date-sub">{{ k.expiry_date | relative_time(is_future=True) }}</div>
+        {% else %}
+        <span class="keys-table__date-sub">—</span>
+        {% endif %}
+    </td>
+    <td>
+        <div class="keys-table__date">{{ k.created_date or '—' }}</div>
+        {% if k.created_date %}
+        <div class="keys-table__date-sub">{{ k.created_date | relative_time(is_future=False) }}</div>
+        {% endif %}
+    </td>
+    <td>
+        <div class="keys-table__actions">
+            <button type="button" class="keys-action btn-view-key" title="Подробнее"
+                data-key-id="{{ k.key_id }}"
+                data-status="{{ k.key_status }}"
+                data-user="{% if k.username %}@{{ k.username }}{% else %}{{ k.user_id or '—' }}{% endif %}"
+                data-host="{{ k.host_name }}"
+                data-email="{{ k.key_email }}"
+                data-uuid="{{ k.remnawave_user_uuid or '' }}"
+                data-expires="{{ k.expiry_date or '—' }}"
+                data-created="{{ k.created_date or '—' }}"
+                data-sub="{{ k.subscription_url or k.access_url or '' }}"
+                data-comment="{{ (k.description or k.comment or '')|e }}"
+                data-user-comment="{{ (k.comment_key or '')|e }}">
+                <span class="material-symbols-outlined text-lg">info</span>
+            </button>
+            {% if k.user_id %}
+            <a href="{{ url_for('users_page', q=k.user_id) }}" class="keys-action" title="Профиль">
+                <span class="material-symbols-outlined text-lg">person</span>
+            </a>
+            {% endif %}
+            <button type="button" class="keys-action btn-edit-comment"
+                data-key-id="{{ k.key_id }}"
+                data-current-comment="{{ (k.comment or k.description or '')|e }}"
+                title="Комментарий">
+                <span class="material-symbols-outlined text-lg">comment</span>
+            </button>
+            <button type="button" class="keys-action keys-action--warn btn-open-expiry"
+                data-key-id="{{ k.key_id }}" title="Изменить срок">
+                <span class="material-symbols-outlined text-lg">schedule</span>
+            </button>
+            <button type="button" class="keys-action keys-action--copy"
+                onclick="copyKey(this)" data-key="{{ k.subscription_url or k.access_url or '' }}"
+                title="Скопировать ссылку">
+                <span class="material-symbols-outlined text-lg">content_copy</span>
+            </button>
+            <form action="{{ url_for('delete_key_route', key_id=k.key_id) }}" method="post" class="inline ajax-form"
+                data-confirm="Удалить ключ #{{ k.key_id }}?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <button type="submit" class="keys-action keys-action--danger" title="Удалить">
+                    <span class="material-symbols-outlined text-lg">delete</span>
+                </button>
+            </form>
+        </div>
+    </td>
+</tr>
+{% if k.comment or k.description %}
+<tr class="keys-note-row">
+    <td colspan="9">
+        <div class="keys-note">
+            <span class="material-symbols-outlined text-sm">sticky_note_2</span>
+            {{ k.comment or k.description }}
+        </div>
+    </td>
+</tr>
+{% endif %}
+{% endfor %}
+{% if not keys %}
+<tr>
+    <td colspan="9"><div class="keys-empty">Ключи не найдены</div></td>
+</tr>
+{% endif %}

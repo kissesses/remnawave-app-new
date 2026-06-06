@@ -1,0 +1,141 @@
+<div id="aboutModal" class="modal-overlay about-modal-overlay">
+    <div class="about-mac-window modal-content" role="dialog" aria-labelledby="about-mac-title" aria-modal="true">
+        <div class="about-mac-titlebar">
+            <div class="macos-traffic-lights about-mac-traffic" aria-hidden="true">
+                <button type="button" class="about-mac-close" onclick="closeModal('aboutModal')" aria-label="Закрыть"></button>
+                <span></span>
+                <span></span>
+            </div>
+            <span id="about-mac-title" class="about-mac-titlebar__label">{{ project_info.brand or project_info.name or 'ReSTEAL v3 RW' }}</span>
+        </div>
+
+        <div class="about-mac-body">
+            <div class="about-mac-hero">
+                <div class="about-mac-hero__row">
+                    <img id="about-dev-avatar" class="about-mac-dev-avatar" src="" alt="" width="44" height="44" hidden />
+                    <div class="about-mac-dev-avatar about-mac-dev-avatar--placeholder" id="about-dev-avatar-ph" aria-hidden="true">
+                        <span class="material-symbols-outlined">person</span>
+                    </div>
+                    <div class="about-mac-hero__text">
+                        <a id="about-dev-name" href="{{ project_info.links.developer }}" target="_blank" rel="noopener"
+                            class="about-mac-dev-name">{{ project_info.author }}</a>
+                        <h2 class="about-mac-name" id="about-mac-brand">{{ project_info.brand or 'ReSTEAL v3 RW' }}</h2>
+                        <p class="about-mac-meta">
+                            <span class="about-mac-version" id="about-mac-version">v{{ project_info.version }}</span>
+                            <span class="about-mac-meta__sep">·</span>
+                            <span class="about-mac-tagline" id="about-mac-tagline">{{ project_info.tagline or 'Telegram VPN shop' }}</span>
+                        </p>
+                        <p id="about-dev-bio" class="about-mac-dev-bio"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="about-update-result" class="about-mac-result hidden" role="alert" aria-live="polite"></div>
+
+            <div id="about-update-banner" class="about-mac-update hidden" role="status">
+                <div class="about-mac-update__icon">
+                    <span class="material-symbols-outlined">system_update</span>
+                </div>
+                <div class="about-mac-update__text">
+                    <strong>Доступно обновление</strong>
+                    <span id="about-update-version"></span>
+                </div>
+                <button type="button" id="about-update-apply" class="about-mac-update__btn about-mac-update__btn--panel hidden">
+                    Обновить
+                </button>
+                <a id="about-update-link" href="{{ project_info.links.releases }}" target="_blank" rel="noopener"
+                    class="about-mac-update__btn about-mac-update__btn--external">Релизы</a>
+            </div>
+
+            <dl class="about-mac-specs about-mac-specs--grid" id="about-mac-specs">
+                <div class="about-mac-specs__row">
+                    <dt>Версия</dt>
+                    <dd id="about-spec-version">{{ project_info.version }}</dd>
+                </div>
+                <div class="about-mac-specs__row">
+                    <dt>Тег образа</dt>
+                    <dd id="about-spec-image-tag">—</dd>
+                </div>
+                <div class="about-mac-specs__row">
+                    <dt>Лицензия</dt>
+                    <dd id="about-spec-license">{{ project_info.license or 'MIT' }}</dd>
+                </div>
+                <div class="about-mac-specs__row">
+                    <dt>Звёзды</dt>
+                    <dd id="about-spec-stars">—</dd>
+                </div>
+                <div class="about-mac-specs__row">
+                    <dt>Обновлён</dt>
+                    <dd id="about-spec-updated">—</dd>
+                </div>
+                <div class="about-mac-specs__row">
+                    <dt>Статус бота</dt>
+                    <dd id="about-spec-bot">
+                        {% if main_running and support_running %}
+                        <span class="about-mac-status about-mac-status--ok">Live</span>
+                        {% elif main_running or support_running %}
+                        <span class="about-mac-status about-mac-status--warn">Limited</span>
+                        {% else %}
+                        <span class="about-mac-status about-mac-status--off">Stopped</span>
+                        {% endif %}
+                    </dd>
+                </div>
+            </dl>
+
+            <div id="about-install-block" class="about-mac-terminal hidden">
+                <div class="about-mac-terminal__head">
+                    <span class="about-mac-terminal__dot"></span>
+                    <span>Установка обновления</span>
+                    <button type="button" id="about-copy-install" class="about-mac-terminal__copy" title="Копировать">
+                        <span class="material-symbols-outlined">content_copy</span>
+                    </button>
+                </div>
+                <code id="about-install-cmd" class="about-mac-terminal__code"></code>
+            </div>
+
+            <div class="about-mac-actions">
+                <a href="{{ project_info.links.repository }}" target="_blank" rel="noopener" class="about-mac-action">
+                    <span class="material-symbols-outlined">code</span>
+                    <span>Репозиторий</span>
+                </a>
+                <a href="{{ project_info.links.releases }}" target="_blank" rel="noopener" class="about-mac-action">
+                    <span class="material-symbols-outlined">history</span>
+                    <span>Релизы</span>
+                </a>
+                <a href="{{ project_info.links.get('issues') or (project_info.links.repository ~ '/issues') }}" target="_blank" rel="noopener" class="about-mac-action">
+                    <span class="material-symbols-outlined">bug_report</span>
+                    <span>Issues</span>
+                </a>
+                <a href="{{ project_info.links.telegram }}" target="_blank" rel="noopener" class="about-mac-action">
+                    <span class="material-symbols-outlined">forum</span>
+                    <span>Сообщество</span>
+                </a>
+            </div>
+
+            <div class="about-mac-donate" id="about-mac-donate">
+                <div class="about-mac-donate__head">
+                    <span class="about-mac-donate__title">
+                        <span class="material-symbols-outlined">favorite</span>
+                        Поддержать
+                    </span>
+                    <span class="about-mac-donate__hint">TON · USDT</span>
+                    <button type="button" id="about-copy-donate" class="about-mac-donate__copy" title="Копировать адрес">
+                        <span class="material-symbols-outlined">content_copy</span>
+                    </button>
+                </div>
+                <code class="about-mac-donate__addr" id="about-donate-addr">{{ (project_info.donate or {}).get('address', 'UQAIaNG4ccxBDViWi3hISWeZEHDM1LvBrV292USg_A0AERHF') }}</code>
+            </div>
+
+            <div class="about-mac-footer">
+                <button type="button" id="about-check-updates" class="about-mac-footer__link">
+                    <span class="material-symbols-outlined about-mac-spin" id="about-check-spin">sync</span>
+                    Обновления
+                </button>
+                <span class="about-mac-footer__sep">·</span>
+                <button type="button" id="about-copy-version" class="about-mac-footer__link">Копировать версию</button>
+                <span class="about-mac-footer__sep">·</span>
+                <span class="about-mac-copyright">© {{ project_info.author or 'kissesses' }}</span>
+            </div>
+        </div>
+    </div>
+</div>

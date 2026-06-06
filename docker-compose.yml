@@ -1,0 +1,155 @@
+# Remnawave App — production (co-install с Remnawave Panel на одном сервере)
+#
+# Требования:
+#   1. Remnawave Panel уже установлен (/opt/remnawave)
+#   2. Docker-сеть remnawave-network существует
+#
+# Быстрая установка:
+#   mkdir /opt/remnawave-app && cd /opt/remnawave-app
+#   curl -o docker-compose.yml https://raw.githubusercontent.com/kissesses/remnawave-app/main/docker-compose.yml
+#   curl -o .env https://raw.githubusercontent.com/kissesses/remnawave-app/main/.env.example
+#   Секреты: docs/INSTALL.md (openssl + sed)
+#   docker compose pull && docker compose up -d
+#
+# Reverse proxy — в Nginx Remnawave (см. docs/INSTALL.md).
+# Prod: PostgreSQL и Redis без ports на хост — только внутри Docker-сети.
+
+x-common: &common
+  restart: unless-stopped
+
+x-logging: &logging
+  logging:
+    driver: json-file
+    options:
+      max-size: 50m
+      max-file: 3
+
+x-env-shopbot: &env-shopbot
+  env_file: .env
+
+x-coinstall-network: &coinstall-network
+  networks:
+    - remnawave-network
+
+x-hardening: &hardening
+  init: true
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+
+x-hardening-postgres: &hardening-postgres
+  init: true
+  security_opt:
+    - no-new-privileges:true
+
+# Redis — кэш (rate limit, presence); без RDB на диск и без cap_drop: ALL
+x-hardening-redis: &hardening-redis
+  init: true
+  security_opt:
+    - no-new-privileges:true
+
+services:
+  remnawave-app:
+    image: ghcr.io/kissesses/remnawave-app:${SHOPBOT_IMAGE_TAG:-latest}
+    container_name: remnawave-app
+    <<: [*common, *logging, *env-shopbot, *coinstall-network, *hardening]
+    stop_grace_period: 30s
+    mem_limit: 768m
+    cpus: "1.0"
+    ports:
+      - '127.0.0.1:1337:1337'
+      - '127.0.0.1:8000:8000'
+    volumes:
+      - shopbot-data:/app/project/data
+      - backups-data:/app/project/backups
+      - ${REMNAWAVE_BACKUP_COMPOSE_DIR:-/opt/remnawave}:${REMNAWAVE_BACKUP_COMPOSE_DIR:-/opt/remnawave}:ro
+      # Обновление из панели (тег latest/stable): раскомментируйте обе строки
+      # - /var/run/docker.sock:/var/run/docker.sock
+      # - ${SHOPBOT_COMPOSE_PROJECT_DIR:-/opt/remnawave-app}:${SHOPBOT_COMPOSE_PROJECT_DIR:-/opt/remnawave-app}:ro
+    environment:
+      TZ: ${TZ:-Europe/Moscow}
+      SHOPBOT_DATABASE_URL: postgresql://${POSTGRES_USER:-shopbot}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-shopbot}
+      SHOPBOT_REDIS_URL: ${SHOPBOT_REDIS_URL:-redis://:${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}@redis:6379/0}
+      SHOPBOT_REQUIRE_TOTP: ${SHOPBOT_REQUIRE_TOTP:-1}
+      SHOPBOT_SECRET_KEY: ${SHOPBOT_SECRET_KEY:-}
+      SHOPBOT_SESSION_SECURE: ${SHOPBOT_SESSION_SECURE:-1}
+      SHOPBOT_MASTER_KEY: ${SHOPBOT_MASTER_KEY:-}
+      SHOPBOT_DATA_DIR: /app/project/data
+      SHOPBOT_BACKUPS_DIR: /app/project/backups
+      SHOPBOT_RP_ID: ${SHOPBOT_RP_ID:-}
+      SHOPBOT_RP_ORIGIN: ${SHOPBOT_RP_ORIGIN:-}
+      SHOPBOT_WEBAPP_TOKEN_DAYS: ${SHOPBOT_WEBAPP_TOKEN_DAYS:-90}
+      SHOPBOT_DEBUG: ${SHOPBOT_DEBUG:-0}
+      SHOPBOT_IMAGE_TAG: ${SHOPBOT_IMAGE_TAG:-latest}
+      DEVELOPER_SUPPORT_ENABLED: ${DEVELOPER_SUPPORT_ENABLED:-0}
+      DEVELOPER_SUPPORT_HUB_URL: ${DEVELOPER_SUPPORT_HUB_URL:-}
+      DEVELOPER_SUPPORT_PAIRING_TTL_SEC: ${DEVELOPER_SUPPORT_PAIRING_TTL_SEC:-600}
+      SHOPBOT_COMPOSE_PROJECT_DIR: ${SHOPBOT_COMPOSE_PROJECT_DIR:-/opt/remnawave-app}
+      REMNAWAVE_BACKUP_COMPOSE_DIR: ${REMNAWAVE_BACKUP_COMPOSE_DIR:-/opt/remnawave}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:1337/login >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:18-alpine
+    <<: [*common, *logging, *coinstall-network, *hardening-postgres]
+    mem_limit: 512m
+    cpus: "1.0"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-shopbot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-shopbot}
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-shopbot} -d ${POSTGRES_DB:-shopbot}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:8-alpine
+    <<: [*common, *logging, *coinstall-network, *hardening-redis]
+    mem_limit: 128m
+    cpus: "0.5"
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+    # Без RDB: только кэш; избегает Permission denied на volume и MISCONF stop-writes
+    command:
+      - redis-server
+      - --save
+      - ""
+      - --appendonly
+      - "no"
+      - --loglevel
+      - warning
+      - --requirepass
+      - ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep -q PONG"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+networks:
+  remnawave-network:
+    external: true
+    name: remnawave-network
+
+volumes:
+  shopbot-data:
+  redis-data:
+  postgres-data:
+  backups-data:

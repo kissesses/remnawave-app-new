@@ -1,0 +1,631 @@
+<script>
+    (function () {
+        let mainChart = null;
+        let localMiniChart = null;
+        let autoRefreshInterval = null;
+        let currentPeriod = 6;
+        let lastNetworkData = null;
+        let lastNetworkTime = null;
+        const NETWORK_DATA_KEY = 'monitor_network_data';
+        const NETWORK_TIME_KEY = 'monitor_network_time';
+
+        async function fetchJSON(url) {
+            try {
+                const resp = await fetch(url, { credentials: 'same-origin' });
+                return await resp.json();
+            } catch (e) { return { ok: false, error: String(e) }; }
+        }
+
+        function fmtBytes(n) {
+            if (n == null) return '—';
+            const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+            let i = 0, x = Number(n);
+            while (x >= 1024 && i < units.length - 1) { x /= 1024; i++; }
+            return x.toFixed(1) + ' ' + units[i];
+        }
+
+        function fmtPct(x) { return (x == null) ? '—' : (Number(x).toFixed(1) + '%'); }
+
+        function secsToDHMS(s) {
+            if (!s && s !== 0) return '—';
+            s = Number(s);
+            const d = Math.floor(s / 86400); s %= 86400;
+            const h = Math.floor(s / 3600); s %= 3600;
+            const m = Math.floor(s / 60);
+            const sec = s % 60;
+            const parts = [];
+            if (d) parts.push(d + 'д');
+            if (h) parts.push(h + 'ч');
+            if (m) parts.push(m + 'м');
+            if (sec && parts.length === 0) parts.push(sec + 'с');
+            return parts.join(' ') || '< 1м';
+        }
+
+        function getStatusColor(value, thresholds = { warning: 70, critical: 90 }) {
+            if (value == null) return 'text-white/50';
+            if (value >= thresholds.critical) return 'text-red-400';
+            if (value >= thresholds.warning) return 'text-yellow-400';
+            return 'text-primary';
+        }
+
+        function calculateNetworkSpeed(currentData, sourceId = 'default') {
+            const now = Date.now();
+            const dataKey = `${NETWORK_DATA_KEY}_${sourceId}`;
+            const timeKey = `${NETWORK_TIME_KEY}_${sourceId}`;
+            try {
+                const savedData = localStorage.getItem(dataKey);
+                const savedTime = localStorage.getItem(timeKey);
+                if (savedData && savedTime) {
+                    lastNetworkData = JSON.parse(savedData);
+                    lastNetworkTime = parseInt(savedTime);
+                }
+            } catch (e) { }
+            if (!lastNetworkData || !lastNetworkTime) {
+                lastNetworkData = currentData;
+                lastNetworkTime = now;
+                try {
+                    localStorage.setItem(dataKey, JSON.stringify(currentData));
+                    localStorage.setItem(timeKey, now.toString());
+                } catch (e) { }
+                return { upSpeed: 0, downSpeed: 0, totalSpeed: 0 };
+            }
+            const timeDiff = (now - lastNetworkTime) / 1000;
+            if (timeDiff < 1) return { upSpeed: 0, downSpeed: 0, totalSpeed: 0 };
+            const bytesUpDiff = (currentData.bytes_sent || 0) - (lastNetworkData.bytes_sent || 0);
+            const bytesDownDiff = (currentData.bytes_recv || 0) - (lastNetworkData.bytes_recv || 0);
+            const upSpeed = Math.max(0, bytesUpDiff / timeDiff);
+            const downSpeed = Math.max(0, bytesDownDiff / timeDiff);
+            lastNetworkData = currentData;
+            lastNetworkTime = now;
+            try {
+                localStorage.setItem(dataKey, JSON.stringify(currentData));
+                localStorage.setItem(timeKey, now.toString());
+            } catch (e) { }
+            return { upSpeed, downSpeed, totalSpeed: upSpeed + downSpeed };
+        }
+
+        function updateStatsCards(data) {
+            if (!data || !data.ok) return;
+            const isRemote = data.uname !== undefined;
+            let cpu, mem, disk, net;
+            if (isRemote) {
+                cpu = { percent: data.cpu_percent || 0, count_logical: data.cpu_count || '—' };
+                mem = { percent: data.memory_percent || 0, used: (data.memory_used_mb || 0) * 1024 * 1024, total: (data.memory_total_mb || 0) * 1024 * 1024 };
+                disk = { percent: data.disk_percent || 0, mountpoint: data.disk_mountpoint || '/' };
+                net = { bytes_sent: data.network_sent || 0, bytes_recv: data.network_recv || 0 };
+            } else {
+                cpu = data.cpu || {};
+                mem = data.memory || {};
+                const diskPercent = data.disk_percent !== undefined ? data.disk_percent : (data.disks?.[0]?.percent || 0);
+                disk = { percent: diskPercent, mountpoint: data.disks?.[0]?.mountpoint || '/' };
+                net = data.net || {};
+            }
+            const networkSpeed = calculateNetworkSpeed(net, 'stats_cards');
+            document.getElementById('cpu-stat').innerHTML = `<span class="${getStatusColor(cpu.percent)}">${fmtPct(cpu.percent)}</span>`;
+            document.getElementById('cpu-trend').textContent = `${cpu.count_logical || '—'} ядер`;
+            document.getElementById('memory-stat').innerHTML = `<span class="${getStatusColor(mem.percent)}">${fmtPct(mem.percent)}</span>`;
+            document.getElementById('memory-trend').textContent = `${fmtBytes(mem.used || 0)} / ${fmtBytes(mem.total || 0)}`;
+            document.getElementById('disk-stat').innerHTML = `<span class="${getStatusColor(disk.percent)}">${fmtPct(disk.percent)}</span>`;
+            document.getElementById('disk-trend').textContent = disk.mountpoint || '/';
+            const speedTotal = fmtBytes(networkSpeed.totalSpeed) + '/с';
+            const speedUp = fmtBytes(networkSpeed.upSpeed) + '/с';
+            const speedDown = fmtBytes(networkSpeed.downSpeed) + '/с';
+            document.getElementById('network-stat').innerHTML = `<span class="text-blue-400">${speedTotal}</span>`;
+            document.getElementById('network-trend').innerHTML = `↓${speedDown}  ↑${speedUp}`;
+        }
+
+        function renderLocal(el, data) {
+            if (!data || !data.ok) {
+                el.innerHTML = `<div class="flex items-center justify-center p-4 h-full text-red-500 gap-2"><span class="material-symbols-outlined text-sm">error</span> <span class="text-[10px] font-bold tracking-widest uppercase">${data?.error || 'Сбой получения данных'}</span></div>`;
+                return;
+            }
+            const cpu = data.cpu || {};
+            const mem = data.memory || {};
+            const sw = data.swap || {};
+            const disks = (data.disks || []);
+
+            let diskHtml = disks.map(d => `
+                <div>
+                    <div class="flex justify-between text-[9px] font-bold uppercase tracking-widest text-white/50 mb-1.5">
+                        <span>${d.mountpoint || d.device}</span>
+                        <span class="${getStatusColor(d.percent)}">${fmtPct(d.percent)}</span>
+                    </div>
+                    <div class="w-full h-1.5 bg-black/40 rounded-full overflow-hidden">
+                        <div class="h-full ${d.percent >= 90 ? 'bg-red-500' : d.percent >= 70 ? 'bg-yellow-400' : 'bg-primary'} transition-all duration-500" style="width: ${d.percent || 0}%"></div>
+                    </div>
+                </div>
+            `).join('');
+
+            el.innerHTML = `
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                     <div class="bg-black/20 rounded-xl p-3 border border-white/5 flex flex-col justify-center items-center">
+                        <div class="text-[8px] uppercase tracking-widest text-white/40 font-bold mb-1">Хостнейм</div>
+                        <div class="text-[11px] font-bold text-white truncate w-full text-center" title="${data.hostname}">${data.hostname || '—'}</div>
+                    </div>
+                    <div class="bg-black/20 rounded-xl p-3 border border-white/5 flex flex-col justify-center items-center">
+                        <div class="text-[8px] uppercase tracking-widest text-white/40 font-bold mb-1">Uptime</div>
+                        <div class="text-[11px] font-bold text-primary">${secsToDHMS(data.uptime_sec)}</div>
+                    </div>
+                </div>
+
+                <div class="space-y-4 pr-1">
+                    <div>
+                        <div class="flex justify-between text-[9px] font-bold uppercase tracking-widest text-white/50 mb-1.5">
+                            <span>CPU (${cpu.count_logical || '—'} cores)</span>
+                            <span class="${getStatusColor(cpu.percent)}">${fmtPct(cpu.percent)}</span>
+                        </div>
+                        <div class="w-full h-1.5 bg-black/40 rounded-full overflow-hidden">
+                            <div class="h-full bg-primary transition-all duration-500" style="width: ${cpu.percent || 0}%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-[9px] font-bold uppercase tracking-widest text-white/50 mb-1.5">
+                            <span>RAM</span>
+                            <span class="${getStatusColor(mem.percent)}">${fmtPct(mem.percent)}</span>
+                        </div>
+                        <div class="w-full h-1.5 bg-black/40 rounded-full overflow-hidden">
+                            <div class="h-full bg-green-500 transition-all duration-500" style="width: ${mem.percent || 0}%"></div>
+                        </div>
+                        <div class="mt-1 flex justify-end text-[8px] text-white/30 font-mono tracking-tighter">${fmtBytes(mem.used)} / ${fmtBytes(mem.total)}</div>
+                    </div>
+                    ${sw.total ? `
+                    <div>
+                        <div class="flex justify-between text-[9px] font-bold uppercase tracking-widest text-white/50 mb-1.5">
+                            <span>SWAP</span>
+                            <span class="${getStatusColor(sw.percent)}">${fmtPct(sw.percent)}</span>
+                        </div>
+                        <div class="w-full h-1.5 bg-black/40 rounded-full overflow-hidden">
+                            <div class="h-full bg-purple-500 transition-all duration-500" style="width: ${sw.percent || 0}%"></div>
+                        </div>
+                    </div>` : ''}
+                    
+                    ${diskHtml}
+                </div>
+            `;
+        }
+
+        function renderRemote(el, data) {
+            if (!data || !data.ok) {
+                el.innerHTML = `<div class="flex items-center justify-center p-3 text-red-500 gap-2"><span class="material-symbols-outlined text-sm">error</span> <span class="text-[9px] font-bold tracking-widest uppercase">${data?.error || 'Сбой данных'}</span></div>`;
+                return;
+            }
+            const cpu = { percent: data.cpu_percent || 0, count: data.cpu_count || '—' };
+            const mem = { percent: data.memory_percent || 0, used_mb: data.memory_used_mb || 0, total_mb: data.memory_total_mb || 0 };
+            const disk = { percent: data.disk_percent || 0, mountpoint: data.disk_mountpoint || '/' };
+
+            el.innerHTML = `
+                 <div class="grid grid-cols-2 gap-2 mb-3">
+                     <div class="bg-black/20 rounded-lg p-2.5 border border-white/5 flex flex-col items-center justify-center">
+                        <div class="text-[8px] uppercase tracking-widest text-white/40 font-bold mb-1">Система</div>
+                        <div class="text-[10px] font-bold text-white truncate w-full text-center" title="${data.uname}">${data.uname || '—'}</div>
+                    </div>
+                    <div class="bg-black/20 rounded-lg p-2.5 border border-white/5 flex flex-col items-center justify-center">
+                        <div class="text-[8px] uppercase tracking-widest text-white/40 font-bold mb-1">Uptime</div>
+                        <div class="text-[10px] font-bold text-blue-400 truncate">${secsToDHMS(data.uptime_sec)}</div>
+                    </div>
+                </div>
+
+                <div class="space-y-3 pt-1">
+                    <div>
+                        <div class="flex justify-between text-[9px] font-bold uppercase tracking-widest text-white/50 mb-1.5">
+                            <span>CPU (${cpu.count} ЯДЕР)</span>
+                            <span class="${getStatusColor(cpu.percent)}">${fmtPct(cpu.percent)}</span>
+                        </div>
+                        <div class="w-full h-1.5 bg-black/40 rounded-full overflow-hidden">
+                            <div class="h-full bg-primary transition-all duration-500" style="width: ${cpu.percent}%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-[9px] font-bold uppercase tracking-widest text-white/50 mb-1.5">
+                            <span>RAM</span>
+                            <span class="${getStatusColor(mem.percent)}">${fmtPct(mem.percent)}</span>
+                        </div>
+                        <div class="w-full h-1.5 bg-black/40 rounded-full overflow-hidden">
+                            <div class="h-full bg-green-500 transition-all duration-500" style="width: ${mem.percent}%"></div>
+                        </div>
+                        <div class="mt-1 flex justify-end text-[8px] text-white/30 font-mono tracking-tighter">${mem.used_mb}MB / ${mem.total_mb}MB</div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-[9px] font-bold uppercase tracking-widest text-white/50 mb-1.5">
+                            <span>DISK (${disk.mountpoint})</span>
+                            <span class="${getStatusColor(disk.percent)}">${fmtPct(disk.percent)}</span>
+                        </div>
+                        <div class="w-full h-1.5 bg-black/40 rounded-full overflow-hidden">
+                            <div class="h-full bg-yellow-400 transition-all duration-500" style="width: ${disk.percent}%"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function createMainChart() {
+            const ctx = document.getElementById('main-chart');
+            if (!ctx) return null;
+            mainChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'CPU',
+                            data: [],
+                            borderColor: '#22d3ee',
+                            backgroundColor: 'rgba(34, 211, 238, 0.05)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 2,
+                            pointHoverRadius: 6,
+                            pointBackgroundColor: '#22d3ee'
+                        },
+                        {
+                            label: 'RAM',
+                            data: [],
+                            borderColor: '#22c55e',
+                            backgroundColor: 'rgba(34, 197, 94, 0.05)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 2,
+                            pointHoverRadius: 6,
+                            pointBackgroundColor: '#22c55e'
+                        },
+                        {
+                            label: 'Disk',
+                            data: [],
+                            borderColor: '#facc15',
+                            backgroundColor: 'rgba(250, 204, 21, 0.05)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 2,
+                            pointHoverRadius: 6,
+                            pointBackgroundColor: '#facc15'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { intersect: false, mode: 'index' },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            align: 'end',
+                            labels: {
+                                color: '#9ca3af',
+                                usePointStyle: true,
+                                boxWidth: 6,
+                                padding: 20,
+                                font: { family: "'Inter', sans-serif", size: 10, weight: 600 }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#f3f4f6',
+                            bodyColor: '#d1d5db',
+                            borderColor: 'rgba(255,255,255,0.1)',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            padding: 10,
+                            displayColors: true,
+                            boxPadding: 4,
+                            titleFont: { size: 11, weight: 600, family: "'Inter', sans-serif" },
+                            bodyFont: { size: 10, family: "'Inter', sans-serif" }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                color: '#6b7280',
+                                font: { size: 9, family: "'Inter', sans-serif" },
+                                maxRotation: 0,
+                                autoSkip: true,
+                                maxTicksLimit: 8
+                            },
+                            grid: {
+                                color: 'rgba(255,255,255,0.02)',
+                                drawBorder: false
+                            }
+                        },
+                        y: {
+                            min: 0,
+                            max: 100,
+                            ticks: {
+                                color: '#6b7280',
+                                font: { size: 9, family: "'Inter', sans-serif" },
+                                callback: v => v + '%',
+                                stepSize: 20
+                            },
+                            grid: {
+                                color: 'rgba(255,255,255,0.02)',
+                                drawBorder: false
+                            }
+                        }
+                    },
+                    animation: { duration: 800, easing: 'easeOutQuart' }
+                }
+            });
+            return mainChart;
+        }
+
+        function createLocalMiniChart() {
+            const ctx = document.getElementById('local-mini-chart');
+            if (!ctx) return null;
+            localMiniChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['CPU', 'RAM', 'Disk'],
+                    datasets: [{ data: [0, 0, 0], backgroundColor: ['#22d3ee', '#22c55e', '#facc15'], borderWidth: 0, hoverOffset: 4 }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '75%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            borderColor: 'rgba(255,255,255,0.1)',
+                            borderWidth: 1,
+                            bodyFont: { size: 10, family: "'Inter', sans-serif" },
+                            boxPadding: 4,
+                            callbacks: {
+                                label: function (context) {
+                                    return ' ' + context.label + ': ' + context.raw + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            return localMiniChart;
+        }
+
+        async function refreshCharts() {
+            const selector = document.getElementById('server-selector');
+            const selectedValue = selector ? selector.value : 'local';
+
+            let url;
+            if (selectedValue === 'local') {
+                url = `{{ url_for('monitor_series_json', scope='local', name='panel') }}?hours=${currentPeriod}`;
+            } else if (selectedValue.startsWith('remote:')) {
+                const hostName = selectedValue.replace('remote:', '');
+                url = `{{ url_for('monitor_series_json', scope='host', name='__HOST__') }}?hours=${currentPeriod}`.replace('__HOST__', encodeURIComponent(hostName));
+            } else {
+                url = `{{ url_for('monitor_series_json', scope='local', name='panel') }}?hours=${currentPeriod}`;
+            }
+
+            const res = await fetchJSON(url);
+            if (!res || !res.ok || !mainChart) return;
+            const items = res.items || [];
+            if (items.length === 0) {
+                mainChart.data.labels = ['Нет данных'];
+                mainChart.data.datasets[0].data = [0];
+                mainChart.data.datasets[1].data = [0];
+                mainChart.data.datasets[2].data = [0];
+                mainChart.update('none');
+                return;
+            }
+            const labels = items.map(i => {
+                const date = new Date(i.created_at);
+                return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+            });
+            mainChart.data.labels = labels;
+            mainChart.data.datasets[0].data = items.map(i => i.cpu_percent ?? null);
+            mainChart.data.datasets[1].data = items.map(i => i.mem_percent ?? null);
+            mainChart.data.datasets[2].data = items.map(i => i.disk_percent ?? null);
+            mainChart.update('none');
+
+            if (localMiniChart && items.length > 0) {
+                const last = items[items.length - 1];
+                localMiniChart.data.datasets[0].data = [last.cpu_percent || 0, last.mem_percent || 0, last.disk_percent || 0];
+                localMiniChart.update('none');
+            }
+        }
+
+        async function refreshLocalPanel() {
+            const el = document.getElementById('local-metrics');
+            const selector = document.getElementById('server-selector');
+            const selectedValue = selector ? selector.value : 'local';
+
+            if (selectedValue === 'local') {
+                const data = await fetchJSON("{{ url_for('monitor_local_json') }}");
+                renderLocal(el, data);
+                updateStatsCards(data);
+            } else if (selectedValue.startsWith('remote:')) {
+                const hostName = selectedValue.replace('remote:', '');
+                const data = await fetchJSON(`{{ url_for('monitor_host_json', host_name='__HOST__') }}`.replace('__HOST__', encodeURIComponent(hostName)));
+                renderRemote(el, data);
+                updateStatsCards(data);
+            }
+        }
+
+        async function refreshHost(hostName, metricsEl, statusEl) {
+            if (metricsEl) {
+                metricsEl.innerHTML = `<div class="flex items-center gap-2 text-white/40"><span class="material-symbols-outlined text-[14px] animate-spin">progress_activity</span> <span class="text-[9px] font-bold uppercase tracking-widest">Загрузка...</span></div>`;
+            }
+            if (statusEl) statusEl.className = 'w-2 h-2 rounded-full bg-yellow-400';
+            const data = await fetchJSON(`{{ url_for('monitor_host_json', host_name='__HOST__') }}`.replace('__HOST__', encodeURIComponent(hostName)));
+            if (metricsEl) renderRemote(metricsEl, data);
+            if (statusEl) {
+                statusEl.className = `w-2 h-2 rounded-full ${data.ok ? 'bg-green-500' : 'bg-red-500'}`;
+            }
+        }
+
+        async function refreshTarget(targetName, metricsEl, statusEl) {
+            if (metricsEl) {
+                metricsEl.innerHTML = `<div class="flex items-center gap-2 text-white/40"><span class="material-symbols-outlined text-[14px] animate-spin">progress_activity</span> <span class="text-[9px] font-bold uppercase tracking-widest">Загрузка...</span></div>`;
+            }
+            if (statusEl) statusEl.className = 'w-2 h-2 rounded-full bg-yellow-400';
+            const data = await fetchJSON(`{{ url_for('monitor_target_json', target_name='__T__') }}`.replace('__T__', encodeURIComponent(targetName)));
+            if (metricsEl) renderRemote(metricsEl, data);
+            if (statusEl) {
+                statusEl.className = `w-2 h-2 rounded-full ${data.ok ? 'bg-green-500' : 'bg-red-500'}`;
+            }
+        }
+
+        function refreshAllHosts() {
+            document.querySelectorAll('.host-refresh-btn').forEach(btn => {
+                const hostName = btn.getAttribute('data-host');
+                const targetSel = btn.getAttribute('data-target');
+                const metricsEl = document.querySelector(targetSel);
+                const idx = Array.from(document.querySelectorAll('.host-refresh-btn')).indexOf(btn) + 1;
+                const statusEl = document.getElementById(`host-status-${idx}`);
+                refreshHost(hostName, metricsEl, statusEl);
+            });
+        }
+
+        function refreshAllTargets() {
+            document.querySelectorAll('.target-refresh-btn').forEach(btn => {
+                const targetName = btn.getAttribute('data-target-name');
+                const targetSel = btn.getAttribute('data-target');
+                const metricsEl = document.querySelector(targetSel);
+                const idx = Array.from(document.querySelectorAll('.target-refresh-btn')).indexOf(btn) + 1;
+                const statusEl = document.getElementById(`target-status-${idx}`);
+                refreshTarget(targetName, metricsEl, statusEl);
+            });
+        }
+
+        async function refreshAll() {
+            await refreshLocalPanel();
+            await refreshCharts();
+            refreshAllHosts();
+            refreshAllTargets();
+        }
+
+        window.initDashboardMonitor = function() {
+            if (window.__dashMonitorReady) return;
+            window.__dashMonitorReady = true;
+            createMainChart();
+            createLocalMiniChart();
+            refreshAll();
+
+            document.getElementById('refresh-all')?.addEventListener('click', refreshAll);
+
+            if (document.getElementById('server-selector')) {
+                if (typeof initSoftSelect === 'function') {
+                    initSoftSelect('server-selector', 'Локальная');
+                } else {
+                    const sel = document.getElementById('server-selector');
+                    const menus = document.querySelectorAll('.soft-select-item');
+                    const toggle = document.querySelector('.soft-select-toggle span:first-child');
+
+                    menus.forEach(menuItem => {
+                        menuItem.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            menus.forEach(m => m.classList.remove('is-active', 'bg-white/5'));
+                            this.classList.add('is-active', 'bg-white/5');
+
+                            const val = this.getAttribute('data-value');
+                            if (toggle) toggle.textContent = this.textContent.trim();
+
+                            if (sel) {
+                                sel.value = val;
+                                sel.dispatchEvent(new Event('change'));
+                            }
+
+                            document.querySelector('.soft-select-menu').classList.add('hidden');
+                        });
+                    });
+
+                    const tgBtn = document.querySelector('.soft-select-toggle');
+                    if (tgBtn) {
+                        tgBtn.addEventListener('click', () => {
+                            document.querySelector('.soft-select-menu').classList.toggle('hidden');
+                        });
+                    }
+                }
+            }
+
+            const serverSelector = document.getElementById('server-selector');
+            if (serverSelector) {
+                serverSelector.addEventListener('change', async () => {
+                    await refreshLocalPanel();
+                    await refreshCharts();
+                });
+            }
+
+            document.getElementById('clear-metrics')?.addEventListener('click', () => {
+                if (window.showConfirmModal) {
+                    showConfirmModal('Вы уверены, что хотите удалить все старые замеры из БД?\n\nЭто действие необратимо и освободит память, но не повлияет на текущую статистику.', async () => {
+                        await performClearMetrics();
+                    });
+                } else if (confirm('Вы уверены, что хотите удалить все старые замеры из БД?\n\nЭто действие необратимо и освободит память, но не повлияет на текущую статистику.')) {
+                    performClearMetrics();
+                }
+            });
+
+            async function performClearMetrics() {
+                const btn = document.getElementById('clear-metrics');
+                const originalHTML = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="material-symbols-outlined text-[14px] animate-spin">progress_activity</span> Очистка...';
+
+                try {
+                    const resp = await fetch(`{{ url_for('monitor_clear_metrics') }}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': window.getCsrfToken ? window.getCsrfToken() : '{{ csrf_token() }}'
+                        }
+                    });
+                    const data = await resp.json();
+
+                    if (data.ok) {
+                        if (window.showToast) window.showToast('success', data.message || 'Метрики успешно очищены');
+                        else alert(data.message || 'Метрики успешно очищены');
+                        await refreshCharts();
+                    } else {
+                        if (window.showToast) window.showToast('danger', data.error || 'Ошибка очистки метрик');
+                        else alert(data.error || 'Ошибка очистки метрик');
+                    }
+                } catch (e) {
+                    console.error(e);
+                    if (window.showToast) window.showToast('danger', 'Ошибка очистки метрик');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHTML;
+                }
+            }
+
+            document.querySelectorAll('.host-refresh-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const hostName = btn.getAttribute('data-host');
+                    const targetSel = btn.getAttribute('data-target');
+                    const metricsEl = document.querySelector(targetSel);
+                    const idx = Array.from(document.querySelectorAll('.host-refresh-btn')).indexOf(btn) + 1;
+                    const statusEl = document.getElementById(`host-status-${idx}`);
+                    refreshHost(hostName, metricsEl, statusEl);
+                });
+            });
+
+            document.querySelectorAll('.target-refresh-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const targetName = btn.getAttribute('data-target-name');
+                    const targetSel = btn.getAttribute('data-target');
+                    const metricsEl = document.querySelector(targetSel);
+                    const idx = Array.from(document.querySelectorAll('.target-refresh-btn')).indexOf(btn) + 1;
+                    const statusEl = document.getElementById(`target-status-${idx}`);
+                    refreshTarget(targetName, metricsEl, statusEl);
+                });
+            });
+
+            document.querySelectorAll('.period-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.period-btn').forEach(b => {
+                        b.classList.remove('bg-primary/20', 'text-primary', 'hover:bg-primary/30');
+                        b.classList.add('bg-white/10', 'text-white/50', 'hover:text-white', 'hover:bg-white/5');
+                    });
+                    btn.classList.remove('bg-white/10', 'text-white/50', 'hover:text-white', 'hover:bg-white/5');
+                    btn.classList.add('bg-primary/20', 'text-primary', 'hover:bg-primary/30');
+                    currentPeriod = parseInt(btn.getAttribute('data-period') || '6', 10);
+                    refreshCharts();
+                });
+            });
+
+            autoRefreshInterval = setInterval(refreshAll, 60000);
+        };
+    })();
+
+</script>

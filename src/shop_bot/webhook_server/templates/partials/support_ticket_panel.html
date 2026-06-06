@@ -1,0 +1,61 @@
+{% set is_closed = ticket.status == 'closed' %}
+<div class="support-preview__panel" data-ticket-id="{{ ticket.ticket_id }}">
+    <div class="support-preview__head">
+        <div class="support-preview__title-wrap">
+            <h2 class="support-preview__title">
+                {% if is_important %}<span class="material-symbols-outlined is-star">star</span>{% endif %}
+                {{ display_subject }}
+            </h2>
+            <p class="support-preview__meta">
+                #{{ ticket.ticket_id }} ·
+                {% if ticket.username %}@{{ ticket.username }}{% else %}User #{{ ticket.user_id }}{% endif %} ·
+                <span class="support-pill {% if is_closed %}support-pill--closed{% elif is_waiting %}support-pill--waiting{% else %}support-pill--open{% endif %}">
+                    {% if is_closed %}Закрыт{% elif is_waiting %}Ждёт ответа{% else %}Открыт{% endif %}
+                </span>
+            </p>
+        </div>
+        <div class="support-preview__head-actions">
+            <a href="{{ url_for('support_ticket_page', ticket_id=ticket.ticket_id) }}" class="support-icon-btn" title="На всю страницу">
+                <span class="material-symbols-outlined">open_in_full</span>
+            </a>
+            <button type="button" class="support-icon-btn" data-panel-action="star" data-csrf="{{ csrf_token() }}" title="Важный">
+                <span class="material-symbols-outlined{% if is_important %} is-star{% endif %}">star</span>
+            </button>
+            {% if not is_closed %}
+            <button type="button" class="support-icon-btn" data-panel-action="close" data-csrf="{{ csrf_token() }}" title="Закрыть">
+                <span class="material-symbols-outlined">check_circle</span>
+            </button>
+            {% else %}
+            <button type="button" class="support-icon-btn" data-panel-action="open" data-csrf="{{ csrf_token() }}" title="Открыть">
+                <span class="material-symbols-outlined">replay</span>
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="support-preview__chat" id="support-preview-messages">
+        {% include 'partials/support_ticket_messages.html' %}
+    </div>
+
+    <div class="support-composer support-composer--preview">
+        <div class="support-composer__modes">
+            <button type="button" class="support-composer__mode is-active" data-mode="reply">Ответ</button>
+            <button type="button" class="support-composer__mode" data-mode="note">Заметка</button>
+            <div class="support-canned-wrap">
+                <button type="button" class="support-btn support-btn--ghost support-canned-toggle" id="support-canned-toggle">
+                    <span class="material-symbols-outlined text-sm">quickreply</span> Шаблоны
+                </button>
+                <div class="support-canned-menu" id="support-canned-menu" hidden></div>
+            </div>
+        </div>
+        <form class="support-preview-composer" data-ticket-id="{{ ticket.ticket_id }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <div class="support-composer__row">
+                <textarea name="message" rows="2" placeholder="Ответ пользователю…" {% if is_closed %}disabled{% endif %}></textarea>
+                <button type="submit" class="support-composer__send" {% if is_closed %}disabled{% endif %}>
+                    <span class="material-symbols-outlined">send</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

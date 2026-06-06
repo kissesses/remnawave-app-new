@@ -1,0 +1,260 @@
+{% set meta = stealth_login_meta or {} %}
+{% set decoy = settings.stealth_login_decoy or '502_nginx' %}
+{% set selected_label = meta.decoy_label or decoy %}
+
+<section id="tab-stealth-login" class="tab-content stealth-panel">
+    {% if meta.enabled and not meta.has_unlock %}
+    <div class="stl-alert" role="alert">
+        <span class="material-symbols-outlined" aria-hidden="true">warning</span>
+        <div><strong>Нет способа разблокировки.</strong> Включите горячую клавишу, серию кликов или секретный URL — иначе войти в панель будет невозможно.</div>
+    </div>
+    {% endif %}
+
+    <header class="stl-hub">
+        <div class="stl-hub__intro">
+            <div class="stl-hub__icon" aria-hidden="true">
+                <span class="material-symbols-outlined">visibility_off</span>
+            </div>
+            <div>
+                <h2 class="stl-hub__title">Скрытый вход</h2>
+                <p class="stl-hub__desc">Маскировка <code>/login</code> · inline HTML без CDN</p>
+            </div>
+        </div>
+        <div class="stl-hub__stats">
+            <span class="stl-stat{% if meta.enabled %} stl-stat--on{% endif %}" id="stl-status-pill">
+                <span class="material-symbols-outlined">{% if meta.enabled %}shield{% else %}shield_lock{% endif %}</span>
+                <span class="stl-stat__text">{{ 'Активен' if meta.enabled else 'Выключен' }}</span>
+            </span>
+            <span class="stl-stat">
+                <span class="material-symbols-outlined">grid_view</span>
+                <span>{{ meta.decoy_options | length }} шаблонов</span>
+            </span>
+            <span class="stl-stat stl-stat--muted" title="Способы разблокировки">
+                <span class="material-symbols-outlined">lock_open</span>
+                <span>{{ meta.unlock_summary }}</span>
+            </span>
+        </div>
+        <div class="stl-hub__actions">
+            <a href="{{ meta.login_url }}" target="_blank" rel="noopener" class="stl-btn stl-btn--ghost">
+                <span class="material-symbols-outlined">open_in_new</span>
+                /login
+            </a>
+            <input type="hidden" name="stealth_login_enabled" value="0" />
+            <div class="stl-enable">
+                <span class="stl-enable__label">Скрытый вход</span>
+                <label class="settings-macos-switch" title="Включить скрытую страницу входа">
+                    <input type="checkbox" name="stealth_login_enabled" value="1" id="stealth-login-enabled"
+                        {% if settings.stealth_login_enabled == '1' %}checked{% endif %} />
+                    <span class="settings-macos-switch__track"></span>
+                </label>
+            </div>
+        </div>
+    </header>
+
+    <div class="stl-studio">
+        <div class="stl-preview-pane" aria-label="Предпросмотр маскировки">
+            <div class="stl-preview-pane__head">
+                <div>
+                    <p class="stl-preview-pane__eyebrow">Предпросмотр</p>
+                    <h3 class="stl-preview-pane__title" id="stl-preview-title">{{ selected_label }}</h3>
+                </div>
+                <div class="stl-preview-pane__actions">
+                    <button type="button" class="stl-icon-btn" id="stl-preview-reload" title="Обновить превью" disabled>
+                        <span class="material-symbols-outlined">refresh</span>
+                    </button>
+                    <a href="#" class="stl-icon-btn" id="stl-preview-open" target="_blank" rel="noopener" title="Открыть decoy" hidden>
+                        <span class="material-symbols-outlined">fullscreen</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="stl-preview-pane__body">
+                <div class="stl-preview-empty" id="stl-preview-empty">
+                    <span class="material-symbols-outlined">touch_app</span>
+                    <p>Нажмите на шаблон в галерее — здесь появится предпросмотр</p>
+                </div>
+                <div class="stl-preview-loading" id="stl-preview-loading" hidden>
+                    <span class="stl-preview-loading__spin"></span>
+                    <span>Загрузка…</span>
+                </div>
+                <div class="stl-browser" id="stl-preview-browser" hidden>
+                    <div class="stl-browser__chrome">
+                        <span class="stl-browser__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                        <span class="stl-browser__url">{{ meta.login_url }}</span>
+                    </div>
+                    <div class="stl-browser__viewport">
+                        <iframe id="stl-preview-iframe" title="Предпросмотр маскировки" sandbox="allow-scripts"></iframe>
+                    </div>
+                </div>
+            </div>
+            <p class="stl-preview-pane__foot">Так decoy выглядит для посетителя на <code>/login</code></p>
+        </div>
+
+        <div class="stl-picker" aria-label="Галерея маскировок">
+            <div class="stl-picker__toolbar">
+                <div class="stl-search">
+                    <span class="material-symbols-outlined">search</span>
+                    <input type="search" id="stealth-decoy-search" class="stl-search__input"
+                        placeholder="Поиск…" autocomplete="off" />
+                </div>
+                <span class="stl-picker__count">Показано: <strong id="stealth-decoy-count">{{ meta.decoy_options | length }}</strong></span>
+            </div>
+
+            <div class="stl-picker__filters" role="tablist" aria-label="Категории">
+                <button type="button" class="stl-filter is-active" data-group="all" role="tab">Все</button>
+                {% for group in meta.decoy_option_groups or [] %}
+                <button type="button" class="stl-filter" data-group="{{ group.id }}" role="tab">{{ group.label }}</button>
+                {% endfor %}
+            </div>
+
+            <div class="stl-tile-grid" id="stealth-decoy-grid">
+                {% for group in meta.decoy_option_groups or [] %}
+                {% for opt in group.options %}
+                <label class="stl-tile{% if decoy == opt.id %} is-selected{% endif %}"
+                    data-decoy-id="{{ opt.id }}"
+                    data-group="{{ group.id }}"
+                    data-label="{{ opt.label | e }}"
+                    data-kind="{{ opt.kind }}">
+                    <input type="radio" name="stealth_login_decoy" value="{{ opt.id }}"
+                        class="stl-tile__input"{% if decoy == opt.id %} checked{% endif %} />
+                    <span class="stl-tile__check" aria-hidden="true">
+                        <span class="material-symbols-outlined">check</span>
+                    </span>
+                    <span class="stl-tile__icon" aria-hidden="true">
+                        <span class="material-symbols-outlined">{% if opt.kind == 'game' %}videogame_asset{% else %}language{% endif %}</span>
+                    </span>
+                    <span class="stl-tile__label">{{ opt.label }}</span>
+                    <span class="stl-tile__badges">
+                        <span class="stl-badge">{{ opt.status }}</span>
+                        {% if opt.kind == 'game' %}<span class="stl-badge stl-badge--game">игра</span>{% endif %}
+                    </span>
+                </label>
+                {% endfor %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="stl-settings">
+        <h3 class="stl-settings__heading">
+            <span class="material-symbols-outlined">tune</span>
+            Параметры разблокировки
+        </h3>
+        <div class="stl-settings__grid">
+            <div class="stl-card">
+                <div class="stl-card__head">
+                    <span class="stl-card__glyph material-symbols-outlined">link</span>
+                    <div>
+                        <h4 class="stl-card__title">Адресная строка</h4>
+                        <p class="stl-card__sub">Подмена URL после decoy</p>
+                    </div>
+                </div>
+                <div class="stl-card__body">
+                    <label class="stl-label" for="stealth-history-path">URL в history</label>
+                    <input type="text" id="stealth-history-path" name="stealth_login_history_path"
+                        value="{{ settings.stealth_login_history_path or '/' }}" placeholder="/"
+                        class="stl-input" />
+                    <p class="stl-hint">Обычно <code>/</code> — посетитель не видит <code>/login</code></p>
+                </div>
+            </div>
+
+            <div class="stl-card stl-card--span2">
+                <div class="stl-card__head">
+                    <span class="stl-card__glyph material-symbols-outlined">lock_open</span>
+                    <div>
+                        <h4 class="stl-card__title">Разблокировка</h4>
+                        <p class="stl-card__sub">{{ meta.unlock_summary }}</p>
+                    </div>
+                </div>
+                <div class="stl-card__body stl-card__body--split">
+                    <div class="stl-unlock">
+                        <div class="stl-unlock__row">
+                            <div class="stl-unlock__info">
+                                <span class="material-symbols-outlined">keyboard</span>
+                                <div>
+                                    <p class="stl-unlock__name">Горячая клавиша</p>
+                                    <p class="stl-unlock__desc">Комбинация открывает форму</p>
+                                </div>
+                            </div>
+                            <input type="hidden" name="stealth_login_hotkey_enabled" value="0" />
+                            <label class="settings-macos-switch">
+                                <input type="checkbox" name="stealth_login_hotkey_enabled" value="1"
+                                    {% if settings.stealth_login_hotkey_enabled != '0' %}checked{% endif %} />
+                                <span class="settings-macos-switch__track"></span>
+                            </label>
+                        </div>
+                        <div class="stl-unlock__extra">
+                            <div id="stealth-hotkey-badge" class="stl-kbd"></div>
+                            <input type="text" name="stealth_login_hotkey" id="stealth-hotkey-input"
+                                value="{{ settings.stealth_login_hotkey or 'ctrl+b' }}" class="hidden" readonly />
+                            <button type="button" id="stealth-hotkey-capture-btn" class="stl-btn stl-btn--sm">Изменить</button>
+                            <span id="stealth-hotkey-listening" class="stl-kbd-listen hidden">Нажмите комбинацию…</span>
+                        </div>
+                    </div>
+                    <div class="stl-unlock">
+                        <div class="stl-unlock__row">
+                            <div class="stl-unlock__info">
+                                <span class="material-symbols-outlined">ads_click</span>
+                                <div>
+                                    <p class="stl-unlock__name">Серия кликов</p>
+                                    <p class="stl-unlock__desc">Быстрые клики по странице</p>
+                                </div>
+                            </div>
+                            <input type="hidden" name="stealth_login_clicks_enabled" value="0" />
+                            <label class="settings-macos-switch">
+                                <input type="checkbox" name="stealth_login_clicks_enabled" value="1"
+                                    {% if settings.stealth_login_clicks_enabled != '0' %}checked{% endif %} />
+                                <span class="settings-macos-switch__track"></span>
+                            </label>
+                        </div>
+                        <div class="stl-unlock__extra stl-unlock__fields">
+                            <div>
+                                <label class="stl-label" for="stealth-clicks-count">Кликов</label>
+                                <input type="number" id="stealth-clicks-count" name="stealth_login_clicks_count"
+                                    value="{{ settings.stealth_login_clicks_count or '4' }}" min="2" max="12" class="stl-input" />
+                            </div>
+                            <div>
+                                <label class="stl-label" for="stealth-clicks-window">Окно (мс)</label>
+                                <input type="number" id="stealth-clicks-window" name="stealth_login_clicks_window_ms"
+                                    value="{{ settings.stealth_login_clicks_window_ms or '2000' }}" min="500" max="10000" step="100" class="stl-input" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stl-card">
+                <div class="stl-card__head">
+                    <span class="stl-card__glyph material-symbols-outlined">key</span>
+                    <div>
+                        <h4 class="stl-card__title">Секретный URL</h4>
+                        <p class="stl-card__sub">Прямой доступ без decoy</p>
+                    </div>
+                </div>
+                <div class="stl-card__body">
+                    <label class="stl-label" for="stealth-secret-param">Имя параметра</label>
+                    <input type="text" id="stealth-secret-param" name="stealth_login_secret_param"
+                        value="{{ settings.stealth_login_secret_param or '' }}" placeholder="gate" class="stl-input" autocomplete="off" />
+                    <label class="stl-label" for="stealth-secret-value" style="margin-top:0.6rem;">Значение</label>
+                    <div class="stl-input-row">
+                        <input type="text" id="stealth-secret-value" name="stealth_login_secret_value"
+                            value="{{ settings.stealth_login_secret_value or '' }}" placeholder="секретный-токен"
+                            class="stl-input" autocomplete="off" />
+                        <button type="button" id="stealth-secret-generate" class="stl-btn stl-btn--sm">Сгенерировать</button>
+                    </div>
+                    {% if meta.secret_configured %}
+                    <p class="stl-hint stl-hint--ok">
+                        <span class="material-symbols-outlined">verified</span> Прямая ссылка настроена
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="stl-tips">
+            <span class="stl-tips__item"><span class="material-symbols-outlined">smart_toy</span> Переключатель в админ-меню бота</span>
+            <span class="stl-tips__item"><span class="material-symbols-outlined">videogame_asset</span> Игры offline, без storage</span>
+            <span class="stl-tips__item"><span class="material-symbols-outlined">shield</span> Не делитесь секретным URL</span>
+        </div>
+    </div>
+</section>

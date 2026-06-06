@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark setup-macos-page">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Инициализация — Remnawave ShopBot</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='img/favicon-32x32.png') }}">
+    <meta name="theme-color" content="#0a0a0c">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/setup-macos.css') }}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+</head>
+<body class="setup-macos-page">
+    <div class="setup-macos-bg" id="setup-macos-wallpaper" aria-hidden="true"></div>
+    <div class="setup-macos-vignette" aria-hidden="true"></div>
+
+    <header class="setup-macos-menubar">
+        <div class="setup-macos-menubar__left">
+            <img src="{{ url_for('static', filename='img/app-icon-32.png') }}" alt="" class="setup-macos-menubar__icon" width="16" height="16" onerror="this.style.display='none'">
+            <span>Remnawave ShopBot</span>
+        </div>
+        <div class="setup-macos-menubar__right">
+            <span class="setup-macos-menubar__status">
+                <span class="material-symbols-outlined" aria-hidden="true">wifi</span>
+                <span class="material-symbols-outlined" aria-hidden="true">battery_full</span>
+            </span>
+            <span class="setup-macos-menubar__clock" id="setup-macos-clock"></span>
+        </div>
+    </header>
+
+    <main class="setup-macos-stage">
+        <div class="setup-macos-window" role="dialog" aria-labelledby="setup-titlebar">
+            <div class="setup-macos-titlebar">
+                <div class="setup-macos-traffic" aria-hidden="true">
+                    <span class="close"></span>
+                    <span class="min"></span>
+                    <span class="max"></span>
+                </div>
+                <span class="setup-macos-titlebar__title" id="setup-titlebar">Инициализация панели</span>
+            </div>
+
+            <div class="setup-macos-window__body">
+                <div class="setup-macos-hero setup-macos-hero--compact">
+                    <div class="setup-macos-pill">
+                        <span class="setup-macos-pill__dot"></span>
+                        First run setup
+                    </div>
+                    <p class="setup-macos-hero__lead">Подключите Remnawave и создайте учётную запись администратора</p>
+                </div>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                {% for category, message in messages %}
+                <div class="setup-macos-alert setup-macos-alert--{% if category == 'danger' %}danger{% else %}info{% endif %}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+                {% endif %}
+                {% endwith %}
+
+                <form method="post" action="{{ url_for('setup_page') }}" autocomplete="off">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <section class="setup-macos-section">
+                        <div class="setup-macos-section__head">
+                            <span class="material-symbols-outlined" aria-hidden="true">api</span>
+                            <h2>Remnawave API</h2>
+                        </div>
+                        <div class="setup-macos-field">
+                            <label for="remnawave_base_url">URL панели Remnawave</label>
+                            <input type="url" id="remnawave_base_url" name="remnawave_base_url" required
+                                placeholder="https://panel.example.com"
+                                value="{{ form.remnawave_base_url or '' }}">
+                            <p class="setup-macos-hint">Remnawave → Settings → API</p>
+                        </div>
+                        <div class="setup-macos-field">
+                            <label for="remnawave_api_token">API Token</label>
+                            <input type="password" id="remnawave_api_token" name="remnawave_api_token" required
+                                minlength="20" autocomplete="off" class="font-mono"
+                                placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+                            <p class="setup-macos-hint">JWT из Settings → API Tokens (<code>eyJ</code>…)</p>
+                        </div>
+                    </section>
+
+                    <section class="setup-macos-section">
+                        <div class="setup-macos-section__head">
+                            <span class="material-symbols-outlined" aria-hidden="true">admin_panel_settings</span>
+                            <h2>Администратор панели</h2>
+                        </div>
+                        <div class="setup-macos-grid setup-macos-grid--admin">
+                            <div class="setup-macos-field">
+                                <label for="panel_login">Логин</label>
+                                <input type="text" id="panel_login" name="panel_login" required minlength="3" maxlength="64"
+                                    pattern="[A-Za-z0-9._-]+"
+                                    value="{{ form.panel_login or 'administrator' }}"
+                                    placeholder="administrator">
+                            </div>
+                            <div class="setup-macos-field setup-macos-field--password">
+                                <div class="setup-macos-password-row">
+                                    <label for="panel_password">Пароль</label>
+                                    <div class="setup-macos-password-actions">
+                                        <button type="button" class="setup-macos-btn-sm" id="toggle-password-btn" title="Изменить пароль">
+                                            <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+                                        </button>
+                                        <button type="button" class="setup-macos-btn-sm setup-macos-btn-sm--primary" id="regenerate-password-btn" title="Сгенерировать">
+                                            <span class="material-symbols-outlined" aria-hidden="true">autorenew</span>
+                                        </button>
+                                        <button type="button" class="setup-macos-btn-sm" id="copy-password-btn" title="Копировать">
+                                            <span class="material-symbols-outlined" aria-hidden="true">content_copy</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="setup-macos-password-banner" id="generated-password-banner">{{ generated_password }}</div>
+                                <input type="password" name="panel_password" id="panel_password" required minlength="16"
+                                    value="{{ generated_password }}" placeholder="Минимум 16 символов"
+                                    class="setup-macos-password-edit hidden" autocomplete="new-password">
+                                <input type="hidden" name="panel_password_confirm" id="panel_password_confirm" value="{{ generated_password }}">
+                                <input type="hidden" id="generated-password-value" value="{{ generated_password }}">
+                            </div>
+                        </div>
+                    </section>
+
+                    <button type="submit" class="setup-macos-submit">Завершить инициализацию</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/setup-macos.js') }}"></script>
+    <script>
+    (function () {
+        const lowers = "abcdefghjkmnpqrstuvwxyz";
+        const uppers = "ABCDEFGHJKMNPQRSTUVWXYZ";
+        const digits = "23456789";
+        const special = "!@#$%&*_+-=";
+        const alphabet = lowers + uppers + digits + special;
+
+        function pick(chars) {
+            const arr = new Uint32Array(1);
+            crypto.getRandomValues(arr);
+            return chars[arr[0] % chars.length];
+        }
+
+        function shuffle(values) {
+            for (let i = values.length - 1; i > 0; i--) {
+                const arr = new Uint32Array(1);
+                crypto.getRandomValues(arr);
+                const j = arr[0] % (i + 1);
+                [values[i], values[j]] = [values[j], values[i]];
+            }
+            return values;
+        }
+
+        function generatePassword(length) {
+            length = length || 27;
+            const chars = [pick(lowers), pick(uppers), pick(digits), pick(special)];
+            for (let i = chars.length; i < length; i++) {
+                chars.push(pick(alphabet));
+            }
+            return shuffle(chars).join("");
+        }
+
+        const passwordInput = document.getElementById("panel_password");
+        const confirmInput = document.getElementById("panel_password_confirm");
+        const banner = document.getElementById("generated-password-banner");
+        const hiddenValue = document.getElementById("generated-password-value");
+        const toggleBtn = document.getElementById("toggle-password-btn");
+        const regenBtn = document.getElementById("regenerate-password-btn");
+        const copyBtn = document.getElementById("copy-password-btn");
+
+        let passwordVisible = false;
+
+        function applyPassword(value) {
+            passwordInput.value = value;
+            confirmInput.value = value;
+            banner.textContent = value;
+            hiddenValue.value = value;
+            if (!passwordInput.classList.contains("hidden")) {
+                passwordInput.value = value;
+            }
+        }
+
+        function setPasswordEditMode(editing) {
+            passwordVisible = editing;
+            banner.classList.toggle("hidden", editing);
+            passwordInput.classList.toggle("hidden", !editing);
+            if (editing) {
+                passwordInput.type = "text";
+                passwordInput.focus();
+                passwordInput.select();
+            } else {
+                passwordInput.type = "password";
+            }
+            toggleBtn.innerHTML = editing
+                ? '<span class="material-symbols-outlined" aria-hidden="true">check</span>'
+                : '<span class="material-symbols-outlined" aria-hidden="true">edit</span>';
+        }
+
+        passwordInput.addEventListener("input", function () {
+            confirmInput.value = passwordInput.value;
+            hiddenValue.value = passwordInput.value;
+        });
+
+        regenBtn.addEventListener("click", function () {
+            applyPassword(generatePassword());
+            setPasswordEditMode(false);
+        });
+
+        toggleBtn.addEventListener("click", function () {
+            if (passwordInput.classList.contains("hidden")) {
+                passwordInput.value = passwordInput.value || hiddenValue.value;
+                setPasswordEditMode(true);
+            } else {
+                applyPassword(passwordInput.value);
+                setPasswordEditMode(false);
+            }
+        });
+
+        document.querySelector("form").addEventListener("submit", function () {
+            confirmInput.value = passwordInput.classList.contains("hidden")
+                ? hiddenValue.value
+                : passwordInput.value;
+            if (passwordInput.classList.contains("hidden")) {
+                passwordInput.value = hiddenValue.value;
+            }
+        });
+
+        copyBtn.addEventListener("click", async function () {
+            const value = passwordInput.value || hiddenValue.value;
+            try {
+                await navigator.clipboard.writeText(value);
+                copyBtn.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">check</span> Скопировано';
+                setTimeout(function () {
+                    copyBtn.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">content_copy</span> Копировать';
+                }, 1800);
+            } catch (err) {
+                copyBtn.textContent = "Ошибка";
+            }
+        });
+    })();
+    </script>
+</body>
+</html>

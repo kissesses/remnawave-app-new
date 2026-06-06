@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Тикет #{{ ticket.ticket_id }}{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/support-panel.css') }}" />
+{% endblock %}
+
+{% block content %}
+{% set is_waiting = ticket.status == 'open' and ticket.last_sender == 'user' %}
+<div class="support-ticket-page">
+    <div class="support-ticket-toolbar">
+        <div class="support-ticket-toolbar__info">
+            <h1 class="support-ticket-toolbar__title">
+                {% if is_important %}<span class="material-symbols-outlined is-star">star</span>{% endif %}
+                {{ display_subject }}
+            </h1>
+            <div class="support-ticket-toolbar__meta">
+                <span>#{{ ticket.ticket_id }}</span>
+                <span>{% if ticket.username %}@{{ ticket.username }}{% else %}User #{{ ticket.user_id }}{% endif %}</span>
+                <span>{{ ticket.updated_at or ticket.created_at }}</span>
+                <span class="support-pill {% if ticket.status == 'closed' %}support-pill--closed{% elif is_waiting %}support-pill--waiting{% else %}support-pill--open{% endif %}" data-status-badge>
+                    {% if ticket.status == 'closed' %}Закрыт{% elif is_waiting %}Ждёт ответа{% else %}Открыт{% endif %}
+                </span>
+            </div>
+        </div>
+        <div class="support-ticket-toolbar__actions">
+            <a href="{{ url_for('support_list_page') }}" class="support-action-btn" title="К списку">
+                <span class="material-symbols-outlined">arrow_back</span>
+                <span>Назад</span>
+            </a>
+            <button type="button" class="support-action-btn" id="support-copy-transcript" title="Копировать переписку">
+                <span class="material-symbols-outlined">content_copy</span>
+                <span>Копировать</span>
+            </button>
+            <button type="button" class="support-action-btn{% if is_important %} is-active{% endif %}"
+                data-ticket-action="star" data-csrf="{{ csrf_token() }}" title="Важный">
+                <span class="material-symbols-outlined">star</span>
+                <span>Важный</span>
+            </button>
+            <button type="button" class="support-action-btn" data-ticket-action="close" data-csrf="{{ csrf_token() }}"
+                title="Закрыть" {% if ticket.status != 'open' %}hidden{% endif %}>
+                <span class="material-symbols-outlined">check_circle</span>
+                <span>Закрыть</span>
+            </button>
+            <button type="button" class="support-action-btn" data-ticket-action="open" data-csrf="{{ csrf_token() }}"
+                title="Открыть" {% if ticket.status == 'open' %}hidden{% endif %}>
+                <span class="material-symbols-outlined">replay</span>
+                <span>Открыть</span>
+            </button>
+            <button type="button" class="support-action-btn support-action-btn--danger" data-ticket-action="delete"
+                data-csrf="{{ csrf_token() }}" title="Удалить">
+                <span class="material-symbols-outlined">delete</span>
+                <span>Удалить</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="support-ticket-layout">
+        <div class="support-chat-shell">
+            <div id="support-chat-messages" class="support-chat-messages" data-ticket-id="{{ ticket.ticket_id }}">
+                <div class="support-loading">
+                    <span class="material-symbols-outlined animate-spin">progress_activity</span>
+                </div>
+            </div>
+
+            <div class="support-composer">
+                <div class="support-composer__modes">
+                    <button type="button" class="support-composer__mode is-active" data-mode="reply">Ответ</button>
+                    <button type="button" class="support-composer__mode" data-mode="note">Заметка</button>
+                    <button type="button" class="support-action-btn" onclick="generateGeminiResponse(event)"
+                        data-csrf="{{ csrf_token() }}" title="AI">
+                        <span class="material-symbols-outlined">auto_awesome</span>
+                        <span>AI</span>
+                    </button>
+                    <div class="support-canned-wrap">
+                        <button type="button" class="support-btn support-btn--ghost support-canned-toggle">
+                            <span class="material-symbols-outlined text-sm">quickreply</span> Шаблоны
+                        </button>
+                        <div class="support-canned-menu" hidden></div>
+                    </div>
+                </div>
+                <form id="support-composer-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <div class="support-composer__row">
+                        <textarea name="message" rows="1" placeholder="Ответ пользователю..."
+                            {% if ticket.status == 'closed' %}disabled{% endif %}></textarea>
+                        <button type="submit" class="support-composer__send" {% if ticket.status == 'closed' %}disabled{% endif %}>
+                            <span class="material-symbols-outlined">send</span>
+                        </button>
+                    </div>
+                    <p class="support-composer__hint">Ctrl + Enter — отправить · Заметки только для команды</p>
+                </form>
+            </div>
+        </div>
+
+        <aside class="support-user-card">
+            <div class="support-user-card__avatar">{{ ticket.username[0]|upper if ticket.username else 'U' }}</div>
+            <div class="support-user-card__name demo-blur-username">
+                {% if ticket.username %}@{{ ticket.username }}{% else %}Пользователь{% endif %}
+            </div>
+            <div class="support-user-card__id">ID {{ ticket.user_id }}</div>
+            <div class="support-user-card__row"><span>Создан</span><span>{{ ticket.created_at or '—' }}</span></div>
+            <div class="support-user-card__row"><span>Обновлён</span><span>{{ ticket.updated_at or '—' }}</span></div>
+            <div class="support-user-card__row"><span>Тред форума</span><span>{% if ticket.message_thread_id %}#{{ ticket.message_thread_id }}{% else %}—{% endif %}</span></div>
+            <div class="support-user-card__actions">
+                <a href="{{ url_for('users_page', q=ticket.user_id) }}" class="support-btn">
+                    <span class="material-symbols-outlined text-sm">person</span> Профиль
+                </a>
+                <a href="{{ url_for('support_list_page', status='all', q=ticket.user_id) }}" class="support-btn support-btn--ghost">
+                    <span class="material-symbols-outlined text-sm">history</span> Все тикеты
+                </a>
+            </div>
+        </aside>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/support-panel.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,136 @@
+/* Telegram channels for backups — settings → Боты */
+
+.bot-channels-alert {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    padding: 0.875rem 1rem;
+    margin-bottom: 1rem;
+    border-radius: 12px;
+    border: 1px solid rgba(251, 191, 36, 0.35);
+    background: rgba(251, 191, 36, 0.08);
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.8125rem;
+}
+
+.bot-channels-alert ul {
+    margin: 0.35rem 0 0;
+    padding-left: 1.1rem;
+}
+
+.bot-channels-alert .material-symbols-outlined {
+    color: #fbbf24;
+    font-size: 1.25rem;
+}
+
+.bot-channels-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.bot-channel-card {
+    position: relative;
+    border-radius: 1.25rem;
+    padding: 1.25rem;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+}
+
+.bot-channel-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.35;
+    pointer-events: none;
+    background: radial-gradient(circle at 100% 0%, var(--bot-card-accent, #64d2ff33), transparent 55%);
+}
+
+.bot-channel-card--archive { --bot-card-accent: #64d2ff; }
+.bot-channel-card--secrets { --bot-card-accent: #ff9f0a; }
+
+.bot-channel-card__head {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    position: relative;
+    z-index: 1;
+}
+
+.bot-channel-card__icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--bot-card-accent, #64d2ff);
+}
+
+.bot-channel-card__title {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+.bot-channel-card__desc {
+    font-size: 0.6875rem;
+    color: rgba(255, 255, 255, 0.45);
+    margin: 0.2rem 0 0;
+    line-height: 1.4;
+}
+
+.bot-channel-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    position: relative;
+    z-index: 1;
+}
+
+.bot-channel-test {
+    margin-top: 0.85rem;
+    display: flex;
+    gap: 0.5rem;
+    position: relative;
+    z-index: 1;
+}
+
+.bot-channel-test button {
+    flex: 1;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0.55rem 0.75rem;
+    border-radius: 0.65rem;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.85);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.bot-channel-test button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.bot-channels-hint {
+    margin-top: 1rem;
+    padding: 0.85rem 1rem;
+    border-radius: 0.85rem;
+    background: rgba(100, 210, 255, 0.08);
+    border: 1px solid rgba(100, 210, 255, 0.15);
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.65);
+    line-height: 1.5;
+}
+
+.bot-channels-hint strong {
+    color: rgba(255, 255, 255, 0.9);
+}

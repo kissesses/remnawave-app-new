@@ -1,0 +1,1861 @@
+/* macOS v2 — System Settings style for /settings */
+
+/* Tabs with horizontal section nav (Панель, Платежи, …) */
+.settings-tab-sectioned .settings-form-section:not(.is-section-visible) {
+    display: none !important;
+}
+
+.settings-tab-sectioned .settings-form-section.is-section-visible {
+    display: block !important;
+}
+
+.settings-tab-sectioned .settings-form-section__header {
+    display: none !important;
+}
+
+.settings-tab-sectioned > .space-y-8 {
+    gap: 0 !important;
+}
+
+.settings-tab-sectioned .settings-form-section__body {
+    margin-top: 0;
+}
+
+/* Settings groups, rows & sub-tab nav — all panel designs */
+.settings-page .settings-macos-group {
+    margin-bottom: 1.35rem;
+}
+
+.settings-page .settings-macos-group__caption {
+    margin: 0 0 0.35rem 0.35rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--sp-text-tertiary, rgba(255, 255, 255, 0.45));
+}
+
+.settings-page .settings-macos-list {
+    display: flex;
+    flex-direction: column;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+}
+
+html:not(.dark) .settings-page .settings-macos-list {
+    background: rgba(255, 255, 255, 0.88);
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+.settings-page .settings-macos-row {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    width: 100%;
+    padding: 0.6rem 0.85rem;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    font: inherit;
+}
+
+html:not(.dark) .settings-page .settings-macos-row {
+    border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+.settings-page .settings-macos-list > *:last-child {
+    border-bottom: none;
+}
+
+.settings-page .settings-macos-row--link {
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.12s;
+}
+
+.settings-page button.settings-macos-row {
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.settings-page .settings-macos-row--link:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+html:not(.dark) .settings-page .settings-macos-row--link:hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.settings-page .settings-macos-row__glyph {
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    background: rgba(142, 142, 147, 0.42);
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.settings-page .settings-macos-row__body {
+    flex: 1;
+    min-width: 0;
+}
+
+.settings-page .settings-macos-row__title {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--sp-text, inherit);
+}
+
+.settings-page .settings-macos-row__sub {
+    display: block;
+    margin-top: 0.1rem;
+    font-size: 0.6875rem;
+    color: var(--sp-text-tertiary, rgba(255, 255, 255, 0.55));
+}
+
+.settings-page .settings-macos-row__chevron {
+    font-size: 1.1rem;
+    color: var(--sp-text-tertiary, rgba(255, 255, 255, 0.45));
+    opacity: 0.65;
+}
+
+.settings-page .settings-macos-row__value {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--sp-text-secondary, rgba(255, 255, 255, 0.72));
+}
+
+.settings-page .settings-macos-row__value--wrap {
+    max-width: 62%;
+    text-align: right;
+    word-break: break-all;
+}
+
+.settings-page .settings-macos-row--info {
+    justify-content: space-between;
+}
+
+.settings-page .settings-macos-row--field {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.45rem;
+}
+
+.settings-page .settings-macos-row__field-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--sp-text-secondary, rgba(255, 255, 255, 0.72));
+}
+
+.settings-page .settings-macos-row__field-input {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.settings-page .settings-macos-input {
+    width: 5.5rem;
+    padding: 0.4rem 0.55rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.2);
+    color: var(--sp-text, inherit);
+    font-size: 0.8125rem;
+}
+
+html:not(.dark) .settings-page .settings-macos-input {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.08);
+    color: #1c1c1e;
+}
+
+html:not(.dark) .settings-page select.settings-macos-input {
+    color: #1c1c1e;
+}
+
+.settings-page .settings-macos-input--stretch {
+    width: 100%;
+    flex: 1;
+    min-width: 0;
+}
+
+.settings-page .settings-macos-row__field-input--stretch {
+    width: 100%;
+}
+
+.settings-page .settings-macos-row__field-input--stretch .soft-select {
+    width: 100%;
+}
+
+.settings-page .settings-macos-row__field-input--stretch .soft-select-toggle {
+    width: 100%;
+}
+
+.settings-page .settings-macos-row__field-input--action {
+    flex-wrap: wrap;
+}
+
+.settings-page .settings-macos-row__field-hint {
+    font-size: 0.6875rem;
+    color: var(--sp-text-tertiary, rgba(255, 255, 255, 0.45));
+}
+
+.settings-page .settings-macos-row--toggle {
+    justify-content: space-between;
+}
+
+.settings-page .settings-macos-switch {
+    position: relative;
+    display: inline-flex;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.settings-page .settings-macos-switch input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.settings-page .settings-macos-switch__track {
+    width: 2.65rem;
+    height: 1.55rem;
+    border-radius: 999px;
+    background: rgba(120, 120, 128, 0.32);
+    position: relative;
+    transition: background 0.15s;
+}
+
+.settings-page .settings-macos-switch__track::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 1.2rem;
+    height: 1.2rem;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+    transition: transform 0.15s;
+}
+
+.settings-page .settings-macos-switch input:checked + .settings-macos-switch__track {
+    background: #34c759;
+}
+
+.settings-page .settings-macos-switch input:checked + .settings-macos-switch__track::after {
+    transform: translateX(1.1rem);
+}
+
+.settings-page .settings-macos-row__field-input--hotkey {
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.settings-page .settings-macos-hotkey-badge {
+    min-width: 5.5rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.22);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-align: center;
+    color: var(--sp-accent, var(--primary));
+}
+
+html:not(.dark) .settings-page .settings-macos-hotkey-badge {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+.settings-page .settings-macos-btn-secondary {
+    padding: 0.35rem 0.7rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.06);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--sp-text-secondary, rgba(255, 255, 255, 0.72));
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+}
+
+.settings-page .settings-macos-btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--sp-text, inherit);
+}
+
+.settings-page .settings-macos-hotkey-listening {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--sp-accent, var(--primary));
+}
+
+.settings-page .settings-section-nav {
+    position: sticky;
+    top: 0;
+    z-index: 6;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.2rem;
+    margin: 0 0 1.1rem;
+    padding: 0.28rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 11px;
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.settings-page .settings-section-nav::-webkit-scrollbar {
+    display: none;
+}
+
+html:not(.dark) .settings-page .settings-section-nav {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+.settings-page .settings-section-nav.is-scrolled {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 6px 18px rgba(0, 0, 0, 0.18);
+}
+
+.settings-page .settings-section-nav__link {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: transparent;
+    border: none;
+    color: var(--sp-text-secondary, rgba(255, 255, 255, 0.72));
+    font-weight: 500;
+    font-size: 0.75rem;
+    letter-spacing: -0.01em;
+    padding: 0.42rem 0.82rem;
+    border-radius: 8px;
+    transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.settings-page .settings-section-nav__link .settings-section-nav__icon {
+    opacity: 0.62;
+    font-size: 0.9375rem !important;
+    transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.settings-page .settings-section-nav__link:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--sp-text, inherit);
+}
+
+html:not(.dark) .settings-page .settings-section-nav__link:hover {
+    background: rgba(0, 0, 0, 0.06);
+}
+
+.settings-page .settings-section-nav__link.is-active {
+    background: var(--primary, var(--sp-accent, #0a84ff));
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12) inset, 0 4px 14px rgba(var(--primary-rgb, 10, 132, 255), 0.28);
+}
+
+.settings-page .settings-section-nav__link.is-active .settings-section-nav__icon {
+    opacity: 1;
+    color: #fff;
+}
+
+.settings-macos-search-wrap,
+.settings-macos-hero {
+    display: none;
+}
+
+html[data-design="macos-v2"] .settings-macos-search-wrap,
+html[data-design="macos-v2"] .settings-macos-hero {
+    display: flex;
+}
+
+html[data-design="macos-v2"] .settings-page {
+    padding-bottom: 0;
+    min-height: calc(100vh - 2rem);
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-page {
+    min-height: 0;
+}
+
+html[data-design="macos-v2"] .settings-page .settings-header {
+    display: none;
+}
+
+html[data-design="macos-v2"] .settings-page .settings-shell {
+    grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
+    gap: 0;
+    position: relative;
+    min-height: calc(100vh - 2.5rem);
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(28, 28, 30, 0.72);
+    /* blur на ::before — иначе backdrop-filter ломает position:fixed у модалок внутри .settings-main */
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.28);
+}
+
+html[data-design="macos-v2"] .settings-page .settings-shell::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    backdrop-filter: blur(28px) saturate(160%);
+    -webkit-backdrop-filter: blur(28px) saturate(160%);
+}
+
+html[data-design="macos-v2"] .settings-page .settings-shell > * {
+    position: relative;
+    z-index: 1;
+}
+
+html:not(.dark)[data-design="macos-v2"] .settings-page .settings-shell {
+    background: rgba(246, 246, 248, 0.92);
+    border-color: rgba(0, 0, 0, 0.1);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.1);
+}
+
+html[data-design="macos-v2"] .settings-page .settings-sidebar {
+    position: sticky;
+    top: 0;
+    align-self: stretch;
+    max-height: none;
+    height: auto;
+    min-height: 100%;
+    padding: 0.85rem 0.65rem 1rem;
+    border: none;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0;
+    background: rgba(0, 0, 0, 0.14);
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+html:not(.dark)[data-design="macos-v2"] .settings-page .settings-sidebar {
+    background: rgba(0, 0, 0, 0.03);
+    border-right-color: rgba(0, 0, 0, 0.08);
+}
+
+html[data-design="macos-v2"] .settings-macos-search-wrap {
+    align-items: center;
+    gap: 0.45rem;
+    margin-bottom: 0.75rem;
+    padding: 0.45rem 0.65rem;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+html:not(.dark)[data-design="macos-v2"] .settings-macos-search-wrap {
+    background: rgba(0, 0, 0, 0.06);
+    border-color: rgba(0, 0, 0, 0.1);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+html[data-design="macos-v2"] .settings-macos-search-wrap .material-symbols-outlined {
+    font-size: 1rem;
+    color: var(--sp-text-tertiary);
+    flex-shrink: 0;
+}
+
+html[data-design="macos-v2"] .settings-macos-search {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    color: var(--sp-text);
+    font-size: 0.8125rem;
+    outline: none;
+}
+
+html[data-design="macos-v2"] .settings-macos-search::placeholder {
+    color: var(--sp-text-tertiary);
+}
+
+html[data-design="macos-v2"] .settings-macos-nav-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    margin-bottom: 0.65rem;
+}
+
+html[data-design="macos-v2"] .settings-macos-nav-group:last-child {
+    margin-bottom: 0;
+}
+
+html[data-design="macos-v2"] .settings-macos-nav-group__title {
+    margin: 0.35rem 0.55rem 0.25rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--sp-text-tertiary);
+}
+
+html[data-design="macos-v2"] .settings-macos-nav-rail {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    flex: 1;
+    min-height: 0;
+}
+
+html[data-design="macos-v2"] .settings-page .settings-sidebar .tab-link {
+    position: relative;
+    gap: 0.65rem;
+    padding: 0.42rem 0.55rem 0.42rem 0.65rem;
+    border-radius: 8px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--sp-text);
+}
+
+html[data-design="macos-v2"] .settings-page .settings-sidebar .tab-link .material-symbols-outlined {
+    display: none;
+}
+
+html[data-design="macos-v2"] .settings-page .settings-sidebar .tab-link:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+html:not(.dark)[data-design="macos-v2"] .settings-page .settings-sidebar .tab-link:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+html[data-design="macos-v2"] .settings-page .settings-sidebar .tab-link.settings-tab-active {
+    background: rgba(var(--primary-rgb, 10, 132, 255), 0.14);
+    color: var(--sp-accent, var(--primary, #0a84ff));
+    box-shadow: none;
+}
+
+html[data-design="macos-v2"] .settings-page .settings-sidebar .tab-link.settings-tab-active::before {
+    content: '';
+    position: absolute;
+    left: 0.15rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 1.05rem;
+    border-radius: 99px;
+    background: var(--sp-accent, var(--primary, #0a84ff));
+}
+
+html[data-design="macos-v2"] .settings-page .settings-sidebar .tab-link.settings-tab-active .settings-nav-icon {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.22),
+        0 2px 8px rgba(0, 0, 0, 0.18);
+}
+
+html[data-design="macos-v2"] .settings-page .settings-sidebar .tab-link.settings-tab-active .settings-nav-label {
+    font-weight: 600;
+}
+
+html[data-design="macos-v2"] .settings-nav-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.35rem;
+    height: 1.35rem;
+    border-radius: 6px;
+    flex-shrink: 0;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+html[data-design="macos-v2"] .settings-nav-icon .material-symbols-outlined {
+    display: block !important;
+    font-size: 0.875rem;
+    color: #fff;
+    opacity: 1;
+}
+
+html[data-design="macos-v2"] .settings-nav-icon--panel { background: linear-gradient(180deg, #98989d 0%, #636366 100%); }
+html[data-design="macos-v2"] .settings-nav-icon--stealth-login { background: linear-gradient(180deg, #8e8e93 0%, #48484a 100%); }
+html[data-design="macos-v2"] .settings-nav-icon--bot { background: linear-gradient(180deg, #5bd66a 0%, #28a745 100%); }
+html[data-design="macos-v2"] .settings-nav-icon--payments { background: linear-gradient(180deg, #ffb340 0%, #ff9500 100%); }
+html[data-design="macos-v2"] .settings-nav-icon--hosts { background: linear-gradient(180deg, #7d7aff 0%, #5856d6 100%); }
+html[data-design="macos-v2"] .settings-nav-icon--referrals { background: linear-gradient(180deg, #64d2ff 0%, #32ade6 100%); }
+html[data-design="macos-v2"] .settings-nav-icon--content { background: linear-gradient(180deg, #ff6482 0%, #ff2d55 100%); }
+html[data-design="macos-v2"] .settings-nav-icon--access { background: linear-gradient(180deg, #409cff 0%, #007aff 100%); }
+html[data-design="macos-v2"] .settings-nav-icon--mail-templates { background: linear-gradient(180deg, #5ac8fa 0%, #007aff 100%); }
+html[data-design="macos-v2"] .settings-nav-icon--broadcast { background: linear-gradient(180deg, #ff6961 0%, #ff3b30 100%); }
+html[data-design="macos-v2"] .settings-nav-icon--promo { background: linear-gradient(180deg, #ffe066 0%, #ffcc00 100%); }
+html[data-design="macos-v2"] .settings-nav-icon--promo .material-symbols-outlined { color: #3a3000; }
+html[data-design="macos-v2"] .settings-nav-icon--logs { background: linear-gradient(180deg, #aeaeb2 0%, #8e8e93 100%); }
+html[data-design="macos-v2"] .settings-nav-icon--webapp { background: linear-gradient(180deg, #5e5ce6 0%, #3634a3 100%); }
+html[data-design="macos-v2"] .settings-nav-icon--remnawave { background: linear-gradient(180deg, #c77dff 0%, #af52de 100%); }
+
+html[data-design="macos-v2"] .settings-page .settings-main {
+    padding: 1.35rem 1.5rem 1.75rem;
+    overflow-y: auto;
+    max-height: calc(100vh - 2.5rem);
+}
+
+html[data-design="macos-v2"] .settings-macos-hero {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    margin-bottom: 1.35rem;
+    padding-bottom: 1.15rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+html:not(.dark)[data-design="macos-v2"] .settings-macos-hero {
+    border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+html[data-design="macos-v2"] .settings-macos-hero__row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+html[data-design="macos-v2"] .settings-macos-hero__main {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    min-width: 0;
+}
+
+html[data-design="macos-v2"] .settings-macos-hero__icon {
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: 14px;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.28),
+        0 8px 24px rgba(0, 0, 0, 0.22);
+}
+
+html[data-design="macos-v2"] .settings-macos-hero__icon .material-symbols-outlined {
+    font-size: 1.65rem !important;
+}
+
+html[data-design="macos-v2"] .settings-macos-hero__title {
+    margin: 0;
+    font-size: 1.625rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    color: var(--sp-text);
+}
+
+html[data-design="macos-v2"] .settings-macos-hero__desc {
+    margin: 0.4rem 0 0;
+    max-width: 38rem;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--sp-text-secondary);
+}
+
+html[data-design="macos-v2"] .settings-page .settings-save-btn {
+    flex-shrink: 0;
+    margin-top: 0.15rem;
+    background: var(--sp-accent, var(--primary, #0a84ff));
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 8px 24px rgba(var(--primary-rgb, 10, 132, 255), 0.28);
+}
+
+html[data-design="macos-v2"] .settings-page .settings-save-btn:hover {
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.1) inset, 0 10px 28px rgba(var(--primary-rgb, 10, 132, 255), 0.34);
+}
+
+
+html[data-design="macos-v2"] .settings-form-section {
+    scroll-margin-top: 3.75rem;
+}
+
+
+html[data-design="macos-v2"] .settings-page .settings-alert {
+    border-radius: 12px;
+    margin-bottom: 1rem;
+}
+
+html[data-design="macos-v2"] .settings-page .settings-header .settings-save-btn {
+    display: none;
+}
+
+html[data-design="macos-v2"] .settings-save-btn--macos {
+    display: inline-flex;
+}
+
+.settings-save-btn--macos {
+    display: none;
+}
+
+html[data-design="macos-v2"] .settings-page .settings-sidebar .tab-link.hidden,
+html[data-design="macos-v2"] .settings-macos-nav-group.hidden {
+    display: none !important;
+}
+
+/* ── macOS System Settings — grouped list content ── */
+
+.settings-page .tab-content > .space-y-6,
+.settings-page .tab-content > div.space-y-6 {
+    gap: 1.35rem;
+}
+
+.settings-page .tab-content .grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.35rem !important;
+}
+
+.settings-page .tab-content .xl\\:col-span-2 {
+    grid-column: span 1 !important;
+}
+
+/* Section shell: caption + rounded list box */
+.settings-page .tab-content .bg-white\\/5.border.border-white\\/10.rounded-2xl.p-5,
+.settings-page .tab-content .bg-white\\/5.border.border-white\\/10.rounded-xl,
+.settings-page .settings-group.bg-white\\/5.border.border-white\\/10.rounded-2xl.p-5,
+.settings-page #tab-access .settings-group.bg-white\\/5 {
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    overflow: visible !important;
+}
+
+.settings-page .tab-content .bg-white\\/5 > .flex.items-center.gap-2.mb-4,
+.settings-page .tab-content .bg-white\\/5 > .flex.items-center.justify-between.gap-2.mb-4,
+.settings-page .settings-group-header {
+    margin: 0 0 0.35rem !important;
+    padding: 0 0.35rem !important;
+}
+
+.settings-page .tab-content .bg-white\\/5 > .flex.items-center.gap-2.mb-4 > .w-8,
+.settings-page .settings-group-title .material-symbols-outlined {
+    display: none;
+}
+
+.settings-page .tab-content .bg-white\\/5 h4,
+.settings-page .settings-group-title {
+    font-size: 0.8125rem !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.01em !important;
+    color: var(--sp-text-secondary) !important;
+    text-transform: none !important;
+}
+
+/* macOS list container */
+.settings-page .settings-macos-list,
+.settings-page .tab-content .bg-white\\/5 > .space-y-4,
+.settings-page .tab-content .bg-white\\/5 > .space-y-6,
+.settings-page .settings-group > .space-y-4,
+.settings-page .settings-group > .space-y-2.max-h-56,
+.settings-page .settings-group > form.settings-divider {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 10px !important;
+    overflow: hidden !important;
+}
+
+html:not(.dark) .settings-page .settings-macos-list,
+html:not(.dark) .settings-page .tab-content .bg-white\\/5 > .space-y-4,
+html:not(.dark) .settings-page .tab-content .bg-white\\/5 > .space-y-6,
+html:not(.dark) .settings-page .settings-group > .space-y-4,
+html:not(.dark) .settings-page .settings-group > .space-y-2.max-h-56,
+html:not(.dark) .settings-page .settings-group > form.settings-divider {
+    background: rgba(255, 255, 255, 0.88) !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+.settings-page .settings-group > form.settings-divider {
+    border-top: none !important;
+    padding: 0.85rem !important;
+    border-radius: 0 0 10px 10px !important;
+    margin-top: -1px !important;
+}
+
+.settings-page .settings-group > .space-y-2.max-h-56 {
+    max-height: 14rem;
+    overflow-y: auto !important;
+    border-radius: 10px 10px 0 0 !important;
+}
+
+.settings-page .settings-group > .space-y-2.max-h-56 + form.settings-divider {
+    border-radius: 0 0 10px 10px !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+html:not(.dark) .settings-page .settings-group > .space-y-2.max-h-56 + form.settings-divider {
+    border-top-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+/* List row separators */
+.settings-page .tab-content .bg-white\\/5 > .space-y-4 > *,
+.settings-page .tab-content .bg-white\\/5 > .space-y-6 > *,
+.settings-page .settings-macos-list > * {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+html:not(.dark) .settings-page .tab-content .bg-white\\/5 > .space-y-4 > *,
+html:not(.dark) .settings-page .tab-content .bg-white\\/5 > .space-y-6 > *,
+html:not(.dark) .settings-page .settings-macos-list > * {
+    border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+.settings-page .tab-content .bg-white\\/5 > .space-y-4 > *:last-child,
+.settings-page .tab-content .bg-white\\/5 > .space-y-6 > *:last-child,
+.settings-page .settings-macos-list > *:last-child {
+    border-bottom: none;
+}
+
+/* Toggle / switch rows */
+.settings-page .tab-content .bg-black\\/20.border.border-white\\/5.rounded-xl.flex.items-center.justify-between,
+.settings-page .tab-content label.flex.items-center.justify-between.gap-3.cursor-pointer.p-3.rounded-xl.bg-black\\/20,
+.settings-page .tab-content .flex.items-center.justify-between.p-4.bg-black\\/20.border.border-white\\/5.rounded-xl {
+    border-radius: 0 !important;
+    border: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+    background: transparent !important;
+    padding: 0.6rem 0.85rem !important;
+    min-height: 2.65rem;
+    margin: 0 !important;
+}
+
+.settings-page .tab-content .grid.grid-cols-1.md\\:grid-cols-3,
+.settings-page .tab-content .grid.grid-cols-1.md\\:grid-cols-2.xl\\:grid-cols-3,
+.settings-page .tab-content .grid.grid-cols-1.sm\\:grid-cols-2,
+.settings-page .tab-content .grid.grid-cols-1.sm\\:grid-cols-2.md\\:grid-cols-4 {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+}
+
+.settings-page .tab-content .grid.grid-cols-1.md\\:grid-cols-3 > *,
+.settings-page .tab-content .grid.grid-cols-1.md\\:grid-cols-2.xl\\:grid-cols-3 > *,
+.settings-page .tab-content .grid.grid-cols-1.sm\\:grid-cols-2 > *,
+.settings-page .tab-content .grid.grid-cols-1.sm\\:grid-cols-2.md\\:grid-cols-4 > * {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.settings-page .tab-content .grid.grid-cols-1.md\\:grid-cols-3 > *:last-child,
+.settings-page .tab-content .grid.grid-cols-1.md\\:grid-cols-2.xl\\:grid-cols-3 > *:last-child,
+.settings-page .tab-content .grid.grid-cols-1.sm\\:grid-cols-2.md\\:grid-cols-4 > *:last-child {
+    border-bottom: none;
+}
+
+/* Two-column field grids (SMTP and similar) */
+.settings-page .tab-content .grid.grid-cols-1.md\\:grid-cols-2.gap-4 {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+}
+
+.settings-page .tab-content .grid.grid-cols-1.md\\:grid-cols-2.gap-4 > div {
+    padding: 0.65rem 0.85rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+html:not(.dark) .settings-page .tab-content .grid.grid-cols-1.md\\:grid-cols-2.gap-4 > div {
+    border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+.settings-page .tab-content label.block.text-white\\/40.text-\\[10px\\].uppercase,
+.settings-page .tab-content label.block.text-white\\/60.text-\\[10px\\].uppercase {
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    color: var(--sp-text-secondary) !important;
+}
+
+.settings-tab-sectioned .bg-white\\/5 > .flex.items-center.gap-2.mb-4,
+.settings-tab-sectioned .bg-white\\/5 > .flex.items-center.justify-between.gap-2.mb-4:not(:has(label.cursor-pointer)) {
+    display: none !important;
+}
+
+.settings-tab-sectioned .bg-white\\/5 > .flex.items-center.justify-between.gap-2.mb-4:has(label.cursor-pointer) {
+    margin: 0 0 0.35rem !important;
+    padding: 0.55rem 0.85rem !important;
+    border-radius: 10px 10px 0 0 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-bottom: none !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+
+.settings-tab-sectioned .bg-white\\/5 > .flex.items-center.justify-between.gap-2.mb-4:has(label.cursor-pointer) .w-8.h-8,
+.settings-tab-sectioned .bg-white\\/5 > .flex.items-center.justify-between.gap-2.mb-4:has(label.cursor-pointer) h4 {
+    display: none;
+}
+
+.settings-tab-sectioned > .space-y-8 {
+    gap: 0 !important;
+}
+
+.settings-tab-sectioned .settings-form-section:not(.is-section-visible) {
+    display: none !important;
+}
+
+.settings-tab-sectioned .settings-form-section.is-section-visible {
+    display: block !important;
+}
+
+.settings-tab-sectioned > .space-y-8 {
+    gap: 0 !important;
+}
+
+/* Row icons */
+.settings-page .tab-content .bg-black\\/20 .w-8.h-8.rounded-lg,
+.settings-page .tab-content .bg-black\\/20 .w-10.h-10.rounded-xl,
+.settings-page .tab-content .flex.items-center.justify-between.p-4.bg-black\\/20 .w-10.h-10 {
+    width: 1.6rem !important;
+    height: 1.6rem !important;
+    min-width: 1.6rem;
+    border-radius: 6px !important;
+    background: rgba(142, 142, 147, 0.45) !important;
+    border: none !important;
+    color: #fff !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.settings-page .tab-content .bg-black\\/20 .w-8.h-8 .material-symbols-outlined,
+.settings-page .tab-content .bg-black\\/20 .w-10.h-10 .material-symbols-outlined {
+    font-size: 0.9rem !important;
+}
+
+/* Row typography */
+.settings-page .tab-content .bg-black\\/20 span.text-xs.font-bold.uppercase,
+.settings-page .tab-content .flex.items-center.justify-between.p-4.bg-black\\/20 span.text-sm.font-bold {
+    text-transform: none !important;
+    font-size: 0.8125rem !important;
+    font-weight: 500 !important;
+    letter-spacing: 0 !important;
+    color: var(--sp-text) !important;
+}
+
+.settings-page .tab-content .bg-black\\/20 p.text-\\[9px\\],
+.settings-page .tab-content .flex.items-center.justify-between.p-4.bg-black\\/20 p.text-\\[10px\\] {
+    font-size: 0.6875rem !important;
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+    color: var(--sp-text-tertiary) !important;
+    margin-top: 0.1rem !important;
+}
+
+/* Field rows inside list */
+.settings-page .tab-content .bg-white\\/5 > .space-y-4 > div:not(.grid):not(.pt-2):not(.pt-4),
+.settings-page .tab-content .bg-white\\/5 > .space-y-6 > div:not(.grid):not(.pt-2):not(.pt-4) {
+    padding: 0.65rem 0.85rem;
+}
+
+.settings-page .tab-content .bg-white\\/5 > .space-y-4 > .pt-2,
+.settings-page .tab-content .bg-white\\/5 > .space-y-4 > .pt-4,
+.settings-page .tab-content .bg-white\\/5 > .space-y-6 > .pt-4 {
+    padding: 0 !important;
+    border-bottom: none !important;
+}
+
+.settings-page .tab-content .pt-2 > .bg-black\\/20,
+.settings-page .tab-content .pt-4 > .flex.items-center.justify-between {
+    border-radius: 0 !important;
+    border: none !important;
+    background: transparent !important;
+}
+
+.settings-page .tab-content .pt-2 .bg-black\\/20.border.border-white\\/5.rounded-xl.px-4.py-3.space-y-3 {
+    padding: 0 !important;
+}
+
+.settings-page .tab-content .pt-2 .bg-black\\/20.border.border-white\\/5.rounded-xl.px-4.py-3.space-y-3 > .flex.items-center.justify-between {
+    padding: 0.6rem 0.85rem !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+.settings-page .tab-content .pt-2 .bg-black\\/20.border.border-white\\/5.rounded-xl.px-4.py-3.space-y-3 > div:not(.flex) {
+    padding: 0.65rem 0.85rem 0.85rem;
+}
+
+.settings-page label.text-white\\/60,
+.settings-page .tab-content label.block.text-white\\/60 {
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    color: var(--sp-text-secondary) !important;
+    margin-bottom: 0.35rem !important;
+}
+
+.settings-page .tab-content input[type="text"],
+.settings-page .tab-content input[type="password"],
+.settings-page .tab-content input[type="number"],
+.settings-page .tab-content input[type="url"],
+.settings-page .tab-content select,
+.settings-page .tab-content textarea,
+.settings-page .tab-content .soft-select-toggle {
+    border-radius: 8px !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+html:not(.dark) .settings-page .tab-content input[type="text"],
+html:not(.dark) .settings-page .tab-content input[type="password"],
+html:not(.dark) .settings-page .tab-content input[type="number"],
+html:not(.dark) .settings-page .tab-content input[type="url"],
+html:not(.dark) .settings-page .tab-content select,
+html:not(.dark) .settings-page .tab-content textarea,
+html:not(.dark) .settings-page .tab-content .soft-select-toggle {
+    background: rgba(0, 0, 0, 0.04) !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+    color: #1c1c1e !important;
+}
+
+/* Navigation link rows + chevron */
+.settings-page .tab-content a.inline-flex.items-center.gap-2,
+.settings-page .settings-list-item {
+    position: relative;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 0.75rem !important;
+    width: 100%;
+    padding: 0.6rem 2.15rem 0.6rem 0.85rem !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+    font-size: 0.8125rem !important;
+    font-weight: 500 !important;
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+    color: var(--sp-text) !important;
+    text-decoration: none !important;
+    transition: background 0.12s ease;
+}
+
+.settings-page .tab-content a.inline-flex.items-center.gap-2:hover,
+.settings-page .settings-list-item:hover {
+    background: rgba(255, 255, 255, 0.06) !important;
+    opacity: 1 !important;
+}
+
+html:not(.dark) .settings-page .tab-content a.inline-flex.items-center.gap-2:hover,
+html:not(.dark) .settings-page .settings-list-item:hover {
+    background: rgba(0, 0, 0, 0.04) !important;
+}
+
+.settings-page .settings-list-item.is-active {
+    background: rgba(var(--primary-rgb, 10, 132, 255), 0.12) !important;
+    border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+.settings-page .tab-content a.inline-flex.items-center.gap-2 .material-symbols-outlined,
+.settings-page .tab-content a.inline-flex.items-center.gap-2 span.material-symbols-outlined {
+    font-size: 1.1rem !important;
+    color: var(--sp-accent) !important;
+}
+
+.settings-page .tab-content a.inline-flex.items-center.gap-2::after,
+.settings-page .settings-list-item::after {
+    content: 'chevron_right';
+    font-family: 'Material Symbols Outlined';
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    position: absolute;
+    right: 0.65rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.125rem;
+    line-height: 1;
+    color: var(--sp-text-tertiary);
+    pointer-events: none;
+}
+
+.settings-page .settings-list-item-title {
+    font-size: 0.8125rem;
+    font-weight: 500;
+}
+
+.settings-page .settings-list-item-meta {
+    font-size: 0.6875rem;
+    color: var(--sp-text-tertiary);
+}
+
+.settings-page .settings-link-action {
+    font-size: 0.8125rem;
+    padding: 0.15rem 0.35rem;
+}
+
+/* Info / callout rows — macOS navigation row */
+.settings-page .tab-content .rounded-xl.border.border-accent\\/20.bg-accent\\/5,
+.settings-page .tab-content .rounded-xl.border.border-primary\\/20.bg-primary\\/5 {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 0.85rem !important;
+    border-radius: 0 !important;
+    border: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+    background: transparent !important;
+    padding: 0.7rem 0.85rem !important;
+    margin: 0 !important;
+    min-height: 2.85rem;
+    transition: background 0.12s ease;
+}
+
+.settings-page .tab-content .rounded-xl.border.border-accent\\/20.bg-accent\\/5:hover,
+.settings-page .tab-content .rounded-xl.border.border-primary\\/20.bg-primary\\/5:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+
+html:not(.dark) .settings-page .tab-content .rounded-xl.border.border-accent\\/20.bg-accent\\/5:hover,
+html:not(.dark) .settings-page .tab-content .rounded-xl.border.border-primary\\/20.bg-primary\\/5:hover {
+    background: rgba(0, 0, 0, 0.03) !important;
+}
+
+.settings-page .tab-content .rounded-xl.border.border-accent\\/20.bg-accent\\/5 > div:first-child,
+.settings-page .tab-content .rounded-xl.border.border-primary\\/20.bg-primary\\/5 > div:first-child {
+    flex: 1;
+    min-width: 0;
+}
+
+.settings-page .tab-content .rounded-xl.border.border-accent\\/20.bg-accent\\/5 .text-sm.font-bold,
+.settings-page .tab-content .rounded-xl.border.border-primary\\/20.bg-primary\\/5 .text-sm.font-bold {
+    font-size: 0.8125rem !important;
+    font-weight: 500 !important;
+    text-transform: none !important;
+    color: var(--sp-text) !important;
+}
+
+.settings-page .tab-content .rounded-xl.border.border-accent\\/20.bg-accent\\/5 p.text-\\[11px\\],
+.settings-page .tab-content .rounded-xl.border.border-primary\\/20.bg-primary\\/5 p.text-\\[11px\\] {
+    font-size: 0.6875rem !important;
+    color: var(--sp-text-tertiary) !important;
+    margin-top: 0.12rem !important;
+    line-height: 1.35;
+}
+
+.settings-page .tab-content .rounded-xl.border.border-accent\\/20.bg-accent\\/5 a.inline-flex,
+.settings-page .tab-content .rounded-xl.border.border-primary\\/20.bg-primary\\/5 a.inline-flex {
+    flex-shrink: 0;
+    position: relative;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.25rem !important;
+    margin-left: auto;
+    padding: 0 1.1rem 0 0 !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    font-size: 0.8125rem !important;
+    font-weight: 500 !important;
+    letter-spacing: 0 !important;
+    text-transform: none !important;
+    color: var(--sp-accent, var(--primary)) !important;
+    white-space: nowrap;
+}
+
+.settings-page .tab-content .rounded-xl.border.border-accent\\/20.bg-accent\\/5 a.inline-flex .material-symbols-outlined,
+.settings-page .tab-content .rounded-xl.border.border-primary\\/20.bg-primary\\/5 a.inline-flex .material-symbols-outlined {
+    display: none !important;
+}
+
+.settings-page .tab-content .rounded-xl.border.border-accent\\/20.bg-accent\\/5 a.inline-flex::after,
+.settings-page .tab-content .rounded-xl.border.border-primary\\/20.bg-primary\\/5 a.inline-flex::after {
+    content: 'chevron_right';
+    font-family: 'Material Symbols Outlined';
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.125rem;
+    line-height: 1;
+    color: var(--sp-text-tertiary);
+    pointer-events: none;
+}
+
+/* Card caption icons — neutral, not accent-tinted */
+.settings-page .tab-content .bg-white\\/5 .w-8.h-8.rounded-lg.bg-primary\\/10 {
+    background: rgba(142, 142, 147, 0.42) !important;
+    color: #fff !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.settings-page .tab-content .bg-white\\/5 .w-8.h-8.rounded-lg.bg-primary\\/10 .material-symbols-outlined {
+    color: #fff !important;
+    font-size: 0.95rem !important;
+}
+
+/* Backup / field rows inside grouped list */
+.settings-page .tab-content .bg-white\\/5 > .space-y-4 > .grid.grid-cols-1.md\\:grid-cols-1,
+.settings-page .tab-content .bg-white\\/5 > .space-y-6 > .grid.grid-cols-1.md\\:grid-cols-1 {
+    padding: 0.75rem 0.85rem !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.settings-page .tab-content .bg-white\\/5 > .space-y-4 > .grid.grid-cols-1.md\\:grid-cols-1 label,
+.settings-page .tab-content .bg-white\\/5 > .space-y-4 > .grid.grid-cols-1.md\\:grid-cols-1 input {
+    font-size: 0.8125rem !important;
+}
+
+.settings-page .tab-content .bg-white\\/5 > .space-y-4 > .grid.grid-cols-1.md\\:grid-cols-1 label {
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+    font-weight: 500 !important;
+    color: var(--sp-text-secondary) !important;
+}
+
+.settings-page .tab-content .bg-white\\/5 > .space-y-4 > .grid.grid-cols-1.md\\:grid-cols-1 input {
+    background: rgba(0, 0, 0, 0.22) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    border-radius: 8px !important;
+}
+
+html:not(.dark) .settings-page .tab-content .bg-white\\/5 > .space-y-4 > .grid.grid-cols-1.md\\:grid-cols-1 input {
+    background: rgba(0, 0, 0, 0.04) !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Toggle switches — macOS green */
+.settings-page label.relative.inline-flex.items-center.cursor-pointer .peer:checked ~ div,
+.settings-page label.flex.items-center.justify-between input.peer:checked ~ div {
+    background: #34c759 !important;
+}
+
+.settings-page .tab-content .text-primary,
+.settings-page .tab-content .text-primary\\/70 {
+    color: var(--primary, var(--sp-accent)) !important;
+}
+
+.settings-page .tab-content .group:focus-within .group-focus-within\\:text-primary {
+    color: var(--primary, var(--sp-accent)) !important;
+}
+
+/* Host cards — accordion list style */
+.settings-page .host-card {
+    border-radius: 10px !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    box-shadow: none !important;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+html:not(.dark) .settings-page .host-card {
+    background: rgba(255, 255, 255, 0.88) !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+.settings-page .host-card > .flex.items-center.justify-between.px-6.py-4,
+.settings-page #tab-hosts .bg-white\\/5 > .flex.items-center.justify-between.px-6.py-4 {
+    padding: 0.65rem 0.85rem !important;
+    background: transparent !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+.settings-page #tab-hosts .bg-white\\/5.border.border-white\\/10.rounded-xl {
+    border-radius: 10px !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.settings-page #tab-hosts .bg-white\\/5 > .flex.items-center.justify-between .w-10.h-10 {
+    width: 1.6rem !important;
+    height: 1.6rem !important;
+    border-radius: 6px !important;
+    background: rgba(88, 86, 214, 0.85) !important;
+}
+
+.settings-page #tab-hosts .bg-white\\/5 h3 {
+    font-size: 0.8125rem !important;
+    font-weight: 500 !important;
+}
+
+.settings-page #tab-hosts #add-host-icon {
+    color: var(--sp-text-tertiary) !important;
+    font-size: 1.125rem !important;
+}
+
+/* Broadcast audience — macOS list + visible recipient info */
+.settings-page #tab-broadcast .broadcast-audience-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+html:not(.dark) .settings-page #tab-broadcast .broadcast-audience-list {
+    background: rgba(255, 255, 255, 0.88);
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+.settings-page #tab-broadcast .broadcast-audience-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+    grid-template-columns: 1fr !important;
+}
+
+.settings-page #tab-broadcast .broadcast-audience-option {
+    display: block;
+    margin: 0;
+}
+
+.settings-page #tab-broadcast .broadcast-audience-row {
+    border-radius: 0 !important;
+    border: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+    background: transparent !important;
+    padding: 0.65rem 0.85rem !important;
+    min-height: 3.25rem;
+}
+
+html:not(.dark) .settings-page #tab-broadcast .broadcast-audience-row {
+    border-bottom-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+.settings-page #tab-broadcast .broadcast-audience-option:last-child .broadcast-audience-row {
+    border-bottom: none !important;
+}
+
+.settings-page #tab-broadcast .broadcast-audience-option:has(input:checked) .broadcast-audience-row {
+    background: rgba(var(--primary-rgb, 10, 132, 255), 0.16) !important;
+    box-shadow: inset 3px 0 0 var(--primary, #0a84ff) !important;
+    border-bottom-color: rgba(var(--primary-rgb, 10, 132, 255), 0.18) !important;
+}
+
+html:not(.dark) .settings-page #tab-broadcast .broadcast-audience-option:has(input:checked) .broadcast-audience-row {
+    background: rgba(var(--primary-rgb, 10, 132, 255), 0.12) !important;
+    box-shadow: inset 3px 0 0 var(--primary, #0071e3) !important;
+}
+
+.settings-page #tab-broadcast .broadcast-audience-option:has(input:checked) .broadcast-audience-icon {
+    background: rgba(var(--primary-rgb, 10, 132, 255), 0.2) !important;
+    color: var(--primary, #0a84ff) !important;
+}
+
+.settings-page #tab-broadcast .broadcast-audience-option:has(input:checked) .broadcast-audience-title {
+    color: color-mix(in srgb, var(--primary, #0a84ff) 70%, white) !important;
+    font-weight: 600 !important;
+}
+
+html:not(.dark) .settings-page #tab-broadcast .broadcast-audience-option:has(input:checked) .broadcast-audience-title {
+    color: var(--primary, #0071e3) !important;
+}
+
+.settings-page #tab-broadcast .broadcast-audience-option:has(input:checked) .broadcast-audience-radio {
+    border-color: var(--primary, #0a84ff) !important;
+    background: var(--primary, #0a84ff) !important;
+    box-shadow: 0 0 0 2px rgba(var(--primary-rgb, 10, 132, 255), 0.3);
+}
+
+.settings-page #tab-broadcast .broadcast-audience-option:has(input:checked) .broadcast-audience-radio-dot {
+    opacity: 1 !important;
+    background: #fff !important;
+}
+
+.settings-page #tab-broadcast .broadcast-audience-title {
+    font-size: 0.8125rem !important;
+    font-weight: 500 !important;
+    color: var(--sp-text) !important;
+    letter-spacing: 0 !important;
+}
+
+.settings-page #tab-broadcast .broadcast-audience-desc {
+    font-size: 0.6875rem !important;
+    font-weight: 400 !important;
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+    color: var(--sp-text-tertiary) !important;
+    margin-top: 0.15rem !important;
+    line-height: 1.35 !important;
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.settings-page #tab-broadcast .broadcast-audience-count {
+    color: var(--sp-accent) !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+}
+
+.settings-page #tab-broadcast .broadcast-audience-row .flex-1 {
+    min-width: 0;
+    overflow: visible;
+}
+
+.settings-page #tab-broadcast .broadcast-recipient-summary {
+    padding: 0.75rem 0.85rem;
+    border-radius: 10px;
+    border: 1px solid rgba(var(--primary-rgb, 10, 132, 255), 0.22);
+    background: rgba(var(--primary-rgb, 10, 132, 255), 0.08);
+}
+
+html:not(.dark) .settings-page #tab-broadcast .broadcast-recipient-summary {
+    background: rgba(var(--primary-rgb, 10, 132, 255), 0.06);
+    border-color: rgba(var(--primary-rgb, 10, 132, 255), 0.18);
+}
+
+.settings-page #tab-broadcast .broadcast-recipient-summary__label {
+    font-size: 0.6875rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.04em !important;
+    text-transform: uppercase !important;
+    color: var(--sp-text-tertiary) !important;
+    margin-bottom: 0.25rem !important;
+}
+
+.settings-page #tab-broadcast .broadcast-recipient-summary__value {
+    font-size: 0.8125rem !important;
+    font-weight: 500 !important;
+    color: var(--sp-text) !important;
+    line-height: 1.45 !important;
+}
+
+/* Nested inner cards flatten */
+.settings-page .tab-content .bg-black\\/20.border.border-white\\/5.rounded-xl.p-3,
+.settings-page .tab-content .bg-black\\/20.border.border-white\\/5.rounded-xl.p-3.flex.flex-col {
+    border-radius: 0 !important;
+    border: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+    background: transparent !important;
+    padding: 0.65rem 0.85rem !important;
+}
+
+.settings-page .tab-content .grid.grid-cols-1.md\\:grid-cols-2.gap-3,
+.settings-page .tab-content .grid.grid-cols-1.md\\:grid-cols-2.gap-3.h-full {
+    gap: 0 !important;
+    padding: 0 !important;
+}
+
+/* Header toggle in card title row */
+.settings-page .tab-content .bg-white\\/5 > .flex.items-center.justify-between.gap-2.mb-4 .bg-black\\/20.rounded-xl {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+/* Bot ready banner — compact macOS notice */
+.settings-page .tab-content > .space-y-6 > .p-1\\.5.rounded-3xl.bg-white\\/5 {
+    padding: 0.65rem 0.85rem !important;
+    border-radius: 10px !important;
+    border: 1px solid rgba(48, 209, 88, 0.2) !important;
+    background: rgba(48, 209, 88, 0.08) !important;
+    margin-bottom: 0.25rem;
+}
+
+.settings-page .tab-content > .space-y-6 > .p-1\\.5.rounded-3xl.bg-white\\/5 > div {
+    padding: 0 !important;
+}
+
+.settings-page .tab-content > .space-y-6 > .p-1\\.5.rounded-3xl.bg-white\\/5 .w-14.h-14 {
+    width: 2rem !important;
+    height: 2rem !important;
+    border-radius: 8px !important;
+}
+
+/* macOS v2 — settings inside workspace floating window (iframe) */
+html[data-design="macos-v2"].workspace-embed-root,
+html[data-design="macos-v2"] body.workspace-embed {
+    height: 100%;
+    overflow: hidden;
+}
+
+html[data-design="macos-v2"] body.workspace-embed .relative.flex.min-h-screen {
+    min-height: 100%;
+    height: 100%;
+}
+
+html[data-design="macos-v2"] body.workspace-embed .relative.flex.min-h-screen > .flex-1.flex.flex-col {
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+}
+
+html[data-design="macos-v2"] body.workspace-embed .workspace-embed-main.flex-1 {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+html[data-design="macos-v2"] body.workspace-embed .workspace-embed-main {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+    padding: 0 !important;
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-page {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+    padding-bottom: 0;
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-page .settings-shell {
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: unset;
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+    align-items: stretch;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(22, 22, 24, 0.98);
+}
+
+html:not(.dark)[data-design="macos-v2"] body.workspace-embed .settings-page .settings-shell {
+    background: rgba(246, 246, 248, 0.98);
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-macos-sidebar {
+    position: relative;
+    top: auto;
+    flex-shrink: 0;
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    max-height: none;
+    min-height: 0;
+    height: auto;
+    padding: 0;
+    overflow: visible;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(0, 0, 0, 0.24);
+}
+
+html:not(.dark)[data-design="macos-v2"] body.workspace-embed .settings-macos-sidebar {
+    background: rgba(0, 0, 0, 0.04);
+    border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-macos-search-wrap {
+    display: none;
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-macos-nav-rail {
+    flex-direction: row;
+    align-items: stretch;
+    flex: none;
+    gap: 0;
+    padding: 0.5rem 0.55rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    mask-image: linear-gradient(90deg, transparent, #000 0.5rem, #000 calc(100% - 0.5rem), transparent);
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-macos-nav-rail::-webkit-scrollbar {
+    display: none;
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-macos-nav-group {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 0.28rem;
+    margin: 0;
+    padding: 0 0.75rem 0 0;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+html:not(.dark)[data-design="macos-v2"] body.workspace-embed .settings-macos-nav-group {
+    border-right-color: rgba(0, 0, 0, 0.08);
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-macos-nav-group:last-child {
+    border-right: none;
+    padding-right: 0;
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-macos-nav-group__title {
+    margin: 0 0.2rem 0 0;
+    padding: 0.22rem 0.42rem;
+    border-radius: 6px;
+    font-size: 0.5625rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    line-height: 1.2;
+    color: var(--sp-text-tertiary);
+    background: rgba(255, 255, 255, 0.05);
+    flex-shrink: 0;
+    pointer-events: none;
+    user-select: none;
+}
+
+html:not(.dark)[data-design="macos-v2"] body.workspace-embed .settings-macos-nav-group__title {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-sidebar .tab-link {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.22rem;
+    width: auto;
+    min-width: 4.1rem;
+    max-width: 5.5rem;
+    padding: 0.38rem 0.42rem;
+    border-radius: 10px;
+    text-align: center;
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-sidebar .tab-link::before {
+    display: none;
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-sidebar .tab-link.settings-tab-active {
+    background: rgba(var(--primary-rgb, 10, 132, 255), 0.16);
+    color: var(--sp-accent, var(--primary, #0a84ff));
+    box-shadow:
+        0 0 0 1px rgba(var(--primary-rgb, 10, 132, 255), 0.32),
+        0 4px 14px rgba(var(--primary-rgb, 10, 132, 255), 0.2);
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-nav-icon {
+    width: 1.7rem;
+    height: 1.7rem;
+    border-radius: 8px;
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-nav-label {
+    display: block;
+    width: 100%;
+    font-size: 0.5625rem;
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: 0.01em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-page .settings-main {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 0.85rem 1.15rem 1.25rem;
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-macos-hero {
+    flex-shrink: 0;
+    margin: 0 0 0.65rem;
+    padding: 0;
+    border: none;
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-macos-hero__main {
+    display: none;
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-macos-hero__row {
+    justify-content: flex-end;
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-section-nav {
+    top: 0;
+    flex-shrink: 0;
+}
+
+html[data-design="macos-v2"] body.workspace-embed #settings-tab-form {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+html[data-design="macos-v2"] body.workspace-embed #settings-tab-form > .tab-content {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+@media (max-width: 900px) {
+    html[data-design="macos-v2"] .settings-page .settings-shell {
+        display: flex;
+        flex-direction: column;
+        grid-template-columns: unset;
+        min-height: auto;
+    }
+
+    html[data-design="macos-v2"] .settings-macos-sidebar {
+        position: static;
+        flex-shrink: 0;
+        flex-direction: column;
+        gap: 0;
+        padding: 0;
+        overflow: visible;
+        border-right: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        max-height: none;
+        background: rgba(0, 0, 0, 0.18);
+    }
+
+    html:not(.dark)[data-design="macos-v2"] .settings-macos-sidebar {
+        background: rgba(0, 0, 0, 0.04);
+        border-bottom-color: rgba(0, 0, 0, 0.08);
+    }
+
+    html[data-design="macos-v2"] .settings-macos-search-wrap {
+        display: none;
+    }
+
+    html[data-design="macos-v2"] .settings-macos-nav-rail {
+        flex-direction: row;
+        align-items: stretch;
+        flex: none;
+        padding: 0.5rem 0.55rem;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none;
+        mask-image: linear-gradient(90deg, transparent, #000 0.5rem, #000 calc(100% - 0.5rem), transparent);
+    }
+
+    html[data-design="macos-v2"] .settings-macos-nav-rail::-webkit-scrollbar {
+        display: none;
+    }
+
+    html[data-design="macos-v2"] .settings-macos-nav-group {
+        flex-direction: row;
+        align-items: center;
+        flex-wrap: nowrap;
+        gap: 0.28rem;
+        margin: 0;
+        padding: 0 0.75rem 0 0;
+        border-right: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    html[data-design="macos-v2"] .settings-macos-nav-group:last-child {
+        border-right: none;
+        padding-right: 0;
+    }
+
+    html[data-design="macos-v2"] .settings-macos-nav-group__title {
+        margin: 0 0.2rem 0 0;
+        padding: 0.22rem 0.42rem;
+        border-radius: 6px;
+        font-size: 0.5625rem;
+        background: rgba(255, 255, 255, 0.05);
+        flex-shrink: 0;
+    }
+
+    html[data-design="macos-v2"] .settings-page .settings-sidebar .tab-link {
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.22rem;
+        width: auto;
+        min-width: 4.1rem;
+        max-width: 5.5rem;
+        padding: 0.38rem 0.42rem;
+        border-radius: 10px;
+        text-align: center;
+    }
+
+    html[data-design="macos-v2"] .settings-page .settings-sidebar .tab-link::before {
+        display: none;
+    }
+
+    html[data-design="macos-v2"] .settings-page .settings-sidebar .tab-link.settings-tab-active {
+        background: rgba(var(--primary-rgb, 10, 132, 255), 0.16);
+        color: var(--sp-accent, var(--primary, #0a84ff));
+        box-shadow:
+            0 0 0 1px rgba(var(--primary-rgb, 10, 132, 255), 0.32),
+            0 4px 14px rgba(var(--primary-rgb, 10, 132, 255), 0.2);
+    }
+
+    html[data-design="macos-v2"] .settings-nav-icon {
+        width: 1.7rem;
+        height: 1.7rem;
+    }
+
+    html[data-design="macos-v2"] .settings-nav-label {
+        display: block;
+        width: 100%;
+        font-size: 0.5625rem;
+        font-weight: 600;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    html[data-design="macos-v2"] .settings-page .settings-main {
+        max-height: none;
+    }
+
+    html[data-design="macos-v2"] .settings-macos-hero__row {
+        flex-direction: column;
+    }
+}
+/* Glass & Stealth — settings surfaces */
+html[data-design="glass"] .settings-page .settings-macos-list,
+html[data-design="stealth-admin"] .settings-page .settings-macos-list {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+html[data-design="glass"] .settings-page .settings-section-nav,
+html[data-design="stealth-admin"] .settings-page .settings-section-nav {
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+

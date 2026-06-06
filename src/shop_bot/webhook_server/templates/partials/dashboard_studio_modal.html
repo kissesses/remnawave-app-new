@@ -1,0 +1,36 @@
+<div id="dashboardStudioModal" class="modal-overlay dash-studio-modal" style="z-index: 1300;" aria-hidden="true">
+    <div class="dash-studio-modal__window" role="dialog" aria-labelledby="dash-studio-title">
+        <div class="dash-studio-modal__titlebar">
+            <div class="dash-studio-modal__lights" aria-hidden="true"><span></span><span></span><span></span></div>
+            <h3 class="dash-studio-modal__title" id="dash-studio-title">Dashboard Studio</h3>
+            <button type="button" class="dash-studio-modal__close" id="dash-studio-close" title="Закрыть">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="dash-studio-modal__body">
+            <aside class="dash-studio-sidebar">
+                <nav class="dash-studio-tabs" id="dash-studio-tab-nav" role="tablist"></nav>
+            </aside>
+            <div class="dash-studio-main">
+                <section class="dash-studio-section" id="dash-studio-section-widgets">
+                    <p class="dash-studio-hint" id="dash-studio-hint">Включите блоки и измените порядок (↑↓). Сохраняется для вашего аккаунта.</p>
+                    <div class="dash-studio-widget-list" id="dash-studio-widget-list"></div>
+                    <div class="dash-studio-design" id="dash-studio-design"></div>
+                </section>
+                <section class="dash-studio-section dash-studio-section--options" id="dash-studio-section-options">
+                    <div class="dash-studio-design" id="dash-studio-behavior"></div>
+                </section>
+            </div>
+        </div>
+        <div class="dash-studio-modal__footer">
+            <button type="button" class="dash-studio-btn dash-studio-btn--ghost" id="dash-studio-preview" title="Применить черновик на странице без сохранения">
+                <span class="material-symbols-outlined" style="font-size:1rem">visibility</span>
+                Превью
+            </button>
+            <button type="button" class="dash-studio-btn dash-studio-btn--ghost" id="dash-studio-reset">Сбросить мои настройки</button>
+            <button type="button" class="dash-studio-btn dash-studio-btn--ghost" id="dash-studio-save-global" hidden>Сохранить для всех (глобально)</button>
+            <div class="dash-studio-footer-spacer"></div>
+            <button type="button" class="dash-studio-btn dash-studio-btn--primary" id="dash-studio-save">Сохранить</button>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,638 @@
+/* WebApp — Glass Hub dashboard (welcome + subscription / balance / referral cards) */
+
+html[data-webapp-design="glass-hub"] {
+    --wa-gh-accent: #3b82f6;
+    --wa-gh-accent-soft: rgba(59, 130, 246, 0.15);
+    --wa-gh-bg: #0b0e14;
+    --wa-gh-glass: rgba(255, 255, 255, 0.05);
+    --wa-gh-glass-border: rgba(255, 255, 255, 0.08);
+    --wa-gh-top: calc(72px + env(safe-area-inset-top));
+}
+
+html[data-webapp-design="glass-hub"] body {
+    background: var(--wa-gh-bg) !important;
+    color: #f1f5f9 !important;
+}
+
+html[data-webapp-design="glass-hub"] body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+        radial-gradient(ellipse 70% 50% at 15% -5%, rgba(59, 130, 246, 0.22), transparent 55%),
+        radial-gradient(ellipse 55% 45% at 95% 15%, rgba(99, 102, 241, 0.14), transparent 50%),
+        radial-gradient(ellipse 60% 40% at 50% 100%, rgba(14, 165, 233, 0.08), transparent 55%);
+}
+
+/* Top navigation */
+.webapp-glass-hub-topnav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 99970;
+    padding: max(env(safe-area-inset-top), 10px) 12px 10px;
+    background: rgba(11, 14, 20, 0.82);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.webapp-glass-hub-topnav__inner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 1200px;
+    margin: 0 auto;
+    min-height: 44px;
+}
+
+.webapp-glass-hub-topnav__brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    font-size: 0.8125rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #fff;
+}
+
+.webapp-glass-hub-topnav__brand img {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    object-fit: contain;
+}
+
+.webapp-glass-hub-topnav__pills {
+    display: none;
+    align-items: center;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    flex: 1;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+@media (min-width: 640px) {
+    .webapp-glass-hub-topnav__pills {
+        display: flex;
+    }
+}
+
+.webapp-glass-hub-topnav__pills::-webkit-scrollbar {
+    display: none;
+}
+
+.webapp-glass-hub-topnav__pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: rgba(148, 163, 184, 0.95);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.webapp-glass-hub-topnav__pill .material-icons-round {
+    font-size: 17px !important;
+}
+
+.webapp-glass-hub-topnav__pill:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.webapp-glass-hub-topnav__pill.is-active {
+    background: var(--wa-gh-accent);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.35);
+}
+
+.webapp-glass-hub-topnav__actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.webapp-glass-hub-topnav__icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.webapp-glass-hub-topnav__icon-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+.webapp-glass-hub-topnav__icon-btn .material-icons-round {
+    font-size: 18px !important;
+}
+
+.webapp-glass-hub-topnav__user {
+    display: none;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.55);
+    padding: 0 4px;
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@media (min-width: 480px) {
+    .webapp-glass-hub-topnav__user {
+        display: block;
+    }
+}
+
+.webapp-glass-hub-topnav__balance {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.webapp-glass-hub-topnav__balance:hover {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.35);
+}
+
+.webapp-glass-hub-topnav__balance .material-icons-round {
+    font-size: 16px !important;
+    opacity: 0.85;
+}
+
+/* Pages layout */
+html[data-webapp-design="glass-hub"] #main-page,
+html[data-webapp-design="glass-hub"] #purchase-page,
+html[data-webapp-design="glass-hub"] #renew-page,
+html[data-webapp-design="glass-hub"] #setup-page,
+html[data-webapp-design="glass-hub"] #profile-page,
+html[data-webapp-design="glass-hub"] #support-page {
+    position: relative;
+    z-index: 1;
+    width: 100% !important;
+    max-width: 1200px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding: var(--wa-gh-top) 16px calc(24px + env(safe-area-inset-bottom)) !important;
+    min-height: 100vh;
+    min-height: 100dvh;
+    box-sizing: border-box;
+}
+
+html[data-webapp-design="glass-hub"] #main-page > header,
+html[data-webapp-design="glass-hub"] #main-page > nav,
+html[data-webapp-design="glass-hub"] #main-page > .grid,
+html[data-webapp-design="glass-hub"] #main-page > footer,
+html[data-webapp-design="glass-hub"] #key-info-section-container,
+html[data-webapp-design="glass-hub"] #webapp-cabinet-quick,
+html[data-webapp-design="glass-hub"] #purchase-page > header,
+html[data-webapp-design="glass-hub"] #renew-page > header,
+html[data-webapp-design="glass-hub"] #setup-page > header,
+html[data-webapp-design="glass-hub"] #profile-page > header,
+html[data-webapp-design="glass-hub"] #support-page > header {
+    display: none !important;
+}
+
+html[data-webapp-design="glass-hub"] .absolute.-top-20.-left-20,
+html[data-webapp-design="glass-hub"] .absolute.-top-24.-right-24 {
+    display: none !important;
+}
+
+/* Hero */
+.webapp-gh-hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1.5rem;
+    border: 1px solid var(--wa-gh-glass-border);
+    background: var(--wa-gh-glass);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    padding: 1.75rem 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.25);
+}
+
+.webapp-gh-hero__glow {
+    position: absolute;
+    top: -4rem;
+    right: -4rem;
+    width: 16rem;
+    height: 16rem;
+    border-radius: 50%;
+    background: rgba(59, 130, 246, 0.18);
+    filter: blur(60px);
+    pointer-events: none;
+}
+
+.webapp-gh-hero__body {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+@media (min-width: 768px) {
+    .webapp-gh-hero__body {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+}
+
+.webapp-gh-hero__title {
+    margin: 0;
+    font-size: 1.625rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    color: #fff;
+}
+
+@media (min-width: 640px) {
+    .webapp-gh-hero__title {
+        font-size: 2rem;
+    }
+}
+
+.webapp-gh-hero__sub {
+    margin: 0.5rem 0 0;
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    color: rgba(148, 163, 184, 0.95);
+    max-width: 36rem;
+}
+
+.webapp-gh-hero__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    min-width: 0;
+}
+
+@media (min-width: 480px) {
+    .webapp-gh-hero__actions {
+        flex-direction: row;
+        flex-shrink: 0;
+    }
+}
+
+.webapp-gh-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0.85rem 1.25rem;
+    border-radius: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+    white-space: nowrap;
+}
+
+.webapp-gh-btn:hover {
+    transform: scale(1.02);
+}
+
+.webapp-gh-btn--primary {
+    background: var(--wa-gh-accent);
+    color: #fff;
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.35);
+}
+
+.webapp-gh-btn--secondary {
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.webapp-gh-btn .material-icons-round {
+    font-size: 20px !important;
+}
+
+/* Cards grid */
+.webapp-gh-cards {
+    display: grid;
+    gap: 1.25rem;
+}
+
+@media (min-width: 768px) {
+    .webapp-gh-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .webapp-gh-cards {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.webapp-gh-card {
+    border-radius: 1.5rem;
+    border: 1px solid var(--wa-gh-glass-border);
+    background: var(--wa-gh-glass);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    padding: 1.35rem 1.25rem;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.webapp-gh-card:hover {
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.28);
+}
+
+.webapp-gh-card__head {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.webapp-gh-card__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.75rem;
+    background: var(--wa-gh-accent-soft);
+    color: var(--wa-gh-accent);
+}
+
+.webapp-gh-card__icon .material-icons-round {
+    font-size: 22px !important;
+}
+
+.webapp-gh-card__title {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.webapp-gh-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.webapp-gh-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.webapp-gh-badge--active {
+    background: rgba(34, 197, 94, 0.15);
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+.webapp-gh-badge--muted {
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.webapp-gh-badge--outline {
+    background: transparent;
+    color: rgba(255, 255, 255, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.webapp-gh-badge__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.webapp-gh-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.webapp-gh-row {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.75rem;
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.webapp-gh-row__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.75rem;
+    background: var(--wa-gh-accent-soft);
+    color: var(--wa-gh-accent);
+    flex-shrink: 0;
+}
+
+.webapp-gh-row__icon .material-icons-round {
+    font-size: 20px !important;
+}
+
+.webapp-gh-row__label {
+    font-size: 0.625rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(148, 163, 184, 0.85);
+    margin-bottom: 0.15rem;
+}
+
+.webapp-gh-row__value {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.webapp-gh-balance-amount {
+    font-size: 2.75rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: #fff;
+    line-height: 1;
+    text-align: center;
+}
+
+.webapp-gh-balance-sub {
+    text-align: center;
+    font-size: 0.875rem;
+    color: rgba(148, 163, 184, 0.9);
+    margin-top: 0.5rem;
+}
+
+.webapp-gh-card__foot {
+    margin-top: auto;
+}
+
+.webapp-gh-card__foot .webapp-gh-btn {
+    width: 100%;
+}
+
+.webapp-gh-ref-desc {
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: rgba(148, 163, 184, 0.95);
+    margin: 0;
+}
+
+.webapp-gh-ref-field label {
+    display: block;
+    font-size: 0.625rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(148, 163, 184, 0.75);
+    margin-bottom: 0.4rem;
+}
+
+.webapp-gh-ref-input {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.65rem;
+    border-radius: 0.75rem;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.webapp-gh-ref-input code {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.6875rem;
+    color: rgba(255, 255, 255, 0.7);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.webapp-gh-ref-copy {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 0.5rem;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+}
+
+.webapp-gh-ref-copy:hover {
+    background: var(--wa-gh-accent-soft);
+    color: var(--wa-gh-accent);
+}
+
+.webapp-gh-link-btn {
+    display: block;
+    width: 100%;
+    padding: 0.65rem;
+    border: none;
+    background: none;
+    color: var(--wa-gh-accent);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+}
+
+.webapp-gh-empty {
+    text-align: center;
+    padding: 1.5rem 0.5rem;
+    color: rgba(148, 163, 184, 0.85);
+    font-size: 0.8125rem;
+}
+
+.webapp-gh-empty .webapp-gh-btn {
+    margin-top: 1rem;
+}
+
+/* Glass cards on other pages */
+html[data-webapp-design="glass-hub"] .glass-card,
+html[data-webapp-design="glass-hub"] .bg-white.dark\:bg-surface-dark,
+html[data-webapp-design="glass-hub"] .dark\:bg-surface-dark,
+html[data-webapp-design="glass-hub"] .bg-black\/20,
+html[data-webapp-design="glass-hub"] .bg-black\/30 {
+    background: var(--wa-gh-glass) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+    border: 1px solid var(--wa-gh-glass-border) !important;
+    border-radius: 1.25rem !important;
+}
+
+html[data-webapp-design="glass-hub"] .text-primary,
+html[data-webapp-design="glass-hub"] .text-emerald-500 {
+    color: #60a5fa !important;
+}
+
+html[data-webapp-design="glass-hub"] .bg-primary,
+html[data-webapp-design="glass-hub"] button.bg-primary,
+html[data-webapp-design="glass-hub"] #pay-button,
+html[data-webapp-design="glass-hub"] #renew-pay-button {
+    background: var(--wa-gh-accent) !important;
+    color: #fff !important;
+    border: none !important;
+}
+
+html[data-webapp-design="glass-hub"] #webapp-theme-fab {
+    bottom: calc(20px + env(safe-area-inset-bottom));
+}

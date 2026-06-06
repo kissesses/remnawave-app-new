@@ -1,0 +1,137 @@
+<div id="themeModal" class="modal-overlay theme-modal-overlay" style="z-index: 1200;">
+    <div class="modal-content theme-modal theme-modal--auth" role="dialog" aria-labelledby="theme-modal-title" aria-modal="true">
+        <header class="theme-modal__header">
+            <div class="macos-traffic-lights theme-modal__lights" aria-hidden="true">
+                <span></span><span></span><span></span>
+            </div>
+            <div class="theme-modal__header-text">
+                <h2 id="theme-modal-title" class="theme-modal__title">Макет панели</h2>
+                <p class="theme-modal__subtitle">Оформление входа и панели после авторизации</p>
+            </div>
+            <button type="button" class="theme-modal__close" onclick="ThemeManager.cancel()" aria-label="Закрыть">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </header>
+
+        <div class="theme-modal__body">
+            <section class="theme-modal__section">
+                <h3 class="theme-modal__section-title">Макет</h3>
+                <div class="theme-modal__previews theme-modal__previews--5">
+                    <button type="button" class="theme-preview-card" data-design-option="classic">
+                        <div class="theme-preview-card__frame theme-preview-card__frame--classic" aria-hidden="true">
+                            <div class="tpc-bar">
+                                <span class="tpc-dot"></span><span class="tpc-dot"></span><span class="tpc-dot"></span>
+                                <span class="tpc-brand"></span>
+                                <span class="tpc-nav"><i></i><i></i><i></i></span>
+                            </div>
+                            <div class="tpc-body">
+                                <span class="tpc-line tpc-line--lg"></span>
+                                <span class="tpc-line"></span>
+                                <span class="tpc-card"></span>
+                                <span class="tpc-card tpc-card--sm"></span>
+                            </div>
+                        </div>
+                        <div class="theme-preview-card__info">
+                            <strong>Классический</strong>
+                            <span>Навигация в верхней шапке</span>
+                        </div>
+                        <span class="theme-preview-card__check material-symbols-outlined">check_circle</span>
+                    </button>
+
+                    <button type="button" class="theme-preview-card" data-design-option="macos">
+                        <div class="theme-preview-card__frame theme-preview-card__frame--macos" aria-hidden="true">
+                            <div class="tpc-bar tpc-bar--slim">
+                                <span class="tpc-dot"></span><span class="tpc-dot"></span><span class="tpc-dot"></span>
+                                <span class="tpc-brand tpc-brand--center"></span>
+                            </div>
+                            <div class="tpc-body tpc-body--macos">
+                                <span class="tpc-line tpc-line--lg"></span>
+                                <span class="tpc-card"></span>
+                            </div>
+                            <div class="tpc-dock">
+                                <i></i><i></i><i></i><i></i><span class="tpc-dock-sep"></span><i></i>
+                            </div>
+                        </div>
+                        <div class="theme-preview-card__info">
+                            <strong>macOS</strong>
+                            <span>Dock и обычные страницы</span>
+                        </div>
+                        <span class="theme-preview-card__check material-symbols-outlined">check_circle</span>
+                    </button>
+
+                    <button type="button" class="theme-preview-card theme-preview-card--featured" data-design-option="macos-v2">
+                        <span class="theme-preview-card__new">NEW</span>
+                        <div class="theme-preview-card__frame theme-preview-card__frame--macos-v2" aria-hidden="true">
+                            <div class="tpc-bar tpc-bar--slim">
+                                <span class="tpc-dot"></span><span class="tpc-dot"></span><span class="tpc-dot"></span>
+                                <span class="tpc-brand tpc-brand--center"></span>
+                            </div>
+                            <div class="tpc-body tpc-body--macos-v2">
+                                <span class="tpc-win tpc-win--lg"></span>
+                                <span class="tpc-win tpc-win--sm"></span>
+                            </div>
+                            <div class="tpc-dock">
+                                <i></i><i></i><i></i><i></i><span class="tpc-dock-sep"></span><i></i>
+                            </div>
+                        </div>
+                        <div class="theme-preview-card__info">
+                            <strong>macOS v2</strong>
+                            <span>Рабочий стол, окна и обои</span>
+                        </div>
+                        <span class="theme-preview-card__check material-symbols-outlined">check_circle</span>
+                    </button>
+
+                    <button type="button" class="theme-preview-card" data-design-option="glass">
+                        <div class="theme-preview-card__frame theme-preview-card__frame--glass" aria-hidden="true"></div>
+                        <div class="theme-preview-card__info">
+                            <strong>Glass</strong>
+                            <span>Боковая панель и стекло</span>
+                        </div>
+                        <span class="theme-preview-card__check material-symbols-outlined">check_circle</span>
+                    </button>
+
+                    <button type="button" class="theme-preview-card" data-design-option="stealth-admin">
+                        <div class="theme-preview-card__frame theme-preview-card__frame--stealth-admin" aria-hidden="true"></div>
+                        <div class="theme-preview-card__info">
+                            <strong>Stealth</strong>
+                            <span>Тёмный неон и сетка</span>
+                        </div>
+                        <span class="theme-preview-card__check material-symbols-outlined">check_circle</span>
+                    </button>
+                </div>
+            </section>
+
+            <section class="theme-modal__section" id="theme-accent-section">
+                <h3 class="theme-modal__section-title">Акцентный цвет</h3>
+                <p class="theme-modal__subtitle mb-3" style="margin-top:-0.25rem">Подсветка кнопок и элементов Glass</p>
+                <div class="theme-accent-grid" role="group" aria-label="Акцентный цвет">
+                    <button type="button" class="theme-accent-btn" data-accent-option="blue" style="background:#0a84ff" title="Синий" aria-pressed="false"></button>
+                    <button type="button" class="theme-accent-btn" data-accent-option="violet" style="background:#8b5cf6" title="Фиолетовый" aria-pressed="false"></button>
+                    <button type="button" class="theme-accent-btn" data-accent-option="rose" style="background:#f43f5e" title="Розовый" aria-pressed="false"></button>
+                    <button type="button" class="theme-accent-btn" data-accent-option="emerald" style="background:#10b981" title="Изумрудный" aria-pressed="false"></button>
+                    <button type="button" class="theme-accent-btn" data-accent-option="cyan" style="background:#06b6d4" title="Голубой" aria-pressed="false"></button>
+                    <button type="button" class="theme-accent-btn" data-accent-option="amber" style="background:#f59e0b" title="Янтарный" aria-pressed="false"></button>
+                    <button type="button" class="theme-accent-btn" data-accent-option="red" style="background:#ef4444" title="Красный" aria-pressed="false"></button>
+                </div>
+                <p class="theme-accent-live" id="theme-accent-live-wrap">
+                    Выбрано: <span id="theme-accent-live" class="theme-accent-live__swatch">Синий</span>
+                </p>
+            </section>
+
+            <section class="theme-modal__section" id="theme-brightness-section">
+                <h3 class="theme-modal__section-title">Яркость</h3>
+                <p class="theme-modal__subtitle mb-3" style="margin-top:-0.25rem">Для Glass и классического макета</p>
+                <div class="theme-segment" role="group" aria-label="Яркость">
+                    <button type="button" class="theme-segment__btn" data-brightness-option="dark">
+                        <span class="material-symbols-outlined">dark_mode</span>
+                        Тёмная
+                    </button>
+                    <button type="button" class="theme-segment__btn" data-brightness-option="light">
+                        <span class="material-symbols-outlined">light_mode</span>
+                        Светлая
+                    </button>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,1625 @@
+{% extends "base.html" %}
+{% block title %}Управление Пользователями{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/users-panel.css') }}" />
+{% endblock %}
+
+{% block content %}
+<div class="users-page">
+    <header class="users-header">
+        <div>
+            <p class="users-breadcrumb">Панель</p>
+            <h1 class="users-title">Пользователи</h1>
+            <p class="users-subtitle">База клиентов, балансы, подписки и рефералы</p>
+        </div>
+    </header>
+
+    <nav class="users-filters" aria-label="Фильтры пользователей">
+        {% for f, label in [
+            ('all', 'Все'),
+            ('with_keys', 'С ключами'),
+            ('pinned', 'Закреплённые'),
+            ('trial', 'Trial доступен'),
+            ('banned', 'Забанены')
+        ] %}
+        <a href="{{ url_for('users_page', filter=f, q=q) }}"
+           class="users-filter ajax-nav{% if filter_status == f %} is-active{% endif %}"
+           data-filter="{{ f }}">
+            {{ label }}
+            <span class="users-filter__count">{{ user_counts.get(f, 0) if user_counts else 0 }}</span>
+        </a>
+        {% endfor %}
+    </nav>
+
+    <form id="users-search-form" class="users-search" role="search">
+        <span class="material-symbols-outlined">search</span>
+        <input type="search" name="q" id="users-search" value="{{ q or '' }}"
+            placeholder="Поиск по ID или username..." autocomplete="off" />
+        <button type="button" id="search-clear" class="users-search__clear hidden" aria-label="Очистить">
+            <span class="material-symbols-outlined text-lg">close</span>
+        </button>
+    </form>
+
+    <div id="users-list" class="users-list"
+         data-fetch-url="{{ url_for('users_table_partial', page=current_page, per_page=per_page, q=q, filter=filter_status) }}"
+         data-fetch-interval="120000">
+        <div class="users-loading">
+            <span class="material-symbols-outlined animate-spin">progress_activity</span>
+            Загрузка...
+        </div>
+    </div>
+
+    <div id="users-pagination" class="users-pagination"
+        data-src="{{ url_for('users_pagination_partial', page=current_page, q=q, per_page=per_page, filter=filter_status) }}">
+    </div>
+</div>
+
+<div id="balanceModal" class="modal-overlay" style="z-index: 1100;">
+    <div class="modal-content bg-[#0a0612] border border-white/10 rounded-2xl shadow-2xl backdrop-blur-xl">
+        <div class="p-6 border-b border-white/5 flex items-center justify-between">
+            <h5 class="text-white font-bold text-lg">Баланс пользователя</h5>
+            <button onclick="closeModal('balanceModal')" class="text-white/50 hover:text-white transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="p-6">
+            <div class="mb-4 flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
+                <div class="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
+                    <span class="material-symbols-outlined">person</span>
+                </div>
+                <div>
+                    <div class="text-white/50 text-xs uppercase font-bold tracking-wider">Пользователь</div>
+                    <div class="text-white font-bold text-sm" id="bm-user"></div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-white/5 p-3 rounded-xl border border-white/5">
+                    <div class="text-white/50 text-[10px] uppercase font-bold tracking-wider mb-1">Текущий баланс</div>
+                    <div class="text-2xl font-bold text-white"><span id="bm-balance">0.00</span> <span
+                            class="text-white/50 text-lg font-normal">₽</span></div>
+                </div>
+                <div class="bg-white/5 p-3 rounded-xl border border-white/5">
+                    <div class="text-white/50 text-[10px] uppercase font-bold tracking-wider mb-1">Рефералы</div>
+                    <div class="text-2xl font-bold text-white"><span id="bm-refcount">0</span></div>
+                </div>
+            </div>
+
+            <form id="bm-form" class="flex gap-3 ajax-form" method="post" data-success-msg="Баланс успешно изменён"
+                data-refresh="users-list">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <div class="relative flex-1">
+                    <span
+                        class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-lg">payments</span>
+                    <input
+                        class="w-full bg-black/30 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-primary/40 font-mono"
+                        type="text" inputmode="decimal" name="delta" placeholder="± Сумма" required />
+                </div>
+                <button
+                    class="px-6 py-2 rounded-xl bg-primary text-background-dark font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 flex items-center gap-2"
+                    type="submit">
+                    <span class="material-symbols-outlined text-lg">save</span>
+                    <span>Изменить</span>
+                </button>
+            </form>
+
+            <div class="mt-6">
+                <div class="text-white/50 text-[10px] uppercase font-bold tracking-wider mb-2">Список рефералов</div>
+                <div class="bg-black/30 rounded-xl border border-white/5 p-2 max-h-36 overflow-y-auto custom-scroll">
+                    <ul id="bm-reflist" class="space-y-1 text-xs text-white/70"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="messageModal" class="modal-overlay" style="z-index: 1100;">
+    <div class="modal-content bg-[#0a0612] border border-white/10 rounded-2xl shadow-2xl backdrop-blur-xl">
+        <div class="p-6 border-b border-white/5 flex items-center justify-between">
+            <h5 class="text-white font-bold text-lg">Отправить сообщение</h5>
+            <button onclick="closeModal('messageModal')" class="text-white/50 hover:text-white transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="p-6">
+            <div class="mb-4 text-white/70 text-sm" id="mm-user"></div>
+            <form id="mm-form" method="post" class="ajax-form" data-success-msg="Сообщение отправлено">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <div class="mb-4">
+                    <label class="block text-white/60 text-[10px] uppercase font-bold tracking-wider mb-2">📩 Сообщение
+                        от администратора:</label>
+                    <div class="relative">
+                        <textarea
+                            class="w-full bg-black/30 border border-white/10 rounded-xl p-4 text-white placeholder:text-white/20 focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all min-h-[120px] resize-y text-sm"
+                            name="message" placeholder="Введите сообщение для пользователя..." required></textarea>
+                        <div class="absolute bottom-3 right-3 text-white/20 text-xs pointer-events-none">От лица бота
+                        </div>
+                    </div>
+                </div>
+                <button
+                    class="w-full py-3 rounded-xl bg-primary text-background-dark font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2 uppercase tracking-wider text-xs"
+                    type="submit">
+                    <span class="material-symbols-outlined text-lg">send</span>
+                    Отправить
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Key Comment Modal -->
+<div id="commentModal" class="modal-overlay" style="z-index: 1100;">
+    <div class="modal-content">
+        <div class="p-4 border-b border-white/10 flex items-center justify-between">
+            <h5 class="text-white font-bold">Комментарий к ключу</h5>
+            <button onclick="closeModal('commentModal')" class="text-white/50 hover:text-white">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="p-6">
+            <div id="commentModalLoading" class="hidden text-center py-4">
+                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
+            </div>
+            <div id="commentModalContent">
+                <input type="text" id="commentInput" placeholder="Введите комментарий"
+                    class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-primary/50" />
+            </div>
+        </div>
+        <div class="p-4 border-t border-white/10 flex justify-end gap-2">
+            <button onclick="closeModal('commentModal')"
+                class="px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20">Отмена</button>
+            <button id="commentSaveBtn"
+                class="px-4 py-2 rounded-lg bg-primary text-background-dark font-bold hover:bg-primary/90">Сохранить</button>
+        </div>
+    </div>
+</div>
+
+<!-- Key Expiry Modal -->
+<div id="expiryModal" class="modal-overlay" style="z-index: 1100;">
+    <div class="modal-content">
+        <div class="p-4 border-b border-white/10 flex items-center justify-between">
+            <h5 class="text-white font-bold">Изменить срок действия</h5>
+            <button onclick="closeModal('expiryModal')" class="text-white/50 hover:text-white">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="p-6">
+            <label class="block text-white/70 text-sm mb-2">Сколько дней прибавить/убавить</label>
+            <input type="number" id="expiryDelta" placeholder="Например, 7 или -7"
+                class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-primary/50" />
+            <p class="text-white/50 text-sm mt-2">Положительное — продлить, отрицательное — сократить.</p>
+        </div>
+        <div class="p-4 border-t border-white/10 flex justify-end gap-2">
+            <button onclick="closeModal('expiryModal')"
+                class="px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20">Отмена</button>
+            <button id="expirySaveBtn"
+                class="px-4 py-2 rounded-lg bg-primary text-background-dark font-bold hover:bg-primary/90">Сохранить</button>
+        </div>
+    </div>
+</div>
+
+<!-- Revoke Key Confirmation Modal -->
+<div id="revokeConfirmModal" class="modal-overlay" style="z-index: 1100;">
+    <div class="modal-content overflow-hidden">
+        <div class="p-4 border-b border-red-500/30 flex items-center justify-between bg-red-500/10">
+            <h5 class="text-white font-bold flex items-center gap-2">
+                <span class="material-symbols-outlined text-red-400">warning</span>
+                Подтверждение отзыва
+            </h5>
+            <button onclick="closeModal('revokeConfirmModal')" class="text-white/50 hover:text-white">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="p-6">
+            <p class="text-white mb-2">Вы уверены, что хотите отозвать <span class="text-red-400 font-bold">этот</span>
+                ключ?</p>
+            <p class="text-white/40 text-xs uppercase font-bold tracking-widest">⚠️ Действие необратимо</p>
+        </div>
+        <div class="p-4 border-t border-white/10 flex justify-end gap-2 bg-black/20">
+            <button onclick="closeModal('revokeConfirmModal')"
+                class="px-4 py-2 rounded-xl bg-white/5 text-white/70 hover:bg-white/10 transition-colors text-sm font-bold uppercase tracking-wider">Отмена</button>
+            <button id="revokeConfirmBtn"
+                class="px-5 py-2 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition-all shadow-lg shadow-red-500/20 text-sm uppercase tracking-wider">Отозвать</button>
+        </div>
+    </div>
+</div>
+
+<!-- Revoke ALL Keys Confirmation Modal -->
+<div id="revokeAllConfirmModal" class="modal-overlay" style="z-index: 1100;">
+    <div class="modal-content overflow-hidden">
+        <div class="p-4 border-b border-red-500/30 flex items-center justify-between bg-red-500/10">
+            <h5 class="text-white font-bold flex items-center gap-2">
+                <span class="material-symbols-outlined text-red-400">delete_forever</span>
+                Отозвать ВСЕ ключи
+            </h5>
+            <button onclick="closeModal('revokeAllConfirmModal')" class="text-white/50 hover:text-white">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="p-6">
+            <p class="text-white mb-2">Вы уверены, что хотите отозвать <span
+                    class="text-red-500 font-bold underline">ВСЕ</span> ключи этого пользователя?</p>
+            <p class="text-red-400/80 text-xs font-bold uppercase tracking-widest">⚠️ Все подписки будут аннулированы
+                немедленно!</p>
+        </div>
+        <div class="p-4 border-t border-white/10 flex justify-end gap-2 bg-black/20">
+            <button onclick="closeModal('revokeAllConfirmModal')"
+                class="px-4 py-2 rounded-xl bg-white/5 text-white/70 hover:bg-white/10 transition-colors text-sm font-bold uppercase tracking-wider">Отмена</button>
+            <button id="revokeAllConfirmBtn"
+                class="px-5 py-2 rounded-xl bg-red-600 text-white font-bold hover:bg-red-700 transition-all shadow-lg shadow-red-600/20 text-sm uppercase tracking-wider">Отозвать
+                всё</button>
+        </div>
+    </div>
+</div>
+
+<div id="deleteUserConfirmModal" class="modal-overlay" style="z-index: 1100;">
+    <div class="modal-content overflow-hidden">
+        <div class="p-4 border-b border-red-500/30 flex items-center justify-between bg-red-500/10">
+            <h5 class="text-white font-bold flex items-center gap-2">
+                <span class="material-symbols-outlined text-red-400">person_remove</span>
+                Удалить пользователя
+            </h5>
+            <button onclick="closeModal('deleteUserConfirmModal')" class="text-white/50 hover:text-white">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="p-6">
+            <p class="text-white mb-2">Удалить пользователя <strong id="delete-user-label">—</strong> из базы данных?</p>
+            <p class="text-red-400/80 text-xs font-bold uppercase tracking-widest">⚠️ Будут отозваны ключи, удалены транзакции, тикеты и профиль. Действие необратимо.</p>
+        </div>
+        <div class="p-4 border-t border-white/10 flex justify-end gap-2 bg-black/20">
+            <button onclick="closeModal('deleteUserConfirmModal')"
+                class="px-4 py-2 rounded-xl bg-white/5 text-white/70 hover:bg-white/10 transition-colors text-sm font-bold uppercase tracking-wider">Отмена</button>
+            <button id="deleteUserConfirmBtn"
+                class="px-5 py-2 rounded-xl bg-red-600 text-white font-bold hover:bg-red-700 transition-all shadow-lg shadow-red-600/20 text-sm uppercase tracking-wider">Удалить</button>
+        </div>
+    </div>
+</div>
+
+<!-- Ban User Confirmation Modal -->
+<div id="banConfirmModal" class="modal-overlay" style="z-index: 1100;">
+    <div class="modal-content overflow-hidden">
+        <div class="p-4 border-b border-orange-500/30 flex items-center justify-between bg-orange-500/10">
+            <h5 class="text-white font-bold flex items-center gap-2">
+                <span class="material-symbols-outlined text-orange-400">block</span>
+                Изменение статуса доступа
+            </h5>
+            <button onclick="closeModal('banConfirmModal')" class="text-white/50 hover:text-white">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="p-6">
+            <p class="text-white mb-2" id="banModalText">Вы уверены, что хотите изменить статус блокировки пользователя?
+            </p>
+            <p class="text-white/40 text-[10px] uppercase font-bold tracking-widest">📩 Пользователь получит уведомление
+                в боте</p>
+        </div>
+        <div class="p-4 border-t border-white/10 flex justify-end gap-2 bg-black/20">
+            <button onclick="closeModal('banConfirmModal')"
+                class="px-4 py-2 rounded-xl bg-white/5 text-white/70 hover:bg-white/10 transition-colors text-sm font-bold uppercase tracking-wider">Отмена</button>
+            <button id="banConfirmBtn"
+                class="px-5 py-2 rounded-xl bg-orange-500 text-white font-bold hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20 text-sm uppercase tracking-wider">Изменить
+                статус</button>
+        </div>
+    </div>
+</div>
+
+<!-- Generic Confirmation Modal for Clear Actions -->
+<div id="confirmClearModal" class="modal-overlay" style="z-index: 1200;">
+    <div class="modal-content overflow-hidden border border-red-500/20 shadow-2xl shadow-red-500/10">
+        <div class="p-5 border-b border-red-500/20 flex items-center justify-between bg-red-500/5">
+            <h5 class="text-white font-bold flex items-center gap-2 text-sm uppercase tracking-wider">
+                <span class="material-symbols-outlined text-red-500">warning</span>
+                <span id="ccm-title">Подтверждение</span>
+            </h5>
+            <button onclick="closeModal('confirmClearModal')" class="text-white/30 hover:text-white transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="p-6">
+            <p class="text-white/80 text-sm leading-relaxed mb-1" id="ccm-message"></p>
+            <p class="text-red-500/60 text-[10px] uppercase font-black tracking-widest italic">Действие абсолютно
+                необратимо!</p>
+        </div>
+        <div class="p-4 border-t border-white/5 flex justify-end gap-3 bg-black/20">
+            <button onclick="closeModal('confirmClearModal')"
+                class="px-5 py-2 rounded-xl bg-white/5 text-white/60 hover:bg-white/10 transition-colors text-[10px] font-black uppercase tracking-widest border border-white/10">
+                Отмена
+            </button>
+            <button id="ccm-confirm-btn"
+                class="px-6 py-2 rounded-xl bg-red-500 text-white font-black hover:bg-red-600 transition-all shadow-lg shadow-red-500/20 text-[10px] uppercase tracking-widest border border-red-400/30">
+                Очистить
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="userDetailsModal" class="modal-overlay users-modal-overlay" style="z-index: 1050;">
+    <div class="users-modal modal-content">
+        <div class="users-modal__hero-bg" aria-hidden="true"></div>
+
+        <header class="users-modal__header">
+            <div class="users-modal__hero">
+                <div id="udm-avatar" class="users-modal__avatar">
+                    <img id="udm-avatar-img" class="users-modal__avatar-img" alt="" hidden />
+                    <span id="udm-avatar-fallback">U</span>
+                </div>
+                <div class="users-modal__identity">
+                    <div class="users-modal__title-row">
+                        <h2 class="users-modal__title demo-blur-username" id="udm-username">@user</h2>
+                        <div class="users-modal__badges">
+                            <span id="udm-status-badge" class="udm-badge udm-badge--active">Активен</span>
+                            <span id="udm-pinned-badge" class="udm-badge udm-badge--pinned hidden">Закреплён</span>
+                        </div>
+                    </div>
+                    <div class="users-modal__meta">
+                        <span class="udm-meta-chip"><span class="material-symbols-outlined">tag</span><span id="udm-telegram-id" class="demo-blur-sensitive">—</span></span>
+                        <span class="udm-meta-chip"><span class="material-symbols-outlined">calendar_today</span><span id="udm-registration" class="font-mono demo-blur-sensitive"></span></span>
+                    </div>
+                    <div id="udm-auth-email" class="users-modal__email hidden"></div>
+                </div>
+            </div>
+            <button type="button" onclick="closeModal('userDetailsModal')" class="users-modal__close" aria-label="Закрыть">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </header>
+
+        <div class="users-modal__stats" id="udm-stats-strip">
+            <div class="users-modal__stat users-modal__stat--balance">
+                <span class="material-symbols-outlined">account_balance_wallet</span>
+                <div>
+                    <span class="users-modal__stat-label">Баланс</span>
+                    <span class="users-modal__stat-value" id="udm-balance">0 ₽</span>
+                </div>
+            </div>
+            <div class="users-modal__stat">
+                <span class="material-symbols-outlined">payments</span>
+                <div>
+                    <span class="users-modal__stat-label">Потрачено</span>
+                    <span class="users-modal__stat-value" id="udm-total-spent">0 ₽</span>
+                </div>
+            </div>
+            <div class="users-modal__stat">
+                <span class="material-symbols-outlined">calendar_month</span>
+                <div>
+                    <span class="users-modal__stat-label">Месяцев</span>
+                    <span class="users-modal__stat-value" id="udm-total-months">0</span>
+                </div>
+            </div>
+            <div class="users-modal__stat users-modal__stat--ref">
+                <span class="material-symbols-outlined">diversity_3</span>
+                <div>
+                    <span class="users-modal__stat-label">Реф. баланс</span>
+                    <span class="users-modal__stat-value" id="udm-ref-balance">0 ₽</span>
+                </div>
+            </div>
+        </div>
+
+        <nav class="users-modal__tabs" id="udm-tabs">
+            <button type="button" class="users-modal__tab is-active" data-tab="activity"><span class="material-symbols-outlined">timeline</span>Активность</button>
+            <button type="button" class="users-modal__tab" data-tab="overview"><span class="material-symbols-outlined">person</span>Обзор</button>
+            <button type="button" class="users-modal__tab" data-tab="subs"><span class="material-symbols-outlined">vpn_key</span>Подписки</button>
+            <button type="button" class="users-modal__tab" data-tab="payments"><span class="material-symbols-outlined">receipt_long</span>Платежи</button>
+            <button type="button" class="users-modal__tab" data-tab="balance"><span class="material-symbols-outlined">account_balance</span>Баланс</button>
+        </nav>
+
+        <div class="users-modal__toolbar">
+            <button type="button" id="udm-action-pin" class="udm-tool-btn" title="Закрепить">
+                <span id="udm-action-pin-icon" class="material-symbols-outlined">push_pin</span>
+                <span id="udm-action-pin-text">Закреп</span>
+            </button>
+            <button type="button" id="udm-action-issue" class="udm-tool-btn udm-tool-btn--primary" title="Выдать ключ">
+                <span class="material-symbols-outlined">vpn_key</span><span>Выдать</span>
+            </button>
+            <span class="udm-tool-divider"></span>
+            <button type="button" id="udm-action-add-bal" class="udm-tool-btn udm-tool-btn--green" title="Пополнить">
+                <span class="material-symbols-outlined">add</span><span>Пополнить</span>
+            </button>
+            <button type="button" id="udm-action-sub-bal" class="udm-tool-btn udm-tool-btn--red" title="Списать">
+                <span class="material-symbols-outlined">remove</span><span>Списать</span>
+            </button>
+            <span class="udm-tool-divider"></span>
+            <button type="button" id="udm-action-msg" class="udm-tool-btn" title="Написать">
+                <span class="material-symbols-outlined">mail</span><span>Написать</span>
+            </button>
+            <button type="button" id="udm-action-ban" class="udm-tool-btn udm-tool-btn--warn" title="Бан">
+                <span id="udm-action-ban-icon" class="material-symbols-outlined">block</span>
+                <span id="udm-action-ban-text">Бан</span>
+            </button>
+            <button type="button" id="udm-action-revoke-all" class="udm-tool-btn udm-tool-btn--danger" title="Отозвать ключи">
+                <span class="material-symbols-outlined">delete_forever</span><span>Отозвать</span>
+            </button>
+            <button type="button" id="udm-action-delete" class="udm-tool-btn udm-tool-btn--danger" title="Удалить пользователя">
+                <span class="material-symbols-outlined">person_remove</span><span>Удалить</span>
+            </button>
+        </div>
+
+        <div class="users-modal__body">
+            <div id="udm-loading" class="users-modal__loading">
+                <span class="material-symbols-outlined animate-spin">progress_activity</span>
+                <p>Загрузка профиля...</p>
+            </div>
+            <div id="udm-content" class="hidden">
+                <div class="users-modal__panel is-active" data-panel="activity">
+                    <section class="udm-card">
+                        <header class="udm-card__head">
+                            <span class="material-symbols-outlined udm-card__icon udm-card__icon--blue">timeline</span>
+                            <div>
+                                <h3 class="udm-card__title">Активность клиента</h3>
+                                <p class="udm-card__desc">Платежи, баланс, поддержка и действия администраторов</p>
+                            </div>
+                        </header>
+                        <div class="udm-card__body udm-card__body--flush">
+                            <ul id="udm-activity-list" class="udm-activity-list"></ul>
+                        </div>
+                    </section>
+                </div>
+                <div class="users-modal__panel" data-panel="overview">
+                    <div class="users-modal__grid">
+                        <section class="udm-card">
+                            <header class="udm-card__head">
+                                <span class="material-symbols-outlined udm-card__icon udm-card__icon--orange">tune</span>
+                                <div>
+                                    <h3 class="udm-card__title">Настройки</h3>
+                                    <p class="udm-card__desc">Пробный период и индивидуальные параметры</p>
+                                </div>
+                            </header>
+                            <div class="udm-card__body">
+                                <div class="udm-toggle-row">
+                                    <div class="udm-toggle-row__info">
+                                        <span class="material-symbols-outlined">history_toggle_off</span>
+                                        <div>
+                                            <strong>Пробный период</strong>
+                                            <span id="udm-trial-label">—</span>
+                                        </div>
+                                    </div>
+                                    <label class="udm-switch">
+                                        <input type="checkbox" id="udm-trial-toggle">
+                                        <span class="udm-switch__track"></span>
+                                    </label>
+                                </div>
+                                <div class="udm-toggle-row udm-toggle-row--border">
+                                    <div class="udm-toggle-row__info">
+                                        <span class="material-symbols-outlined">badge</span>
+                                        <div>
+                                            <strong>Индивидуальные настройки</strong>
+                                            <span>Скидки и параметры продавца</span>
+                                        </div>
+                                    </div>
+                                    <label class="udm-switch">
+                                        <input type="checkbox" id="udm-seller-active">
+                                        <span class="udm-switch__track"></span>
+                                    </label>
+                                </div>
+                                <div id="udm-seller-settings" class="udm-seller-form hidden">
+                                    <div class="udm-seller-form__grid">
+                                        <label class="udm-field">
+                                            <span>Скидка %</span>
+                                            <input type="number" step="0.1" id="udm-seller-sale" placeholder="0">
+                                        </label>
+                                        <label class="udm-field">
+                                            <span>Реф. %</span>
+                                            <input type="number" step="0.1" id="udm-seller-ref" placeholder="0">
+                                        </label>
+                                        <label class="udm-field">
+                                            <span>UUID</span>
+                                            <input type="text" id="udm-seller-uuid" placeholder="0">
+                                        </label>
+                                    </div>
+                                    <button type="button" id="udm-save-seller-btn" class="udm-btn udm-btn--primary udm-btn--block">Сохранить</button>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="udm-card udm-card--refs">
+                            <header class="udm-card__head">
+                                <span class="material-symbols-outlined udm-card__icon udm-card__icon--purple">diversity_3</span>
+                                <div>
+                                    <h3 class="udm-card__title">Рефералы</h3>
+                                    <p class="udm-card__desc">Код приглашения и список рефералов</p>
+                                </div>
+                            </header>
+                            <div class="udm-card__body">
+                                <div class="udm-ref-chips">
+                                    <button type="button" class="udm-ref-chip" onclick="copyToClipboard(document.getElementById('udm-ref-code').innerText, this)">
+                                        <span class="udm-ref-chip__label">Ваш код</span>
+                                        <span class="udm-ref-chip__value demo-blur-sensitive" id="udm-ref-code">—</span>
+                                        <span class="material-symbols-outlined">content_copy</span>
+                                    </button>
+                                    <div class="udm-ref-chip udm-ref-chip--static">
+                                        <span class="udm-ref-chip__label">Пригласил</span>
+                                        <span class="udm-ref-chip__value" id="udm-referred-by">—</span>
+                                    </div>
+                                </div>
+                                <div class="udm-ref-list-head">
+                                    <label class="udm-ref-filter" title="Сначала с тратами > 0₽">
+                                        <input type="checkbox" id="udm-ref-filter-spent">
+                                        <span class="udm-switch__track udm-switch__track--sm"></span>
+                                        <span>Активные</span>
+                                    </label>
+                                    <span class="udm-ref-count" id="udm-ref-count-badge">
+                                        <span id="udm-ref-count">0</span> / <span id="udm-refs-total">0</span>
+                                    </span>
+                                </div>
+                                <ul id="udm-referrals-list" class="udm-ref-list"></ul>
+                                <button type="button" id="udm-refs-load-more" class="udm-btn udm-btn--ghost udm-btn--block hidden">
+                                    <span class="material-symbols-outlined">expand_circle_down</span>Загрузить ещё
+                                </button>
+                            </div>
+                        </section>
+                    </div>
+
+                    <section class="udm-card udm-card--support" id="udm-support-section">
+                        <header class="udm-card__head">
+                            <span class="material-symbols-outlined udm-card__icon udm-card__icon--blue">support_agent</span>
+                            <div>
+                                <h3 class="udm-card__title">Поддержка</h3>
+                                <p class="udm-card__desc">Обращения пользователя</p>
+                            </div>
+                            <span class="udm-badge udm-badge--info" id="udm-support-count">0</span>
+                        </header>
+                        <div class="udm-card__body">
+                            <div id="udm-support-list" class="users-support-list"></div>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="users-modal__panel" data-panel="subs">
+                    <section class="udm-card">
+                        <header class="udm-card__head">
+                            <span class="material-symbols-outlined udm-card__icon udm-card__icon--blue">vpn_key</span>
+                            <div>
+                                <h3 class="udm-card__title">Подписки</h3>
+                                <p class="udm-card__desc" id="udm-subs-stats"></p>
+                            </div>
+                        </header>
+                        <div class="udm-card__body udm-card__body--flush">
+                            <div id="udm-subs-list" class="udm-subs-list"></div>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="users-modal__panel" data-panel="payments">
+                    <section class="udm-card">
+                        <header class="udm-card__head">
+                            <span class="material-symbols-outlined udm-card__icon udm-card__icon--green">receipt_long</span>
+                            <div>
+                                <h3 class="udm-card__title">История платежей</h3>
+                                <p class="udm-card__desc">Платежи, касса и метаданные</p>
+                            </div>
+                            <button type="button" id="udm-clear-payment-history" class="udm-btn udm-btn--danger udm-btn--sm" title="Очистить историю">
+                                <span class="material-symbols-outlined">delete_sweep</span>Очистить
+                            </button>
+                        </header>
+                        <div class="udm-card__body udm-card__body--flush">
+                            <div class="udm-table-wrap">
+                                <table class="udm-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Дата / ID</th>
+                                            <th>Событие</th>
+                                            <th>Детали</th>
+                                            <th>Метод</th>
+                                            <th>Сумма</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="udm-payment-history"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="users-modal__panel" data-panel="balance">
+                    <section class="udm-card">
+                        <header class="udm-card__head">
+                            <span class="material-symbols-outlined udm-card__icon udm-card__icon--orange">account_balance</span>
+                            <div>
+                                <h3 class="udm-card__title">История баланса</h3>
+                                <p class="udm-card__desc">Пополнения, списания и рефералка</p>
+                            </div>
+                            <button type="button" id="udm-clear-balance-history" class="udm-btn udm-btn--danger udm-btn--sm" title="Очистить историю">
+                                <span class="material-symbols-outlined">delete_sweep</span>Очистить
+                            </button>
+                        </header>
+                        <div class="udm-card__body udm-card__body--flush">
+                            <div class="udm-table-wrap">
+                                <table class="udm-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Дата / ID</th>
+                                            <th>Событие</th>
+                                            <th>Детали</th>
+                                            <th>Метод</th>
+                                            <th>Сумма</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="udm-balance-history"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/users-panel.js') }}"></script>
+<script>
+    (function () {
+        const escapeHtml = window.panelEscapeHtml || ((v) => String(v ?? ''));
+
+        async function clearBalanceHistory(uid) {
+            showConfirmModal(
+                'Очистка истории баланса',
+                'Вы уверены, что хотите полностью очистить историю транзакций баланса для этого пользователя?',
+                async () => {
+                    try {
+                        const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+                        const resp = await fetch(`{{ url_for('clear_balance_history_route', user_id=0) }}`.replace('/0/', `/${uid}/`), {
+                            method: 'POST',
+                            headers: { 'X-CSRFToken': csrfToken },
+                            credentials: 'same-origin'
+                        });
+                        const data = await resp.json();
+                        if (data && data.ok) {
+                            showToast('success', data.message || 'История очищена');
+                            document.getElementById('udm-balance-history').innerHTML = '<tr><td colspan="5" class="px-4 py-4 text-center text-white/50">История очищена</td></tr>';
+                        } else {
+                            showToast('danger', (data && data.error) || 'Ошибка при очистке');
+                        }
+                    } catch (e) {
+                        showToast('danger', 'Ошибка соединения: ' + e.message);
+                    }
+                }
+            );
+        }
+
+        async function clearPaymentHistory(uid) {
+            showConfirmModal(
+                'Очистка истории платежей',
+                'Вы уверены, что хотите полностью очистить историю внешних платежей для этого пользователя?',
+                async () => {
+                    try {
+                        const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+                        const resp = await fetch(`{{ url_for('clear_payment_history_route', user_id=0) }}`.replace('/0/', `/${uid}/`), {
+                            method: 'POST',
+                            headers: { 'X-CSRFToken': csrfToken },
+                            credentials: 'same-origin'
+                        });
+                        const data = await resp.json();
+                        if (data && data.ok) {
+                            showToast('success', data.message || 'История очищена');
+                            document.getElementById('udm-payment-history').innerHTML = '<tr><td colspan="5" class="px-5 py-8 text-center text-white/30 text-xs uppercase tracking-widest font-bold">История пуста</td></tr>';
+                        } else {
+                            showToast('danger', (data && data.error) || 'Ошибка при очистке');
+                        }
+                    } catch (e) {
+                        showToast('danger', 'Ошибка соединения: ' + e.message);
+                    }
+                }
+            );
+        }
+
+        document.getElementById('udm-clear-balance-history')?.addEventListener('click', function () {
+            const uid = document.getElementById('udm-trial-toggle')?.getAttribute('data-user-id');
+            if (uid) clearBalanceHistory(uid);
+        });
+
+        document.getElementById('udm-clear-payment-history')?.addEventListener('click', function () {
+            const uid = document.getElementById('udm-trial-toggle')?.getAttribute('data-user-id');
+            if (uid) clearPaymentHistory(uid);
+        });
+
+        window.usersOpenDetails = async function (uid) {
+            if (!uid) return;
+            const modal = document.getElementById('userDetailsModal');
+            if (!modal) return;
+            modal.classList.add('open');
+            if (typeof window.openModal === 'function') {
+                window.openModal('userDetailsModal');
+            }
+            await fetchUserDetails(uid);
+        };
+
+        document.addEventListener('click', async function (e) {
+            const page = e.target.closest('.users-page');
+            if (!page) return;
+
+            const balBtn = e.target.closest('.btn-user-balance-sign');
+            if (balBtn) {
+                e.preventDefault();
+                openBalanceModalForUser(
+                    balBtn.getAttribute('data-uid'),
+                    balBtn.getAttribute('data-username') || 'N/A',
+                    balBtn.getAttribute('data-balance') || '0.00',
+                    balBtn.getAttribute('data-sign') || ''
+                );
+                return;
+            }
+
+            const msgBtn = e.target.closest('.btn-user-message');
+            if (msgBtn) {
+                e.preventDefault();
+                openMessageModalForUser(msgBtn.getAttribute('data-uid'), msgBtn.getAttribute('data-username') || 'N/A');
+                return;
+            }
+
+            const detBtn = e.target.closest('.btn-user-details');
+            if (detBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                await window.usersOpenDetails(detBtn.getAttribute('data-uid'));
+            }
+        });
+
+        const listEl = document.getElementById('users-list');
+
+        async function openBalanceModalForUser(uid, uname, balance, sign = '') {
+            let refs = [];
+            try {
+                const resp = await fetch(`{{ url_for('user_referrals_json', user_id=0) }}`.replace('/0/', `/${uid}/`), { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' });
+                const data = await resp.json();
+                refs = (data && data.ok) ? (data.items || []) : [];
+            } catch (_) { }
+
+            document.getElementById('bm-user').classList.add('demo-blur-username');
+            document.getElementById('bm-user').textContent = `@${uname} (#${uid})`;
+            document.getElementById('bm-balance').textContent = balance;
+            document.getElementById('bm-form').action = `{{ url_for('adjust_balance_route', user_id=0) }}`.replace('/0/', `/${uid}/`);
+            document.getElementById('bm-refcount').textContent = refs.length;
+            document.getElementById('bm-reflist').innerHTML = refs.map(r =>
+                `<li>#${escapeHtml(r.telegram_id)} — <span class="demo-blur-username">@${escapeHtml(r.username || 'N/A')}</span> · ${escapeHtml(r.registration_date)}</li>`
+            ).join('');
+
+            const deltaInput = document.querySelector('#bm-form input[name="delta"]');
+            if (deltaInput) {
+                deltaInput.value = sign;
+                setTimeout(() => { deltaInput.focus(); deltaInput.setSelectionRange(1, 1); }, 100);
+            }
+            openModal('balanceModal');
+        }
+
+        function reloadUsersList() {
+            if (typeof window.usersPanelReload === 'function') window.usersPanelReload();
+        }
+
+        document.querySelectorAll('#udm-tabs .users-modal__tab').forEach((tab) => {
+            tab.addEventListener('click', () => {
+                const name = tab.dataset.tab;
+                document.querySelectorAll('#udm-tabs .users-modal__tab').forEach((t) => t.classList.toggle('is-active', t === tab));
+                document.querySelectorAll('.users-modal__panel').forEach((p) => p.classList.toggle('is-active', p.dataset.panel === name));
+            });
+        });
+
+        function openMessageModalForUser(uid, uname) {
+            document.getElementById('mm-user').textContent = `@${uname} (#${uid})`;
+            document.getElementById('mm-form').action = `{{ url_for('send_user_message_route', user_id=0) }}`.replace('/0', `/${uid}`);
+            document.querySelector('#mm-form textarea[name="message"]').value = '';
+            openModal('messageModal');
+        }
+
+        async function revokeAllKeys(uid, uname) {
+            const confirmBtn = document.getElementById('revokeAllConfirmBtn');
+            confirmBtn.onclick = async () => {
+                const data = await apiRequest(
+                    `{{ url_for('revoke_keys_route', user_id=0) }}`.replace('/0', `/${uid}`),
+                    'POST',
+                    {},
+                    'Все ключи пользователя отозваны'
+                );
+                if (data) {
+                    closeModal('revokeAllConfirmModal');
+                    const udmContent = document.getElementById('udm-content');
+                    if (!udmContent.classList.contains('hidden')) {
+                        fetchUserDetails(uid);
+                    }
+                }
+            };
+            openModal('revokeAllConfirmModal');
+        }
+
+        // ===== УНИВЕРСАЛЬНЫЙ ЗАПРОС =====
+        async function apiRequest(url, method, body, successMsg) {
+            try {
+                const fd = body instanceof FormData ? body : new FormData();
+                if (!(body instanceof FormData) && typeof body === 'object') Object.entries(body).forEach(([k, v]) => fd.append(k, v));
+
+                const csrfToken = getCsrfToken();
+                fd.append('csrf_token', csrfToken);
+
+                const resp = await fetch(url, {
+                    method,
+                    body: fd,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': csrfToken
+                    },
+                    credentials: 'same-origin'
+                });
+                const data = await resp.json().catch(() => ({ ok: resp.ok }));
+                if (data.ok) {
+                    if (successMsg) showToast('success', successMsg);
+                    return data;
+                }
+                showToast('danger', (data && data.message) || data.error || 'Ошибка операции');
+                return null;
+            } catch (e) {
+                showToast('danger', 'Ошибка сети: ' + e.message);
+                return null;
+            }
+        }
+
+        // ===== УНИВЕРСАЛЬНЫЙ ЗАПРОС ПЕРЕНЕСЕН В BASE.HTML =====
+
+        // Оставляем только специфичную логику если нужно, но AJAX формы теперь в base.html
+
+        document.addEventListener('submit', (e) => {
+            const form = e.target.closest('#commentForm, #expiryForm, #revokeKeyInternalForm');
+            if (!form) return;
+        });
+
+        async function fetchUserDetails(uid) {
+            const loadingEl = document.getElementById('udm-loading');
+            const contentEl = document.getElementById('udm-content');
+            if (loadingEl) {
+                loadingEl.classList.remove('hidden');
+                loadingEl.innerHTML = '<span class="material-symbols-outlined animate-spin">progress_activity</span><p>Загрузка профиля...</p>';
+            }
+            contentEl?.classList.add('hidden');
+
+            try {
+                const resp = await fetch(`{{ url_for('user_details_json', user_id=0) }}`.replace('/0', `/${uid}`), {
+                    headers: { 'Accept': 'application/json' },
+                    credentials: 'same-origin'
+                });
+                const data = await resp.json();
+                if (typeof data === 'string' && isLoginPage(data)) { window.location.reload(); return; }
+
+                if (data && data.ok) {
+                    const sellerInfo = data.seller_info || { active: false, settings: {} };
+                    const sellerActive = sellerInfo.active;
+                    const sellerSettings = sellerInfo.settings || { seller_sale: 0, seller_ref: 0, seller_uuid: "0" };
+
+                    const sellerToggle = document.getElementById('udm-seller-active');
+                    const sellerContainer = document.getElementById('udm-seller-settings');
+                    const sellerSaleInput = document.getElementById('udm-seller-sale');
+                    const sellerRefInput = document.getElementById('udm-seller-ref');
+                    const sellerUuidInput = document.getElementById('udm-seller-uuid');
+                    const sellerSaveBtn = document.getElementById('udm-save-seller-btn');
+
+                    if (sellerToggle && sellerContainer && sellerSaleInput && sellerRefInput && sellerUuidInput && sellerSaveBtn) {
+                        sellerToggle.checked = sellerActive;
+                        if (sellerActive) {
+                            sellerContainer.classList.remove('hidden');
+                        } else {
+                            sellerContainer.classList.add('hidden');
+                        }
+
+                        sellerSaleInput.value = sellerSettings.seller_sale || 0;
+                        sellerRefInput.value = sellerSettings.seller_ref || 0;
+                        sellerUuidInput.value = sellerSettings.seller_uuid || "0";
+
+                        const saveSellerSettings = async () => {
+                            const payload = new FormData();
+                            payload.append('seller_active', sellerToggle.checked ? 1 : 0);
+                            payload.append('seller_sale', sellerSaleInput.value);
+                            payload.append('seller_ref', sellerRefInput.value);
+                            payload.append('seller_uuid', sellerUuidInput.value);
+
+                            const csrfToken = getCsrfToken();
+                            payload.append('csrf_token', csrfToken);
+
+                            sellerSaveBtn.disabled = true;
+                            const oldText = sellerSaveBtn.textContent;
+                            sellerSaveBtn.textContent = 'Сохранение...';
+
+                            try {
+                                const resp = await fetch(`/admin/users/${uid}/seller_settings`, {
+                                    method: 'POST',
+                                    body: payload,
+                                    headers: {
+                                        'X-Requested-With': 'XMLHttpRequest',
+                                        'X-CSRFToken': csrfToken
+                                    }
+                                });
+                                const res = await resp.json();
+                                if (res.ok) {
+                                    showToast('success', 'Настройки продавца сохранены');
+                                } else {
+                                    showToast('danger', 'Ошибка: ' + res.error);
+                                }
+                            } catch (e) {
+                                showToast('danger', 'Ошибка сохранения: ' + e);
+                            } finally {
+                                sellerSaveBtn.disabled = false;
+                                sellerSaveBtn.textContent = oldText;
+                            }
+                        };
+
+                        sellerToggle.onchange = () => {
+                            if (sellerToggle.checked) {
+                                sellerContainer.classList.remove('hidden');
+                            } else {
+                                sellerContainer.classList.add('hidden');
+                            }
+                            saveSellerSettings();
+                        };
+
+                        sellerSaveBtn.onclick = saveSellerSettings;
+                    }
+
+                    const unameRaw = data.user.username || 'N/A';
+                    document.getElementById('udm-telegram-id').textContent = '#' + (data.user.telegram_id || 'N/A');
+                    document.getElementById('udm-username').classList.add('demo-blur-username');
+                    document.getElementById('udm-username').textContent = '@' + unameRaw;
+                    document.getElementById('udm-registration').textContent = data.user.registration_date || '';
+                    document.getElementById('udm-total-spent').textContent = (data.user.total_spent || 0).toFixed(2) + ' ₽';
+                    document.getElementById('udm-total-months').textContent = (data.user.total_months || 0);
+                    const refBalEl = document.getElementById('udm-ref-balance');
+                    if (refBalEl) {
+                        refBalEl.textContent = (data.user.referral_balance || 0).toFixed(2) + ' ₽';
+                        refBalEl.title = 'Всего: ' + (data.user.referral_balance_all || 0).toFixed(2) + ' ₽';
+                    }
+                    const avatarWrap = document.getElementById('udm-avatar');
+                    const avatarImg = document.getElementById('udm-avatar-img');
+                    const avatarFallback = document.getElementById('udm-avatar-fallback');
+                    if (avatarWrap && avatarFallback) {
+                        avatarFallback.textContent = (unameRaw[0] || 'U').toUpperCase();
+                        avatarWrap.classList.toggle('is-banned', !!data.user.is_banned);
+                    }
+                    if (avatarImg) {
+                        avatarImg.hidden = true;
+                        avatarImg.removeAttribute('src');
+                        if (data.user.avatar_url) {
+                            avatarImg.onload = () => { avatarImg.hidden = false; };
+                            avatarImg.onerror = () => { avatarImg.hidden = true; };
+                            avatarImg.src = data.user.avatar_url;
+                        }
+                    }
+                    const udmStatusBadge = document.getElementById('udm-status-badge');
+                    if (udmStatusBadge) {
+                        udmStatusBadge.textContent = data.user.is_banned ? 'Забанен' : 'Активен';
+                        udmStatusBadge.className = 'udm-badge ' + (data.user.is_banned ? 'udm-badge--banned' : 'udm-badge--active');
+                    }
+                    const authEmailEl = document.getElementById('udm-auth-email');
+                    if (authEmailEl) {
+                        if (data.user.auth_email) {
+                            authEmailEl.textContent = data.user.auth_email;
+                            authEmailEl.classList.remove('hidden');
+                        } else {
+                            authEmailEl.classList.add('hidden');
+                        }
+                    }
+
+                    const trialToggle = document.getElementById('udm-trial-toggle');
+                    const trialLabel = document.getElementById('udm-trial-label');
+                    trialToggle.checked = data.user.trial_used || false;
+                    trialToggle.setAttribute('data-user-id', uid);
+                    trialLabel.textContent = data.user.trial_used ? 'Использовано' : 'Не использовано';
+
+                    document.getElementById('udm-ref-code').textContent = data.user.referral_code || 'N/A';
+                    document.getElementById('udm-ref-count').textContent = data.user.referral_count || '0';
+                    document.getElementById('udm-referred-by').textContent = data.user.referred_by?.username ?
+                        `@${data.user.referred_by.username} (#${data.user.referred_by.telegram_id})` : 'Не приглашён';
+                    document.getElementById('udm-balance').textContent = (data.user.balance || 0).toFixed(2) + ' ₽';
+
+                    const pinBadge = document.getElementById('udm-pinned-badge');
+                    const pinBtn = document.getElementById('udm-action-pin');
+                    if (pinBadge) pinBadge.classList.toggle('hidden', !data.user.is_pinned);
+                    if (pinBtn) pinBtn.classList.toggle('is-pinned', !!data.user.is_pinned);
+
+                    const pinText = document.getElementById('udm-action-pin-text');
+                    if (pinText) pinText.textContent = data.user.is_pinned ? 'Открепить' : 'Закрепить';
+
+                    const banBtn = document.getElementById('udm-action-ban');
+                    const banText = document.getElementById('udm-action-ban-text');
+                    const banIcon = document.getElementById('udm-action-ban-icon');
+                    if (banText) banText.textContent = data.user.is_banned ? 'Разбан' : 'Бан';
+                    if (banBtn) {
+                        banBtn.classList.toggle('udm-tool-btn--green', !!data.user.is_banned);
+                        banBtn.classList.toggle('udm-tool-btn--warn', !data.user.is_banned);
+                    }
+                    if (banIcon) banIcon.textContent = data.user.is_banned ? 'check_circle' : 'block';
+
+                    const subsStats = document.getElementById('udm-subs-stats');
+                    const subsList = document.getElementById('udm-subs-list');
+                    if (subsStats) {
+                        subsStats.textContent = data.subs_stats ?
+                            `(Всего: ${data.subs_stats.total}, Активно: ${data.subs_stats.active}, Истекло: ${data.subs_stats.expired})` : '';
+                    }
+                    if (subsList) subsList.innerHTML = data.subscriptions?.length ? data.subscriptions.map(sub => {
+                        function formatDuration(dateStr) {
+                            if (!dateStr || sub.is_expired) return '';
+                            const d = new Date(dateStr);
+                            const now = new Date();
+                            const diffDays = Math.ceil((d - now) / (1000 * 60 * 60 * 24));
+                            if (diffDays <= 0) return '';
+                            if (diffDays > 30) {
+                                const months = Math.round(diffDays / 30);
+                                return `(${months} мес.)`;
+                            }
+                            return '';
+                        }
+                        const durationText = formatDuration(sub.expire_date);
+                        const emailDisp = sub.email ? escapeHtml(sub.email.split('@')[0]) : 'N/A';
+
+                        return `
+                    <div class="udm-sub-card${sub.is_expired ? ' udm-sub-card--expired' : ''}">
+                        <div class="udm-sub-card__top">
+                            <div class="udm-sub-card__status">
+                                <span class="udm-sub-status ${sub.is_expired ? 'udm-sub-status--expired' : 'udm-sub-status--active'}">${escapeHtml(sub.status_text)}</span>
+                                ${durationText ? `<span class="udm-sub-duration">${escapeHtml(durationText)}</span>` : ''}
+                                <span class="udm-sub-expire">· ${escapeHtml(sub.expire_date)}</span>
+                            </div>
+                            <div class="udm-sub-card__meta">
+                                ${sub.admin_comment ? `<span class="udm-sub-tag udm-sub-tag--green" title="${escapeHtml(sub.admin_comment)}">${escapeHtml(sub.admin_comment)}</span>` : ''}
+                                ${sub.user_comment ? `<span class="udm-sub-tag udm-sub-tag--blue" title="${escapeHtml(sub.user_comment)}">${escapeHtml(sub.user_comment)}</span>` : ''}
+                                <span class="udm-sub-tag">${escapeHtml(sub.host_name)}</span>
+                            </div>
+                        </div>
+                        <div class="udm-sub-key">
+                            <span class="udm-sub-key__text">${escapeHtml(sub.key)}</span>
+                            <button type="button" data-copy="${escapeHtml(sub.key)}" onclick="copyToClipboard(this.dataset.copy, this)" class="udm-icon-btn" title="Скопировать">
+                                <span class="material-symbols-outlined" style="font-size:1rem">content_copy</span>
+                            </button>
+                            <button type="button" data-url="${escapeHtml(sub.key)}" onclick="window.open(this.dataset.url, '_blank')" class="udm-icon-btn" title="Открыть">
+                                <span class="material-symbols-outlined" style="font-size:1rem">open_in_new</span>
+                            </button>
+                        </div>
+                        <div class="udm-sub-footer">
+                            <div class="udm-sub-chips">
+                                <button type="button" class="udm-sub-chip" data-copy="${escapeHtml(sub.email)}" onclick="copyToClipboard(this.dataset.copy, this)" title="Скопировать email">
+                                    <span class="material-symbols-outlined" style="font-size:0.75rem">mail</span>
+                                    <strong>${escapeHtml(sub.email)}</strong>
+                                </button>
+                                <button type="button" class="udm-sub-chip" data-copy="${escapeHtml(sub.email ? sub.email.split('@')[0] : '')}" onclick="copyToClipboard(this.dataset.copy, this)" title="User">
+                                    <span class="material-symbols-outlined" style="font-size:0.75rem">person</span>
+                                    <strong>${emailDisp}</strong>
+                                </button>
+                                <button type="button" class="udm-sub-chip" data-copy="${escapeHtml(sub.remnawave_user_uuid)}" onclick="copyToClipboard(this.dataset.copy, this)" title="UUID">
+                                    <span class="material-symbols-outlined" style="font-size:0.75rem">fingerprint</span>
+                                    <strong>${escapeHtml((sub.remnawave_user_uuid || '').substring(0, 8))}…</strong>
+                                </button>
+                            </div>
+                            <div class="udm-sub-actions">
+                                <button type="button" class="udm-icon-btn udm-icon-btn--warn btn-user-edit-expiry" data-key-id="${escapeHtml(sub.key_id)}" title="Изменить срок">
+                                    <span class="material-symbols-outlined" style="font-size:1rem">schedule</span>
+                                </button>
+                                <button type="button" class="udm-icon-btn btn-user-edit-comment" data-key-id="${escapeHtml(sub.key_id)}" data-current-comment="${escapeHtml(sub.admin_comment || '')}" title="Комментарий">
+                                    <span class="material-symbols-outlined" style="font-size:1rem">comment</span>
+                                </button>
+                                <button type="button" class="udm-icon-btn udm-icon-btn--danger btn-user-revoke-key" data-key-id="${escapeHtml(sub.key_id)}" title="Отозвать">
+                                    <span class="material-symbols-outlined" style="font-size:1rem">delete</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `}).join('') : '<div class="udm-sub-empty">Нет активных подписок</div>';
+
+                    function formatWithRelative(dateStr) {
+                        if (!dateStr) return 'N/A';
+                        try {
+                            const d = new Date(dateStr);
+                            const now = new Date();
+                            const diffMs = now - d;
+                            const diffMins = Math.floor(diffMs / 60000);
+                            const diffHours = Math.floor(diffMs / 3600000);
+                            const diffDays = Math.floor(diffMs / 86400000);
+
+                            let rel = '';
+                            if (diffMins < 60) rel = `(${diffMins}мин)`;
+                            else if (diffHours < 24) rel = `(${diffHours}ч)`;
+                            else if (diffDays < 30) rel = `(${diffDays}д)`;
+                            else if (diffDays < 365) rel = `(${Math.round(diffDays / 30)}мес)`;
+                            else rel = `(${Math.round(diffDays / 365)}г)`;
+
+                            const Y = d.getFullYear();
+                            const M = String(d.getMonth() + 1).padStart(2, '0');
+                            const D = String(d.getDate()).padStart(2, '0');
+                            const h = String(d.getHours()).padStart(2, '0');
+                            const m = String(d.getMinutes()).padStart(2, '0');
+                            const s = String(d.getSeconds()).padStart(2, '0');
+
+                            return `${Y}-${M}-${D} ${h}:${m}:${s} <span class="text-white/50 text-xs">${rel}</span>`;
+                        } catch (e) {
+                            return dateStr;
+                        }
+                    }
+
+                    function formatMoney(value, signed = false) {
+                        const num = Number(value || 0);
+                        const sign = signed && num > 0 ? '+' : '';
+                        return `${sign}${num.toFixed(2)} ₽`;
+                    }
+
+                    function renderTxStatusBadge(status) {
+                        const s = String(status || 'unknown').toLowerCase();
+                        const cls = ['paid', 'completed', 'success'].includes(s)
+                            ? 'udm-tx-badge--ok'
+                            : s === 'pending'
+                                ? 'udm-tx-badge--pending'
+                                : 'udm-tx-badge--fail';
+                        return `<span class="udm-tx-badge ${cls}">${escapeHtml(status || 'N/A')}</span>`;
+                    }
+
+                    function renderTxDetails(tx) {
+                        const parts = Array.isArray(tx.details) ? tx.details : [];
+                        const chips = parts.map(item => `<span class="inline-flex px-2 py-1 rounded-lg bg-white/5 border border-white/5 text-white/60 text-[10px]">${escapeHtml(item)}</span>`).join('');
+                        const metadata = tx.metadata && Object.keys(tx.metadata).length
+                            ? `<details class="mt-2"><summary class="cursor-pointer text-[10px] text-primary/80 hover:text-primary font-bold uppercase tracking-wider">metadata JSON</summary><pre class="mt-2 max-w-[520px] whitespace-pre-wrap break-all rounded-xl bg-black/30 border border-white/5 p-3 text-[10px] text-white/50">${escapeHtml(JSON.stringify(tx.metadata, null, 2))}</pre></details>`
+                            : '';
+                        return `<div class="min-w-[320px] max-w-[620px]"><div class="flex flex-wrap gap-1.5">${chips || '<span class="text-white/30">Нет деталей</span>'}</div>${metadata}</div>`;
+                    }
+
+                    function renderTxRow(tx, isBalance = false) {
+                        const amount = Number(tx.amount || 0);
+                        const amountClass = amount < 0 ? 'text-red-400' : amount > 0 ? 'text-emerald-400' : 'text-white';
+                        const payId = tx.payment_id || '—';
+                        const shortPayId = payId.length > 18 ? `${payId.slice(0, 8)}…${payId.slice(-6)}` : payId;
+                        const currencyLine = tx.amount_currency || tx.currency_name
+                            ? `<div class="text-[10px] text-white/35 mt-1">${escapeHtml(tx.amount_currency || '—')} ${escapeHtml(tx.currency_name || '')}</div>`
+                            : '';
+                        return `
+                    <tr class="hover:bg-white/5 transition-colors group align-top">
+                        <td class="px-5 py-3 text-xs text-white/70 whitespace-nowrap border-b border-dashed border-white/5 group-last:border-none font-mono">
+                            <div>${formatWithRelative(tx.date)}</div>
+                            <div class="mt-2 space-y-1">
+                                <div class="text-[10px] text-white/35">TX: <span class="text-white/60">#${escapeHtml(tx.transaction_id || '—')}</span></div>
+                                <button type="button" data-copy="${escapeHtml(payId)}" onclick="copyToClipboard(this.dataset.copy, this)" class="text-left text-[10px] text-primary/80 hover:text-primary" title="${escapeHtml(payId)}">PAY: ${escapeHtml(shortPayId)}</button>
+                            </div>
+                        </td>
+                        <td class="px-5 py-3 text-xs border-b border-dashed border-white/5 group-last:border-none">
+                            <div class="font-bold text-white">${escapeHtml(tx.type || tx.action_label || 'Событие')}</div>
+                            <div class="mt-1 text-[10px] text-white/35 font-mono">${escapeHtml(tx.action || 'no_action')}</div>
+                        </td>
+                        <td class="px-5 py-3 text-xs border-b border-dashed border-white/5 group-last:border-none">${renderTxDetails(tx)}</td>
+                        <td class="px-5 py-3 text-xs border-b border-dashed border-white/5 group-last:border-none whitespace-nowrap">
+                            <div class="font-bold text-white/70">${escapeHtml(tx.method_label || tx.payment_method || 'N/A')}</div>
+                            <div class="mt-1">${renderTxStatusBadge(tx.status)}</div>
+                        </td>
+                        <td class="px-5 py-3 text-xs font-bold whitespace-nowrap border-b border-dashed border-white/5 group-last:border-none font-mono ${amountClass}">
+                            ${formatMoney(amount, isBalance)}
+                            ${currencyLine}
+                        </td>
+                    </tr>`;
+                    }
+
+                    const emptyHistoryRow = '<tr><td colspan="5" class="udm-table-empty">История пуста</td></tr>';
+
+                    const paymentHistory = document.getElementById('udm-payment-history');
+                    if (paymentHistory) {
+                        paymentHistory.innerHTML = data.payment_history?.length
+                            ? data.payment_history.map(tx => renderTxRow(tx, false)).join('')
+                            : emptyHistoryRow;
+                    }
+
+                    const balanceHistory = document.getElementById('udm-balance-history');
+                    if (balanceHistory) {
+                        balanceHistory.innerHTML = data.balance_history?.length
+                            ? data.balance_history.map(tx => renderTxRow(tx, true)).join('')
+                            : emptyHistoryRow;
+                    }
+
+                    const supportList = document.getElementById('udm-support-list');
+                    const supportCount = document.getElementById('udm-support-count');
+                    const tickets = data.support_tickets || [];
+                    if (supportCount) supportCount.textContent = data.support_tickets_count || tickets.length;
+                    if (supportList) {
+                        supportList.innerHTML = tickets.length ? tickets.map(t => `
+                            <a href="/support/${encodeURIComponent(t.ticket_id)}" class="users-support-item">
+                                <span>#${escapeHtml(t.ticket_id)} · ${escapeHtml(t.subject || 'Без темы')}</span>
+                                <span class="udm-badge ${t.status === 'open' ? 'udm-badge--active' : ''}">${t.status === 'open' ? 'Открыт' : 'Закрыт'}</span>
+                            </a>
+                        `).join('') : '<p class="udm-ref-empty">Обращений нет</p>';
+                    }
+
+                    const activityList = document.getElementById('udm-activity-list');
+                    if (activityList) {
+                        const kindIcon = {
+                            payment: 'receipt_long',
+                            balance: 'account_balance_wallet',
+                            support: 'support_agent',
+                            admin: 'admin_panel_settings',
+                            system: 'person_add',
+                        };
+                        const kindClass = {
+                            payment: 'udm-activity-item--payment',
+                            balance: 'udm-activity-item--balance',
+                            support: 'udm-activity-item--support',
+                            admin: 'udm-activity-item--admin',
+                            system: 'udm-activity-item--system',
+                        };
+                        const items = data.activity || [];
+                        activityList.innerHTML = items.length ? items.map(item => {
+                            const amount = item.amount != null && item.kind !== 'support'
+                                ? `<span class="udm-activity-item__amount">${formatMoney(Number(item.amount), item.kind === 'balance')}</span>`
+                                : '';
+                            const ticketLink = item.ticket_id
+                                ? `<a href="/support/${item.ticket_id}" class="udm-activity-item__link">Открыть →</a>`
+                                : '';
+                            return `
+                            <li class="udm-activity-item ${kindClass[item.kind] || ''}">
+                                <span class="udm-activity-item__icon material-symbols-outlined">${kindIcon[item.kind] || 'info'}</span>
+                                <div class="udm-activity-item__body">
+                                    <div class="udm-activity-item__title">${escapeHtml(item.title || 'Событие')}</div>
+                                    <div class="udm-activity-item__sub">${escapeHtml(item.subtitle || '')}</div>
+                                    <div class="udm-activity-item__date">${formatWithRelative(item.date)}</div>
+                                    ${ticketLink}
+                                </div>
+                                ${amount}
+                            </li>`;
+                        }).join('') : '<li class="udm-activity-empty">Нет записей активности</li>';
+                    }
+
+                    document.querySelectorAll('#udm-tabs .users-modal__tab').forEach((t) => t.classList.toggle('is-active', t.dataset.tab === 'activity'));
+                    document.querySelectorAll('.users-modal__panel').forEach((p) => p.classList.toggle('is-active', p.dataset.panel === 'activity'));
+
+                    document.getElementById('udm-loading').classList.add('hidden');
+                    document.getElementById('udm-content').classList.remove('hidden');
+                } else {
+                    showToast('danger', 'Не удалось загрузить данные пользователя');
+                    const loading = document.getElementById('udm-loading');
+                    if (loading) {
+                        loading.classList.remove('hidden');
+                        loading.innerHTML = '<p class="udm-ref-empty">Не удалось загрузить профиль</p>';
+                    }
+                    document.getElementById('udm-content')?.classList.add('hidden');
+                }
+
+                try {
+                    const refResp = await fetch(`{{ url_for('user_referrals_json', user_id=0) }}`.replace('/0', `/${uid}`), {
+                        headers: { 'Accept': 'application/json' }, credentials: 'same-origin'
+                    });
+                    const refData = await refResp.json();
+                    let refs = (refData && refData.ok) ? (refData.items || []) : [];
+
+                    document.getElementById('udm-refs-total').textContent = refs.length;
+
+                    const refsContainer = document.getElementById('udm-referrals-list');
+                    const loadMoreBtn = document.getElementById('udm-refs-load-more');
+                    const filterSpent = document.getElementById('udm-ref-filter-spent');
+
+                    let renderedCount = 0;
+                    const BATCH_SIZE_INITIAL = 4;
+                    const BATCH_SIZE_MORE = 10;
+
+                    const getSortedRefs = () => {
+                        if (!filterSpent?.checked) return [...refs];
+                        return [...refs].sort((a, b) => {
+                            const aSpent = (a.total_spent || 0) > 0;
+                            const bSpent = (b.total_spent || 0) > 0;
+                            if (aSpent !== bSpent) return bSpent ? 1 : -1;
+                            return new Date(b.registration_date) - new Date(a.registration_date);
+                        });
+                    };
+
+                    function renderRefs(count, reset = false) {
+                        if (reset) {
+                            refsContainer.innerHTML = '';
+                            renderedCount = 0;
+                        }
+                        const sorted = getSortedRefs();
+                        const next = sorted.slice(renderedCount, renderedCount + (count || 0));
+                        next.forEach(r => {
+                            const datePart = (r.registration_date || '').split(' ')[0];
+                            let relTime = '';
+                            try {
+                                const d = new Date(r.registration_date);
+                                const now = new Date();
+                                const diffDays = Math.ceil((now - d) / (1000 * 60 * 60 * 24));
+                                if (diffDays < 30) relTime = `(${diffDays} дн.)`;
+                                else if (diffDays < 365) relTime = `(${Math.round(diffDays / 30)} мес.)`;
+                                else relTime = `(${Math.round(diffDays / 365)} г.)`;
+                            } catch (_) { }
+
+                            const li = document.createElement('li');
+                            li.className = 'udm-ref-item';
+
+                            li.innerHTML = `
+                                <div class="udm-ref-item__user">
+                                    <div class="udm-ref-item__avatar">RF</div>
+                                    <div>
+                                        <div class="udm-ref-item__name demo-blur-username">@${escapeHtml(r.username || 'Без юзернейма')}</div>
+                                        <div class="udm-ref-item__id">#${escapeHtml(r.telegram_id)}</div>
+                                    </div>
+                                </div>
+                                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.25rem">
+                                    <span style="font-size:0.5625rem;color:var(--panel-text-tertiary)">${escapeHtml(datePart)} ${escapeHtml(relTime)}</span>
+                                    <div style="display:flex;align-items:center;gap:0.35rem">
+                                        <span class="udm-badge ${r.total_spent > 0 ? 'udm-badge--active' : ''}" style="font-size:0.5625rem">${escapeHtml((r.total_spent || 0).toFixed(0))} ₽</span>
+                                        <a href="{{ url_for('users_page') }}?q=${encodeURIComponent(r.telegram_id)}"
+                                           class="udm-icon-btn"
+                                           title="Перейти к пользователю" target="_blank">
+                                            <span class="material-symbols-outlined" style="font-size:0.875rem">arrow_outward</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            `;
+                            refsContainer.appendChild(li);
+                        });
+                        renderedCount += next.length;
+
+                        if (renderedCount < refs.length) {
+                            loadMoreBtn.classList.remove('hidden');
+                        } else {
+                            loadMoreBtn.classList.add('hidden');
+                        }
+
+                        const countBadge = document.getElementById('udm-ref-count');
+                        if (countBadge) countBadge.textContent = renderedCount;
+                    }
+
+                    if (refs.length > 0) {
+                        renderRefs(BATCH_SIZE_INITIAL, true);
+                    } else {
+                        refsContainer.innerHTML = '<div class="udm-ref-empty">Список пуст</div>';
+                        loadMoreBtn.classList.add('hidden');
+                    }
+
+                    filterSpent?.addEventListener('change', () => {
+                        const currentCount = renderedCount;
+                        renderRefs(currentCount, true);
+                    });
+
+                    loadMoreBtn.onclick = (e) => {
+                        e.preventDefault();
+                        renderRefs(BATCH_SIZE_MORE);
+                    };
+
+                } catch (e) {
+                    console.error(e);
+                }
+
+            } catch (err) {
+                console.error('fetchUserDetails failed', err);
+                showToast('danger', 'Ошибка загрузки профиля');
+                const loading = document.getElementById('udm-loading');
+                if (loading) {
+                    loading.classList.remove('hidden');
+                    loading.innerHTML = '<p class="udm-ref-empty">Ошибка загрузки данных</p>';
+                }
+                document.getElementById('udm-content')?.classList.add('hidden');
+            }
+        }
+
+        document.getElementById('userDetailsModal').addEventListener('click', function (e) {
+            const btn = e.target.closest('button[id^="udm-action-"]');
+            if (!btn) return;
+
+            const uid = document.getElementById('udm-trial-toggle')?.getAttribute('data-user-id');
+            const uname = document.getElementById('udm-username')?.textContent?.replace('@', '') || '';
+            const balance = document.getElementById('udm-balance')?.textContent || '0.00';
+
+            if (!uid) return;
+
+            const action = btn.id.replace('udm-action-', '');
+
+            if (action === 'add-bal' || action === 'sub-bal') {
+                const isAdd = action === 'add-bal';
+                document.getElementById('bm-user').textContent = `@${uname} (#${uid})`;
+                document.getElementById('bm-balance').textContent = balance;
+                document.getElementById('bm-form').action = `{{ url_for('adjust_balance_route', user_id=0) }}`.replace('/0', `/${uid}`);
+                document.getElementById('bm-refcount').textContent = document.getElementById('udm-ref-count').textContent;
+                document.getElementById('bm-reflist').innerHTML = '';
+
+                const deltaInput = document.querySelector('#bm-form input[name="delta"]');
+                if (deltaInput) {
+                    deltaInput.value = isAdd ? '+' : '-';
+                    setTimeout(() => { deltaInput.focus(); deltaInput.setSelectionRange(1, 1); }, 100);
+                }
+                openModal('balanceModal');
+            } else if (action === 'issue') {
+                window.location.href = `{{ url_for('admin_keys_page') }}?user_id=${uid}`;
+            } else if (action === 'msg') {
+                document.getElementById('mm-user').textContent = `@${uname} (#${uid})`;
+                document.getElementById('mm-form').action = `{{ url_for('send_user_message_route', user_id=0) }}`.replace('/0', `/${uid}`);
+                document.querySelector('#mm-form textarea[name="message"]').value = '';
+                openModal('messageModal');
+            } else if (action === 'revoke-all') {
+                revokeAllKeys(uid, uname);
+            } else if (action === 'delete') {
+                document.getElementById('delete-user-label').textContent = `@${uname} (#${uid})`;
+                const confirmBtn = document.getElementById('deleteUserConfirmBtn');
+                confirmBtn.onclick = async () => {
+                    const data = await apiRequest(
+                        `{{ url_for('delete_user_route', user_id=0) }}`.replace('/0', `/${uid}`),
+                        'POST',
+                        {},
+                        'Пользователь удалён'
+                    );
+                    if (data) {
+                        closeModal('deleteUserConfirmModal');
+                        closeModal('userDetailsModal');
+                        reloadUsersList();
+                    }
+                };
+                openModal('deleteUserConfirmModal');
+            } else if (action === 'pin') {
+                apiRequest(`{{ url_for('toggle_pin_user_route', user_id=0) }}`.replace('/0', `/${uid}`), 'POST', {}, 'Статус закрепа изменен')
+                    .then(d => {
+                        if (d) {
+                            const pinBadge = document.getElementById('udm-pinned-badge');
+                            const pinBtn = document.getElementById('udm-action-pin');
+                            const pinText = document.getElementById('udm-action-pin-text');
+
+                            const isPinnedNow = pinText.textContent === 'Закрепить';
+
+                            if (pinBadge) pinBadge.classList.toggle('hidden', !isPinnedNow);
+                            if (pinBtn) pinBtn.classList.toggle('is-pinned', isPinnedNow);
+                            if (pinText) pinText.textContent = isPinnedNow ? 'Открепить' : 'Закрепить';
+
+                            reloadUsersList();
+                        }
+                    });
+            } else if (action === 'ban') {
+                document.getElementById('banModalText').innerHTML =
+                    `Вы уверены, что хотите изменить статус блокировки для <span class="text-primary font-bold">@${escapeHtml(uname)}</span>?`;
+                const confirmBtn = document.getElementById('banConfirmBtn');
+                confirmBtn.onclick = async () => {
+                    const data = await apiRequest(
+                        `{{ url_for('toggle_block_user_route', user_id=0) }}`.replace('/0', `/${uid}`),
+                        'POST',
+                        {},
+                        'Статус блокировки изменен'
+                    );
+                    if (data) {
+                        closeModal('banConfirmModal');
+                        const isBannedNow = data.is_banned;
+                        const banBtn = document.getElementById('udm-action-ban');
+                        const banText = document.getElementById('udm-action-ban-text');
+                        const banIcon = document.getElementById('udm-action-ban-icon');
+                        const avatarEl = document.getElementById('udm-avatar');
+
+                        if (banText) banText.textContent = isBannedNow ? 'Разбан' : 'Бан';
+                        if (banBtn) {
+                            banBtn.classList.toggle('udm-tool-btn--green', isBannedNow);
+                            banBtn.classList.toggle('udm-tool-btn--warn', !isBannedNow);
+                        }
+                        if (banIcon) banIcon.textContent = isBannedNow ? 'check_circle' : 'block';
+                        if (avatarEl) avatarEl.classList.toggle('is-banned', isBannedNow);
+                        const udmStatusBadge = document.getElementById('udm-status-badge');
+                        if (udmStatusBadge) {
+                            udmStatusBadge.textContent = isBannedNow ? 'Забанен' : 'Активен';
+                            udmStatusBadge.className = 'udm-badge ' + (isBannedNow ? 'udm-badge--banned' : 'udm-badge--active');
+                        }
+                        reloadUsersList();
+                    }
+                };
+                openModal('banConfirmModal');
+            }
+        });
+
+        document.addEventListener('change', async function (e) {
+            if (e.target?.id !== 'udm-trial-toggle') return;
+            const toggle = e.target;
+            const userId = toggle.getAttribute('data-user-id');
+            const label = document.getElementById('udm-trial-label');
+
+            try {
+                const resp = await fetch(`{{ url_for('toggle_trial_used_route', user_id=0) }}`.replace('/0', `/${userId}`), {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': getCsrfToken() },
+                    credentials: 'same-origin'
+                });
+                const data = await resp.json();
+                if (data && data.ok) {
+                    label.textContent = data.trial_used ? 'Использовано' : 'Не использовано';
+                    showToast('success', data.message);
+                } else {
+                    toggle.checked = !toggle.checked;
+                    showToast('danger', 'Не удалось изменить статус');
+                }
+            } catch (_) {
+                toggle.checked = !toggle.checked;
+                showToast('danger', 'Ошибка сети');
+            }
+        });
+
+        let currentUserDetailsId = null;
+
+        let expiryKeyId = null;
+        document.addEventListener('click', e => {
+            const btn = e.target.closest('.btn-user-edit-expiry');
+            if (!btn) return;
+            expiryKeyId = btn.getAttribute('data-key-id');
+            currentUserDetailsId = document.getElementById('udm-trial-toggle')?.getAttribute('data-user-id');
+
+            document.getElementById('expiryDelta').value = '';
+            openModal('expiryModal');
+        });
+
+        document.getElementById('expirySaveBtn')?.addEventListener('click', async () => {
+            const delta = document.getElementById('expiryDelta').value;
+            if (!expiryKeyId || !delta) { showToast('warning', 'Введите количество дней'); return; }
+            try {
+                const fd = new FormData();
+                fd.append('csrf_token', '{{ csrf_token() }}');
+                fd.append('delta_days', delta);
+                const url = `{{ url_for('adjust_key_expiry_route', key_id=0) }}`.replace('/0', `/${expiryKeyId}`);
+                const resp = await fetch(url, { method: 'POST', body: fd, credentials: 'same-origin' });
+                if (resp.ok) {
+                    showToast('success', 'Срок обновлён');
+                    closeModal('expiryModal');
+                    if (currentUserDetailsId) refreshUserDetails(currentUserDetailsId);
+                } else { showToast('danger', 'Ошибка'); }
+            } catch (_) { showToast('danger', 'Ошибка сети'); }
+        });
+
+        let commentKeyId = null;
+        document.addEventListener('click', e => {
+            const btn = e.target.closest('.btn-user-edit-comment');
+            if (!btn) return;
+            commentKeyId = btn.getAttribute('data-key-id');
+            currentUserDetailsId = document.getElementById('udm-trial-toggle')?.getAttribute('data-user-id');
+
+            document.getElementById('commentInput').value = btn.getAttribute('data-current-comment') || '';
+            openModal('commentModal');
+        });
+
+        document.getElementById('commentSaveBtn')?.addEventListener('click', async () => {
+            const comment = document.getElementById('commentInput').value;
+            if (!commentKeyId) return;
+            try {
+                const fd = new FormData();
+                fd.append('csrf_token', '{{ csrf_token() }}');
+                fd.append('comment', comment);
+                const url = `{{ url_for('update_key_comment_route', key_id=0) }}`.replace('/0', `/${commentKeyId}`);
+                const resp = await fetch(url, { method: 'POST', body: fd, credentials: 'same-origin' });
+                if (resp.ok) {
+                    showToast('success', 'Комментарий сохранён');
+                    closeModal('commentModal');
+                    if (currentUserDetailsId) refreshUserDetails(currentUserDetailsId);
+                } else { showToast('danger', 'Ошибка сохранения'); }
+            } catch (_) { showToast('danger', 'Ошибка сети'); }
+        });
+
+        let revokeKeyId = null;
+        document.addEventListener('click', e => {
+            const btn = e.target.closest('.btn-user-revoke-key');
+            if (!btn) return;
+
+            revokeKeyId = btn.getAttribute('data-key-id');
+            currentUserDetailsId = document.getElementById('udm-trial-toggle')?.getAttribute('data-user-id');
+            openModal('revokeConfirmModal');
+        });
+
+        document.getElementById('revokeConfirmBtn')?.addEventListener('click', async () => {
+            if (!revokeKeyId) return;
+
+            try {
+                const fd = new FormData();
+                fd.append('csrf_token', '{{ csrf_token() }}');
+                const url = `{{ url_for('delete_key_route', key_id=0) }}`.replace('/0', `/${revokeKeyId}`);
+                const resp = await fetch(url, { method: 'POST', body: fd, credentials: 'same-origin' });
+                if (resp.ok) {
+                    showToast('success', 'Ключ отозван');
+                    closeModal('revokeConfirmModal');
+                    if (currentUserDetailsId) refreshUserDetails(currentUserDetailsId);
+                } else { showToast('danger', 'Ошибка удаления'); }
+            } catch (_) { showToast('danger', 'Ошибка сети'); }
+        });
+
+        async function refreshUserDetails(uid) {
+            await window.usersOpenDetails(uid);
+        }
+    })();
+
+    function copyToClipboard(text, element) {
+        navigator.clipboard.writeText(text).then(() => {
+            const originalBg = element.className;
+            element.classList.add('bg-primary/20');
+            showToast('success', 'Скопировано');
+            setTimeout(() => {
+                element.className = originalBg;
+            }, 300);
+        }).catch(() => {
+            showToast('danger', 'Не удалось скопировать');
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,546 @@
+/* Remnawave ShopBot — macOS Workspace (desktop + floating windows) */
+
+:root {
+    --ws-wallpaper: linear-gradient(145deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%);
+    --ws-wallpaper-blur: 0px;
+}
+
+html[data-design="macos-v2"] body.workspace-host {
+    overflow: hidden;
+}
+
+html[data-design="macos-v2"] body.workspace-host .neon-main-bg {
+    position: relative;
+    z-index: 1;
+    background: transparent !important;
+    pointer-events: none;
+}
+
+html[data-design="macos-v2"] body.workspace-host .neon-main-bg > main {
+    padding: 0 !important;
+    overflow: hidden;
+    background: transparent !important;
+    pointer-events: none;
+}
+
+html[data-design="macos-v2"] body.workspace-host .neon-main-bg > main > .max-w-7xl {
+    display: none !important;
+}
+
+html[data-design="macos-v2"] body.workspace-host .panel-topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 9000;
+    pointer-events: auto;
+}
+
+/* ===== Desktop layer ===== */
+#workspace-desktop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+
+html[data-design="macos-v2"] body.workspace-host #workspace-desktop {
+    display: block;
+}
+
+#workspace-desktop__wallpaper {
+    position: absolute;
+    inset: 0;
+    background-color: #0a0a0c;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    filter: blur(var(--ws-wallpaper-blur));
+    transform: scale(1.05);
+}
+
+#workspace-desktop__logo {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    opacity: 0.35;
+    transition: opacity 0.3s ease;
+}
+
+#workspace-desktop__logo img {
+    max-width: min(280px, 40vw);
+    max-height: min(280px, 30vh);
+    object-fit: contain;
+    border-radius: 22%;
+    filter: drop-shadow(0 8px 32px rgba(0, 0, 0, 0.25));
+}
+
+#workspace-desktop__logo.is-hidden {
+    display: none;
+}
+
+#workspace-desktop__logo.size-sm img { max-width: 160px; max-height: 120px; }
+#workspace-desktop__logo.size-lg img { max-width: 420px; max-height: 320px; }
+
+/* ===== Window layer ===== */
+#workspace-window-layer {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    pointer-events: none;
+}
+
+html[data-design="macos-v2"] body.workspace-host #workspace-window-layer {
+    display: block;
+}
+
+html[data-design="macos-v2"] .ws-window {
+    border-radius: 10px;
+    background: rgba(30, 30, 32, 0.98);
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.1),
+        0 32px 80px rgba(0, 0, 0, 0.55),
+        0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+html[data-design="macos-v2"] .ws-window.is-focused {
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.14),
+        0 36px 88px rgba(0, 0, 0, 0.58),
+        0 12px 32px rgba(0, 0, 0, 0.38);
+}
+
+html[data-design="macos-v2"] .ws-window__titlebar {
+    height: 36px;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.03));
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+html[data-design="macos-v2"] .ws-window__body {
+    background: #1c1c1e;
+}
+
+html:not(.dark)[data-design="macos-v2"] .ws-window__body {
+    background: #f2f2f7;
+}
+
+html:not(.dark)[data-design="macos-v2"] .ws-window {
+    background: rgba(246, 246, 248, 0.98);
+    box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.08),
+        0 32px 80px rgba(0, 0, 0, 0.22),
+        0 12px 32px rgba(0, 0, 0, 0.12);
+}
+
+html:not(.dark)[data-design="macos-v2"] .ws-window__title {
+    color: rgba(0, 0, 0, 0.55);
+}
+
+html:not(.dark)[data-design="macos-v2"] .ws-window.is-focused .ws-window__title {
+    color: rgba(0, 0, 0, 0.82);
+}
+
+.ws-window {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    min-width: 280px;
+    min-height: 200px;
+    border-radius: 12px;
+    overflow: hidden;
+    pointer-events: auto;
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.08),
+        0 24px 64px rgba(0, 0, 0, 0.45),
+        0 8px 24px rgba(0, 0, 0, 0.25);
+    background: rgba(18, 18, 22, 0.92);
+    backdrop-filter: blur(24px) saturate(1.4);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.ws-window.is-focused {
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.12),
+        0 28px 72px rgba(0, 0, 0, 0.5),
+        0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.ws-window.is-minimized {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.85);
+}
+
+.ws-window.is-maximized {
+    border-radius: 0 !important;
+}
+
+.ws-window__titlebar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    height: 38px;
+    padding: 0 12px 0 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    cursor: grab;
+    user-select: none;
+    flex-shrink: 0;
+}
+
+.ws-window.is-focused .ws-window__titlebar {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.ws-window__titlebar:active {
+    cursor: grabbing;
+}
+
+.ws-window__lights {
+    display: flex;
+    gap: 7px;
+    flex-shrink: 0;
+}
+
+.ws-window__light {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: filter 0.15s ease;
+}
+
+.ws-window__light:hover {
+    filter: brightness(1.15);
+}
+
+.ws-window__light--close { background: #ff5f57; }
+.ws-window__light--minimize { background: #febc2e; }
+.ws-window__light--maximize { background: #28c840; }
+
+.ws-window__title {
+    flex: 1;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.55);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0 8px;
+}
+
+.ws-window.is-focused .ws-window__title {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.ws-window__body {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.ws-window__iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+    background: transparent;
+}
+
+.ws-window.is-dragging .ws-window__iframe,
+.ws-window.is-resizing .ws-window__iframe {
+    pointer-events: none;
+}
+
+body.ws-window-interacting {
+    user-select: none;
+    cursor: inherit;
+}
+
+.ws-window__resize {
+    position: absolute;
+    z-index: 6;
+}
+
+.ws-window__resize--n {
+    top: 0;
+    left: 14px;
+    right: 14px;
+    height: 8px;
+    cursor: ns-resize;
+}
+
+.ws-window__resize--s {
+    left: 14px;
+    right: 14px;
+    bottom: 0;
+    height: 8px;
+    cursor: ns-resize;
+}
+
+.ws-window__resize--e {
+    right: 0;
+    top: 14px;
+    bottom: 14px;
+    width: 8px;
+    cursor: ew-resize;
+}
+
+.ws-window__resize--w {
+    left: 0;
+    top: 14px;
+    bottom: 14px;
+    width: 8px;
+    cursor: ew-resize;
+}
+
+.ws-window__resize--nw {
+    top: 0;
+    left: 0;
+    width: 14px;
+    height: 14px;
+    cursor: nwse-resize;
+}
+
+.ws-window__resize--ne {
+    top: 0;
+    right: 0;
+    width: 14px;
+    height: 14px;
+    cursor: nesw-resize;
+}
+
+.ws-window__resize--sw {
+    bottom: 0;
+    left: 0;
+    width: 14px;
+    height: 14px;
+    cursor: nesw-resize;
+}
+
+.ws-window__resize--se {
+    right: 0;
+    bottom: 0;
+    width: 14px;
+    height: 14px;
+    cursor: nwse-resize;
+}
+
+/* ===== Dock workspace extras ===== */
+.panel-dock__item.is-running .panel-dock__dot {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.panel-dock__item.is-running .panel-dock__icon {
+    transform: translateY(-4px) scale(1.08);
+}
+
+.panel-dock.is-edit-mode .panel-dock__item {
+    animation: ws-dock-jiggle 0.3s ease-in-out infinite alternate;
+}
+
+.panel-dock.is-edit-mode .panel-dock__item:nth-child(odd) {
+    animation-delay: 0.05s;
+}
+
+@keyframes ws-dock-jiggle {
+    from { transform: rotate(-1.5deg); }
+    to { transform: rotate(1.5deg); }
+}
+
+.panel-dock__edit-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.panel-dock__edit-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.panel-dock__item.is-dragging {
+    opacity: 0.5;
+}
+
+.panel-dock__item.is-dock-hidden {
+    display: none !important;
+}
+
+/* ===== Embed mode (iframe content) ===== */
+html:has(body.workspace-embed),
+html.workspace-embed-root {
+    height: auto;
+    min-height: 100%;
+    overflow: visible;
+}
+
+body.workspace-embed {
+    background: transparent !important;
+    height: auto;
+    min-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+html[data-design="macos-v2"] body.workspace-embed {
+    background: #1c1c1e !important;
+}
+
+html:not(.dark)[data-design="macos-v2"] body.workspace-embed {
+    background: #f2f2f7 !important;
+}
+
+body.workspace-embed .neon-ambient {
+    display: none !important;
+}
+
+body.workspace-embed .relative.flex.min-h-screen {
+    min-height: 0 !important;
+    height: auto;
+}
+
+body.workspace-embed .relative.flex.min-h-screen > .flex-1 {
+    min-height: 0;
+    height: auto;
+    flex: none;
+}
+
+body.workspace-embed .workspace-embed-main {
+    padding: 1rem 1.25rem 1.5rem;
+    max-width: none;
+    margin: 0;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    display: block;
+}
+
+html[data-design="macos-v2"] body.workspace-embed .workspace-embed-main {
+    padding: 0;
+}
+
+/* Never show host chrome inside workspace iframes */
+body.workspace-embed .panel-topbar,
+body.workspace-embed .panel-dock,
+body.workspace-embed #workspace-desktop,
+body.workspace-embed #workspace-window-layer {
+    display: none !important;
+}
+
+/* ===== Dock editor modal ===== */
+.ws-dock-editor-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 360px;
+    overflow-y: auto;
+}
+
+.ws-dock-editor-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    cursor: grab;
+}
+
+.ws-dock-editor-item.is-hidden-item {
+    opacity: 0.45;
+}
+
+.ws-dock-editor-item__drag {
+    color: rgba(255, 255, 255, 0.25);
+    cursor: grab;
+}
+
+.ws-dock-editor-item__icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+/* ===== Theme modal desktop section ===== */
+.ws-wallpaper-presets {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+}
+
+.ws-wallpaper-preset {
+    aspect-ratio: 16/10;
+    border-radius: 10px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: border-color 0.2s ease, transform 0.15s ease;
+}
+
+.ws-wallpaper-preset:hover {
+    transform: scale(1.03);
+}
+
+.ws-wallpaper-preset.is-active {
+    border-color: #0a84ff;
+    box-shadow: 0 0 0 2px rgba(10, 132, 255, 0.25);
+}
+
+.ws-wallpaper-preset--aurora { background: linear-gradient(145deg, #1a1a2e, #16213e, #0f3460); }
+.ws-wallpaper-preset--sunset { background: linear-gradient(145deg, #2d1b4e, #8b3a62, #e8a87c); }
+.ws-wallpaper-preset--ocean { background: linear-gradient(145deg, #0c1445, #1a5276, #48c9b0); }
+.ws-wallpaper-preset--midnight { background: linear-gradient(145deg, #0d0d0d, #1a1a2e, #2d2d44); }
+.ws-wallpaper-preset--light { background: linear-gradient(145deg, #e8e8ed, #f2f2f7, #d1d1d6); }
+
+.theme-ws-live-preview {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: #0a0a0c;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+    overflow: hidden;
+    position: relative;
+}
+
+.theme-ws-live-preview::after {
+    content: 'Предпросмотр';
+    position: absolute;
+    left: 0.65rem;
+    bottom: 0.55rem;
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.45);
+    pointer-events: none;
+}

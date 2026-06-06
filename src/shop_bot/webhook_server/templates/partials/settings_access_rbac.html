@@ -1,0 +1,632 @@
+{% set acc_active_admins = panel_admins | selectattr('is_active') | list | length if panel_admins is defined else 0 %}
+{% set acc_default_tab = 'security' %}
+{% if can('settings_access') %}
+    {% if edit_role %} {% set acc_default_tab = 'roles' %}
+    {% elif edit_admin %} {% set acc_default_tab = 'admins' %}
+    {% else %} {% set acc_default_tab = 'overview' %}
+    {% endif %}
+{% endif %}
+
+<section id="tab-access" class="tab-content acc-panel" data-acc-default-tab="{{ acc_default_tab }}">
+    <header class="acc-hub">
+        <div class="acc-hub__intro">
+            <div class="acc-hub__icon" aria-hidden="true">
+                <span class="material-symbols-outlined">shield_person</span>
+            </div>
+            <div>
+                <h2 class="acc-hub__title">Access Studio</h2>
+                <p class="acc-hub__desc">Роли · администраторы · приглашения · 2FA · журнал</p>
+            </div>
+        </div>
+        <div class="acc-hub__stats">
+            {% if can('settings_access') %}
+            <span class="acc-stat">
+                <span class="material-symbols-outlined">badge</span>
+                <span>{{ panel_roles|length }} ролей</span>
+            </span>
+            <span class="acc-stat">
+                <span class="material-symbols-outlined">group</span>
+                <span>{{ acc_active_admins }}/{{ panel_admins|length }} активных</span>
+            </span>
+            {% endif %}
+            <span class="acc-stat acc-stat--{% if security_info.configured %}ok{% elif security_info.needs_setup %}warn{% else %}muted{% endif %}">
+                <span class="material-symbols-outlined">verified_user</span>
+                <span>{{ security_info.label }}</span>
+            </span>
+        </div>
+        {% if can('settings_access') %}
+        <div class="acc-hub__actions">
+            <a href="{{ url_for('settings_access_audit_export') }}" class="acc-btn acc-btn--ghost" title="Экспорт журнала">
+                <span class="material-symbols-outlined">download</span>
+                CSV
+            </a>
+        </div>
+        {% endif %}
+    </header>
+
+    <nav class="acc-tabs" role="tablist" aria-label="Разделы доступа">
+        {% if can('settings_access') %}
+        <button type="button" class="acc-tab" data-acc-tab="overview" role="tab">
+            <span class="material-symbols-outlined">dashboard</span> Обзор
+        </button>
+        <button type="button" class="acc-tab" data-acc-tab="roles" role="tab">
+            <span class="material-symbols-outlined">badge</span> Роли
+        </button>
+        <button type="button" class="acc-tab" data-acc-tab="admins" role="tab">
+            <span class="material-symbols-outlined">group</span> Админы
+        </button>
+        <button type="button" class="acc-tab" data-acc-tab="invites" role="tab">
+            <span class="material-symbols-outlined">link</span> Приглашения
+        </button>
+        <button type="button" class="acc-tab" data-acc-tab="login" role="tab">
+            <span class="material-symbols-outlined">login</span> Вход
+        </button>
+        <button type="button" class="acc-tab" data-acc-tab="audit" role="tab">
+            <span class="material-symbols-outlined">history</span> Журнал
+        </button>
+        {% endif %}
+        <button type="button" class="acc-tab" data-acc-tab="security" role="tab">
+            <span class="material-symbols-outlined">lock</span> Моя защита
+        </button>
+    </nav>
+
+    {% if can('settings_access') %}
+    <!-- Overview -->
+    <div class="acc-pane" data-acc-pane="overview" hidden>
+        <div class="acc-overview-grid">
+            <button type="button" class="acc-overview-card" data-acc-goto="roles">
+                <span class="acc-overview-card__icon material-symbols-outlined">badge</span>
+                <span class="acc-overview-card__title">Роли доступа</span>
+                <span class="acc-overview-card__meta">{{ panel_roles|length }} шт. · права по разделам</span>
+            </button>
+            <button type="button" class="acc-overview-card" data-acc-goto="admins">
+                <span class="acc-overview-card__icon material-symbols-outlined">group</span>
+                <span class="acc-overview-card__title">Администраторы</span>
+                <span class="acc-overview-card__meta">{{ panel_admins|length }} учёток</span>
+            </button>
+            <button type="button" class="acc-overview-card" data-acc-goto="invites">
+                <span class="acc-overview-card__icon material-symbols-outlined">link</span>
+                <span class="acc-overview-card__title">Приглашения</span>
+                <span class="acc-overview-card__meta">Ссылки для новых админов</span>
+            </button>
+            <button type="button" class="acc-overview-card" data-acc-goto="login">
+                <span class="acc-overview-card__icon material-symbols-outlined">key</span>
+                <span class="acc-overview-card__title">Методы входа</span>
+                <span class="acc-overview-card__meta">Telegram · Passkey · пароль</span>
+            </button>
+            <button type="button" class="acc-overview-card" data-acc-goto="audit">
+                <span class="acc-overview-card__icon material-symbols-outlined">history</span>
+                <span class="acc-overview-card__title">Журнал действий</span>
+                <span class="acc-overview-card__meta">Аудит изменений панели</span>
+            </button>
+        </div>
+        <div class="acc-card">
+            <div class="acc-card__head">
+                <h3 class="acc-card__title">Недавние события</h3>
+                <button type="button" class="acc-text-btn" data-acc-goto="audit">Весь журнал</button>
+            </div>
+            <div class="acc-audit-preview">
+                {% for entry in panel_audit_entries[:8] %}
+                <div class="acc-audit-row">
+                    <div class="acc-audit-row__meta">
+                        <span>{{ entry.created_at }}</span>
+                        <span>{{ entry.admin_login or 'system' }}</span>
+                    </div>
+                    <div class="acc-audit-row__action">{{ entry.action_label or entry.action }}</div>
+                    {% if entry.summary %}<div class="acc-audit-row__sum">{{ entry.summary }}</div>{% endif %}
+                </div>
+                {% else %}
+                <p class="acc-empty">Записей пока нет</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Roles -->
+    <div class="acc-pane" data-acc-pane="roles" hidden>
+        <div class="acc-studio">
+            <div class="acc-picker">
+                <div class="acc-picker__toolbar">
+                    <div class="acc-search">
+                        <span class="material-symbols-outlined">search</span>
+                        <input type="search" id="acc-role-search" class="acc-search__input" placeholder="Поиск роли…" autocomplete="off" />
+                    </div>
+                    <a href="{{ url_for('settings_tab_page', tab='access') }}#roles" class="acc-btn acc-btn--ghost acc-btn--sm">+ Новая</a>
+                </div>
+                <div class="acc-tile-grid" id="acc-role-grid">
+                    {% for role in panel_roles %}
+                    <a href="{{ url_for('settings_tab_page', tab='access', role_id=role.id) }}#roles"
+                        class="acc-tile acc-role-tile {% if edit_role and edit_role.id == role.id %}is-selected{% endif %}"
+                        data-label="{{ role.name | lower }}"
+                        data-desc="{{ role.description | lower }}">
+                        <span class="acc-tile__icon material-symbols-outlined">{% if role.is_superadmin %}stars{% else %}badge{% endif %}</span>
+                        <span class="acc-tile__label">{{ role.name }}</span>
+                        <span class="acc-tile__meta">
+                            {% if role.is_superadmin %}Полный доступ{% else %}{{ role.perm_view_count }} просмотр · {{ role.perm_edit_count }} редакт.{% endif %}
+                            · {{ role.admin_count }} адм.
+                        </span>
+                        {% if role.is_superadmin %}<span class="acc-badge acc-badge--accent">Super</span>{% endif %}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="acc-editor acc-card">
+                <form action="{{ url_for('settings_access_role_save') }}" method="post" data-submit-mode="native" class="acc-form" id="acc-role-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <input type="hidden" name="role_id" value="{{ edit_role.id if edit_role else '' }}" />
+
+                    <div class="acc-editor__head">
+                        <div>
+                            <p class="acc-editor__eyebrow">{% if edit_role %}Редактирование{% else %}Новая роль{% endif %}</p>
+                            <h3 class="acc-editor__title">{{ edit_role.name if edit_role else 'Роль доступа' }}</h3>
+                        </div>
+                        {% if edit_role and not edit_role.is_superadmin %}
+                        <button type="button" class="acc-btn acc-btn--ghost acc-btn--sm" id="acc-role-duplicate" data-role-id="{{ edit_role.id }}">
+                            <span class="material-symbols-outlined">content_copy</span>
+                            Копировать
+                        </button>
+                        {% endif %}
+                    </div>
+
+                    <div class="acc-field">
+                        <label class="acc-label" for="acc-role-name">Название</label>
+                        <input type="text" id="acc-role-name" name="role_name" required minlength="2"
+                            value="{{ edit_role.name if edit_role else '' }}" placeholder="Менеджер поддержки" class="acc-input" />
+                    </div>
+                    <div class="acc-field">
+                        <label class="acc-label" for="acc-role-desc">Описание</label>
+                        <input type="text" id="acc-role-desc" name="role_description"
+                            value="{{ edit_role.description if edit_role else '' }}" placeholder="Необязательно" class="acc-input" />
+                    </div>
+
+                    {% if edit_role and edit_role.is_superadmin %}
+                    <div class="acc-info">Superadmin имеет полный доступ. Права нельзя ограничить.</div>
+                    {% else %}
+                    <div class="acc-presets" id="acc-role-presets">
+                        <p class="acc-label">Быстрые шаблоны</p>
+                        <div class="acc-presets__grid">
+                            {% for preset in role_presets %}
+                            <button type="button" class="acc-preset-btn" data-acc-preset="{{ preset.id }}"
+                                title="{{ preset.desc }}">
+                                <span class="material-symbols-outlined">{{ preset.icon }}</span>
+                                <span>{{ preset.label }}</span>
+                            </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="acc-coverage" id="acc-role-coverage" aria-live="polite">
+                        <div class="acc-coverage__stats">
+                            <span class="acc-coverage__pill acc-coverage__pill--view">
+                                <span class="material-symbols-outlined">visibility</span>
+                                <span id="acc-cov-view">0</span> просмотр
+                            </span>
+                            <span class="acc-coverage__pill acc-coverage__pill--edit">
+                                <span class="material-symbols-outlined">edit</span>
+                                <span id="acc-cov-edit">0</span> редакт.
+                            </span>
+                        </div>
+                        <div class="acc-coverage__dock" id="acc-cov-dock"></div>
+                    </div>
+
+                    <div class="acc-perm-toolbar">
+                        <span class="acc-label">Права по разделам</span>
+                        <div class="acc-perm-toolbar__actions">
+                            <button type="button" class="acc-text-btn" data-acc-perm-all="edit">Всё редакт.</button>
+                            <button type="button" class="acc-text-btn" data-acc-perm-all="view">Всё просмотр</button>
+                            <button type="button" class="acc-text-btn" data-acc-perm-none>Сброс</button>
+                        </div>
+                    </div>
+                    <div class="acc-perm-legend">
+                        <span><i class="acc-level-dot acc-level-dot--none"></i> Нет</span>
+                        <span><i class="acc-level-dot acc-level-dot--view"></i> Просмотр</span>
+                        <span><i class="acc-level-dot acc-level-dot--edit"></i> Редактирование</span>
+                    </div>
+                    <div class="acc-perm-groups" id="acc-perm-groups">
+                        {% for group in permission_groups %}
+                        <details class="acc-perm-group" open data-acc-perm-group="{{ group.id }}">
+                            <summary class="acc-perm-group__head">
+                                <span>{{ group.title }}</span>
+                                <span class="acc-perm-group__actions">
+                                    <button type="button" class="acc-text-btn" data-acc-group-all="edit">Редакт.</button>
+                                    <button type="button" class="acc-text-btn" data-acc-group-all="view">Просмотр</button>
+                                    <button type="button" class="acc-text-btn" data-acc-group-none>Сброс</button>
+                                </span>
+                            </summary>
+                            <div class="acc-perm-list">
+                                {% for perm_key, perm_label in group.permissions %}
+                                {% set risk = permission_risk.get(perm_key, 'low') %}
+                                {% set cur = (edit_role.permission_levels if edit_role else {}).get(perm_key, 'none') %}
+                                <div class="acc-level-row" data-perm="{{ perm_key }}">
+                                    <div class="acc-level-row__label">
+                                        <span>{{ perm_label }}</span>
+                                        {% if risk in ('high', 'critical') %}
+                                        <span class="acc-risk acc-risk--{{ risk }}" title="Повышенный риск">!</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="acc-level-seg" role="group" aria-label="{{ perm_label }}">
+                                        <button type="button" class="acc-level-seg__btn{% if cur == 'none' %} is-active{% endif %}" data-level="none" title="Нет доступа">—</button>
+                                        <button type="button" class="acc-level-seg__btn{% if cur == 'view' %} is-active{% endif %}" data-level="view" title="Просмотр">
+                                            <span class="material-symbols-outlined">visibility</span>
+                                        </button>
+                                        <button type="button" class="acc-level-seg__btn{% if cur == 'edit' %} is-active{% endif %}" data-level="edit" title="Редактирование">
+                                            <span class="material-symbols-outlined">edit</span>
+                                        </button>
+                                    </div>
+                                    <input type="hidden" name="perm_level_{{ perm_key }}" value="{{ cur }}" class="acc-level-input" />
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </details>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div class="acc-form__actions">
+                        <button type="submit" class="acc-btn acc-btn--primary">Сохранить роль</button>
+                        {% if edit_role and not edit_role.is_superadmin %}
+                        <button type="submit" formaction="{{ url_for('settings_access_role_delete', role_id=edit_role.id) }}"
+                            formmethod="post" data-confirm="Удалить роль «{{ edit_role.name }}»?" class="acc-btn acc-btn--danger">
+                            Удалить
+                        </button>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admins -->
+    <div class="acc-pane" data-acc-pane="admins" hidden>
+        <div class="acc-studio">
+            <div class="acc-picker">
+                <div class="acc-picker__toolbar">
+                    <div class="acc-search">
+                        <span class="material-symbols-outlined">search</span>
+                        <input type="search" id="acc-admin-search" class="acc-search__input" placeholder="Поиск админа…" autocomplete="off" />
+                    </div>
+                    <a href="{{ url_for('settings_tab_page', tab='access') }}#admins" class="acc-btn acc-btn--ghost acc-btn--sm">+ Новый</a>
+                </div>
+                <div class="acc-tile-grid" id="acc-admin-grid">
+                    {% for admin in panel_admins %}
+                    <a href="{{ url_for('settings_tab_page', tab='access', admin_id=admin.id) }}#admins"
+                        class="acc-tile acc-admin-tile {% if edit_admin and edit_admin.id == admin.id %}is-selected{% endif %}"
+                        data-label="{{ admin.login | lower }}"
+                        data-role="{{ admin.role_name | lower }}">
+                        <span class="acc-tile__icon material-symbols-outlined">person</span>
+                        <span class="acc-tile__label">{{ admin.login }}</span>
+                        <span class="acc-tile__meta">{{ admin.role_name }}</span>
+                        <span class="acc-badge {% if admin.is_active %}acc-badge--ok{% else %}acc-badge--muted{% endif %}">
+                            {% if admin.is_active %}Активен{% else %}Выкл{% endif %}
+                        </span>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="acc-editor acc-card">
+                <form action="{{ url_for('settings_access_admin_save') }}" method="post" data-submit-mode="native" class="acc-form" autocomplete="off">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <input type="hidden" name="admin_id" value="{{ edit_admin.id if edit_admin else '' }}" />
+
+                    <div class="acc-editor__head">
+                        <p class="acc-editor__eyebrow">{% if edit_admin %}Редактирование{% else %}Новый администратор{% endif %}</p>
+                        <h3 class="acc-editor__title">{{ edit_admin.login if edit_admin else 'Учётная запись' }}</h3>
+                    </div>
+
+                    <div class="acc-form-grid">
+                        <div class="acc-field">
+                            <label class="acc-label" for="acc-admin-login">Логин</label>
+                            <input type="text" id="acc-admin-login" name="admin_login" required minlength="3"
+                                value="{{ edit_admin.login if edit_admin else '' }}" class="acc-input" />
+                        </div>
+                        <div class="acc-field">
+                            <label class="acc-label" for="acc-admin-pass">
+                                {% if edit_admin %}Новый пароль{% else %}Пароль{% endif %}
+                            </label>
+                            <input type="password" id="acc-admin-pass" name="admin_password"
+                                {% if not edit_admin %}required{% endif %} minlength="16"
+                                placeholder="{% if edit_admin %}Пусто — без изменений{% else %}Мин. 16 символов{% endif %}"
+                                autocomplete="new-password" class="acc-input" />
+                        </div>
+                        <div class="acc-field">
+                            <label class="acc-label" for="acc-admin-role">Роль</label>
+                            <select id="acc-admin-role" name="admin_role_id" required class="acc-input">
+                                {% for role in panel_roles %}
+                                <option value="{{ role.id }}" {% if edit_admin and edit_admin.role_id == role.id %}selected{% endif %}>{{ role.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="acc-field acc-field--check">
+                            <label class="acc-check">
+                                <input type="hidden" name="admin_is_active" value="0" />
+                                <input type="checkbox" name="admin_is_active" value="1"
+                                    {% if not edit_admin or edit_admin.is_active %}checked{% endif %} />
+                                <span>Активен</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    {% if edit_admin %}
+                    <div class="acc-admin-meta">
+                        {% if edit_admin.telegram_username %}
+                        <span class="acc-chip"><span class="material-symbols-outlined">send</span> @{{ edit_admin.telegram_username }}</span>
+                        {% elif edit_admin.telegram_user_id %}
+                        <span class="acc-chip"><span class="material-symbols-outlined">send</span> TG {{ edit_admin.telegram_user_id }}</span>
+                        {% endif %}
+                        <span class="acc-chip"><span class="material-symbols-outlined">shield</span> {{ security_methods.get(edit_admin.auth_security_method, edit_admin.auth_security_method) }}</span>
+                    </div>
+                    {% endif %}
+
+                    <div class="acc-form__actions">
+                        <button type="submit" class="acc-btn acc-btn--primary">Сохранить</button>
+                        {% if edit_admin %}
+                        <button type="submit" formaction="{{ url_for('settings_access_admin_delete', admin_id=edit_admin.id) }}"
+                            formmethod="post" data-confirm="Удалить «{{ edit_admin.login }}»?" class="acc-btn acc-btn--danger">
+                            Удалить
+                        </button>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invites -->
+    <div class="acc-pane" data-acc-pane="invites" hidden>
+        <div class="acc-studio acc-studio--invites">
+            {% if can_edit('settings_access') %}
+            <div class="acc-card acc-invite-create">
+                <div class="acc-card__head">
+                    <h3 class="acc-card__title"><span class="material-symbols-outlined">add_link</span> Новое приглашение</h3>
+                </div>
+                <p class="acc-card__desc">Одноразовая или многоразовая ссылка. Роль Superadmin по приглашению недоступна. Активные ссылки можно скопировать или отозвать в списке ниже.</p>
+                <form id="acc-invite-form" class="acc-form" autocomplete="off" data-submit-mode="custom">
+                    <div class="acc-form-grid acc-form-grid--invites">
+                        <div class="acc-field">
+                            <label class="acc-label" for="acc-invite-role">Роль</label>
+                            <select id="acc-invite-role" name="role_id" required class="acc-input">
+                                {% for role in panel_roles if not role.is_superadmin %}
+                                <option value="{{ role.id }}">{{ role.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="acc-field">
+                            <label class="acc-label" for="acc-invite-expires">Срок (дней)</label>
+                            <input type="number" id="acc-invite-expires" name="expires_days" class="acc-input" min="1" max="365" value="7" />
+                        </div>
+                        <div class="acc-field">
+                            <label class="acc-label" for="acc-invite-max-uses">Использований</label>
+                            <input type="number" id="acc-invite-max-uses" name="max_uses" class="acc-input" min="1" max="100" value="1" />
+                        </div>
+                        <div class="acc-field acc-field--wide">
+                            <label class="acc-label" for="acc-invite-note">Комментарий</label>
+                            <input type="text" id="acc-invite-note" name="note" class="acc-input" maxlength="500" placeholder="Например: для техподдержки" />
+                        </div>
+                        <div class="acc-field acc-field--wide">
+                            <label class="acc-label" for="acc-invite-email">Подсказка e-mail (необяз.)</label>
+                            <input type="text" id="acc-invite-email" name="email_hint" class="acc-input" maxlength="200" placeholder="admin@example.com" />
+                        </div>
+                    </div>
+                    <div class="acc-form__actions">
+                        <button type="submit" class="acc-btn acc-btn--primary" id="acc-invite-submit">
+                            <span class="material-symbols-outlined">link</span> Создать ссылку
+                        </button>
+                    </div>
+                </form>
+                <div class="acc-invite-created" id="acc-invite-created" hidden>
+                    <p class="acc-invite-created__label">Ссылка создана — скопируйте и отправьте администратору:</p>
+                    <div class="acc-invite-url-row">
+                        <input type="text" id="acc-invite-url" class="acc-input acc-invite-url" readonly />
+                        <button type="button" class="acc-btn acc-btn--ghost" id="acc-invite-copy">
+                            <span class="material-symbols-outlined">content_copy</span> Копировать
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="acc-card">
+                <p class="acc-card__desc">Создание и отзыв приглашений доступны только с правом редактирования раздела «Доступ».</p>
+            </div>
+            {% endif %}
+
+            <div class="acc-card acc-invite-list-card">
+                <div class="acc-card__head">
+                    <h3 class="acc-card__title"><span class="material-symbols-outlined">inventory_2</span> Активные и прошлые</h3>
+                    <button type="button" class="acc-btn acc-btn--ghost acc-btn--sm" id="acc-invites-refresh">
+                        <span class="material-symbols-outlined">refresh</span> Обновить
+                    </button>
+                </div>
+                <p class="acc-audit-count">Активных: <strong id="acc-invites-active">—</strong></p>
+                <div class="acc-invite-list" id="acc-invite-list">
+                    <p class="acc-empty">Загрузка…</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login methods -->
+    <div class="acc-pane" data-acc-pane="login" hidden>
+        <div class="acc-card">
+            <div class="acc-card__head">
+                <h3 class="acc-card__title"><span class="material-symbols-outlined">login</span> Методы входа в панель</h3>
+            </div>
+            <p class="acc-card__desc">Альтернативные способы авторизации. При «Только пароль» на странице входа доступны все включённые методы.</p>
+            <form action="{{ url_for('settings_access_auth_methods') }}" method="post" data-submit-mode="native" class="acc-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <label class="acc-method-card">
+                    <input type="checkbox" name="telegram_login_enabled" {% if settings.telegram_login_enabled == '1' %}checked{% endif %} />
+                    <span class="acc-method-card__body">
+                        <span class="acc-method-card__title">Telegram Login</span>
+                        <span class="acc-method-card__desc">Widget — нужен @username основного бота</span>
+                    </span>
+                </label>
+                <label class="acc-method-card {% if not passkey_available %}is-disabled{% endif %}">
+                    <input type="checkbox" name="passkey_login_enabled" {% if settings.passkey_login_enabled == '1' %}checked{% endif %} {% if not passkey_available %}disabled{% endif %} />
+                    <span class="acc-method-card__body">
+                        <span class="acc-method-card__title">Passkey (WebAuthn)</span>
+                        <span class="acc-method-card__desc">Face ID, Touch ID, YubiKey{% if not passkey_available %} — установите webauthn{% endif %}</span>
+                    </span>
+                </label>
+                <button type="submit" class="acc-btn acc-btn--primary">Сохранить</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Audit -->
+    <div class="acc-pane" data-acc-pane="audit" hidden>
+        <div class="acc-card acc-card--audit">
+            <div class="acc-card__head">
+                <h3 class="acc-card__title"><span class="material-symbols-outlined">history</span> Журнал действий</h3>
+                <div class="acc-card__head-actions">
+                    <a href="{{ url_for('settings_tab_page', tab='audit') }}" class="acc-btn acc-btn--ghost acc-btn--sm">
+                        <span class="material-symbols-outlined">open_in_new</span> Audit Studio
+                    </a>
+                    <a href="{{ url_for('settings_access_audit_export') }}" class="acc-btn acc-btn--ghost acc-btn--sm">
+                        <span class="material-symbols-outlined">download</span> CSV
+                    </a>
+                </div>
+            </div>
+            <div class="acc-audit-filters">
+                <div class="acc-search">
+                    <span class="material-symbols-outlined">search</span>
+                    <input type="search" id="acc-audit-q" class="acc-search__input" placeholder="Поиск…" autocomplete="off" />
+                </div>
+                <input type="text" id="acc-audit-admin" class="acc-input acc-input--sm" placeholder="Админ" />
+                <input type="text" id="acc-audit-action" class="acc-input acc-input--sm" placeholder="Действие" />
+                <button type="button" class="acc-btn acc-btn--ghost acc-btn--sm" id="acc-audit-refresh">Обновить</button>
+            </div>
+            <p class="acc-audit-count">Найдено: <strong id="acc-audit-total">—</strong></p>
+            <div class="acc-audit-list" id="acc-audit-list"></div>
+            <button type="button" class="acc-btn acc-btn--ghost" id="acc-audit-more" hidden>Загрузить ещё</button>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Security (my account) -->
+    <div class="acc-pane" data-acc-pane="security" hidden>
+        <div class="acc-security-grid">
+            <div class="acc-card">
+                <div class="acc-card__head">
+                    <h3 class="acc-card__title"><span class="material-symbols-outlined">verified_user</span> Защита аккаунта</h3>
+                    {% if security_info.configured %}
+                    <span class="acc-badge acc-badge--ok">{{ security_info.label }}</span>
+                    {% elif security_info.needs_setup %}
+                    <span class="acc-badge acc-badge--warn">Требует настройки</span>
+                    {% else %}
+                    <span class="acc-badge acc-badge--muted">Не выбрано</span>
+                    {% endif %}
+                </div>
+
+                {% if security_info.forced_totp %}
+                <div class="acc-info">Обязательна 2FA (<code>SHOPBOT_REQUIRE_TOTP=1</code>). «Только пароль» недоступен.</div>
+                {% else %}
+                <p class="acc-card__desc">Индивидуальная настройка — каждый администратор выбирает способ сам.</p>
+                {% endif %}
+
+                <form action="{{ url_for('settings_security_method_save') }}" method="post" data-submit-mode="native" class="acc-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    {% set selected_method = security_info.effective_method %}
+                    {% for method_id, method_label in security_methods.items() %}
+                    {% set desc = security_method_descriptions.get(method_id, '') %}
+                    <label class="acc-method-card acc-method-card--radio {% if selected_method == method_id %}is-selected{% endif %}
+                        {% if method_id == 'passkey' and not passkey_available %}is-disabled{% endif %}
+                        {% if security_info.forced_totp and method_id == 'none' %}is-disabled{% endif %}">
+                        <input type="radio" name="auth_security_method" value="{{ method_id }}"
+                            {% if selected_method == method_id %}checked{% endif %}
+                            {% if security_info.forced_totp and method_id == 'none' %}disabled{% endif %}
+                            {% if method_id == 'passkey' and not passkey_available %}disabled{% endif %} />
+                        <span class="acc-method-card__body">
+                            <span class="acc-method-card__title">{{ method_label }}</span>
+                            <span class="acc-method-card__desc">{{ desc }}</span>
+                        </span>
+                    </label>
+                    {% endfor %}
+                    <button type="submit" class="acc-btn acc-btn--primary">Сохранить выбор</button>
+                </form>
+            </div>
+
+            <div class="acc-card acc-card--setup">
+                {% set active_method = security_info.effective_method %}
+
+                {% if active_method == 'none' %}
+                <div class="acc-info">Рекомендуем TOTP, Passkey или Telegram.</div>
+                {% if totp_info.enabled %}
+                <form action="{{ url_for('settings_totp_disable') }}" method="post" data-submit-mode="native" novalidate class="acc-inline-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <input type="text" name="totp_code" required inputmode="numeric" maxlength="6" autocomplete="one-time-code" class="acc-input" placeholder="Код TOTP" />
+                    <button type="submit" class="acc-btn acc-btn--danger" data-confirm="Отключить TOTP?">Отключить TOTP</button>
+                </form>
+                {% endif %}
+
+                {% elif active_method == 'totp' %}
+                <h4 class="acc-setup-title">Настройка TOTP</h4>
+                {% if totp_info.pending_setup and totp_qr_data_uri %}
+                <p class="acc-card__desc">Отсканируйте QR и введите код.</p>
+                <div class="acc-qr-wrap"><img src="{{ totp_qr_data_uri }}" alt="QR 2FA" width="200" height="200" /></div>
+                <form action="{{ url_for('settings_totp_enable') }}" method="post" data-submit-mode="native" novalidate class="acc-inline-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <input type="text" name="totp_code" required inputmode="numeric" maxlength="6" autocomplete="one-time-code" class="acc-input" placeholder="000000" />
+                    <button type="submit" class="acc-btn acc-btn--primary">Подтвердить</button>
+                    <button type="submit" formaction="{{ url_for('settings_totp_cancel') }}" formmethod="post" class="acc-btn acc-btn--ghost">Отмена</button>
+                </form>
+                {% elif totp_info.enabled %}
+                <div class="acc-info acc-info--ok">TOTP активен — запрашивается при входе.</div>
+                {% else %}
+                <form action="{{ url_for('settings_totp_begin') }}" method="post" data-submit-mode="native">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <button type="submit" class="acc-btn acc-btn--primary">Настроить TOTP</button>
+                </form>
+                {% endif %}
+
+                {% elif active_method == 'passkey' %}
+                <h4 class="acc-setup-title">Passkey</h4>
+                {% if not passkey_available %}
+                <div class="acc-info">Установите пакет <code>webauthn</code>.</div>
+                {% else %}
+                {% if passkeys %}
+                <ul class="acc-passkey-list">
+                    {% for pk in passkeys %}
+                    <li class="acc-passkey-item">
+                        <div>
+                            <div class="acc-passkey-item__name">{{ pk.label }}</div>
+                            <div class="acc-passkey-item__meta">{{ pk.created_at or '—' }}{% if pk.last_used_at %} · {{ pk.last_used_at }}{% endif %}</div>
+                        </div>
+                        <form action="{{ url_for('settings_passkey_delete', credential_id=pk.id) }}" method="post" data-submit-mode="native">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                            <button type="submit" class="acc-btn acc-btn--danger acc-btn--sm" data-confirm="Удалить «{{ pk.label }}»?">Удалить</button>
+                        </form>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="acc-card__desc">Зарегистрируйте Passkey для завершения настройки.</p>
+                {% endif %}
+                <div class="acc-inline-form">
+                    <input type="text" id="passkey-label-input" maxlength="64" placeholder="MacBook, YubiKey…" class="acc-input" />
+                    <button type="button" id="passkey-register-btn" class="acc-btn acc-btn--primary">Добавить Passkey</button>
+                </div>
+                {% endif %}
+
+                {% elif active_method == 'telegram' %}
+                <h4 class="acc-setup-title">Telegram</h4>
+                {% if current_admin and current_admin.telegram_user_id %}
+                <div class="acc-info acc-info--ok flex-wrap">
+                    <span>Привязан: {% if current_admin.telegram_username %}@{{ current_admin.telegram_username }}{% else %}ID {{ current_admin.telegram_user_id }}{% endif %}</span>
+                    <form action="{{ url_for('settings_telegram_unlink') }}" method="post" data-submit-mode="native">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                        <button type="submit" class="acc-btn acc-btn--danger acc-btn--sm" data-confirm="Отвязать?">Отвязать</button>
+                    </form>
+                </div>
+                {% elif telegram_bot_username %}
+                <p class="acc-card__desc">Привяжите Telegram для завершения настройки.</p>
+                <div id="telegram-link-wrap"></div>
+                {% else %}
+                <div class="acc-info">Укажите @username бота в «Боты» и включите Telegram Login.</div>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>

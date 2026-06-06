@@ -1,0 +1,27 @@
+{
+    "_comment": "Конфигурация проекта.",
+    "project": {
+        "version": "1.0.0",
+        "name": "Remnawave App",
+        "brand": "ReSTEAL v3 RW",
+        "tagline": "Telegram VPN shop с современной веб-панелью",
+        "license": "MIT",
+        "github": {
+            "owner": "kissesses",
+            "repo": "remnawave-app"
+        },
+        "links": {
+            "repository": "https://github.com/kissesses/remnawave-app",
+            "issues": "https://github.com/kissesses/remnawave-app/issues",
+            "telegram": "https://github.com/kissesses",
+            "developer": "https://github.com/kissesses",
+            "update": "https://raw.githubusercontent.com/kissesses/remnawave-app/refs/heads/main/src/shop_bot/webhook_server/modules/os.json"
+        },
+        "donate": {
+            "network": "TON",
+            "address": "UQAIaNG4ccxBDViWi3hISWeZEHDM1LvBrV292USg_A0AERHF",
+            "assets": ["TON", "USDT"]
+        },
+        "author": "kissesses"
+    }
+}

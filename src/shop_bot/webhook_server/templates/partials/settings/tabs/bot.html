@@ -1,0 +1,259 @@
+    <section id="tab-bot" class="tab-content settings-tab-sectioned">
+        {% include 'partials/settings/section_nav.html' %}
+        {% set settings_default_section = tab_sections[0].id if tab_sections else 'bot-telegram' %}
+        <div class="space-y-8">
+
+                            {% set section_id = 'bot-telegram' %}
+                <div class="settings-form-section{% if section_id == settings_default_section %} is-section-visible{% endif %}" id="{{ section_id }}">
+                {% set section_title = 'Telegram боты' %}
+                {% set section_desc = 'Основной бот и бот поддержки' %}
+                {% set section_icon = 'smart_toy' %}
+                {% include 'partials/settings/section_header.html' %}
+                <div class="settings-form-section__body space-y-6">
+
+            {% if all_settings_ok and support_settings_ok %}
+            <div class="p-1.5 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl shadow-2xl mb-6">
+                <div class="flex flex-col md:flex-row items-stretch md:items-center gap-4 p-4 pr-6">
+                    <div
+                        class="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary relative overflow-hidden group">
+                        <div class="absolute inset-0 bg-primary/10 animate-pulse"></div>
+                        <span class="material-symbols-outlined text-3xl relative z-10">check_circle</span>
+                    </div>
+                    <div class="flex-1">
+                        <h4 class="text-white font-semibold text-sm tracking-tight">Боты готовы к запуску</h4>
+                        <div class="flex items-center gap-4 mt-1.5">
+                            <div
+                                class="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-primary/5 border border-primary/10">
+                                <div class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></div>
+                                <span
+                                    class="text-[9px] font-semibold text-primary/80 uppercase tracking-widest">Основной
+                                    бот</span>
+                            </div>
+                            <div
+                                class="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-primary/5 border border-primary/10">
+                                <div class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></div>
+                                <span class="text-[9px] font-semibold text-primary/80 uppercase tracking-widest">Support
+                                    бот</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                <!-- Main Bot Card -->
+                <div class="bg-white/5 border border-white/10 rounded-2xl p-5 shadow-xl backdrop-blur-md flex flex-col">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                            <span class="material-symbols-outlined text-lg">robot_2</span>
+                        </div>
+                        <h4 class="text-white font-bold text-sm">Основной бот</h4>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label
+                                class="block text-white/60 text-[10px] uppercase font-bold tracking-wider mb-1.5 ml-1">Токен
+                                бота</label>
+                            <div class="relative group">
+                                <span
+                                    class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-white/20 text-sm group-focus-within:text-primary transition-colors">key</span>
+                                <input type="password" name="telegram_bot_token" id="bot_token_main"
+                                    value="{{ settings.telegram_bot_token or '' }}" required autocomplete="new-password"
+                                    class="w-full bg-black/30 border border-white/10 rounded-xl pl-10 pr-10 py-2.5 text-white text-sm focus:ring-1 focus:ring-primary/40 outline-none transition-all" />
+                                <button type="button" onclick="togglePasswordVisibility('bot_token_main')"
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-white/20 hover:text-white transition-colors">
+                                    <span class="material-symbols-outlined text-sm">visibility</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label
+                                    class="block text-white/60 text-[10px] uppercase font-bold tracking-wider mb-1.5 ml-1">Username
+                                    (без @)</label>
+                                <div class="relative group">
+                                    <span
+                                        class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-white/20 text-sm group-focus-within:text-primary transition-colors">alternate_email</span>
+                                    <input type="text" name="telegram_bot_username"
+                                        value="{{ settings.telegram_bot_username or '' }}" required autocomplete="off"
+                                        class="w-full bg-black/30 border border-white/10 rounded-xl pl-10 pr-3 py-2.5 text-white text-sm focus:ring-1 focus:ring-primary/40 outline-none transition-all" />
+                                </div>
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-white/60 text-[10px] uppercase font-bold tracking-wider mb-1.5 ml-1">ID
+                                    Администратора</label>
+                                <div class="relative group">
+                                    <span
+                                        class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-white/20 text-sm group-focus-within:text-primary transition-colors">badge</span>
+                                    <input type="text" name="admin_telegram_id"
+                                        value="{{ settings.admin_telegram_id or '' }}" required autocomplete="off"
+                                        class="w-full bg-black/30 border border-white/10 rounded-xl pl-10 pr-3 py-2.5 text-white text-sm focus:ring-1 focus:ring-primary/40 outline-none transition-all" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Support Bot Card -->
+                <div class="bg-white/5 border border-white/10 rounded-2xl p-5 shadow-xl backdrop-blur-md flex flex-col">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                            <span class="material-symbols-outlined text-lg">support_agent</span>
+                        </div>
+                        <h4 class="text-white font-bold text-sm">Support-бот</h4>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label
+                                class="block text-white/60 text-[10px] uppercase font-bold tracking-wider mb-1.5 ml-1">Токен
+                                support-бота</label>
+                            <div class="relative group">
+                                <span
+                                    class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-white/20 text-sm group-focus-within:text-primary transition-colors">key</span>
+                                <input type="password" name="support_bot_token" id="bot_token_support"
+                                    value="{{ settings.support_bot_token or '' }}" autocomplete="new-password"
+                                    class="w-full bg-black/30 border border-white/10 rounded-xl pl-10 pr-10 py-2.5 text-white text-sm focus:ring-1 focus:ring-primary/40 outline-none transition-all" />
+                                <button type="button" onclick="togglePasswordVisibility('bot_token_support')"
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-white/20 hover:text-white transition-colors">
+                                    <span class="material-symbols-outlined text-sm">visibility</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label
+                                    class="block text-white/60 text-[10px] uppercase font-bold tracking-wider mb-1.5 ml-1">Username
+                                    (без @)</label>
+                                <div class="relative group">
+                                    <span
+                                        class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-white/20 text-sm group-focus-within:text-primary transition-colors">alternate_email</span>
+                                    <input type="text" name="support_bot_username"
+                                        value="{{ settings.support_bot_username or '' }}" autocomplete="off"
+                                        class="w-full bg-black/30 border border-white/10 rounded-xl pl-10 pr-3 py-2.5 text-white text-sm focus:ring-1 focus:ring-primary/40 outline-none transition-all" />
+                                </div>
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-white/60 text-[10px] uppercase font-bold tracking-wider mb-1.5 ml-1">ID
+                                    саппорт-чата</label>
+                                <div class="relative group">
+                                    <span
+                                        class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-white/20 text-sm group-focus-within:text-primary transition-colors">forum</span>
+                                    <input type="text" name="support_forum_chat_id"
+                                        value="{{ settings.support_forum_chat_id or '' }}" autocomplete="off"
+                                        class="w-full bg-black/30 border border-white/10 rounded-xl pl-10 pr-3 py-2.5 text-white text-sm focus:ring-1 focus:ring-primary/40 outline-none transition-all" />
+                                </div>
+                                <p class="text-[9px] text-white/40 mt-1 ml-1 leading-tight">Для вывода тикетов в
+                                    обсуждения (forum)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+                </div>
+            </div>
+
+            {% set section_id = 'bot-channels' %}
+            <div class="settings-form-section{% if section_id == settings_default_section %} is-section-visible{% endif %}" id="{{ section_id }}">
+                {% set section_title = 'Каналы и топики' %}
+                {% set section_desc = 'Куда отправлять архивы бэкапов и пароли (раздельно)' %}
+                {% set section_icon = 'chat' %}
+                {% include 'partials/settings/section_header.html' %}
+                <div class="settings-form-section__body">
+                    {% if backup_delivery and backup_delivery.autobackup_delivery_blocked %}
+                    <div class="bot-channels-alert" role="alert">
+                        <span class="material-symbols-outlined">warning</span>
+                        <div>
+                            <strong>Автобэкап в Telegram отключён до настройки каналов</strong>
+                            <ul>
+                                {% for msg in backup_delivery.delivery_alerts %}
+                                <li>{{ msg }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="bot-channels-grid">
+                        <article class="bot-channel-card bot-channel-card--archive">
+                            <div class="bot-channel-card__head">
+                                <div class="bot-channel-card__icon">
+                                    <span class="material-symbols-outlined">folder_zip</span>
+                                </div>
+                                <div>
+                                    <h4 class="bot-channel-card__title">Архивы бэкапов</h4>
+                                    <p class="bot-channel-card__desc">Зашифрованные ZIP-файлы. Без пароля в подписи.</p>
+                                </div>
+                            </div>
+                            <div class="bot-channel-fields">
+                                <div>
+                                    <label class="block text-white/60 text-[10px] uppercase font-bold tracking-wider mb-1.5 ml-1">Chat ID</label>
+                                    <input type="text" name="backup_telegram_chat_id"
+                                        value="{{ settings.backup_telegram_chat_id or '' }}"
+                                        placeholder="-1001234567890"
+                                        class="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm focus:ring-1 focus:ring-primary/40 outline-none" />
+                                </div>
+                                <div>
+                                    <label class="block text-white/60 text-[10px] uppercase font-bold tracking-wider mb-1.5 ml-1">Topic ID (форум)</label>
+                                    <input type="text" name="backup_telegram_topic_id"
+                                        value="{{ settings.backup_telegram_topic_id or '' }}"
+                                        placeholder="42"
+                                        class="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm focus:ring-1 focus:ring-primary/40 outline-none" />
+                                </div>
+                            </div>
+                            <div class="bot-channel-test">
+                                <button type="button" data-backup-test-channel="archive">
+                                    <span class="material-symbols-outlined text-sm align-middle">send</span> Тест
+                                </button>
+                            </div>
+                        </article>
+
+                        <article class="bot-channel-card bot-channel-card--secrets">
+                            <div class="bot-channel-card__head">
+                                <div class="bot-channel-card__icon">
+                                    <span class="material-symbols-outlined">key</span>
+                                </div>
+                                <div>
+                                    <h4 class="bot-channel-card__title">Пароли архивов</h4>
+                                    <p class="bot-channel-card__desc">Только пароль AES — в отдельный закрытый топик.</p>
+                                </div>
+                            </div>
+                            <div class="bot-channel-fields">
+                                <div>
+                                    <label class="block text-white/60 text-[10px] uppercase font-bold tracking-wider mb-1.5 ml-1">Chat ID</label>
+                                    <input type="text" name="backup_secrets_chat_id"
+                                        value="{{ settings.backup_secrets_chat_id or '' }}"
+                                        placeholder="-1001234567890"
+                                        class="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm focus:ring-1 focus:ring-primary/40 outline-none" />
+                                </div>
+                                <div>
+                                    <label class="block text-white/60 text-[10px] uppercase font-bold tracking-wider mb-1.5 ml-1">Topic ID (форум)</label>
+                                    <input type="text" name="backup_secrets_topic_id"
+                                        value="{{ settings.backup_secrets_topic_id or '' }}"
+                                        placeholder="7"
+                                        class="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm focus:ring-1 focus:ring-primary/40 outline-none" />
+                                </div>
+                            </div>
+                            <div class="bot-channel-test">
+                                <button type="button" data-backup-test-channel="secrets">
+                                    <span class="material-symbols-outlined text-sm align-middle">send</span> Тест
+                                </button>
+                            </div>
+                        </article>
+                    </div>
+                    <p class="bot-channels-hint">
+                        <strong>Безопасность:</strong> архив и пароль никогда не отправляются в одно сообщение.
+                        Без Chat ID канала архивов автобэкап в Telegram <strong>не выполняется</strong>; ручная отправка из «Бэкапов» тоже требует канал.
+                        Пароль — в отдельный топик (обязателен при шифровании AES). Сохраните форму «Боты» после ввода ID; на странице «Бэкапы» каналы не сбрасываются.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </section>

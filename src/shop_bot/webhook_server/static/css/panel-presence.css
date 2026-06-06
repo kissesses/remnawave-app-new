@@ -1,0 +1,367 @@
+/* Admins online — shared across panel layouts */
+
+.panel-admins-online-btn {
+    position: relative;
+}
+
+.panel-admins-online-btn__count {
+    position: absolute;
+    top: 0.1rem;
+    right: 0.1rem;
+    min-width: 1rem;
+    height: 1rem;
+    padding: 0 0.25rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--primary, #0a84ff) 88%, #000);
+    color: #fff;
+    font-size: 0.5625rem;
+    font-weight: 800;
+    line-height: 1rem;
+    text-align: center;
+    pointer-events: none;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.35);
+}
+
+html:not(.dark) .panel-admins-online-btn__count {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85);
+}
+
+.panel-topbar__btn.panel-admins-online-btn .panel-admins-online-btn__count {
+    top: 0.05rem;
+    right: 0.05rem;
+}
+
+.panel-glass-sidebar__tool-btn.panel-admins-online-btn .panel-admins-online-btn__count {
+    top: -0.1rem;
+    right: -0.1rem;
+    min-width: 0.875rem;
+    height: 0.875rem;
+    line-height: 0.875rem;
+    font-size: 0.5rem;
+}
+
+/* Popover placement — topbar layouts */
+html[data-design="classic"] .panel-admins-popover,
+html[data-design="macos"] .panel-admins-popover,
+html[data-design="macos-v2"] .panel-admins-popover {
+    left: auto;
+    right: 1rem;
+    top: calc(3rem + 0.35rem);
+    bottom: auto;
+    width: min(18rem, calc(100vw - 2rem));
+}
+
+html[data-design="classic"] .panel-admins-popover:not(.hidden),
+html[data-design="macos"] .panel-admins-popover:not(.hidden),
+html[data-design="macos-v2"] .panel-admins-popover:not(.hidden) {
+    z-index: 9100;
+}
+
+html[data-design="macos-v2"] body.workspace-embed .panel-admins-popover {
+    top: 0.65rem;
+    right: 0.65rem;
+    left: auto;
+    bottom: auto;
+    width: min(18rem, calc(100% - 1.3rem));
+}
+
+html[data-design="glass"] .panel-admins-popover,
+html[data-design="stealth-admin"] .panel-admins-popover {
+    left: calc(var(--glass-sidebar-w) + 0.75rem);
+    right: auto;
+    top: auto;
+    bottom: 5.5rem;
+}
+
+@media (max-width: 900px) {
+    html[data-design="glass"] .panel-admins-popover,
+    html[data-design="stealth-admin"] .panel-admins-popover {
+        left: 0.75rem;
+        bottom: 1rem;
+        width: calc(100vw - 1.5rem);
+    }
+}
+
+/* Popover shell — all layouts */
+.panel-admins-popover {
+    position: fixed;
+    z-index: 9100;
+    width: min(20rem, calc(100vw - 2rem));
+    border-radius: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(14, 14, 18, 0.96);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+}
+
+html:not(.dark) .panel-admins-popover {
+    background: rgba(252, 252, 254, 0.96);
+    border-color: rgba(0, 0, 0, 0.1);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
+}
+
+.panel-admins-popover.hidden { display: none; }
+
+.panel-admins-popover__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.85rem 1rem 0.65rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+html:not(.dark) .panel-admins-popover__head {
+    border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+.panel-admins-popover__title-wrap h3 {
+    margin: 0;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.panel-admins-popover__stats {
+    margin: 0.2rem 0 0;
+    font-size: 0.625rem;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+html:not(.dark) .panel-admins-popover__stats {
+    color: rgba(0, 0, 0, 0.45);
+}
+
+.panel-admins-popover__tools {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.panel-admins-popover__refresh,
+.panel-admins-popover__close {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.45);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 0.5rem;
+}
+
+.panel-admins-popover__refresh:hover,
+.panel-admins-popover__close:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+.panel-admins-popover__refresh.is-spinning .material-symbols-outlined {
+    animation: panel-presence-spin 0.6s linear;
+}
+
+@keyframes panel-presence-spin {
+    to { transform: rotate(360deg); }
+}
+
+.panel-admins-tabs {
+    display: flex;
+    gap: 0.25rem;
+    padding: 0.45rem 0.65rem 0;
+}
+
+.panel-admins-tabs__btn {
+    flex: 1;
+    border: none;
+    border-radius: 0.55rem;
+    padding: 0.35rem 0.5rem;
+    font-size: 0.625rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+}
+
+.panel-admins-tabs__btn.is-active {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+html:not(.dark) .panel-admins-tabs__btn {
+    color: rgba(0, 0, 0, 0.45);
+}
+
+html:not(.dark) .panel-admins-tabs__btn.is-active {
+    background: rgba(0, 0, 0, 0.06);
+    color: #1d1d1f;
+}
+
+.panel-admins-panels {
+    padding: 0.35rem 0 0.5rem;
+}
+
+.panel-admins-panel {
+    display: none;
+}
+
+.panel-admins-panel.is-active {
+    display: block;
+}
+
+.panel-admins-list {
+    list-style: none;
+    margin: 0;
+    padding: 0.35rem;
+    max-height: 16rem;
+    overflow-y: auto;
+}
+
+.panel-admins-list__item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.55rem 0.65rem;
+    border: none;
+    border-radius: 0.75rem;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    text-align: left;
+}
+
+.panel-admins-list__item:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.panel-admins-list__item.is-self {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+html:not(.dark) .panel-admins-list__item:hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.panel-admins-list__avatar {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.65rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8125rem;
+    font-weight: 800;
+    background: color-mix(in srgb, var(--primary, #0a84ff) 20%, transparent);
+    color: var(--primary, #0a84ff);
+    flex-shrink: 0;
+}
+
+.panel-admins-list__body {
+    flex: 1;
+    min-width: 0;
+}
+
+.panel-admins-list__name {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 700;
+}
+
+.panel-admins-list__sub {
+    display: block;
+    font-size: 0.6875rem;
+    color: rgba(255, 255, 255, 0.4);
+    margin-top: 0.1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+html:not(.dark) .panel-admins-list__sub {
+    color: rgba(0, 0, 0, 0.45);
+}
+
+.panel-admins-list__dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: #30d158;
+    box-shadow: 0 0 8px rgba(48, 209, 88, 0.6);
+    flex-shrink: 0;
+}
+
+.panel-admins-list__dot.is-away {
+    background: #ffd60a;
+    box-shadow: 0 0 8px rgba(255, 214, 10, 0.45);
+}
+
+.panel-admins-list__dot.is-offline {
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow: none;
+}
+
+.panel-admins-empty {
+    padding: 1rem;
+    text-align: center;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+html:not(.dark) .panel-admins-empty {
+    color: rgba(0, 0, 0, 0.4);
+}
+
+.panel-admins-online-btn.has-others-online .material-symbols-outlined {
+    color: rgb(var(--primary-rgb, 34 211 238));
+}
+
+.panel-admins-online-btn.has-others-online .panel-admins-online-btn__count {
+    animation: panel-presence-pulse 2s ease-in-out infinite;
+}
+
+@keyframes panel-presence-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+}
+
+/* Admin detail modal */
+.panel-admin-detail { max-width: 28rem; }
+
+.panel-admin-detail__status.is-away {
+    color: #ffd60a;
+    background: rgba(255, 214, 10, 0.12);
+}
+
+.panel-admin-detail__action-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+}
+
+.panel-admin-detail__action-summary {
+    font-size: 0.6rem;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.panel-admin-detail__footer {
+    margin-top: 0.85rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.panel-admin-detail__manage {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--primary, #0a84ff);
+    text-decoration: none;
+}
+
+.panel-admin-detail__manage:hover {
+    text-decoration: underline;
+}

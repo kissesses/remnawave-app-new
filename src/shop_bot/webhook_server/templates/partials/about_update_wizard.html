@@ -1,0 +1,65 @@
+<div id="panelUpdateModal" class="modal-overlay about-update-overlay hidden" aria-hidden="true">
+    <div class="about-update-window modal-content" role="dialog" aria-labelledby="panel-update-title" aria-modal="true">
+        <div class="about-mac-titlebar about-update-titlebar">
+            <div class="macos-traffic-lights about-mac-traffic" aria-hidden="true">
+                <button type="button" class="about-update-close" id="panel-update-close" aria-label="Закрыть"></button>
+                <span></span>
+                <span></span>
+            </div>
+            <span id="panel-update-title" class="about-mac-titlebar__label">Обновление ShopBot</span>
+        </div>
+
+        <div class="about-update-body">
+            <div class="about-update-hero" id="panel-update-hero">
+                <div class="about-update-hero__ring" aria-hidden="true">
+                    <svg class="about-update-ring" viewBox="0 0 120 120">
+                        <circle class="about-update-ring__track" cx="60" cy="60" r="52" />
+                        <circle class="about-update-ring__progress" id="panel-update-ring-progress" cx="60" cy="60" r="52" />
+                    </svg>
+                    <span class="about-update-hero__pct" id="panel-update-pct">0%</span>
+                    <span class="about-update-hero__countdown hidden" id="panel-update-countdown" aria-live="polite">1:30</span>
+                </div>
+                <div class="about-update-hero__text">
+                    <p class="about-update-hero__version" id="panel-update-version-line">—</p>
+                    <p class="about-update-hero__status" id="panel-update-status">Подготовка…</p>
+                </div>
+            </div>
+
+            <div class="about-update-steps" id="panel-update-steps">
+                <div class="about-update-step" data-step="validate">
+                    <span class="about-update-step__icon material-symbols-outlined">verified</span>
+                    <span class="about-update-step__label">Проверка</span>
+                </div>
+                <div class="about-update-step" data-step="pull">
+                    <span class="about-update-step__icon material-symbols-outlined">cloud_download</span>
+                    <span class="about-update-step__label">Загрузка</span>
+                </div>
+                <div class="about-update-step" data-step="recreate">
+                    <span class="about-update-step__icon material-symbols-outlined">deployed_code</span>
+                    <span class="about-update-step__label">Применение</span>
+                </div>
+                <div class="about-update-step" data-step="health">
+                    <span class="about-update-step__icon material-symbols-outlined">monitor_heart</span>
+                    <span class="about-update-step__label">Запуск</span>
+                </div>
+            </div>
+
+            <div class="about-update-progress">
+                <div class="about-update-progress__bar" id="panel-update-bar" style="width: 0%"></div>
+            </div>
+
+            <div class="about-mac-terminal about-update-log-wrap">
+                <div class="about-mac-terminal__head">
+                    <span class="about-mac-terminal__dot"></span>
+                    <span>Журнал</span>
+                </div>
+                <pre class="about-mac-terminal__code about-update-log" id="panel-update-log"></pre>
+            </div>
+
+            <div class="about-update-actions hidden" id="panel-update-error-actions">
+                <button type="button" class="about-update-btn about-update-btn--ghost" id="panel-update-back-about">Вернуться</button>
+                <button type="button" class="about-update-btn about-update-btn--ghost" id="panel-update-copy-cmd">Копировать команду</button>
+            </div>
+        </div>
+    </div>
+</div>

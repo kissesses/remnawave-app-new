@@ -1,0 +1,204 @@
+.panel-cmdk {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 12vh 1rem 1rem;
+}
+
+.panel-cmdk.hidden {
+    display: none;
+}
+
+.panel-cmdk__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(6px);
+}
+
+.panel-cmdk__panel {
+    position: relative;
+    width: min(32rem, 100%);
+    border-radius: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(22, 22, 26, 0.96);
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+    overflow: hidden;
+}
+
+html:not(.dark) .panel-cmdk__panel {
+    background: rgba(255, 255, 255, 0.96);
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+.panel-cmdk__head {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.panel-cmdk__head .material-symbols-outlined {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 1.25rem;
+}
+
+html:not(.dark) .panel-cmdk__head .material-symbols-outlined {
+    color: rgba(0, 0, 0, 0.35);
+}
+
+.panel-cmdk__head input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 0.9375rem;
+    color: #fff;
+}
+
+html:not(.dark) .panel-cmdk__head input {
+    color: #111;
+}
+
+.panel-cmdk__esc {
+    font-size: 0.625rem;
+    padding: 0.15rem 0.4rem;
+    border-radius: 0.35rem;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.panel-cmdk__list {
+    max-height: 18rem;
+    overflow-y: auto;
+    margin: 0;
+    padding: 0.35rem;
+    list-style: none;
+}
+
+.panel-cmdk__item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: 0.65rem;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 0.8125rem;
+}
+
+html:not(.dark) .panel-cmdk__item {
+    color: rgba(0, 0, 0, 0.75);
+}
+
+.panel-cmdk__item.is-active,
+.panel-cmdk__item:hover {
+    background: color-mix(in srgb, var(--primary) 14%, transparent);
+    color: #fff;
+}
+
+.panel-cmdk__item .material-symbols-outlined {
+    font-size: 1.125rem;
+    opacity: 0.7;
+}
+
+.panel-cmdk__item-meta {
+    margin-left: auto;
+    font-size: 0.625rem;
+    opacity: 0.4;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.panel-cmdk__empty {
+    padding: 1.5rem;
+    text-align: center;
+    font-size: 0.8125rem;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.panel-cmdk__foot {
+    display: flex;
+    gap: 1rem;
+    padding: 0.55rem 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    font-size: 0.625rem;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.panel-cmdk__foot kbd {
+    margin-right: 0.2rem;
+    padding: 0.1rem 0.3rem;
+    border-radius: 0.25rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.5625rem;
+}
+
+.theme-accent-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.theme-accent-btn {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s;
+}
+
+.theme-accent-btn.is-active {
+    border-color: #fff;
+    box-shadow: 0 0 0 2px var(--primary, #0a84ff), 0 0 0 4px rgba(0, 0, 0, 0.35);
+    transform: scale(1.08);
+}
+
+html:not(.dark) .theme-accent-btn.is-active {
+    border-color: #fff;
+    box-shadow: 0 0 0 2px var(--primary, #0a84ff), 0 0 0 4px rgba(255, 255, 255, 0.5);
+}
+
+.theme-accent-live {
+    margin: 0.65rem 0 0;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.theme-accent-live__swatch {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.15rem 0.55rem 0.15rem 0.35rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    font-weight: 600;
+}
+
+.theme-accent-live__swatch::before {
+    content: '';
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 50%;
+    background: var(--primary, #0a84ff);
+}
+
+html:not(.dark) .theme-accent-live {
+    color: rgba(0, 0, 0, 0.45);
+}
+
+html:not(.dark) .theme-accent-live__swatch {
+    background: rgba(0, 0, 0, 0.06);
+    color: #111;
+}
+
+.theme-preview-card__frame--glass,
+.theme-preview-card__frame--stealth-admin {
+    min-height: 4.5rem;
+}

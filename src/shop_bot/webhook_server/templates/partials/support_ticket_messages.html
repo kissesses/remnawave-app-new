@@ -1,0 +1,27 @@
+{% for m in messages %}
+{% if m.sender == 'note' %}
+<div class="support-msg support-msg--note message-row">
+    <div class="support-msg__bubble">
+        <div class="support-msg__label"><span class="material-symbols-outlined">sticky_note_2</span> Внутренняя заметка</div>
+        <div class="support-msg__text">{{ m.content }}</div>
+        <div class="support-msg__time msg-rel-time" data-timestamp="{{ m.updated_at or m.created_at }}">{{ (m.updated_at or m.created_at or "").split(' ')[1][:5] }}</div>
+    </div>
+</div>
+{% elif m.sender == 'admin' %}
+<div class="support-msg support-msg--admin message-row admin">
+    <div class="support-msg__bubble">
+        <div class="support-msg__label">Поддержка</div>
+        <div class="support-msg__text">{{ m.content }}</div>
+        <div class="support-msg__time msg-rel-time" data-timestamp="{{ m.updated_at or m.created_at }}">{{ (m.updated_at or m.created_at or "").split(' ')[1][:5] }}</div>
+    </div>
+</div>
+{% else %}
+<div class="support-msg support-msg--user message-row user">
+    <div class="support-msg__bubble">
+        <div class="support-msg__label">{{ ticket.username or 'Пользователь' }}</div>
+        <div class="support-msg__text">{{ m.content }}</div>
+        <div class="support-msg__time msg-rel-time" data-timestamp="{{ m.updated_at or m.created_at }}">{{ (m.updated_at or m.created_at or "").split(' ')[1][:5] }}</div>
+    </div>
+</div>
+{% endif %}
+{% endfor %}

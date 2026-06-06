@@ -1,0 +1,151 @@
+/* Remnawave ShopBot — Neon cyber theme (cyan + magenta/purple) */
+
+:root {
+    --primary: #22d3ee;
+    --primary-rgb: 34, 211, 238;
+    --accent: #c026d3;
+    --accent-rgb: 192, 38, 211;
+    --neon-blue-rgb: 59, 130, 246;
+    --bg-deep: #07040f;
+    --bg-panel: #0c0818;
+    --bg-sidebar: rgba(12, 8, 28, 0.88);
+    --glass-border: rgba(34, 211, 238, 0.12);
+    --glass-glow: rgba(192, 38, 211, 0.15);
+}
+
+/* Ambient gradient background */
+.neon-ambient {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse 85% 65% at 8% 15%, rgba(192, 38, 211, 0.28) 0%, transparent 55%),
+        radial-gradient(ellipse 75% 55% at 92% 85%, rgba(59, 130, 246, 0.22) 0%, transparent 55%),
+        radial-gradient(ellipse 55% 45% at 50% -5%, rgba(34, 211, 238, 0.14) 0%, transparent 50%),
+        var(--bg-deep);
+}
+
+.dark .neon-ambient {
+    opacity: 1;
+}
+
+html:not(.dark) .neon-ambient {
+    opacity: 0.35;
+}
+
+body.neon-theme {
+    background: var(--bg-deep) !important;
+    position: relative;
+}
+
+body.neon-theme > .flex,
+body.neon-theme > .relative {
+    position: relative;
+    z-index: 1;
+}
+
+/* Main content areas */
+body.neon-theme .neon-main-bg,
+body.neon-theme [class*="bg-[#102219]"],
+body.neon-theme [class*="bg-[#0a0612]"] {
+    background-color: transparent !important;
+}
+
+body.neon-theme header[class*="bg-[#102219]"],
+body.neon-theme header[class*="bg-[#0a0612]"] {
+    background: rgba(7, 4, 15, 0.75) !important;
+    backdrop-filter: blur(16px);
+    border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Premium glass cards */
+body.neon-theme .premium-card,
+body.neon-theme [class*="rounded-2xl"][class*="bg-white/5"],
+body.neon-theme [class*="rounded-3xl"][class*="bg-white/5"] {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+body.neon-theme [class*="hover:border-primary"]:hover {
+    border-color: rgba(var(--primary-rgb), 0.35) !important;
+    box-shadow: 0 0 30px rgba(var(--primary-rgb), 0.08);
+}
+
+/* Modals */
+body.neon-theme .modal-content {
+    background: rgba(12, 8, 28, 0.96) !important;
+    border-color: rgba(var(--primary-rgb), 0.15) !important;
+    box-shadow:
+        0 25px 60px rgba(0, 0, 0, 0.6),
+        0 0 40px rgba(var(--accent-rgb), 0.08);
+}
+
+body.neon-theme .soft-select-menu {
+    background: rgba(12, 8, 28, 0.98) !important;
+    border-color: rgba(var(--primary-rgb), 0.15) !important;
+}
+
+body.neon-theme .soft-select-item:hover,
+body.neon-theme .soft-select-item.is-active {
+    background: rgba(var(--primary-rgb), 0.12) !important;
+    color: var(--primary) !important;
+}
+
+/* Toasts */
+body.neon-theme .toast-success {
+    background: rgba(var(--primary-rgb), 0.12) !important;
+    border-color: rgba(var(--primary-rgb), 0.25) !important;
+    color: var(--primary) !important;
+}
+
+/* Scrollbar */
+body.neon-theme ::-webkit-scrollbar-thumb {
+    background: rgba(var(--primary-rgb), 0.25) !important;
+}
+
+body.neon-theme ::-webkit-scrollbar-thumb:hover {
+    background: rgba(var(--primary-rgb), 0.45) !important;
+}
+
+body.neon-theme * {
+    scrollbar-color: rgba(var(--primary-rgb), 0.25) rgba(255, 255, 255, 0.02) !important;
+}
+
+/* Primary buttons on dark bg */
+body.neon-theme .bg-primary.text-background-dark,
+body.neon-theme button.bg-primary {
+    color: #07040f !important;
+    box-shadow: 0 0 20px rgba(var(--primary-rgb), 0.35);
+}
+
+/* Stat cards shimmer top edge */
+body.neon-theme .stat-card-neon {
+    position: relative;
+    overflow: hidden;
+}
+
+body.neon-theme .stat-card-neon::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(var(--primary-rgb), 0.6), rgba(var(--accent-rgb), 0.6), transparent);
+}
+
+/* Inputs focus ring */
+body.neon-theme input:focus,
+body.neon-theme textarea:focus,
+body.neon-theme select:focus {
+    box-shadow: 0 0 0 1px rgba(var(--primary-rgb), 0.4), 0 0 20px rgba(var(--primary-rgb), 0.08) !important;
+}
+
+/* Light mode: softer neon */
+html:not(.dark) body.neon-theme {
+    color: #1a1025;
+}

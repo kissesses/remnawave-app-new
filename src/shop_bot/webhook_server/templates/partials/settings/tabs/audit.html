@@ -1,0 +1,162 @@
+<section id="tab-audit" class="tab-content aud-page aud-studio">
+    <div class="aud-mesh" aria-hidden="true"></div>
+
+    <header class="aud-hub">
+        <div class="aud-hub__intro">
+            <div class="aud-hub__icon" aria-hidden="true">
+                <span class="material-symbols-outlined">policy</span>
+            </div>
+            <div class="aud-hub__copy">
+                <h2 class="aud-hub__title">Audit Studio</h2>
+                <p class="aud-hub__desc">Журнал действий администраторов · фильтры · экспорт · детали</p>
+            </div>
+        </div>
+        <div class="aud-hub__actions">
+            <label class="aud-live-toggle" title="Автообновление каждые 30 сек">
+                <input type="checkbox" id="aud-live" />
+                <span class="aud-live-toggle__ui"></span>
+                <span>Live</span>
+            </label>
+            <button type="button" class="aud-btn aud-btn--soft" id="aud-refresh">
+                <span class="material-symbols-outlined">refresh</span> Обновить
+            </button>
+            <a href="#" class="aud-btn aud-btn--accent" id="aud-export" download>
+                <span class="material-symbols-outlined">download</span> CSV
+            </a>
+        </div>
+    </header>
+
+    <div class="aud-kpis" aria-label="Сводка">
+        <article class="aud-kpi">
+            <span class="material-symbols-outlined">today</span>
+            <div>
+                <p class="aud-kpi__val" id="aud-stat-today">—</p>
+                <p class="aud-kpi__lbl">Сегодня</p>
+            </div>
+        </article>
+        <article class="aud-kpi">
+            <span class="material-symbols-outlined">inventory_2</span>
+            <div>
+                <p class="aud-kpi__val" id="aud-stat-total">—</p>
+                <p class="aud-kpi__lbl">Всего записей</p>
+            </div>
+        </article>
+        <article class="aud-kpi aud-kpi--accent">
+            <span class="material-symbols-outlined">filter_list</span>
+            <div>
+                <p class="aud-kpi__val" id="aud-stat-filtered">—</p>
+                <p class="aud-kpi__lbl">По фильтру</p>
+            </div>
+        </article>
+    </div>
+
+    <div class="aud-insights">
+        <section class="aud-insight-card">
+            <header class="aud-insight-card__head">
+                <span class="material-symbols-outlined">leaderboard</span>
+                <h3>Топ действий</h3>
+            </header>
+            <ul class="aud-insight-list" id="aud-top-actions"></ul>
+        </section>
+        <section class="aud-insight-card">
+            <header class="aud-insight-card__head">
+                <span class="material-symbols-outlined">admin_panel_settings</span>
+                <h3>Активные админы</h3>
+            </header>
+            <ul class="aud-insight-list" id="aud-top-admins"></ul>
+        </section>
+    </div>
+
+    <div class="aud-board">
+        <div class="aud-filters">
+            <div class="aud-filters__row aud-filters__row--search">
+                <label class="aud-search" for="aud-q">
+                    <span class="material-symbols-outlined">search</span>
+                    <input type="search" id="aud-q" class="aud-search__input" placeholder="Поиск по действию, деталям, IP…" autocomplete="off" />
+                </label>
+            </div>
+            <div class="aud-filters__row aud-filters__row--grid">
+                <select id="aud-admin" class="aud-select" aria-label="Администратор">
+                    <option value="">Все админы</option>
+                </select>
+                <input type="text" id="aud-ip" class="aud-input" placeholder="IP-адрес" autocomplete="off" />
+                <input type="date" id="aud-date-from" class="aud-input aud-input--date" aria-label="С даты" />
+                <input type="date" id="aud-date-to" class="aud-input aud-input--date" aria-label="По дату" />
+                <button type="button" class="aud-btn aud-btn--ghost" id="aud-clear-filters">Сбросить</button>
+            </div>
+        </div>
+
+        <div class="aud-groups-bar">
+            <span class="aud-groups-bar__label">Категория</span>
+            <div class="aud-groups-scroll">
+                <div class="aud-groups" id="aud-groups" role="group" aria-label="Группы действий"></div>
+            </div>
+        </div>
+
+        <div class="aud-table-scroll">
+            <table class="aud-table" aria-label="Журнал аудита">
+                <thead>
+                    <tr>
+                        <th>Время</th>
+                        <th>Админ</th>
+                        <th>Действие</th>
+                        <th>Детали</th>
+                        <th>IP</th>
+                    </tr>
+                </thead>
+                <tbody id="aud-tbody">
+                    <tr><td colspan="5" class="aud-table-empty">Загрузка…</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <footer class="aud-footer">
+            <p class="aud-footer__meta" id="aud-meta">—</p>
+            <button type="button" class="aud-btn aud-btn--soft" id="aud-more" hidden>Загрузить ещё</button>
+        </footer>
+    </div>
+</section>
+
+<div id="audDetailModal" class="modal-overlay aud-modal" hidden aria-hidden="true">
+    <div class="modal-content aud-modal__window" role="dialog" aria-modal="true" aria-labelledby="aud-detail-title">
+        <header class="aud-modal__head">
+            <div>
+                <p class="aud-modal__eyebrow" id="aud-detail-time">—</p>
+                <h3 class="aud-modal__title" id="aud-detail-title">—</h3>
+                <p class="aud-modal__sub" id="aud-detail-admin">—</p>
+            </div>
+            <button type="button" class="aud-icon-btn" id="aud-detail-close" aria-label="Закрыть">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </header>
+        <div class="aud-modal__body">
+            <div class="aud-detail-grid">
+                <div class="aud-detail-item">
+                    <span class="aud-detail-item__label">Код</span>
+                    <code id="aud-detail-code" class="aud-detail-item__val">—</code>
+                </div>
+                <div class="aud-detail-item">
+                    <span class="aud-detail-item__label">IP</span>
+                    <span id="aud-detail-ip" class="aud-detail-item__val">—</span>
+                </div>
+                <div class="aud-detail-item">
+                    <span class="aud-detail-item__label">Admin ID</span>
+                    <span id="aud-detail-admin-id" class="aud-detail-item__val">—</span>
+                </div>
+            </div>
+            <div class="aud-detail-block">
+                <span class="aud-detail-item__label">Кратко</span>
+                <p id="aud-detail-summary" class="aud-detail-summary">—</p>
+            </div>
+            <div class="aud-detail-block">
+                <div class="aud-detail-block__head">
+                    <span class="aud-detail-item__label">Details (JSON)</span>
+                    <button type="button" class="aud-btn aud-btn--ghost aud-btn--xs" id="aud-copy-json">
+                        <span class="material-symbols-outlined">content_copy</span> Копировать
+                    </button>
+                </div>
+                <pre id="aud-detail-json" class="aud-json">—</pre>
+            </div>
+        </div>
+    </div>
+</div>

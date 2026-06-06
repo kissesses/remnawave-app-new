@@ -1,0 +1,11 @@
+users.db
+users-*.db
+data/.master.key
+data/
+backups/
+__pycache__/
+*.pyc
+*.egg-info/
+.env
+.venv/
+venv/

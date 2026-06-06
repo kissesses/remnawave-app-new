@@ -1,0 +1,370 @@
+{% extends "base.html" %}
+{% block title %}Конструктор кнопок{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/buttons-constructor.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/content-panel.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tool-surface.css') }}" />
+{% endblock %}
+
+{% block content %}
+<div class="btn-cstr-page">
+    <header class="btn-cstr-hero">
+        <div>
+            <p class="btn-cstr-breadcrumb">Панель · Бот</p>
+            <h1 class="btn-cstr-title">Конструктор кнопок</h1>
+            <p class="btn-cstr-subtitle">Раскладка inline-кнопок, тексты бота, предпросмотр Telegram, экспорт JSON.</p>
+        </div>
+        <div class="btn-cstr-hero__actions btn-cstr-hero__actions--layout">
+            <button type="button" class="btn-cstr-btn btn-cstr-btn--ghost" id="export-menu-btn" title="Скачать JSON текущего меню">
+                <span class="material-symbols-outlined text-base">download</span>
+                Экспорт
+            </button>
+            <button type="button" class="btn-cstr-btn btn-cstr-btn--ghost" id="import-menu-btn" title="Загрузить JSON в текущее меню">
+                <span class="material-symbols-outlined text-base">upload</span>
+                Импорт
+            </button>
+            <input type="file" id="import-menu-file" accept=".json,application/json" class="hidden" />
+            <button type="button" class="btn-cstr-btn btn-cstr-btn--ghost" onclick="openModal('buttonHelpModal')">
+                <span class="material-symbols-outlined text-base">menu_book</span>
+                Справка
+            </button>
+            <button type="button" class="btn-cstr-btn btn-cstr-btn--primary" id="add-button-btn">
+                <span class="material-symbols-outlined text-base">add</span>
+                Добавить
+            </button>
+        </div>
+    </header>
+
+    <nav class="btn-cstr-page-tabs" role="tablist" aria-label="Режим конструктора">
+        <button type="button" class="btn-cstr-page-tab is-active" data-page-tab="layout" role="tab">
+            <span class="material-symbols-outlined">grid_view</span> Раскладка
+        </button>
+        <button type="button" class="btn-cstr-page-tab" data-page-tab="content" role="tab">
+            <span class="material-symbols-outlined">edit_note</span> Контент бота
+        </button>
+        <button type="button" class="btn-cstr-page-tab" data-page-tab="media" role="tab">
+            <span class="material-symbols-outlined">photo_library</span> Медиа
+        </button>
+    </nav>
+
+    <div id="btn-cstr-layout-pane" class="btn-cstr-page-pane">
+    <div class="btn-cstr-stats" aria-label="Статистика меню">
+        <div class="btn-cstr-stat btn-cstr-stat--active">
+            <div class="btn-cstr-stat__label">Активные</div>
+            <div class="btn-cstr-stat__value" id="stat-active">0</div>
+        </div>
+        <div class="btn-cstr-stat btn-cstr-stat--hidden">
+            <div class="btn-cstr-stat__label">Скрытые</div>
+            <div class="btn-cstr-stat__value" id="stat-hidden">0</div>
+        </div>
+        <div class="btn-cstr-stat btn-cstr-stat--total">
+            <div class="btn-cstr-stat__label">Всего</div>
+            <div class="btn-cstr-stat__value" id="stat-total">0</div>
+        </div>
+    </div>
+
+    <nav class="btn-cstr-menus" role="tablist" aria-label="Тип меню бота">
+        {% for key, label, icon in [
+            ('main_menu', 'Главное', 'home'),
+            ('profile_menu', 'Профиль', 'person'),
+            ('support_menu', 'Поддержка', 'support_agent'),
+            ('key_info_menu', 'Ключ', 'vpn_key'),
+            ('admin_menu', 'Админ', 'admin_panel_settings')
+        ] %}
+        <button type="button" role="tab" class="btn-cstr-menu-tab{% if key == 'main_menu' %} is-active{% endif %}"
+            data-menu="{{ key }}" aria-selected="{{ 'true' if key == 'main_menu' else 'false' }}">
+            <span class="material-symbols-outlined">{{ icon }}</span>
+            {{ label }}
+        </button>
+        {% endfor %}
+    </nav>
+
+    <div class="btn-cstr-workspace">
+        <section class="btn-cstr-canvas" aria-label="Редактор кнопок">
+            <div class="btn-cstr-canvas__head">
+                <div>
+                    <h2 class="btn-cstr-canvas__title">Раскладка кнопок</h2>
+                    <p class="btn-cstr-canvas__hint">Перетаскивайте для смены порядка · в зону «Скрытые» — чтобы отключить</p>
+                </div>
+                <div class="btn-cstr-toolbar">
+                    <div class="btn-cstr-search">
+                        <span class="material-symbols-outlined">search</span>
+                        <input type="search" id="grid-search" placeholder="Поиск в сетке…" autocomplete="off" />
+                    </div>
+                    <button type="button" class="btn-cstr-btn btn-cstr-btn--ghost" id="duplicate-button-btn" disabled title="Дублировать выбранную (⌘D)">
+                        <span class="material-symbols-outlined text-base">content_copy</span>
+                    </button>
+                </div>
+            </div>
+            <div class="btn-cstr-canvas__body">
+                <div class="btn-cstr-zone-label">
+                    <span>Активные кнопки</span>
+                    <span>2 колонки · ширина 1× / 2×</span>
+                </div>
+                <div id="button-grid" class="btn-cstr-grid"></div>
+
+                <div class="btn-cstr-hidden-zone">
+                    <div class="btn-cstr-zone-label">
+                        <span>Скрытые</span>
+                        <span>Не показываются пользователю</span>
+                    </div>
+                    <div id="hidden-button-grid"></div>
+                </div>
+
+                <div class="btn-cstr-shortcuts">
+                    <span><kbd>⌘S</kbd> сохранить</span>
+                    <span><kbd>⌘D</kbd> дублировать</span>
+                    <span><kbd>Del</kbd> удалить</span>
+                </div>
+            </div>
+        </section>
+
+        <aside class="btn-cstr-sidebar">
+            <div class="btn-cstr-phone">
+                <div class="btn-cstr-phone__notch" aria-hidden="true"></div>
+                <div class="btn-cstr-phone__head">
+                    <span class="btn-cstr-phone__title">Telegram preview</span>
+                    <div class="btn-cstr-phone__actions">
+                        <button type="button" id="refresh-preview-btn" title="Обновить">
+                            <span class="material-symbols-outlined text-sm">refresh</span>
+                        </button>
+                        <button type="button" id="clear-preview-btn" title="Очистить">
+                            <span class="material-symbols-outlined text-sm">close</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="preview-area" class="telegram-preview">
+                    <p class="text-white/40 text-center text-xs py-6">Предпросмотр обновляется автоматически</p>
+                </div>
+            </div>
+
+            <div class="btn-cstr-inspector btn-cstr-inspector--empty" id="btn-cstr-inspector">
+                <div class="btn-cstr-inspector__head">
+                    <h3>Свойства</h3>
+                    <button type="button" onclick="openModal('buttonHelpModal')" class="text-white/30 hover:text-primary transition-colors" title="Справка по callback">
+                        <span class="material-symbols-outlined text-base">info</span>
+                    </button>
+                </div>
+                <div id="inspector-empty" class="btn-cstr-inspector__body">
+                    Выберите кнопку в сетке слева, чтобы редактировать текст, callback и цвет
+                </div>
+                <div id="inspector-form-wrap" class="btn-cstr-inspector__body hidden">
+                    <form id="button-properties-form">
+                        <div class="btn-cstr-field">
+                            <label for="button-id">ID кнопки</label>
+                            <input type="text" id="button-id" readonly class="opacity-60" />
+                        </div>
+                        <div class="btn-cstr-field">
+                            <label for="button-text">Текст</label>
+                            <input type="text" id="button-text" placeholder="Текст в Telegram" />
+                        </div>
+                        <div class="btn-cstr-field">
+                            <label>Тип действия</label>
+                            <div class="soft-select" data-target="action-type">
+                                <button type="button" class="soft-select-toggle">Callback</button>
+                                <div class="soft-select-menu"></div>
+                                <select id="action-type" class="hidden">
+                                    <option value="callback">Callback (внутреннее)</option>
+                                    <option value="url">URL (ссылка)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="btn-cstr-field" id="callback-data-group">
+                            <label for="callback-data">Callback data</label>
+                            <input type="text" id="callback-data" placeholder="manage_keys" />
+                        </div>
+                        <div class="btn-cstr-field hidden" id="url-group">
+                            <label for="button-url">URL</label>
+                            <input type="text" id="button-url" placeholder="https://… или {connection_string}" />
+                        </div>
+                        <div class="btn-cstr-field-row">
+                            <div class="btn-cstr-field">
+                                <label for="row-position">Строка</label>
+                                <input type="number" id="row-position" min="0" value="0" />
+                            </div>
+                            <div class="btn-cstr-field">
+                                <label for="column-position">Колонка</label>
+                                <input type="number" id="column-position" min="0" value="0" />
+                            </div>
+                        </div>
+                        <div class="btn-cstr-field">
+                            <label>Ширина</label>
+                            <div class="soft-select" data-target="button-width">
+                                <button type="button" class="soft-select-toggle">1 колонка</button>
+                                <div class="soft-select-menu"></div>
+                                <select id="button-width" class="hidden">
+                                    <option value="1">1 колонка</option>
+                                    <option value="2">2 колонки (широкая)</option>
+                                    <option value="3">3 колонки</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="btn-cstr-field">
+                            <label for="sort-order">Порядок</label>
+                            <input type="number" id="sort-order" min="0" value="0" />
+                        </div>
+                        <div class="btn-cstr-field">
+                            <label>Цвет</label>
+                            <div class="btn-cstr-colors" id="color-picker">
+                                <button type="button" data-color="" class="color-swatch active" title="По умолчанию">
+                                    <span class="material-symbols-outlined text-xs">block</span>
+                                </button>
+                                <button type="button" data-color="red" class="color-swatch" style="background:#ef5350" title="danger"></button>
+                                <button type="button" data-color="green" class="color-swatch" style="background:#66bb6a" title="success"></button>
+                                <button type="button" data-color="blue" class="color-swatch" style="background:#42a5f5" title="primary"></button>
+                            </div>
+                            <input type="hidden" id="button-color" value="" />
+                        </div>
+                        <div class="btn-cstr-field">
+                            <label for="emoji-id">Premium Emoji ID</label>
+                            <input type="text" id="emoji-id" placeholder="5368324170671202286" />
+                        </div>
+                        <label class="flex items-center gap-2 cursor-pointer mb-3">
+                            <input type="checkbox" id="is-active" checked class="w-4 h-4 rounded" />
+                            <span class="text-sm text-white/70">Активна</span>
+                        </label>
+                        <div class="btn-cstr-save-row">
+                            <button type="submit" class="btn-cstr-save">Сохранить</button>
+                            <button type="button" id="delete-button-btn" class="btn-cstr-save btn-cstr-save--muted hidden">
+                                Удалить кнопку
+                            </button>
+                            <p class="btn-cstr-autosave-hint">Изменения текста сохраняются автоматически</p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </aside>
+    </div>
+    </div>
+
+    <div id="btn-cstr-content-pane" class="btn-cstr-page-pane" hidden>
+        {% include 'partials/button_constructor/bot_content.html' %}
+    </div>
+
+    <div id="btn-cstr-media-pane" class="btn-cstr-page-pane" hidden>
+        {% include 'partials/button_constructor/bot_media.html' %}
+    </div>
+</div>
+
+<!-- Add Button Modal -->
+<div id="addButtonModal" class="modal-overlay">
+    <div class="modal-content max-w-md">
+        <div class="p-4 border-b border-white/10 flex items-center justify-between">
+            <h5 class="text-white font-bold">Новая кнопка</h5>
+            <button type="button" onclick="closeModal('addButtonModal')" class="text-white/50 hover:text-white">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="p-6 space-y-4">
+            <div class="btn-cstr-field" style="margin:0">
+                <label for="new-button-id">ID</label>
+                <input type="text" id="new-button-id" placeholder="my_button" required />
+            </div>
+            <div class="btn-cstr-field" style="margin:0">
+                <label for="new-button-text">Текст</label>
+                <input type="text" id="new-button-text" placeholder="🔑 Мои ключи" required />
+            </div>
+            <div class="btn-cstr-field" style="margin:0">
+                <label>Действие</label>
+                <div class="soft-select" data-target="new-action-type">
+                    <button type="button" class="soft-select-toggle">Callback</button>
+                    <div class="soft-select-menu"></div>
+                    <select id="new-action-type" class="hidden">
+                        <option value="callback">Callback</option>
+                        <option value="url">URL</option>
+                    </select>
+                </div>
+            </div>
+            <div class="btn-cstr-field" id="new-callback-data-group" style="margin:0">
+                <label for="new-callback-data">Callback</label>
+                <input type="text" id="new-callback-data" />
+            </div>
+            <div class="btn-cstr-field hidden" id="new-url-group" style="margin:0">
+                <label for="new-button-url">URL</label>
+                <input type="text" id="new-button-url" />
+            </div>
+            <div class="btn-cstr-field" style="margin:0">
+                <label>Ширина</label>
+                <div class="soft-select" data-target="new-button-width">
+                    <button type="button" class="soft-select-toggle">1 колонка</button>
+                    <div class="soft-select-menu"></div>
+                    <select id="new-button-width" class="hidden">
+                        <option value="1">1 колонка</option>
+                        <option value="2">2 колонки</option>
+                        <option value="3">3 колонки</option>
+                    </select>
+                </div>
+            </div>
+            <div class="btn-cstr-field" style="margin:0">
+                <label>Цвет</label>
+                <div class="btn-cstr-colors" id="new-color-picker">
+                    <button type="button" data-color="" class="color-swatch active"><span class="material-symbols-outlined text-xs">block</span></button>
+                    <button type="button" data-color="red" class="color-swatch" style="background:#ef5350"></button>
+                    <button type="button" data-color="green" class="color-swatch" style="background:#66bb6a"></button>
+                    <button type="button" data-color="blue" class="color-swatch" style="background:#42a5f5"></button>
+                </div>
+                <input type="hidden" id="new-button-color" value="" />
+            </div>
+            <div class="btn-cstr-field" style="margin:0">
+                <label for="new-emoji-id">Emoji ID</label>
+                <input type="text" id="new-emoji-id" />
+            </div>
+        </div>
+        <div class="p-4 border-t border-white/10 flex justify-end gap-2">
+            <button type="button" onclick="closeModal('addButtonModal')" class="btn-cstr-btn">Отмена</button>
+            <button type="button" id="confirm-add-button" class="btn-cstr-btn btn-cstr-btn--primary">Добавить</button>
+        </div>
+    </div>
+</div>
+
+<!-- Help Modal -->
+<div id="buttonHelpModal" class="modal-overlay modal-xl">
+    <div class="modal-content">
+        <div class="p-4 border-b border-white/10 flex items-center justify-between">
+            <h5 class="text-white font-bold">Справочник кнопок и callback</h5>
+            <button type="button" onclick="closeModal('buttonHelpModal')" class="text-white/50 hover:text-white">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="p-6">
+            <div class="mb-4 p-3 rounded-xl border border-primary/20 bg-primary/5">
+                <p class="text-[11px] text-white/70 leading-relaxed">
+                    <strong class="text-primary">Подсказка:</strong> ID кнопки произвольный. Важно поле <span class="text-amber-400 font-semibold">Callback / URL</span> — по нему бот выполняет действие.
+                    Нажмите <strong>+ Добавить</strong> в таблице, чтобы вставить шаблон в текущее меню.
+                </p>
+            </div>
+            <input type="text" id="help-search" placeholder="Поиск…"
+                class="w-full mb-4 bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white text-sm" />
+            <div class="overflow-x-auto max-h-[60vh] custom-scroll">
+                <table class="w-full text-xs">
+                    <thead class="bg-primary/10 sticky top-0">
+                        <tr>
+                            <th class="px-2 py-2 text-left text-primary/70 font-bold uppercase">Меню</th>
+                            <th class="px-2 py-2 text-left text-primary/70 font-bold uppercase">ID</th>
+                            <th class="px-2 py-2 text-left text-primary/70 font-bold uppercase">Текст</th>
+                            <th class="px-2 py-2 text-left text-primary/70 font-bold uppercase">Callback</th>
+                            <th class="px-2 py-2 text-left text-primary/70 font-bold uppercase">URL</th>
+                            <th class="px-2 py-2 text-left text-primary/70 font-bold uppercase"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="help-table-body" class="divide-y divide-white/5"></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="p-4 border-t border-white/10 flex justify-end">
+            <button type="button" onclick="closeModal('buttonHelpModal')" class="btn-cstr-btn btn-cstr-btn--primary">Закрыть</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+window.CONTENT_PANEL_BOOT = { menuImageBase: '/settings/content/menu-image/' };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script src="{{ url_for('static', filename='js/buttons-constructor.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
+<script src="{{ url_for('static', filename='js/bot-content-panel.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
+<script src="{{ url_for('static', filename='js/content-panel.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
+{% endblock %}

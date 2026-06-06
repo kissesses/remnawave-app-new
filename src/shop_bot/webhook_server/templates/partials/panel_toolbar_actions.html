@@ -1,0 +1,59 @@
+<div class="panel-topbar__actions">
+    {% if main_running and support_running %}
+    <span class="panel-topbar__status panel-topbar__status--live">
+        <span class="panel-topbar__status-dot panel-topbar__status-dot--pulse"></span>
+        Live
+    </span>
+    {% elif main_running or support_running %}
+    <span class="panel-topbar__status panel-topbar__status--limited">
+        <span class="panel-topbar__status-dot panel-topbar__status-dot--pulse"></span>
+        Limited
+    </span>
+    {% else %}
+    <span class="panel-topbar__status panel-topbar__status--stopped">
+        <span class="panel-topbar__status-dot"></span>
+        Stopped
+    </span>
+    {% endif %}
+
+    <div class="panel-topbar__divider" aria-hidden="true"></div>
+
+    {% if main_running or support_running %}
+    <form action="{{ url_for('stop_both_bots_route') }}" method="post" class="inline" data-confirm="Остановить работу всех модулей?">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <button type="submit" title="Остановить систему" class="panel-topbar__btn panel-topbar__btn--danger">
+            <span class="material-symbols-outlined">stop_circle</span>
+        </button>
+    </form>
+    {% elif all_settings_ok and support_settings_ok %}
+    <form action="{{ url_for('start_both_bots_route') }}" method="post" class="inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <button type="submit" title="Запустить систему" class="panel-topbar__btn panel-topbar__btn--accent">
+            <span class="material-symbols-outlined">play_circle</span>
+        </button>
+    </form>
+    {% endif %}
+
+    <button type="button" id="btn-restart-bot" title="Полная перезагрузка" class="panel-topbar__btn panel-topbar__btn--muted">
+        <span class="material-symbols-outlined">restart_alt</span>
+    </button>
+
+    {% include 'partials/panel_admins_online_btn.html' %}
+
+    <button type="button" id="about-info-btn" title="О проекте" class="panel-topbar__btn panel-topbar__btn--about">
+        <span id="about-info-icon" class="material-symbols-outlined" aria-hidden="true">info</span>
+        <span id="about-new-badge" class="panel-topbar__new-badge panel-topbar__new-badge--update hidden" aria-hidden="true">NEW</span>
+    </button>
+
+    <button type="button" id="theme-toggle-btn" title="Оформление панели" class="panel-topbar__btn panel-topbar__btn--muted">
+        <span class="material-symbols-outlined">palette</span>
+        <span id="theme-new-badge" class="panel-topbar__new-badge">NEW</span>
+    </button>
+
+    <form action="{{ url_for('logout_page') }}" method="post" class="inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <button type="submit" title="Выйти" class="panel-topbar__btn panel-topbar__btn--muted">
+            <span class="material-symbols-outlined">logout</span>
+        </button>
+    </form>
+</div>

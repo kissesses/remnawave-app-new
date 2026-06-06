@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark setup-macos-page">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Готово — Remnawave ShopBot</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='img/favicon-32x32.png') }}">
+    <meta name="theme-color" content="#0a0a0c">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/setup-macos.css') }}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+</head>
+<body class="setup-macos-page">
+    <div class="setup-macos-bg" id="setup-macos-wallpaper" aria-hidden="true"></div>
+    <div class="setup-macos-vignette" aria-hidden="true"></div>
+
+    <header class="setup-macos-menubar">
+        <div class="setup-macos-menubar__left">
+            <img src="{{ url_for('static', filename='img/app-icon-32.png') }}" alt="" class="setup-macos-menubar__icon" width="16" height="16" onerror="this.style.display='none'">
+            <span>Remnawave ShopBot</span>
+        </div>
+        <div class="setup-macos-menubar__right">
+            <span class="setup-macos-menubar__status">
+                <span class="material-symbols-outlined" aria-hidden="true">wifi</span>
+                <span class="material-symbols-outlined" aria-hidden="true">battery_full</span>
+            </span>
+            <span class="setup-macos-menubar__clock" id="setup-macos-clock"></span>
+        </div>
+    </header>
+
+    <main class="setup-macos-stage">
+        <div class="setup-macos-window" role="dialog" aria-labelledby="setup-done-title">
+            <div class="setup-macos-titlebar">
+                <div class="setup-macos-traffic" aria-hidden="true">
+                    <span class="close"></span>
+                    <span class="min"></span>
+                    <span class="max"></span>
+                </div>
+                <span class="setup-macos-titlebar__title">Инициализация завершена</span>
+            </div>
+
+            <div class="setup-macos-window__body">
+                <div class="setup-macos-success">
+                    <div class="setup-macos-success__icon">
+                        <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+                    </div>
+                    <h1 id="setup-done-title">Панель готова</h1>
+                    <p>Сохраните учётные данные — пароль больше не будет показан</p>
+                </div>
+
+                <div class="setup-macos-cred">
+                    <p class="setup-macos-cred__label">Логин</p>
+                    <div class="setup-macos-cred__row">
+                        <code class="setup-macos-cred__value" id="setup-login">{{ panel_login }}</code>
+                        <button type="button" class="setup-macos-btn-sm copy-btn" data-copy-target="setup-login" aria-label="Копировать логин">
+                            <span class="material-symbols-outlined" aria-hidden="true">content_copy</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="setup-macos-cred setup-macos-cred--accent">
+                    <p class="setup-macos-cred__label">Пароль</p>
+                    <div class="setup-macos-cred__row">
+                        <code class="setup-macos-cred__value" id="setup-password">{{ panel_password }}</code>
+                        <button type="button" class="setup-macos-btn-sm setup-macos-btn-sm--primary copy-btn" data-copy-target="setup-password" aria-label="Копировать пароль">
+                            <span class="material-symbols-outlined" aria-hidden="true">content_copy</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="setup-macos-alert setup-macos-alert--info">
+                    Сохраните пароль в менеджере паролей. После перехода на страницу входа восстановить его будет нельзя.
+                </div>
+
+                <a href="{{ url_for('login_page') }}" class="setup-macos-submit setup-macos-link">
+                    <span class="material-symbols-outlined" aria-hidden="true">login</span>
+                    Перейти ко входу
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/setup-macos.js') }}"></script>
+    <script>
+    document.querySelectorAll(".copy-btn").forEach(function (btn) {
+        btn.addEventListener("click", async function () {
+            const targetId = btn.getAttribute("data-copy-target");
+            const text = document.getElementById(targetId).textContent.trim();
+            try {
+                await navigator.clipboard.writeText(text);
+                btn.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">check</span>';
+                setTimeout(function () {
+                    btn.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">content_copy</span>';
+                }, 1500);
+            } catch (err) {
+                btn.textContent = "!";
+            }
+        });
+    });
+    </script>
+</body>
+</html>

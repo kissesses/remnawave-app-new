@@ -1,0 +1,176 @@
+{# Bot copy & links — saved via POST /settings/content #}
+<form id="btn-cstr-content-form" action="{{ url_for('settings_tab_page', tab='content') }}" method="post"
+    class="cnt-panel btn-cstr-content-root cstr-sub-studio" data-cnt-default-tab="overview" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+    <header class="cstr-sub-hub">
+        <div class="cstr-sub-hub__intro">
+            <div class="cstr-sub-hub__icon" aria-hidden="true">
+                <span class="material-symbols-outlined">edit_note</span>
+            </div>
+            <div>
+                <h2 class="cstr-sub-hub__title">Контент бота</h2>
+                <p class="cstr-sub-hub__desc">Тексты экранов, инструкции и ссылки · кнопки — во вкладке «Раскладка»</p>
+            </div>
+        </div>
+        <button type="submit" class="btn-cstr-btn btn-cstr-btn--primary cstr-sub-hub__save" id="btn-cstr-content-save">
+            <span class="material-symbols-outlined text-base">save</span>
+            Сохранить
+        </button>
+    </header>
+
+    <div class="cstr-sub-toolbar">
+        <nav class="cnt-tabs cstr-sub-tabs" role="tablist" aria-label="Разделы контента бота">
+            <button type="button" class="cnt-tab is-active" data-cnt-tab="overview" role="tab">
+                <span class="material-symbols-outlined">dashboard</span> Обзор
+            </button>
+            <button type="button" class="cnt-tab" data-cnt-tab="texts" role="tab">
+                <span class="material-symbols-outlined">edit_note</span> Тексты
+            </button>
+            <button type="button" class="cnt-tab" data-cnt-tab="howto" role="tab">
+                <span class="material-symbols-outlined">menu_book</span> Инструкции
+            </button>
+            <button type="button" class="cnt-tab" data-cnt-tab="links" role="tab">
+                <span class="material-symbols-outlined">link</span> Ссылки
+            </button>
+        </nav>
+    </div>
+
+    <div class="cstr-sub-body">
+        <div class="cnt-pane" data-cnt-pane="overview">
+            <div class="cnt-overview-grid">
+                <button type="button" class="cnt-overview-card" data-cnt-goto="texts">
+                    <span class="material-symbols-outlined cnt-overview-card__icon">edit_note</span>
+                    <span class="cnt-overview-card__title">Тексты</span>
+                    <span class="cnt-overview-card__meta">О проекте · поддержка · главное меню</span>
+                </button>
+                <button type="button" class="cnt-overview-card" data-cnt-goto="howto">
+                    <span class="material-symbols-outlined cnt-overview-card__icon">menu_book</span>
+                    <span class="cnt-overview-card__title">Инструкции</span>
+                    <span class="cnt-overview-card__meta">Android · iOS · Windows · Linux</span>
+                </button>
+                <button type="button" class="cnt-overview-card" data-cnt-goto="links">
+                    <span class="material-symbols-outlined cnt-overview-card__icon">link</span>
+                    <span class="cnt-overview-card__title">Ссылки и доступ</span>
+                    <span class="cnt-overview-card__meta">Канал · terms · подписка</span>
+                </button>
+                <a class="cnt-overview-card cnt-overview-card--link" href="{{ url_for('button_constructor_page') }}" data-cnt-page-tab="layout">
+                    <span class="material-symbols-outlined cnt-overview-card__icon">grid_view</span>
+                    <span class="cnt-overview-card__title">Раскладка кнопок</span>
+                    <span class="cnt-overview-card__meta">Текст · цвет · emoji · порядок</span>
+                </a>
+                <a class="cnt-overview-card cnt-overview-card--link" href="{{ url_for('button_constructor_page') }}#media">
+                    <span class="material-symbols-outlined cnt-overview-card__icon">photo_library</span>
+                    <span class="cnt-overview-card__title">Медиа экранов</span>
+                    <span class="cnt-overview-card__meta">Баннеры всех экранов</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="cnt-pane" data-cnt-pane="texts" hidden>
+            <div class="cnt-studio-split">
+                <div class="cstr-editor-stack">
+                    <div class="cnt-card">
+                        <h3 class="cnt-card__title">Текстовые блоки</h3>
+                        <p class="cnt-card__desc">Статичные сообщения в информационных разделах</p>
+                        <div class="cnt-field" style="margin-top:0.55rem">
+                            <label class="cnt-label" for="bc-about-text">О проекте</label>
+                            <textarea id="bc-about-text" name="about_text" rows="3" class="cnt-textarea">{{ settings.about_text or '' }}</textarea>
+                        </div>
+                        <div class="cnt-field">
+                            <label class="cnt-label" for="bc-support-text">Поддержка</label>
+                            <textarea id="bc-support-text" name="support_text" rows="3" class="cnt-textarea">{{ settings.support_text or '' }}</textarea>
+                        </div>
+                    </div>
+                    <div class="cnt-card">
+                        <h3 class="cnt-card__title">Главное меню</h3>
+                        <p class="cnt-card__desc">Подпись к /start · HTML: &lt;b&gt;, &lt;i&gt; · картинка — вкладка «Медиа»</p>
+                        <div class="cnt-field" style="margin-top:0.55rem">
+                            <label class="cnt-label" for="bc-main-menu-text">Текст</label>
+                            <textarea id="bc-main-menu-text" name="main_menu_text" rows="5" class="cnt-textarea cnt-preview-source"
+                                placeholder="🏠 &lt;b&gt;Главное меню&lt;/b&gt;&#10;&#10;Выберите действие:">{{ settings.main_menu_text or '' }}</textarea>
+                        </div>
+                    </div>
+                </div>
+                <aside class="cstr-preview-sticky" aria-label="Предпросмотр Telegram">
+                    <p class="cstr-preview-label">Предпросмотр</p>
+                    <div class="cnt-tg-phone">
+                        <div class="cnt-tg-phone__bar">
+                            <span class="material-symbols-outlined">arrow_back</span>
+                            <span>ShopBot</span>
+                        </div>
+                        <div class="cnt-tg-phone__body">
+                            <div class="cnt-tg-bubble" id="bc-tg-bubble">Текст главного меню…</div>
+                        </div>
+                        <p class="cstr-preview-hint">Клавиатура — вкладка «Раскладка»</p>
+                    </div>
+                </aside>
+            </div>
+        </div>
+
+        <div class="cnt-pane" data-cnt-pane="howto" hidden>
+            <div class="cnt-card cnt-card--compact" style="margin-bottom:0.65rem">
+                <div class="cnt-field" style="margin:0">
+                    <label class="cnt-label" for="bc-howto-intro">Вступление</label>
+                    <textarea id="bc-howto-intro" name="howto_intro_text" rows="2" class="cnt-textarea" placeholder="Выберите вашу платформу…">{{ settings.howto_intro_text or '' }}</textarea>
+                </div>
+            </div>
+            <div class="cnt-howto-split">
+                <nav class="cnt-howto-nav" role="tablist" aria-label="Платформы">
+                    {% for plat in [{'id': 'android', 'l': 'Android', 'i': 'android'}, {'id': 'ios', 'l': 'iOS', 'i': 'phone_iphone'}, {'id': 'windows', 'l': 'Windows', 'i': 'desktop_windows'}, {'id': 'linux', 'l': 'Linux', 'i': 'terminal'}] %}
+                    <button type="button" class="cnt-howto-nav__btn{% if loop.first %} is-active{% endif %}" data-platform="{{ plat.id }}" role="tab">
+                        <span class="material-symbols-outlined">{{ plat.i }}</span>
+                        {{ plat.l }}
+                    </button>
+                    {% endfor %}
+                </nav>
+                <div class="cnt-howto-editor">
+                    {% for plat in [{'id': 'android', 'n': 'howto_android_text'}, {'id': 'ios', 'n': 'howto_ios_text'}, {'id': 'windows', 'n': 'howto_windows_text'}, {'id': 'linux', 'n': 'howto_linux_text'}] %}
+                    <div class="cnt-platform-pane" data-platform="{{ plat.id }}"{% if not loop.first %} hidden{% endif %}>
+                        <label class="cnt-label">Текст инструкции</label>
+                        <textarea name="{{ plat.n }}" rows="12" class="cnt-textarea cnt-textarea--code">{{ settings[plat.n] or '' }}</textarea>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="cnt-pane" data-cnt-pane="links" hidden>
+            <div class="cnt-card">
+                <h3 class="cnt-card__title">Доступ и подписка</h3>
+                <div class="cnt-toggle-row" style="margin-top:0.55rem">
+                    <div>
+                        <div class="cnt-toggle-row__label">Обязательная подписка на канал</div>
+                        <div class="cnt-toggle-row__hint">Бот проверяет подписку перед использованием</div>
+                    </div>
+                    <input type="hidden" name="force_subscription" value="false" />
+                    <label class="settings-macos-switch" title="Обязательная подписка">
+                        <input type="checkbox" name="force_subscription" value="true" id="bc-force_subscription"
+                            {% if settings.force_subscription == 'true' %}checked{% endif %} />
+                        <span class="settings-macos-switch__track"></span>
+                    </label>
+                </div>
+            </div>
+            <div class="cnt-card" style="margin-top:0.65rem">
+                <h3 class="cnt-card__title">Внешние ссылки</h3>
+                <p class="cnt-card__desc">URL для поддержки, канала и юридических документов</p>
+                <div class="cnt-link-grid cstr-link-grid" style="margin-top:0.55rem">
+                    {% for field in [
+                        {'n': 'support_user', 'l': 'Поддержка', 'p': 'https://t.me/support', 'i': 'support_agent'},
+                        {'n': 'channel_url', 'l': 'Telegram-канал', 'p': 'https://t.me/channel', 'i': 'campaign'},
+                        {'n': 'terms_url', 'l': 'Условия (Terms)', 'p': 'https://…', 'i': 'gavel'},
+                        {'n': 'privacy_url', 'l': 'Приватность', 'p': 'https://…', 'i': 'shield'}
+                    ] %}
+                    <div class="cstr-link-field cnt-field">
+                        <label class="cnt-label" for="bc-{{ field.n }}">
+                            <span class="material-symbols-outlined">{{ field.i }}</span> {{ field.l }}
+                        </label>
+                        <input type="url" id="bc-{{ field.n }}" name="{{ field.n }}" value="{{ settings[field.n] or '' }}"
+                            placeholder="{{ field.p }}" class="cnt-input" autocomplete="off" />
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</form>

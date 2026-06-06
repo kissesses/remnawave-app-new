@@ -1,0 +1,74 @@
+<aside id="panel-glass-sidebar" class="panel-glass-sidebar" aria-label="Боковая навигация">
+    <div class="panel-glass-sidebar__brand">
+        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="" class="panel-glass-sidebar__logo" onerror="this.style.display='none'" />
+        <div class="panel-glass-sidebar__brand-text">
+            <span id="glass-brand-title" class="panel-glass-sidebar__title" data-refresh-part="brand">{{ brand_title or 'Admin Panel' }}</span>
+            <span class="panel-glass-sidebar__sub">Панель управления</span>
+        </div>
+        <button type="button" id="glass-brand-edit" class="panel-glass-sidebar__brand-edit" title="Сменить название">
+            <span class="material-symbols-outlined">edit</span>
+        </button>
+    </div>
+
+    {% macro glass_nav_link(endpoint, label, icon, group=[], perm=none, prefix='~') %}
+    {% if perm is none or can(perm) %}
+    {% set is_active = request.endpoint == endpoint or request.endpoint in group %}
+    {% if endpoint in ['settings_page', 'settings_tab_page'] %}
+        {% set _route = url_for('settings_tab_page', tab='panel') %}
+    {% else %}
+        {% set _route = url_for(endpoint) %}
+    {% endif %}
+    <a href="{{ _route }}"
+        class="panel-glass-sidebar__link{% if is_active %} is-active{% endif %}"
+        data-cmd-label="{{ label }}"
+        data-cmd-url="{{ _route }}">
+        <span class="material-symbols-outlined">{{ icon }}</span>
+        <span><span class="panel-glass-sidebar__prefix">{{ prefix }}</span>{{ label }}</span>
+        {% if endpoint == 'support_list_page' %}
+        <span id="glass-support-badge" class="panel-glass-sidebar__badge hidden"></span>
+        {% endif %}
+    </a>
+    {% endif %}
+    {% endmacro %}
+
+    <nav class="panel-glass-sidebar__nav">
+        <div class="panel-glass-sidebar__group">
+            <div class="panel-glass-sidebar__group-title">Обзор</div>
+            {{ glass_nav_link('dashboard_page', 'Главная', 'home', perm='dashboard') }}
+        </div>
+        <div class="panel-glass-sidebar__group">
+            <div class="panel-glass-sidebar__group-title">Управление</div>
+            {{ glass_nav_link('users_page', 'Пользователи', 'group', perm='users') }}
+            {{ glass_nav_link('admin_keys_page', 'Ключи', 'vpn_key', perm='keys') }}
+            {{ glass_nav_link('support_list_page', 'Поддержка', 'support_agent', ['support_ticket_page'], perm='support') }}
+        </div>
+        <div class="panel-glass-sidebar__group">
+            <div class="panel-glass-sidebar__group-title">Инструменты</div>
+            {{ glass_nav_link('button_constructor_page', 'Кнопки', 'build', perm='button_constructor') }}
+            {{ glass_nav_link('node_page', 'Ноды', 'dns', perm='node') }}
+        </div>
+        <div class="panel-glass-sidebar__group">
+            <div class="panel-glass-sidebar__group-title">Система</div>
+            {% if can('db_manage') %}
+            {{ glass_nav_link('backups_page', 'Бэкапы', 'database') }}
+            {% endif %}
+            {{ glass_nav_link('settings_tab_page', 'Настройки', 'settings', ['settings_tab_page'], perm='settings') }}
+        </div>
+    </nav>
+
+    <div class="panel-glass-sidebar__footer">
+        {% include 'partials/panel_glass_footer.html' %}
+        <div class="panel-glass-sidebar__footer-row">
+            <button type="button" id="panel-cmdk-hint" class="panel-glass-sidebar__cmdk" title="Быстрый поиск">
+                <kbd>⌘K</kbd>
+            </button>
+        </div>
+    </div>
+</aside>
+
+<div id="panel-glass-mobile-bar" class="panel-glass-mobile-bar" aria-hidden="true">
+    <button type="button" id="panel-glass-menu-toggle" class="panel-glass-mobile-bar__menu" aria-label="Меню">
+        <span class="material-symbols-outlined">menu</span>
+    </button>
+    <span id="panel-glass-mobile-title" class="panel-glass-mobile-bar__title">{{ brand_title or 'Admin Panel' }}</span>
+</div>

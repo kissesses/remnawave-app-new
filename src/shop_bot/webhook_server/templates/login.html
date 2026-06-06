@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport" />
+    <title>Вход в панель</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='img/favicon-32x32.png') }}" />
+    <meta name="theme-color" content="#0a84ff" />
+    <meta name="csrf-token" content="{{ csrf_token() }}" />
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/auth-ios.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/panel-switches.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/auth-classic.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/auth-macos.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/auth-glass-stealth.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/panel-macos.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/panel-light.css') }}" rel="stylesheet" />
+
+    <script>
+        (function () {
+            const theme = localStorage.getItem('theme') || 'dark';
+            if (theme === 'dark') document.documentElement.classList.add('dark');
+            else document.documentElement.classList.remove('dark');
+            const design = localStorage.getItem('design-theme') || 'classic';
+            document.documentElement.dataset.design = design;
+            if (design !== 'stealth-admin') {
+                const accents = {
+                    blue: { c: '#0a84ff', r: '10, 132, 255' },
+                    violet: { c: '#8b5cf6', r: '139, 92, 246' },
+                    rose: { c: '#f43f5e', r: '244, 63, 94' },
+                    emerald: { c: '#10b981', r: '16, 185, 129' },
+                    cyan: { c: '#06b6d4', r: '6, 182, 212' },
+                    amber: { c: '#f59e0b', r: '245, 158, 11' },
+                    red: { c: '#ef4444', r: '239, 68, 68' },
+                };
+                const key = localStorage.getItem('panel-accent') || 'blue';
+                const a = accents[key] || accents.blue;
+                const root = document.documentElement;
+                const soft = 'rgba(' + a.r + ', 0.16)';
+                root.style.setProperty('--primary', a.c);
+                root.style.setProperty('--primary-rgb', a.r);
+                root.style.setProperty('--panel-accent', a.c);
+                root.style.setProperty('--panel-accent-soft', soft);
+                root.style.setProperty('--auth-accent', a.c);
+                root.style.setProperty('--auth-accent-soft', soft);
+            }
+        })();
+    </script>
+
+    {% if stealth_reveal %}
+    <script>history.replaceState(null, "", "/");</script>
+    {% endif %}
+</head>
+
+<body class="auth-ios" data-auth-page="true">
+    <div id="login-identifier-v2" class="hidden" data-login-page="true"></div>
+
+    <div class="auth-macos-chrome" aria-hidden="true">
+        <div id="auth-macos-wallpaper" class="auth-macos-wallpaper"></div>
+        <div class="auth-macos-vignette"></div>
+        <header class="auth-macos-menubar">
+            <div class="auth-macos-menubar__left">
+                <img src="{{ url_for('static', filename='img/app-icon-32.png') }}" alt="" class="auth-macos-menubar__icon" onerror="this.style.display='none'" />
+                <span class="auth-macos-menubar__menu">Remnawave ShopBot</span>
+            </div>
+            <div class="auth-macos-menubar__right">
+                <span class="auth-macos-menubar__status" aria-hidden="true">
+                    <span class="material-symbols-outlined">wifi</span>
+                    <span class="material-symbols-outlined">battery_full</span>
+                </span>
+                <time id="auth-macos-clock" class="auth-macos-menubar__clock"></time>
+            </div>
+        </header>
+        <div class="auth-macos-dock" id="auth-macos-dock" aria-label="Выбор учётной записи"></div>
+    </div>
+
+    <div class="auth-glass-chrome" aria-hidden="true">
+        <div class="auth-glass-chrome__ambient"></div>
+        <div class="auth-glass-chrome__grid"></div>
+    </div>
+
+    <div id="auth-theme-btn-slot" class="auth-theme-btn-slot">
+        <button type="button" id="theme-toggle-btn" class="auth-theme-btn" title="Макет панели" aria-label="Макет панели">
+            <span class="material-symbols-outlined">palette</span>
+            <span id="auth-theme-new-badge" class="auth-theme-btn__new">NEW</span>
+        </button>
+    </div>
+
+    <main class="auth-page">
+        <div class="auth-card">
+            <aside class="auth-brand" aria-hidden="false">
+                <div class="auth-brand__logo">
+                    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="" onerror="this.style.display='none'" />
+                    <span>Remnawave ShopBot</span>
+                </div>
+
+                <div>
+                    <p class="auth-brand__new-pill">
+                        <span class="auth-new-badge">NEW</span>
+                        macOS v2 — рабочий стол, окна и новое оформление
+                    </p>
+                    <p class="auth-classic-pill">
+                        <span class="auth-classic-pill__dot" aria-hidden="true"></span>
+                        Классический макет — навигация в верхней шапке
+                    </p>
+                    <h1 class="auth-brand__title">Панель управления</h1>
+                    <p class="auth-brand__subtitle">
+                        Управление ботом, пользователями, платежами и инфраструктурой в одном месте.
+                    </p>
+                </div>
+
+                <div class="auth-brand__features">
+                    <div class="auth-feature">
+                        <span class="material-symbols-outlined">shield</span>
+                        Защищённый вход с RBAC
+                    </div>
+                    <div class="auth-feature">
+                        <span class="material-symbols-outlined">dns</span>
+                        Хосты, ноды и мониторинг
+                    </div>
+                    <div class="auth-feature">
+                        <span class="material-symbols-outlined">payments</span>
+                        Платежи и подписки
+                    </div>
+                </div>
+
+                <p class="auth-brand__footer">v.{{ project_info.version }}</p>
+            </aside>
+
+            <section class="auth-form-panel">
+                <div class="auth-form-wrap">
+                    <div class="auth-glass-head">
+                        <div class="auth-glass-head__badge">
+                            <span class="material-symbols-outlined">shield_lock</span>
+                        </div>
+                        <h2 class="auth-glass-head__title">Вход в панель</h2>
+                        <p class="auth-glass-head__sub">Remnawave App · v.{{ project_info.version }}</p>
+                    </div>
+
+                    <div class="auth-macos-profile">
+                        <div class="auth-macos-avatar">
+                            <img src="{{ url_for('static', filename='img/app-icon-512.png') }}" alt=""
+                                data-fallback="{{ url_for('static', filename='img/logo.png') }}"
+                                onerror="if(this.dataset.fallback){this.src=this.dataset.fallback}" />
+                        </div>
+                        <h1 id="auth-macos-display-name" class="auth-macos-display-name">{% if pending_login %}{{ pending_login }}{% else %}Administrator{% endif %}</h1>
+                        <p class="auth-macos-hint">
+                            {% if is_blocked %}Доступ временно ограничен
+                            {% elif totp_step %}Введите код двухфакторной аутентификации
+                            {% else %}Введите пароль для входа в панель{% endif %}
+                        </p>
+                        <div id="auth-macos-telegram-mount" class="auth-macos-telegram-mount hidden"></div>
+                    </div>
+
+                    <div class="auth-mobile-brand">
+                        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="" onerror="this.style.display='none'" />
+                        <span>Remnawave ShopBot</span>
+                    </div>
+
+                    <p class="auth-classic-pill auth-classic-pill--mobile">
+                        <span class="auth-classic-pill__dot" aria-hidden="true"></span>
+                        Классический макет
+                    </p>
+
+                    <header class="auth-form-header">
+                        <p class="auth-mobile-new-pill">
+                            <span class="auth-new-badge">NEW</span>
+                            macOS v2 — новое оформление панели
+                        </p>
+                        <div class="auth-form-icon">
+                            <span class="material-symbols-outlined">lock</span>
+                        </div>
+                        <h2 class="auth-form-title">Вход</h2>
+                        <p class="auth-form-subtitle">Введите учётные данные администратора</p>
+                    </header>
+
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                    <div class="space-y-2">
+                        {% for category, message in messages %}
+                        <div class="auth-alert {% if category == 'danger' %}auth-alert--danger{% else %}auth-alert--info{% endif %}">
+                            <span class="material-symbols-outlined">{% if category == 'danger' %}error{% else %}info{% endif %}</span>
+                            <span>{{ message }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+
+                    {% if is_blocked %}
+                    <div class="auth-blocked">
+                        <div class="auth-blocked__icon">
+                            <span class="material-symbols-outlined">lock_person</span>
+                        </div>
+                        <h3 class="auth-blocked__title">Доступ заблокирован</h3>
+                        <p class="auth-blocked__text">Система безопасности временно ограничила вход из‑за подозрительной активности.</p>
+                    </div>
+                    {% elif totp_step %}
+                    <form method="post" action="/login" autocomplete="off" novalidate>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                        <div class="auth-alert auth-alert--info" style="margin-bottom: 1rem;">
+                            <span class="material-symbols-outlined">phonelink_lock</span>
+                            <span>Введите 6-значный код из приложения аутентификатора{% if pending_login %} для <strong>{{ pending_login }}</strong>{% endif %}.</span>
+                        </div>
+                        <div class="auth-field">
+                            <label class="auth-label" for="totp_code">Код 2FA</label>
+                            <div class="auth-input-wrap">
+                                <span class="auth-input-icon">
+                                    <span class="material-symbols-outlined">pin</span>
+                                </span>
+                                <input type="text" name="totp_code" id="totp_code" required
+                                    inputmode="numeric" maxlength="6" autocomplete="one-time-code"
+                                    class="auth-input" placeholder="000000" />
+                            </div>
+                        </div>
+                        <button type="submit" class="auth-submit">
+                            Подтвердить
+                            <span class="material-symbols-outlined">verified_user</span>
+                        </button>
+                    </form>
+                    {% else %}
+                    <form method="post" action="/login" autocomplete="off" id="auth-login-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                        <input type="hidden" name="account_ref" id="auth-account-ref" value="" />
+
+                        <div class="auth-field auth-field--username">
+                            <label class="auth-label" for="username">Логин</label>
+                            <div class="auth-input-wrap">
+                                <span class="auth-input-icon">
+                                    <span class="material-symbols-outlined">person</span>
+                                </span>
+                                <input type="text" name="username" id="username" required
+                                    class="auth-input" placeholder="administrator" autocomplete="username" />
+                            </div>
+                        </div>
+
+                        <div id="auth-macos-password-panel" class="auth-macos-password-panel">
+                        <div class="auth-field auth-field--password">
+                            <label class="auth-label" for="password">Пароль</label>
+                            <div class="auth-input-wrap">
+                                <span class="auth-input-icon">
+                                    <span class="material-symbols-outlined">key</span>
+                                </span>
+                                <input type="password" name="password" id="password" required
+                                    class="auth-input" placeholder="••••••••••••••••" autocomplete="current-password" />
+                                <button type="button" class="auth-input-toggle" onclick="togglePassword()" aria-label="Показать пароль">
+                                    <span class="material-symbols-outlined" id="eye-icon">visibility_off</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <label class="auth-remember">
+                            <input type="checkbox" name="remember_me" id="remember_me" />
+                            <span class="auth-remember-track" aria-hidden="true"></span>
+                            <span class="auth-remember-text">Запомнить логин</span>
+                        </label>
+
+                        <button type="submit" class="auth-submit">
+                            Войти
+                            <span class="material-symbols-outlined">arrow_forward</span>
+                        </button>
+                        </div>
+                    </form>
+
+                    {% if telegram_login_enabled or passkey_login_enabled %}
+                    <div class="auth-alt-login">
+                        <div class="auth-alt-login__divider"><span>или</span></div>
+                        <div class="auth-alt-icons">
+                            {% if passkey_login_enabled %}
+                            <button type="button" id="passkey-login-btn" class="auth-alt-icon-btn"
+                                title="Войти по Passkey" aria-label="Войти по Passkey">
+                                <span class="material-symbols-outlined">passkey</span>
+                            </button>
+                            {% endif %}
+                            {% if telegram_login_enabled %}
+                            <div id="telegram-login-wrap" class="auth-alt-icon-btn auth-alt-icon-btn--telegram"
+                                title="Войти через Telegram" aria-label="Войти через Telegram">
+                                <span class="auth-alt-icon-btn__visual" aria-hidden="true">
+                                    <svg class="auth-alt-icon-btn__svg" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+                                    </svg>
+                                </span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+
+                    <p class="auth-version">Remnawave ShopBot v.{{ project_info.version }}</p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    {% include 'partials/theme_menu_auth.html' %}
+    <div id="toast-container" class="auth-toast-container"></div>
+
+    <script>
+        window.openModal = function (modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) modal.classList.add('open');
+        };
+        window.closeModal = function (modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) modal.classList.remove('open');
+        };
+        window.showToast = function (type, message, duration = 4000) {
+            const mapped = type === 'error' ? 'danger' : type;
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = `auth-toast auth-toast--${mapped}`;
+            toast.innerHTML = `<span>${message}</span><button type="button" aria-label="Закрыть">×</button>`;
+            toast.querySelector('button')?.addEventListener('click', () => toast.remove());
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('auth-toast--hide');
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        };
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal-overlay')) e.target.classList.remove('open');
+        });
+    </script>
+    <script src="{{ url_for('static', filename='js/auth-macos.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/auth-macos-v2-login.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/auth-classic.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/auth-glass.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/theme-manager.js') }}"></script>
+
+    <script>
+        function togglePassword() {
+            const input = document.getElementById('password');
+            const icon = document.getElementById('eye-icon');
+            if (!input || !icon) return;
+            const show = input.type === 'password';
+            input.type = show ? 'text' : 'password';
+            icon.textContent = show ? 'visibility' : 'visibility_off';
+        }
+
+        const uIn = document.getElementById('username');
+        const rem = document.getElementById('remember_me');
+        if (uIn && rem) {
+            const saved = localStorage.getItem('login_persist');
+            if (saved) {
+                uIn.value = saved;
+                rem.checked = true;
+            }
+            const form = uIn.form;
+            if (form) {
+                form.addEventListener('submit', () => {
+                    if (rem.checked) localStorage.setItem('login_persist', uIn.value);
+                    else localStorage.removeItem('login_persist');
+                });
+            }
+        }
+    </script>
+    {% if not is_blocked and not totp_step %}
+    <script>
+        window.AUTH_MACOS_V2 = {
+            blocked: {{ is_blocked | default(false) | tojson }},
+            totpStep: {{ totp_step | default(false) | tojson }},
+            accounts: {{ login_accounts | tojson }},
+            accountsUrl: {{ url_for('login_accounts_api') | tojson }}
+        };
+        window.AUTH_ALT = {
+            csrfToken: {{ csrf_token() | tojson }},
+            telegramEnabled: {{ telegram_login_enabled | tojson }},
+            passkeyEnabled: {{ passkey_login_enabled | tojson }},
+            telegramBotUsername: {{ telegram_bot_username | tojson }},
+            passkeyOptionsUrl: {{ url_for('login_passkey_options') | tojson }},
+            passkeyVerifyUrl: {{ url_for('login_passkey_verify') | tojson }},
+            telegramLoginUrl: {{ url_for('login_telegram') | tojson }}
+        };
+    </script>
+    <script src="{{ url_for('static', filename='js/auth-alt-login.js') }}"></script>
+    {% endif %}
+</body>
+
+</html>

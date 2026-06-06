@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport" />
+    <title>Приглашение в панель</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='img/favicon-32x32.png') }}" />
+    <meta name="theme-color" content="#0a84ff" />
+    <meta name="csrf-token" content="{{ csrf_token() }}" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/auth-ios.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/auth-classic.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/auth-macos.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/auth-glass-stealth.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/access-panel.css') }}" rel="stylesheet" />
+    <script>
+        (function () {
+            const theme = localStorage.getItem('theme') || 'dark';
+            if (theme === 'dark') document.documentElement.classList.add('dark');
+            else document.documentElement.classList.remove('dark');
+            document.documentElement.dataset.design = localStorage.getItem('design-theme') || 'classic';
+        })();
+    </script>
+</head>
+
+<body class="auth-ios invite-page" data-auth-page="true">
+    <main class="auth-page invite-page__main">
+        <div class="auth-card invite-card">
+            <section class="auth-form-panel invite-card__panel">
+                <div class="auth-form-wrap">
+                    <div class="auth-glass-head">
+                        <div class="auth-glass-head__badge">
+                            <span class="material-symbols-outlined">person_add</span>
+                        </div>
+                        <h2 class="auth-glass-head__title">Приглашение администратора</h2>
+                        <p class="auth-glass-head__sub">{{ brand_title or 'Remnawave ShopBot' }} · Access Studio</p>
+                    </div>
+
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                    <div class="invite-flashes">
+                        {% for category, message in messages %}
+                        <p class="invite-flash invite-flash--{{ category }}">{{ message }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+
+                    {% if invite_error and not invite %}
+                    <div class="invite-state invite-state--error">
+                        <span class="material-symbols-outlined">link_off</span>
+                        <h3>Приглашение недоступно</h3>
+                        <p>{{ invite_error }}</p>
+                        <a href="{{ url_for('login_page') }}" class="invite-btn invite-btn--ghost">На страницу входа</a>
+                    </div>
+                    {% elif invite %}
+                    <div class="invite-meta">
+                        <div class="invite-meta__chip">
+                            <span class="material-symbols-outlined">badge</span>
+                            Роль: <strong>{{ invite.role_name }}</strong>
+                        </div>
+                        {% if invite.note %}
+                        <p class="invite-meta__note">{{ invite.note }}</p>
+                        {% endif %}
+                        <p class="invite-meta__hint">
+                            Действует до {{ invite.expires_at }} · осталось использований: {{ invite.uses_left }}
+                        </p>
+                    </div>
+
+                    <form method="post" class="invite-form" autocomplete="off">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                        <div class="invite-field">
+                            <label class="invite-label" for="invite-login">Логин</label>
+                            <input type="text" id="invite-login" name="login" required minlength="3"
+                                pattern="[A-Za-z0-9._-]+" class="invite-input"
+                                placeholder="admin.name" autocomplete="username" />
+                            <span class="invite-hint">Латиница, цифры, точка, дефис</span>
+                        </div>
+                        <div class="invite-field">
+                            <label class="invite-label" for="invite-password">Пароль</label>
+                            <input type="password" id="invite-password" name="password" required minlength="16"
+                                class="invite-input" placeholder="Минимум 16 символов" autocomplete="new-password" />
+                        </div>
+                        <div class="invite-field">
+                            <label class="invite-label" for="invite-password-confirm">Подтверждение пароля</label>
+                            <input type="password" id="invite-password-confirm" name="password_confirm" required minlength="16"
+                                class="invite-input" autocomplete="new-password" />
+                        </div>
+                        <button type="submit" class="invite-btn invite-btn--primary">
+                            <span class="material-symbols-outlined">check_circle</span>
+                            Создать учётную запись
+                        </button>
+                    </form>
+
+                    <p class="invite-footer-note">
+                        После регистрации войдите в панель и настройте 2FA или Passkey в разделе «Моя защита».
+                    </p>
+                    {% endif %}
+                </div>
+            </section>
+        </div>
+    </main>
+</body>
+
+</html>

@@ -1,0 +1,16 @@
+{# section_id, section_title, section_desc (optional), section_icon (optional) #}
+<header class="settings-form-section__header">
+    <div class="settings-form-section__header-main">
+        {% if section_icon %}
+        <span class="settings-form-section__icon" aria-hidden="true">
+            <span class="material-symbols-outlined">{{ section_icon }}</span>
+        </span>
+        {% endif %}
+        <div>
+            <h2 class="settings-form-section__title">{{ section_title }}</h2>
+            {% if section_desc %}
+            <p class="settings-form-section__desc">{{ section_desc }}</p>
+            {% endif %}
+        </div>
+    </div>
+</header>

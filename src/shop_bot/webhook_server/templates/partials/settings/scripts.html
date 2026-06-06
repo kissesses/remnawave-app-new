@@ -1,0 +1,1028 @@
+<script>
+    const showToast = (...args) => window.SettingsPage?.toast(...args);
+    const settingsConfirm = (...args) => window.SettingsPage?.confirmDialog(...args);
+
+    // ===== ИНИЦИАЛИЗАЦИЯ =====
+    // Выполнение базовых настроек при загрузке документа
+    document.addEventListener('DOMContentLoaded', () => { initGlobalLogic(); initInteractiveElements(); });
+    // ===== Конец инизиализации =====
+
+    // ===== ГЛОБАЛЬНАЯ ЛОГИКА =====
+    // Логика, которая не требует переинициализации при обновлении контента
+    function initGlobalLogic() {
+        async function handleHostForm(form) {
+            const formData = new FormData(form);
+            const action = form.action;
+
+            try {
+                const res = await sendRequest(action, 'POST', formData);
+
+                if (res.ok) {
+                    if (action.includes('/delete-host')) {
+                        const hostName = decodeURIComponent(action.split('/delete-host/')[1]);
+                        const card = document.querySelector(`.host-card[data-host-name="${hostName}"]`);
+                        const pane = document.getElementById('host-content-' + hostName);
+                        if (pane) pane.remove();
+                        if (card) {
+                            card.remove();
+                            showToast('success', res.message || 'Хост удален');
+                            if (window.HstPanel) {
+                                const next = document.querySelector('#hosts-grid-container .host-card');
+                                if (next) window.HstPanel.selectHost(next.dataset.hostName);
+                                else {
+                                    const empty = document.getElementById('hst-editor-empty');
+                                    if (empty) empty.hidden = false;
+                                }
+                            }
+                        } else {
+                            showToast('success', res.message || 'Хост удален');
+                            setTimeout(() => window.location.reload(), 500);
+                        }
+                    } else if (action.includes('/toggle-host-visibility')) {
+                        const hostName = decodeURIComponent(action.split('/toggle-host-visibility/')[1]);
+                        const btn = form.querySelector('button');
+                        const hiddenInput = form.querySelector('input[name="visible"]');
+
+                        if (hiddenInput && btn) {
+                            const newVal = hiddenInput.value === '1' ? '0' : '1';
+                            hiddenInput.value = newVal;
+
+                            if (newVal === '1') {
+                                btn.className = 'hst-btn hst-btn--ok';
+                                btn.innerHTML = '<span class="material-symbols-outlined">visibility</span> Показать';
+                            } else {
+                                btn.className = 'hst-btn hst-btn--warn';
+                                btn.innerHTML = '<span class="material-symbols-outlined">visibility_off</span> Скрыть';
+                            }
+                            const tile = document.querySelector(`.host-card[data-host-name="${hostName}"]`);
+                            if (tile) {
+                                const badge = tile.querySelector('.hst-tile__badge');
+                                if (badge) {
+                                    if (newVal === '1') {
+                                        badge.classList.remove('hst-tile__badge--hidden');
+                                        badge.textContent = badge.dataset.planCount || badge.textContent;
+                                    } else {
+                                        badge.classList.add('hst-tile__badge--hidden');
+                                        badge.textContent = 'скрыт';
+                                    }
+                                }
+                            }
+                            showToast('success', res.message || 'Видимость обновлена');
+                        } else {
+                            showToast('success', res.message || 'Видимость обновлена');
+                        }
+                    } else if (action.includes('/add-host')) {
+                        showToast('success', res.message || 'Хост добавлен');
+                        form.reset();
+                        await reloadContent();
+                    } else if (action.includes('/rename-host')) {
+                        showToast('success', res.message || 'Хост переименован');
+                        await reloadContent();
+                    } else {
+                        showToast('success', res.message || 'Настройки сохранены');
+                    }
+                } else {
+                    showToast('danger', res.error || 'Ошибка');
+                }
+            } catch (e) {
+                console.error(e);
+                showToast('danger', 'Ошибка отправки формы');
+            }
+        }
+
+        // Глобальный перехватчик форм тарифов и SSH целей
+        document.addEventListener('submit', async (e) => {
+            const form = e.target;
+
+            // Тарифы
+            if (form.action && (form.action.includes('/add-plan') || form.action.includes('/update-plan') || form.action.includes('/delete-plan'))) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const isDelete = form.action.includes('delete-plan');
+                if (isDelete) {
+                    const confirmed = await showCustomConfirm('Удалить тариф?');
+                    if (!confirmed) return;
+                }
+
+                await handlePlanForm(form, form.action.includes('update'), isDelete);
+            }
+            // SSH Цели
+            else if (form.action && (form.action.includes('/ssh-targets/create') || form.action.includes('/ssh-targets/') && (form.action.includes('/update') || form.action.includes('/delete')))) {
+
+                e.preventDefault();
+                e.stopPropagation();
+
+                const isDelete = form.action.includes('/delete');
+                const isUpdate = form.action.includes('/update');
+
+                if (isDelete) {
+                    const targetName = decodeURIComponent(form.action.split('/ssh-targets/')[1].split('/')[0]);
+                    const confirmed = await showCustomConfirm(`Удалить SSH-цель '${targetName}'?`);
+                    if (!confirmed) return;
+                }
+
+                await handleSSHTargetForm(form, isUpdate, isDelete);
+            }
+            else if (form.action && (
+                form.action.includes('/add-host') ||
+                form.action.includes('/delete-host') ||
+                form.action.includes('/rename-host') ||
+                form.action.includes('/toggle-host-visibility') ||
+                form.action.includes('/update-host-') ||
+                form.action.includes('/admin/hosts/ssh/update') ||
+                form.action.includes('/speedtest/install')
+            )) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const isDelete = form.action.includes('/delete-host');
+                if (isDelete) {
+                    const hostName = decodeURIComponent(form.action.split('/delete-host/')[1]);
+                    const confirmed = await showCustomConfirm(`Удалить хост '${hostName}' и все его тарифы?`);
+                    if (!confirmed) return;
+                }
+
+                await handleHostForm(form);
+            }
+        }, true);
+
+        window.toggleAddHostForm = () => toggleElementState('add-host', 'addHostFormCollapsed');
+        window.toggleHostContent = (name) => toggleElementState(name, 'hostCollapsed_' + name);
+        window.selectTrafficStrategy = (host, val, label) => {
+            document.getElementById('traffic_limit_strategy_input_' + host).value = val;
+            document.getElementById('strategy_label_' + host).textContent = label;
+            document.activeElement.blur();
+        };
+        window.toggleDescriptionForm = async (host) => {
+            const chk = document.getElementById('toggle-description-' + host), frm = document.getElementById('description-form-' + host);
+            if (chk && frm) {
+                frm.classList.toggle('hidden', !chk.checked);
+                if (!chk.checked) {
+                    const formData = new FormData();
+                    formData.append('host_name', host);
+                    formData.append('host_description', '');
+                    const res = await sendRequest(frm.querySelector('form').action, 'POST', formData);
+                    if (res.ok) showToast('success', 'Описание сброшено');
+                }
+            }
+        };
+
+        window.toggleDeviceMode = async (host, checked) => {
+            const mode = checked ? 'tiers' : 'plan';
+            const block = document.getElementById('device-tiers-block-' + host);
+            const label = document.getElementById('device-mode-label-' + host);
+            if (block) block.classList.toggle('hidden', !checked);
+            if (label) label.textContent = checked ? 'Выбор' : 'По тарифу';
+            const fd = new FormData();
+            fd.append('host_name', host);
+            fd.append('device_mode', mode);
+            await sendRequest('/update-host-device-mode', 'POST', fd);
+        };
+
+        window.toggleTierLockExtend = async (host, checked) => {
+            const fd = new FormData();
+            fd.append('host_name', host);
+            fd.append('value', checked ? '1' : '0');
+            await sendRequest('/update-tier-lock-extend', 'POST', fd);
+        };
+
+        window.addDeviceTier = (host) => SettingsPage.addDeviceTier(host, sendRequest);
+        window.deleteDeviceTier = (tierId, host) => SettingsPage.deleteDeviceTier(tierId, host, sendRequest);
+
+        if (localStorage.getItem('addHostFormCollapsed') === 'false') window.toggleAddHostForm();
+        restoreHostStates();
+    }
+    // ===== Конец глобальной логики =====
+
+    // ===== ВОССТАНОВЛЕНИЕ СОСТОЯНИЯ =====
+    // Проверка сохраненных состояний свернутых элементов
+    function restoreHostStates() {
+        document.querySelectorAll('[id^="host-content-"]').forEach(el => {
+            const name = el.id.replace('host-content-', '');
+            if (localStorage.getItem('hostCollapsed_' + name) === 'false') {
+                el.classList.remove('hidden');
+                const icon = document.getElementById('host-icon-' + name);
+                if (icon) icon.style.transform = 'rotate(180deg)';
+            }
+        });
+    }
+    // ===== Конец восстановления состояния =====
+
+    // ===== ПЕРЕКЛЮЧЕНИЕ СОСТОЯНИЯ ЭЛЕМЕНТА =====
+    // Смена видимости и сохранение состояния в локальное хранилище
+    function toggleElementState(id, storageKey) {
+        const el = document.getElementById(id.startsWith('add-host') ? 'add-host-form' : 'host-content-' + id);
+        const icon = document.getElementById(id.startsWith('add-host') ? 'add-host-icon' : 'host-icon-' + id);
+        if (el) {
+            el.classList.toggle('hidden');
+            const isHidden = el.classList.contains('hidden');
+            if (storageKey) localStorage.setItem(storageKey, isHidden);
+            if (icon) icon.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(180deg)';
+        }
+    }
+    // ===== Конец переключения состояния =====
+
+    // ===== ИНТЕРАКТИВНЫЕ ЭЛЕМЕНТЫ =====
+    // Инициализация обработчиков для динамических элементов
+    function initInteractiveElements() {
+        initForms();
+        initDragAndDrop('hosts-grid-container', 'host-card', '/node/servers/hosts/reorder', 'data-host-name');
+        initDragAndDrop('ssh-targets-grid-container', 'ssh-target-card', '/node/servers/ssh/reorder', 'data-target-name');
+
+        if (window.initSoftSelect) {
+            window.initSoftSelect('existing_backup', '— Выберите архив —');
+            window.initSoftSelect('trial_host_id', 'Выборочно (пользователь выбирает)');
+        }
+
+        const backupSelect = document.getElementById('existing_backup');
+        if (backupSelect) backupSelect.addEventListener('change', () => document.getElementById('backup-date').textContent = backupSelect.options[backupSelect.selectedIndex].getAttribute('data-mtime') || '—');
+
+        const dbFileBtn = document.getElementById('btn-pick-file'), dbFileInput = document.getElementById('db_file');
+        if (dbFileBtn && dbFileInput) {
+            dbFileBtn.onclick = () => dbFileInput.click();
+            dbFileInput.onchange = () => document.getElementById('picked-file-name').textContent = dbFileInput.files[0]?.name || 'Файл не выбран';
+        }
+
+        initImageUploaders();
+
+        document.querySelectorAll('.pay-info-toggle').forEach(t => {
+            t.onchange = async function () {
+                const res = await sendRequest('/api/settings/update-pay-info', 'POST', { field: this.dataset.field, value: this.checked }, true);
+                if (res.status === 'success') showToast('success', 'Настройки обновлены');
+                else { showToast('danger', res.message || 'Ошибка'); this.checked = !this.checked; }
+            };
+        });
+
+        document.querySelectorAll('.btn-copy-text').forEach(btn => {
+            btn.onclick = function () {
+                navigator.clipboard.writeText(this.dataset.copyText).then(() => {
+                    const original = this.innerHTML;
+                    this.innerHTML = '<span class="material-symbols-outlined text-green-400 text-[16px]">check</span>';
+                    setTimeout(() => this.innerHTML = original, 2000);
+                });
+            };
+        });
+
+        document.querySelectorAll('.speedtest-loading-btn').forEach(btn => {
+            const form = btn.closest('form');
+            if (form) form.addEventListener('submit', () => {
+                btn.innerHTML = `<span class="inline-flex items-center gap-1"><svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> ${btn.dataset.label || 'Выполняется'}...</span>`;
+                btn.disabled = true;
+            });
+        });
+
+        // Обработчики для SSH целей
+        document.querySelectorAll('.ssh-edit-btn').forEach(btn => {
+            btn.onclick = () => {
+                const target = btn.dataset.target;
+                const form = document.getElementById('edit-ssh-' + target);
+                if (form) form.classList.toggle('hidden');
+            };
+        });
+        document.querySelectorAll('.ssh-cancel-btn').forEach(btn => {
+            btn.onclick = () => {
+                const target = btn.dataset.target;
+                const form = document.getElementById('edit-ssh-' + target);
+                if (form) form.classList.add('hidden');
+            };
+        });
+
+        // Переключение видимости пароля
+        window.togglePasswordVisibility = (id) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const isPass = el.type === 'password';
+            el.type = isPass ? 'text' : 'password';
+            const btn = el.nextElementSibling;
+            if (btn && btn.tagName === 'BUTTON') {
+                const icon = btn.querySelector('.material-symbols-outlined');
+                if (icon) icon.textContent = isPass ? 'visibility_off' : 'visibility';
+            }
+        };
+
+        window.togglePassword = window.togglePasswordVisibility;
+    }
+    // ===== Конец интерактивных элементов =====
+
+    // ===== УМНОЕ ОБНОВЛЕНИЕ =====
+    // Перезагрузка контента без обновления страницы
+    async function reloadContent() {
+        try {
+            const res = await fetch(window.location.href, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Cache-Control': 'no-cache' },
+                credentials: 'include'
+            });
+            const html = await res.text();
+
+            if (html.includes('id' + '="login-identifier-v2"')) {
+                console.warn('[DEBUG] reloadContent detected Login Page! Refresh prevented.');
+                showToast('warning', 'Не удалось обновить список: требуется авторизация');
+                return;
+            }
+
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+            document.querySelectorAll('.tab-content').forEach(old => {
+                const newContent = doc.getElementById(old.id);
+                if (newContent) {
+                    old.innerHTML = newContent.innerHTML;
+                }
+            });
+            initInteractiveElements();
+            restoreHostStates();
+            loadAllSpeedtestData();
+            if (typeof window.reinitAccessPanel === 'function') {
+                window.reinitAccessPanel();
+            }
+        } catch (e) { console.error('Smart Refresh failed:', e); }
+    }
+    // ===== Конец умного обновления =====
+
+    // ===== ЗАГРУЗКА ДАННЫХ SPEEDTEST =====
+    async function loadAllSpeedtestData() {
+        const cards = document.querySelectorAll('.ssh-target-card');
+        const results = [];
+        const promises = [];
+        for (const card of cards) {
+            const targetName = card.dataset.targetName;
+            if (targetName) {
+                promises.push(loadTopForTarget(targetName).then(dl => { if (dl !== null) results.push({ name: targetName, download: dl }); }));
+            }
+        }
+        await Promise.all(promises);
+        applySpeedBadges(results);
+    }
+
+    function applySpeedBadges(results) {
+        document.querySelectorAll('[id^="st-badge-"]').forEach(el => el.innerHTML = '');
+        if (results.length < 2) return;
+        results.sort((a, b) => b.download - a.download);
+        const badges = [
+            { emoji: '🥇', bg: 'rgba(234,179,8,0.2)', border: 'rgba(234,179,8,0.3)', color: '#fde047', label: '1 место' },
+            { emoji: '🥈', bg: 'rgba(156,163,175,0.2)', border: 'rgba(156,163,175,0.3)', color: '#d1d5db', label: '2 место' },
+            { emoji: '🥉', bg: 'rgba(180,83,9,0.2)', border: 'rgba(217,119,6,0.3)', color: '#fbbf24', label: '3 место' }
+        ];
+        const count = Math.min(3, results.length);
+        for (let i = 0; i < count; i++) {
+            const el = document.getElementById(`st-badge-${results[i].name}`);
+            if (el) {
+                const b = badges[i];
+                el.innerHTML = `<span style="display:inline-flex;align-items:center;gap:2px;padding:2px 6px;border-radius:6px;background:${b.bg};border:1px solid ${b.border};color:${b.color};font-size:8px;font-weight:700;">${b.emoji} ${b.label}</span>`;
+            }
+        }
+    }
+
+    async function loadTopForTarget(targetName) {
+        const resultContainer = document.getElementById(`st-result-${targetName}`);
+        const dataContainer = document.getElementById(`st-data-${targetName}`);
+        if (!resultContainer || !dataContainer) return null;
+
+        try {
+            const url = `{{ url_for('host_speedtests_json', host_name='__H__') }}`.replace('__H__', encodeURIComponent(targetName)) + '?limit=1';
+            const res = await fetch(url);
+            if (!res.ok) return null;
+            const data = await res.json();
+
+            if (data && data.items && data.items.length > 0) {
+                const last = data.items[0];
+                const ping = `<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[12px] text-white/50">timer</span>${last.ping_ms ?? '—'} <span class="text-[8px] text-white/30">ms</span></span>`;
+                const down = `<span class="flex items-center gap-1 text-[#22d3ee]"><span class="material-symbols-outlined text-[12px]">download</span>${last.download_mbps ?? '—'} <span class="text-[8px] text-white/30">Mbps</span></span>`;
+                const up = `<span class="flex items-center gap-1 text-[#00bfff]"><span class="material-symbols-outlined text-[12px]">upload</span>${last.upload_mbps ?? '—'} <span class="text-[8px] text-white/30">Mbps</span></span>`;
+
+                dataContainer.innerHTML = `${down}${up}${ping}`;
+                resultContainer.classList.remove('hidden');
+                return parseFloat(last.download_mbps) || 0;
+            }
+        } catch (e) {
+            console.error('Failed to load speedtest for', targetName, e);
+        }
+        return null;
+    }
+
+    document.addEventListener('DOMContentLoaded', loadAllSpeedtestData);
+
+    // ===== ИНИЦИАЛИЗАЦИЯ ФОРМ =====
+    // Настройка обработчиков отправки для всех форм
+    function initForms() {
+        SettingsPage.initSubmitPipeline({
+            handleFormSubmit: async (form, successMsg, useSmartRefresh) => {
+                let msg = successMsg || 'Сохранено';
+                const action = form.action || '';
+                if (action.includes('add_host')) msg = 'Хост добавлен';
+                else if (action.includes('delete_host')) msg = 'Хост удалён';
+                else if (action.includes('rename_host')) msg = 'Хост переименован';
+                else if (action.includes('speedtest') || action.includes('auto_install')) msg = 'Задача запущена';
+                else if (action.includes('create_ssh_target')) msg = 'SSH-цель добавлена';
+                else if (action.includes('delete_ssh_target')) msg = 'SSH-цель удалена';
+                await handleFormSubmit(form, msg, useSmartRefresh);
+            },
+        });
+    }
+    // ===== Конец инициализации форм =====
+
+
+    // ===== ОТПРАВКА ЗАПРОСОВ =====
+    // Универсальная функция для AJAX-взаимодействия с сервером
+    async function sendRequest(url, method = 'POST', body = null, isJson = false) {
+        try {
+            const csrfToken = document.querySelector('input[name="csrf_token"]')?.value;
+            const headers = { 'X-CSRFToken': csrfToken || '', 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' };
+            if (isJson) headers['Content-Type'] = 'application/json';
+            const options = { method, headers }; if (body) options.body = isJson ? JSON.stringify(body) : body;
+            const res = await fetch(url, options);
+            if (res.redirected) return { ok: true, redirected: true, url: res.url };
+            try { return await res.json(); } catch { return { ok: res.ok }; }
+        } catch (e) { console.error(e); return { ok: false, error: e.message }; }
+    }
+    // ===== Конец отправки запросов =====
+
+    // ===== ОБРАБОТКА ОТПРАВКИ ФОРМЫ =====
+    // Обработка результата отправки и запуск обновления при необходимости
+    async function handleFormSubmit(form, successMsg, useSmartRefresh = false) {
+        const formData = new FormData(form);
+        const result = await sendRequest(form.action, 'POST', formData);
+        if (result.ok) { showToast('success', result.message || successMsg); if (useSmartRefresh) await reloadContent(); }
+        else showToast('danger', result.error || 'Ошибка');
+    }
+    // ===== Конец обработки отправки =====
+
+    // ===== ОБРАБОТКА ТАРИФОВ =====
+    // Специальная логика добавления, обновления и удаления планов
+    async function handlePlanForm(form, isUpdate = false, isDelete = false) {
+        const formData = new FormData(form);
+        const csrfToken = document.querySelector('input[name="csrf_token"]')?.value;
+        const headers = { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': csrfToken || '' };
+        try {
+            const res = await fetch(form.action, { method: 'POST', headers, body: formData });
+            const data = await res.json();
+            if (data.ok) {
+                const msg = isDelete ? 'Тариф удалён' : (isUpdate ? 'Тариф обновлён' : 'Тариф добавлен');
+                showToast('success', msg);
+
+                if (isDelete) {
+                    const planId = form.action.split('/delete-plan/')[1];
+                    const card = document.getElementById('plan-card-' + planId);
+                    if (card) card.remove();
+                } else if (data.plan) {
+                    const plan = data.plan;
+                    const cardHtml = renderPlanCard(plan, csrfToken);
+
+                    if (isUpdate) {
+                        const oldCard = document.getElementById('plan-card-' + plan.plan_id);
+                        if (oldCard) {
+                            oldCard.outerHTML = cardHtml;
+                            const viewDiv = document.getElementById('view-plan-' + plan.plan_id);
+                            const editDiv = document.getElementById('edit-plan-' + plan.plan_id);
+                            if (viewDiv) viewDiv.classList.remove('hidden');
+                            if (editDiv) editDiv.classList.add('hidden');
+                        }
+                    } else {
+                        const hostName = formData.get('host_name');
+                        const gridId = 'plans-grid-' + hostName;
+                        let grid = document.querySelector('[id="' + CSS.escape(gridId) + '"]');
+
+                        if (!grid) {
+                            const hostSection = form.closest('.bg-white\\/5');
+                            if (hostSection) {
+                                grid = hostSection.querySelector('[id^="plans-grid-"]');
+                            }
+                        }
+
+                        if (!grid) {
+                            const hostSection = form.closest('.bg-white\\/5');
+                            const emptyDiv = hostSection?.querySelector('.bg-white\\/\\[0\\.02\\]');
+                            if (emptyDiv) {
+                                const newGrid = document.createElement('div');
+                                newGrid.id = gridId;
+                                newGrid.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4';
+                                emptyDiv.replaceWith(newGrid);
+                                grid = newGrid;
+                            }
+                        }
+
+                        if (grid) {
+                            grid.insertAdjacentHTML('beforeend', cardHtml);
+                        }
+                        form.reset();
+                    }
+                }
+            } else {
+                showToast('danger', 'Ошибка: ' + (data.error || 'Неизвестная ошибка'));
+            }
+        } catch (e) { showToast('danger', 'Ошибка: ' + e.message); }
+    }
+
+    function renderPlanCard(plan, csrfToken) {
+        const traffic = plan.traffic_limit_gb || '∞';
+        const hwid = plan.hwid_limit || '∞';
+        const price = Math.round(plan.price);
+        return `
+        <div id="plan-card-${plan.plan_id}" class="bg-black/30 border border-white/10 rounded-2xl p-4 group/plan relative overflow-hidden">
+            <div id="view-plan-${plan.plan_id}" class="flex flex-col h-full relative z-10">
+                <div class="flex-1">
+                    <div class="flex justify-between items-center mb-3">
+                        <h6 class="text-white font-bold text-sm leading-tight pr-2 group-hover/plan:text-primary transition-colors">${plan.plan_name}</h6>
+                        <div class="px-2 py-1 rounded-lg bg-primary/10 text-primary font-bold text-xs ring-1 ring-primary/20">${price}₽</div>
+                    </div>
+                    <div class="flex flex-wrap gap-x-2 gap-y-1 justify-center">
+                        <div class="flex items-center gap-1 text-white/40 text-[10px] font-bold uppercase tracking-tight bg-white/5 px-1.5 py-0.5 rounded-md">
+                            <span class="material-symbols-outlined text-[12px]">calendar_today</span>
+                            ${plan.months} м
+                        </div>
+                        <div class="flex items-center gap-1 text-white/40 text-[10px] font-bold uppercase tracking-tight bg-white/5 px-1.5 py-0.5 rounded-md">
+                            <span class="material-symbols-outlined text-[12px]">data_usage</span>
+                            ${traffic} G
+                        </div>
+                        <div class="flex items-center gap-1 text-white/40 text-[10px] font-bold uppercase tracking-tight bg-white/5 px-1.5 py-0.5 rounded-md">
+                            <span class="material-symbols-outlined text-[12px]">devices</span>
+                            ${hwid} HWID
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-white/5">
+                    <button type="button"
+                        onclick="document.getElementById('view-plan-${plan.plan_id}').classList.add('hidden'); document.getElementById('edit-plan-${plan.plan_id}').classList.remove('hidden')"
+                        class="px-4 py-1.5 rounded-lg bg-white/5 text-white font-bold text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all flex items-center justify-center gap-1 border border-white/10">
+                        <span class="material-symbols-outlined text-sm">edit</span> Изменить
+                    </button>
+                    <form action="/delete-plan/${plan.plan_id}" method="post" data-confirm="Удалить тариф '${plan.plan_name}'?" class="w-full">
+                        <input type="hidden" name="csrf_token" value="${csrfToken}" />
+                        <button type="submit"
+                            class="w-full px-4 py-1.5 rounded-lg bg-red-500/10 text-red-500 text-[10px] font-bold uppercase tracking-widest hover:bg-red-500/20 transition-all flex items-center justify-center gap-1 border border-red-500/10">
+                            <span class="material-symbols-outlined text-sm">delete</span> Удалить
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <div id="edit-plan-${plan.plan_id}" class="hidden flex flex-col h-full relative z-10">
+                <form action="/update-plan/${plan.plan_id}" method="post" class="flex flex-col h-full gap-2">
+                    <input type="hidden" name="csrf_token" value="${csrfToken}" />
+                    <div class="space-y-1">
+                        <input type="text" name="plan_name" value="${plan.plan_name}" placeholder="Название" required
+                            class="w-full bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-white text-[11px] focus:ring-1 focus:ring-primary/40 focus:outline-none" />
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="number" name="months" value="${plan.months}" placeholder="Мес." required
+                            class="bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-white text-[11px] focus:ring-1 focus:ring-primary/40 focus:outline-none" />
+                        <input type="number" name="price" value="${price}" placeholder="Цена" required
+                            class="bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-white text-[11px] focus:ring-1 focus:ring-primary/40 focus:outline-none" />
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="number" name="traffic_limit_gb" value="${plan.traffic_limit_gb || ''}" placeholder="GB (0=∞)"
+                            class="bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-white text-[11px] focus:ring-1 focus:ring-primary/40 focus:outline-none" />
+                        <input type="number" name="hwid_limit" value="${plan.hwid_limit || ''}" placeholder="HWID"
+                            class="bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-white text-[11px] focus:ring-1 focus:ring-primary/40 focus:outline-none" />
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 mt-auto pt-2">
+                        <button type="submit"
+                            class="px-4 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white/70 text-[10px] font-bold uppercase tracking-widest hover:bg-primary/20 hover:text-white hover:border-primary/30 transition-all">ОК</button>
+                        <button type="button"
+                            onclick="document.getElementById('edit-plan-${plan.plan_id}').classList.add('hidden'); document.getElementById('view-plan-${plan.plan_id}').classList.remove('hidden')"
+                            class="px-4 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white/40 text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all">Отмена</button>
+                    </div>
+                </form>
+            </div>
+        </div>`;
+    }
+
+    // ===== ОБРАБОТКА SSH ЦЕЛЕЙ =====
+    // Аналогичная логика для SSH целей, чтобы избежать reloadContent
+    async function handleSSHTargetForm(form, isUpdate = false, isDelete = false) {
+        const formData = new FormData(form);
+        const csrfToken = document.querySelector('input[name="csrf_token"]')?.value;
+        const headers = { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': csrfToken || '' };
+
+        try {
+            const res = await fetch(form.action, { method: 'POST', headers, body: formData });
+
+            let data;
+            try {
+                data = await res.json();
+            } catch (e) {
+                if (res.ok && res.redirected) {
+                    console.warn('SSH Target response was a redirect, expected JSON.');
+                    window.location.reload();
+                    return;
+                }
+                throw new Error('Invalid JSON response');
+            }
+
+            if (data.ok) {
+                const msg = isDelete ? 'SSH-цель удалена' : (isUpdate ? 'SSH-цель обновлена' : 'SSH-цель добавлена');
+                showToast('success', msg);
+
+                if (isDelete) {
+                    const parts = form.action.split('/ssh-targets/');
+                    if (parts.length > 1) {
+                        const targetName = decodeURIComponent(parts[1].split('/')[0]);
+                        const card = document.querySelector(`.ssh-target-card[data-target-name="${targetName}"]`);
+                        if (card) card.remove();
+                    }
+                } else {
+
+                    const targetData = {
+                        target_name: formData.get('target_name') || formData.get('new_target_name'),
+                        ssh_host: formData.get('ssh_host'),
+                        ssh_port: formData.get('ssh_port') || 22,
+                        ssh_user: formData.get('ssh_user'),
+                        ssh_password: formData.get('ssh_password'),
+                        description: formData.get('description'),
+                        old_target_name: isUpdate ? decodeURIComponent(form.action.split('/ssh-targets/')[1].split('/')[0]) : null
+                    };
+
+                    const cardHtml = renderSSHTargetCard(targetData, csrfToken);
+
+                    if (isUpdate) {
+                        const oldName = targetData.old_target_name;
+                        const oldCard = document.querySelector(`.ssh-target-card[data-target-name="${oldName}"]`);
+                        if (oldCard) {
+                            oldCard.outerHTML = cardHtml;
+                            initInteractiveElements();
+                        }
+                    } else {
+                        let grid = document.getElementById('ssh-targets-grid-container');
+                        if (!grid) {
+                            const emptyDiv = document.querySelector('#tab-hosts .bg-white\\/5.text-center'); // roughly searching for empty state
+                            if (emptyDiv && emptyDiv.innerText.includes('SSH-цели')) {
+                                const newGrid = document.createElement('div');
+                                newGrid.id = 'ssh-targets-grid-container';
+                                newGrid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4';
+                                emptyDiv.replaceWith(newGrid);
+                                grid = newGrid;
+                            }
+                        }
+                        if (grid) {
+                            grid.insertAdjacentHTML('beforeend', cardHtml);
+                            initInteractiveElements();
+                        }
+                        form.reset();
+                    }
+                }
+            } else {
+                showToast('danger', 'Ошибка: ' + (data.error || 'Неизвестная ошибка'));
+            }
+        } catch (e) { showToast('danger', 'Ошибка: ' + e.message); }
+    }
+
+    function renderSSHTargetCard(t, csrfToken) {
+        const deleteUrl = `/admin/ssh-targets/${t.target_name}/delete`;
+        const testUrl = `/admin/ssh-targets/${t.target_name}/speedtest/run`;
+        const updateUrl = `/admin/ssh-targets/${t.target_name}/update`;
+        const installUrl = `/admin/ssh-targets/${t.target_name}/speedtest/install`;
+
+        return `
+         <div class="ssh-target-card relative bg-white/5 border border-white/10 rounded-2xl overflow-hidden shadow-xl backdrop-blur-md group flex flex-col h-full"
+                    draggable="true" data-target-name="${t.target_name}">
+
+                    <!-- Card Header -->
+                    <div class="flex items-center justify-between px-4 py-2 bg-white/[0.02] border-b border-white/10">
+                        <div class="flex items-center gap-2 flex-1 min-w-0">
+                            <span class="material-symbols-outlined text-white/20 cursor-grab active:cursor-grabbing hover:text-white/60 drag-handle transition-colors" onclick="event.stopPropagation()">drag_indicator</span>
+                            <div class="min-w-0">
+                                <h4 class="text-xs font-bold text-white truncate">${t.target_name}</h4>
+                                ${t.description ? `
+                                <p class="text-[8px] text-primary/60 uppercase font-bold tracking-widest flex items-center gap-0.5 mt-0.5">
+                                    <span class="material-symbols-outlined text-[10px]">description</span>${t.description}
+                                </p>` : `
+                                <p class="text-[8px] text-white/30 uppercase font-bold tracking-widest mt-0.5">SSH Target</p>
+                                `}
+                            </div>
+                        </div>
+
+                        <form action="${deleteUrl}" method="post" data-confirm="Удалить SSH-цель '${t.target_name}'?" class="ml-2">
+                            <input type="hidden" name="csrf_token" value="${csrfToken}" />
+                            <button type="submit" class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-500/10 text-red-500/50 hover:text-red-500 transition-all">
+                                <span class="material-symbols-outlined text-sm">delete</span>
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="p-4 flex-1 flex flex-col justify-between bg-black/10">
+                        <!-- Info Grid -->
+                        <div class="space-y-2">
+                            <div class="bg-black/20 border border-white/5 rounded-xl p-2.5">
+                                <div class="flex items-center gap-2 mb-0.5">
+                                    <span class="material-symbols-outlined text-primary text-[12px]">dns</span>
+                                    <label class="text-white/30 text-[8px] font-bold uppercase tracking-wider">Host:Port</label>
+                                </div>
+                                <p class="text-white/90 text-[11px] font-mono ml-5 truncate">${t.ssh_host}:${t.ssh_port || 22}</p>
+                            </div>
+                        </div>
+
+                        <!-- Data display for Speedtest (Added) -->
+                        <div id="st-result-${t.target_name}" class="bg-black/20 border border-white/5 rounded-xl p-2.5 mt-2 hidden">
+                            <div class="flex items-center gap-2 mb-1 border-b border-white/5 pb-1">
+                                <span class="material-symbols-outlined text-primary text-[12px]">speed</span>
+                                <label class="text-white/30 text-[8px] font-bold uppercase tracking-wider">Последний тест</label>
+                                <span id="st-badge-${t.target_name}" class="ml-auto"></span>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] mt-1.5" id="st-data-${t.target_name}">
+                                <!-- Data injected via JS -->
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="space-y-1.5 pt-4 mt-auto">
+                            <form action="${testUrl}" method="post" class="w-full">
+                                <input type="hidden" name="csrf_token" value="${csrfToken}" />
+                                <button type="submit" class="speedtest-loading-btn w-full px-4 py-1.5 rounded-lg bg-blue-500/20 text-blue-400 text-[10px] font-bold uppercase tracking-widest hover:bg-blue-500/30 transition-all flex items-center justify-center gap-2 border border-blue-500/10" data-label="Тест">
+                                    <span class="material-symbols-outlined text-sm">speed</span>
+                                    Тест скорости
+                                </button>
+                            </form>
+
+                            <div class="grid grid-cols-2 gap-1.5">
+                                <button type="button" class="ssh-edit-btn px-4 py-1.5 rounded-lg bg-white/5 text-white/50 text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all border border-white/5" data-target="${t.target_name}">
+                                    <span class="flex items-center justify-center gap-1">
+                                        <span class="material-symbols-outlined text-xs">edit</span>
+                                        Правка
+                                    </span>
+                                </button>
+                                <form action="${installUrl}" method="post">
+                                    <input type="hidden" name="csrf_token" value="${csrfToken}" />
+                                    <button type="submit" class="speedtest-loading-btn w-full px-4 py-1.5 rounded-lg bg-white/5 text-white/40 text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all border border-white/5" data-label="Setup">
+                                        <span class="flex items-center justify-center gap-1">
+                                            <span class="material-symbols-outlined text-xs">settings</span>
+                                            Setup Seed
+                                        </span>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Edit Form (Hidden by default) -->
+                        <div id="edit-ssh-${t.target_name}" class="hidden pt-3 border-t border-white/5">
+                            <form action="${updateUrl}" method="post" class="space-y-2">
+                                <input type="hidden" name="csrf_token" value="${csrfToken}" />
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div class="col-span-2 space-y-1">
+                                        <input type="text" name="new_target_name" value="${t.target_name}" placeholder="Имя" required class="w-full bg-black/30 border border-white/10 rounded-xl px-2 py-1.5 text-white text-[10px] focus:ring-1 focus:ring-primary/40 focus:outline-none" />
+                                    </div>
+                                    <div class="col-span-2 space-y-1">
+                                        <input type="text" name="ssh_host" value="${t.ssh_host || ''}" placeholder="IP" required autocomplete="off" class="w-full bg-black/30 border border-white/10 rounded-xl px-2 py-1.5 text-white text-[10px] focus:ring-1 focus:ring-primary/40 focus:outline-none" />
+                                    </div>
+                                    <input type="number" name="ssh_port" value="${t.ssh_port || ''}" placeholder="Порт" class="bg-black/30 border border-white/10 rounded-xl px-2 py-1.5 text-white text-[10px]" />
+                                    <input type="text" name="ssh_user" value="${t.ssh_user || ''}" placeholder="Юзер" autocomplete="off" class="bg-black/30 border border-white/10 rounded-xl px-2 py-1.5 text-white text-[10px]" />
+                                    <div class="col-span-2 relative">
+                                        <input type="password" name="ssh_password" id="pass-${t.target_name}" value="${t.ssh_password || ''}" placeholder="Пароль" autocomplete="new-password" class="w-full bg-black/30 border border-white/10 rounded-xl pl-2 pr-8 py-1.5 text-white text-[10px] focus:ring-1 focus:ring-primary/40 focus:outline-none" />
+                                        <button type="button" onclick="window.togglePasswordVisibility('pass-${t.target_name}')" class="absolute right-2 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors">
+                                            <span class="material-symbols-outlined text-[14px]">visibility</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 pt-1 border-t border-white/5">
+                                    <button type="submit" class="py-1.5 rounded-lg bg-primary text-background-dark text-[10px] font-bold uppercase tracking-widest hover:scale-[1.02] transition-all">ОК</button>
+                                    <button type="button" class="ssh-cancel-btn py-1.5 rounded-lg bg-white/10 text-white/70 text-[10px] font-bold uppercase tracking-widest hover:bg-white/20 transition-all" data-target="${t.target_name}" onclick="document.getElementById('edit-ssh-${t.target_name}').classList.add('hidden')">Отмена</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>`;
+    }
+    // ===== Конец обработки тарифов =====
+
+    // ===== ЗАГРУЗКА ИЗОБРАЖЕНИЙ =====
+    // Обработка загрузки и удаления медиафайлов для меню
+    function initImageUploaders() {
+        document.querySelectorAll('input[type="file"][data-section]').forEach(input => {
+            if (input.getAttribute('data-processed')) return; input.setAttribute('data-processed', 'true');
+            input.onchange = async function () {
+                if (!this.files[0]) return; const formData = new FormData(); formData.append('file', this.files[0]);
+                const result = await sendRequest('/upload-menu-image/' + this.dataset.section, 'POST', formData);
+                if (result.ok) { const urlInput = document.getElementById(this.dataset.section + '_image_url'); if (urlInput) urlInput.value = result.path; showToast('success', 'Изображение загружено'); window.CONTENT_PANEL?.onImageUpdated?.(this.dataset.section, result.path); } else showToast('danger', result.error || 'Ошибка загрузки');
+            };
+        });
+        document.querySelectorAll('.btn-delete-menu-image').forEach(btn => {
+            if (btn.getAttribute('data-processed')) return; btn.setAttribute('data-processed', 'true');
+            btn.onclick = async function () {
+                if (!await showCustomConfirm('Удалить изображение?')) return;
+                const result = await sendRequest('/delete-menu-image/' + this.dataset.section, 'POST', null, true);
+                if (result.ok) { const urlInput = document.getElementById(this.dataset.section + '_image_url'); if (urlInput) urlInput.value = ''; showToast('success', 'Изображение удалено'); window.CONTENT_PANEL?.onImageUpdated?.(this.dataset.section, ''); } else showToast('danger', result.error || 'Ошибка удаления');
+            };
+        });
+        document.querySelectorAll('.btn-upload-menu-image').forEach(btn => {
+            if (btn.getAttribute('data-processed')) return; btn.setAttribute('data-processed', 'true');
+            btn.onclick = () => document.getElementById(btn.dataset.section + '_image_file')?.click();
+        });
+    }
+    // ===== Конец загрузки изображений =====
+
+    // ===== ПЕРЕМЕЩЕНИЕ ЭЛЕМЕНТОВ =====
+    // Реализация Drag & Drop для изменения порядка
+    function initDragAndDrop(containerId, itemClass, url, dataAttr) {
+        const container = document.getElementById(containerId); if (!container) return;
+        let dragged = null;
+        container.ondragstart = e => {
+            const card = e.target.closest('.' + itemClass);
+            if (card && card.getAttribute('draggable') === 'true') { dragged = card; e.dataTransfer.effectAllowed = 'move'; setTimeout(() => card.classList.add('opacity-50', 'scale-95'), 0); } else e.preventDefault();
+        };
+        container.ondragend = () => { if (dragged) { dragged.classList.remove('opacity-50', 'scale-95'); dragged = null; saveOrder(); } };
+        container.ondragover = e => {
+            e.preventDefault(); const target = e.target.closest('.' + itemClass);
+            if (target && target !== dragged && dragged) { const sibs = [...container.querySelectorAll('.' + itemClass)]; container.insertBefore(dragged, sibs.indexOf(dragged) < sibs.indexOf(target) ? target.nextSibling : target); }
+        };
+        container.onmousedown = e => e.target.closest('.' + itemClass)?.setAttribute('draggable', !!e.target.closest('.drag-handle'));
+        async function saveOrder() { const order = [...container.querySelectorAll('.' + itemClass)].map(el => el.getAttribute(dataAttr)); await sendRequest(url, 'POST', { order }, true); }
+    }
+    // ===== Конец перемещения элементов =====
+    async function toggleDeviceMode(hostName, checked) {
+        const mode = checked ? 'tiers' : 'plan';
+        const label = document.getElementById('device-mode-label-' + hostName);
+        if (label) label.textContent = checked ? 'Выбор' : 'По тарифу';
+        const block = document.getElementById('device-tiers-block-' + hostName);
+        if (block) { if (checked) block.classList.remove('hidden'); else block.classList.add('hidden'); }
+        const fd = new FormData();
+        fd.append('host_name', hostName);
+        fd.append('device_mode', mode);
+        const r = await sendRequest('/update-host-device-mode', 'POST', fd);
+        if (r.ok) showToast('success', 'Режим устройств сохранён');
+        else showToast('danger', r.error || 'Ошибка сохранения');
+    }
+
+    function editBaseTier(hostName) {
+        document.getElementById('base-tier-display-' + hostName).classList.add('hidden');
+        document.getElementById('base-tier-display-' + hostName).classList.remove('flex');
+        const editDiv = document.getElementById('base-tier-edit-' + hostName);
+        editDiv.classList.remove('hidden');
+        editDiv.classList.add('flex');
+        const input = document.getElementById('base-tier-input-' + hostName);
+        input.focus();
+        input.select();
+    }
+
+    async function saveBaseTier(hostName) {
+        const input = document.getElementById('base-tier-input-' + hostName);
+        if (!input) return;
+        const parsed = parseInt(input.value);
+        if (isNaN(parsed) || parsed < 1) { showToast('danger', 'Укажите число 1 или более'); return; }
+        const fd = new FormData();
+        fd.append('host_name', hostName);
+        fd.append('count', parsed);
+        const r = await sendRequest('/update-host-base-devices', 'POST', fd);
+        if (r.ok) {
+            const el = document.getElementById('base-tier-count-' + hostName);
+            if (el) el.textContent = r.count + ' устр.';
+            showToast('success', 'Базовое кол-во устройств сохранено');
+            input.value = r.count;
+            document.getElementById('base-tier-edit-' + hostName).classList.add('hidden');
+            document.getElementById('base-tier-edit-' + hostName).classList.remove('flex');
+            document.getElementById('base-tier-display-' + hostName).classList.remove('hidden');
+            document.getElementById('base-tier-display-' + hostName).classList.add('flex');
+        } else {
+            showToast('danger', r.error || 'Ошибка');
+        }
+    }
+
+    function editExtraTier(tierId) {
+        document.getElementById('tier-display-' + tierId).classList.add('hidden');
+        document.getElementById('tier-display-' + tierId).classList.remove('flex');
+        const editDiv = document.getElementById('tier-edit-' + tierId);
+        editDiv.classList.remove('hidden');
+        editDiv.classList.add('flex');
+        document.getElementById('tier-input-count-' + tierId).focus();
+    }
+
+    async function saveExtraTier(tierId) {
+        const countInput = document.getElementById('tier-input-count-' + tierId);
+        const priceInput = document.getElementById('tier-input-price-' + tierId);
+        if (!countInput || !priceInput) return;
+        const count = parseInt(countInput.value);
+        const price = parseFloat(priceInput.value);
+        if (isNaN(count) || count < 2 || isNaN(price) || price < 0) { showToast('danger', 'Укажите корректные значения'); return; }
+
+        const fd = new FormData();
+        fd.append('device_count', count);
+        fd.append('price', price);
+        const r = await sendRequest('/edit-device-tier/' + tierId, 'POST', fd);
+        if (r.ok) {
+            document.getElementById('tier-display-count-' + tierId).textContent = count + ' устр.';
+            document.getElementById('tier-display-price-' + tierId).textContent = Math.round(price) + '₽/шт';
+            showToast('success', 'Резерв устройств обновлён');
+            document.getElementById('tier-edit-' + tierId).classList.add('hidden');
+            document.getElementById('tier-edit-' + tierId).classList.remove('flex');
+            document.getElementById('tier-display-' + tierId).classList.remove('hidden');
+            document.getElementById('tier-display-' + tierId).classList.add('flex');
+        } else {
+            showToast('danger', r.error || 'Ошибка');
+        }
+    }
+
+    async function addDeviceTier(hostName) {
+        return SettingsPage.addDeviceTier(hostName, sendRequest);
+    }
+
+    async function deleteDeviceTier(tierId, hostName) {
+        return SettingsPage.deleteDeviceTier(tierId, hostName, sendRequest);
+    }
+
+    async function toggleTierLockExtend(hostName, checked) {
+        const fd = new FormData();
+        fd.append('host_name', hostName);
+        fd.append('value', checked ? '1' : '0');
+        const r = await sendRequest('/update-tier-lock-extend', 'POST', fd);
+        if (r.ok) showToast('success', 'Настройка сохранена');
+        else showToast('danger', r.error || 'Ошибка');
+    }
+
+
+
+</script>
+
+<style>
+    .animate-spin {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* Улучшение выпадающих списков */
+    .tab-content .grid>div {
+        position: relative;
+        z-index: 1;
+    }
+
+    .tab-content .grid>div:has(.soft-select.open) {
+        z-index: 50;
+    }
+
+    .soft-select.open {
+        position: relative;
+        z-index: 60;
+    }
+
+    .soft-select-menu {
+        z-index: 100 !important;
+    }
+
+    [data-target="trial_host_id"] .soft-select-menu {
+        top: auto !important;
+        bottom: 100% !important;
+        margin-top: 0 !important;
+        margin-bottom: 0.5rem !important;
+    }
+</style>
+
+<script>
+    (function () {
+        // Динамическое заполнение Webhook URL
+        const domainSetting = "{{ settings.domain or '' }}";
+        const baseWebhookUrl = domainSetting ? "https://" + domainSetting : window.location.protocol + "//" + window.location.host;
+
+        document.querySelectorAll('.webhook-display').forEach(function (el) {
+            const endpoint = el.getAttribute('data-endpoint');
+            if (endpoint) {
+                el.textContent = baseWebhookUrl + endpoint;
+            }
+        });
+    })();
+    (function () {
+        const btn = document.getElementById('smtp-test-btn');
+        if (!btn) return;
+        btn.addEventListener('click', async () => {
+            const toEl = document.getElementById('smtp-test-to');
+            const to = (toEl?.value || '').trim();
+            const form = document.getElementById('settings-tab-form');
+            const read = (name) => form?.querySelector(`[name="${name}"]`);
+            const payload = { to };
+            ['smtp_enabled', 'smtp_host', 'smtp_port', 'smtp_username', 'smtp_password',
+             'smtp_from_email', 'smtp_from_name', 'smtp_encryption', 'smtp_notify_emails'].forEach((name) => {
+                const el = read(name);
+                if (!el) return;
+                if (el.type === 'checkbox') payload[name] = el.checked ? '1' : '0';
+                else payload[name] = el.value;
+            });
+            const csrfToken = window.getCsrfToken ? window.getCsrfToken() : document.querySelector('input[name="csrf_token"]')?.value;
+            btn.disabled = true;
+            const prev = btn.innerHTML;
+            btn.innerHTML = '<span class="material-symbols-outlined text-sm animate-spin">progress_activity</span> Отправка…';
+            try {
+                const res = await fetch('{{ url_for("settings_smtp_test") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken || '',
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify(payload),
+                });
+                const data = await res.json().catch(() => ({}));
+                showToast(data.ok ? 'success' : 'danger', data.message || (data.ok ? 'Тест отправлен' : 'Ошибка SMTP'));
+            } catch (e) {
+                showToast('danger', 'Ошибка отправки тестового письма');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = prev;
+            }
+        });
+    })();
+</script>

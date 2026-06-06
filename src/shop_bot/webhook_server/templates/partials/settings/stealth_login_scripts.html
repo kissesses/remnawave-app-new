@@ -1,0 +1,72 @@
+<script>
+window.STEALTH_PANEL = {
+    previewUrlTemplate: {{ url_for('settings_stealth_decoy_preview', decoy_id='__ID__') | tojson }},
+};
+</script>
+<script src="{{ url_for('static', filename='js/stealth-login-panel.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
+<script>
+(function () {
+    var inp = document.getElementById('stealth-hotkey-input');
+    var badge = document.getElementById('stealth-hotkey-badge');
+    var captureBtn = document.getElementById('stealth-hotkey-capture-btn');
+    var listeningSpan = document.getElementById('stealth-hotkey-listening');
+
+    if (inp && badge && captureBtn) {
+        function formatHotkey(v) {
+            return (v || 'ctrl+b').split('+').map(function (p) {
+                return p.charAt(0).toUpperCase() + p.slice(1);
+            }).join('+');
+        }
+
+        badge.textContent = formatHotkey(inp.value);
+
+        captureBtn.addEventListener('click', function () {
+            captureBtn.classList.add('hidden');
+            listeningSpan.classList.remove('hidden');
+
+            function onKey(e) {
+                var mods = [];
+                if (e.ctrlKey) mods.push('ctrl');
+                if (e.shiftKey) mods.push('shift');
+                if (e.altKey) mods.push('alt');
+                var key = e.key.toLowerCase();
+                if (['control', 'shift', 'alt', 'meta'].indexOf(key) !== -1) return;
+                if (mods.length === 0) return;
+                e.preventDefault();
+                var combo = mods.concat([key]).join('+');
+                inp.value = combo;
+                badge.textContent = formatHotkey(combo);
+                captureBtn.classList.remove('hidden');
+                listeningSpan.classList.add('hidden');
+                document.removeEventListener('keydown', onKey, true);
+            }
+            document.addEventListener('keydown', onKey, true);
+        });
+    }
+
+    var genBtn = document.getElementById('stealth-secret-generate');
+    var secretVal = document.getElementById('stealth-secret-value');
+    var secretParam = document.getElementById('stealth-secret-param');
+    if (genBtn && secretVal) {
+        genBtn.addEventListener('click', function () {
+            var bytes = new Uint8Array(12);
+            crypto.getRandomValues(bytes);
+            var token = Array.from(bytes, function (b) {
+                return (b % 36).toString(36);
+            }).join('');
+            secretVal.value = token;
+            if (secretParam && !secretParam.value.trim()) {
+                secretParam.value = 'gate';
+            }
+        });
+    }
+
+    const orig = window.initInteractiveElements;
+    if (typeof orig === 'function') {
+        window.initInteractiveElements = function () {
+            orig.apply(this, arguments);
+            if (typeof window.initStealthPanel === 'function') window.initStealthPanel();
+        };
+    }
+})();
+</script>
