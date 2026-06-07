@@ -977,9 +977,23 @@ def get_paginated_trials(
         return items, total
 
 
+def _trial_eligible_where() -> str:
+    now_sql = msk_now_sql()
+    return f"""
+        COALESCE(u.trial_used, 0) = 0
+        AND COALESCE(u.is_banned, 0) = 0
+        AND NOT EXISTS (
+            SELECT 1 FROM vpn_keys k
+            WHERE k.user_id = u.telegram_id
+              AND COALESCE(k.key_email, '') LIKE 'trial_%'
+              AND (k.expire_at IS NULL OR k.expire_at > {now_sql})
+        )
+    """
+
+
 def get_paginated_trial_eligible(page: int = 1, per_page: int = 10) -> tuple[list[dict[str, Any]], int]:
     offset = (page - 1) * per_page
-    where_clause = "COALESCE(u.trial_used, 0) = 0"
+    where_clause = _trial_eligible_where()
 
     count_query = f"SELECT COUNT(*) FROM users u WHERE {where_clause}"
     query = f"""
@@ -1022,7 +1036,7 @@ def get_trial_stats() -> dict[str, Any]:
         active = int(first_col(cursor.fetchone(), 0))
 
         cursor.execute(
-            "SELECT COUNT(*) FROM users WHERE COALESCE(trial_used, 0) = 0"
+            f"SELECT COUNT(*) FROM users u WHERE {_trial_eligible_where()}"
         )
         eligible = int(first_col(cursor.fetchone(), 0))
 

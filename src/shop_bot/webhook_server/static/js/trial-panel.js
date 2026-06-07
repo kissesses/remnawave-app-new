@@ -5,6 +5,19 @@
     let currentView = 'active';
     let currentPage = 1;
     let extendKeyId = null;
+    let grantInFlight = false;
+
+    const ERROR_LABELS = {
+        trial_already_used: 'Пробный период уже использован',
+        user_not_found: 'Пользователь не найден',
+        user_banned: 'Пользователь заблокирован',
+        no_hosts: 'Нет серверов в панели',
+        host_required: 'Укажите сервер',
+        grant_failed: 'Не удалось выдать триал',
+        forbidden: 'Недостаточно прав',
+        not_trial_key: 'Это не trial-ключ',
+        key_not_found: 'Ключ не найден',
+    };
 
     const $ = (sel, root) => (root || document).querySelector(sel);
     const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
@@ -25,6 +38,21 @@
             || '';
         if (token) h['X-CSRFToken'] = token;
         return h;
+    }
+
+    function formatError(err) {
+        if (!err) return 'Ошибка';
+        return ERROR_LABELS[err] || String(err);
+    }
+
+    function formatStatValue(key, value) {
+        if (key === 'conversion_pct') return value + '%';
+        if (key === 'converted') return value + ' купили';
+        return String(value);
+    }
+
+    function tableColspan() {
+        return currentView === 'eligible' ? 4 : 6;
     }
 
     function formatRefreshTime() {
@@ -81,7 +109,7 @@
             const stats = data.stats || {};
             $$('[data-stat]').forEach((el) => {
                 const key = el.getAttribute('data-stat');
-                if (stats[key] !== undefined) el.textContent = key === 'conversion_pct' ? stats[key] + '%' : stats[key];
+                if (stats[key] !== undefined) el.textContent = formatStatValue(key, stats[key]);
             });
 
             renderChart(data.series || []);
@@ -125,7 +153,7 @@
         if (!body) return;
 
         updateTableHead(currentView);
-        body.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:var(--tr-dim)">Загрузка…</td></tr>';
+        body.innerHTML = '<tr><td colspan="' + tableColspan() + '" style="text-align:center;padding:1.5rem;color:var(--tr-dim)">Загрузка…</td></tr>';
 
         const url = new URL(routes.list, window.location.origin);
         url.searchParams.set('view', currentView);
@@ -190,36 +218,59 @@
     }
 
     async function postJson(url, payload) {
-        const res = await fetch(url, {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: { ...csrfHeaders(), 'Content-Type': 'application/json', Accept: 'application/json' },
-            body: JSON.stringify(payload || {}),
-        });
-        return res.json();
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { ...csrfHeaders(), 'Content-Type': 'application/json', Accept: 'application/json' },
+                body: JSON.stringify(payload || {}),
+            });
+            const ct = res.headers.get('content-type') || '';
+            if (ct.includes('application/json')) {
+                try {
+                    return await res.json();
+                } catch (_) {
+                    return { ok: false, error: `Ошибка ${res.status}` };
+                }
+            }
+            return { ok: false, error: `Некорректный ответ (${res.status})` };
+        } catch (_) {
+            return { ok: false, error: 'Сетевая ошибка' };
+        }
     }
 
     async function handleGrant(userIdOrName, hostName, force) {
-        const raw = (userIdOrName || '').trim();
-        const payload = { host_name: hostName, force: !!force };
-        if (/^\d+$/.test(raw)) payload.telegram_id = parseInt(raw, 10);
-        else payload.username = raw.replace(/^@/, '');
-        const data = await postJson(routes.grant, payload);
-        if (!data.ok) {
-            toast(data.error || 'Не удалось выдать триал', 'error');
-            return;
+        if (grantInFlight) return;
+        const submitBtn = $('#tr-grant-submit');
+        const hostDisabled = !!$('#tr_grant_host')?.disabled;
+        grantInFlight = true;
+        if (submitBtn) submitBtn.disabled = true;
+
+        try {
+            const raw = (userIdOrName || '').trim();
+            const payload = { host_name: hostName, force: !!force };
+            if (/^\d+$/.test(raw)) payload.telegram_id = parseInt(raw, 10);
+            else payload.username = raw.replace(/^@/, '');
+            const data = await postJson(routes.grant, payload);
+            if (!data.ok) {
+                toast(formatError(data.error) || data.message || 'Не удалось выдать триал', 'error');
+                return;
+            }
+            toast(data.message || 'Триал выдан', 'success');
+            closeModals();
+            loadStats();
+            loadList(1);
+        } finally {
+            grantInFlight = false;
+            if (submitBtn) submitBtn.disabled = hostDisabled;
         }
-        toast(data.message || 'Триал выдан', 'success');
-        closeModals();
-        loadStats();
-        loadList(1);
     }
 
     async function handleReset(userId) {
         if (!confirm('Сбросить флаг trial_used? Пользователь сможет активировать триал снова.')) return;
         const data = await postJson(routes.reset, { telegram_id: userId });
         if (!data.ok) {
-            toast(data.error || 'Ошибка', 'error');
+            toast(formatError(data.error) || 'Ошибка', 'error');
             return;
         }
         toast(data.message || 'Флаг сброшен', 'success');
@@ -237,7 +288,7 @@
         const url = routes.extend.replace('/0/', '/' + extendKeyId + '/');
         const data = await postJson(url, { delta_days: days });
         if (!data.ok) {
-            toast(data.error || 'Не удалось продлить', 'error');
+            toast(formatError(data.error) || 'Не удалось продлить', 'error');
             return;
         }
         toast('Ключ продлён', 'success');
@@ -250,7 +301,7 @@
         const url = routes.revoke.replace('/0/', '/' + keyId + '/');
         const data = await postJson(url, {});
         if (!data.ok) {
-            toast(data.error || 'Не удалось отозвать', 'error');
+            toast(formatError(data.error) || 'Не удалось отозвать', 'error');
             return;
         }
         toast(data.message || 'Ключ отозван', 'success');

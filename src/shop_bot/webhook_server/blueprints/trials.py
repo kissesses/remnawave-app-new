@@ -75,7 +75,7 @@ def _resolve_user_id(payload: dict) -> int | None:
 @panel_ctx.login_required
 def trials_page():
     all_hosts = get_all_hosts(visible_only=False) or []
-    grant_hosts = get_all_hosts(visible_only=True) or []
+    grant_hosts = all_hosts
     stats = get_trial_stats()
     common = panel_ctx.get_common_template_data()
     return render_template(
@@ -164,7 +164,7 @@ def trials_grant():
     if user.get('is_banned'):
         return jsonify({'ok': False, 'error': 'user_banned'}), 400
 
-    hosts = get_all_hosts(visible_only=True) or []
+    hosts = get_all_hosts(visible_only=False) or []
     if not hosts:
         return jsonify({'ok': False, 'error': 'no_hosts'}), 400
 

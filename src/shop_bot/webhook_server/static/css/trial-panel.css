@@ -47,7 +47,7 @@ html:not(.dark) .tr-page {
         radial-gradient(ellipse 55% 40% at 92% 0%, rgba(245, 158, 11, 0.1), transparent 50%);
     opacity: 0.9;
 }
-.tr-page > *:not(.tr-ambient) { position: relative; z-index: 1; }
+.tr-page > *:not(.tr-ambient):not(.tr-modal) { position: relative; z-index: 1; }
 
 .tr-hero {
     display: flex;
@@ -355,6 +355,35 @@ html:not(.dark) .tr-page {
     font-size: 0.8125rem;
 }
 .tr-soft-select { width: 100%; }
+.tr-page .tr-settings .soft-select { position: relative; width: 100%; }
+.tr-page .tr-settings .soft-select-menu {
+    background: var(--tr-surface-2);
+    border-color: var(--tr-border-strong);
+    box-shadow: var(--tr-shadow);
+}
+.tr-page .tr-settings .soft-select-toggle {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border-radius: var(--tr-radius-sm);
+    border: 1px solid var(--tr-border) !important;
+    background: var(--tr-surface-3) !important;
+    color: var(--tr-text) !important;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: none !important;
+}
+.tr-page .tr-settings .soft-select-toggle:hover,
+.tr-page .tr-settings .soft-select.open .soft-select-toggle {
+    border-color: var(--tr-border-strong) !important;
+    background: var(--tr-surface) !important;
+    box-shadow: 0 0 0 3px var(--tr-accent-soft) !important;
+}
+.tr-page .tr-settings .soft-select-item:hover,
+.tr-page .tr-settings .soft-select-item.is-active {
+    background: var(--tr-accent-soft);
+    color: var(--tr-accent);
+}
 
 .tr-switch { position: relative; display: inline-block; width: 44px; height: 26px; }
 .tr-switch input { opacity: 0; width: 0; height: 0; }
@@ -385,6 +414,20 @@ html:not(.dark) .tr-page {
 .tr-switch input:checked + .tr-switch__track::before { transform: translateX(18px); }
 
 .tr-modal {
+    --tr-text: var(--panel-text, #f4f4f5);
+    --tr-muted: var(--panel-text-secondary, rgba(235, 235, 245, 0.55));
+    --tr-dim: var(--panel-text-tertiary, rgba(235, 235, 245, 0.38));
+    --tr-surface: rgba(255, 255, 255, 0.04);
+    --tr-surface-2: rgba(255, 255, 255, 0.07);
+    --tr-surface-3: rgba(255, 255, 255, 0.1);
+    --tr-border: rgba(255, 255, 255, 0.09);
+    --tr-border-strong: rgba(255, 255, 255, 0.14);
+    --tr-accent: #fb923c;
+    --tr-accent-rgb: 251 146 60;
+    --tr-accent-soft: rgba(var(--tr-accent-rgb), 0.14);
+    --tr-radius-lg: 18px;
+    --tr-radius-sm: 10px;
+    --tr-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
     position: fixed;
     inset: 0;
     z-index: 1200;
@@ -392,22 +435,39 @@ html:not(.dark) .tr-page {
     align-items: center;
     justify-content: center;
     padding: 1rem;
+    color: var(--tr-text);
+}
+html:not(.dark) .tr-modal {
+    --tr-text: #1c1c1e;
+    --tr-muted: rgba(0, 0, 0, 0.55);
+    --tr-dim: rgba(0, 0, 0, 0.42);
+    --tr-surface: rgba(255, 255, 255, 0.92);
+    --tr-surface-2: #fff;
+    --tr-surface-3: #f5f5f7;
+    --tr-border: rgba(0, 0, 0, 0.08);
+    --tr-border-strong: rgba(0, 0, 0, 0.12);
+    --tr-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
 }
 .tr-modal.hidden { display: none !important; }
 .tr-modal__backdrop {
     position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, 0.55);
-    backdrop-filter: blur(4px);
+    background: rgba(0, 0, 0, 0.62);
+    backdrop-filter: blur(8px);
 }
 .tr-modal__panel {
     position: relative;
     width: min(440px, 100%);
     border-radius: var(--tr-radius-lg);
-    border: 1px solid var(--tr-border);
+    border: 1px solid var(--tr-border-strong);
     background: var(--tr-surface-2);
-    box-shadow: var(--tr-shadow), 0 0 0 1px rgba(var(--tr-accent-rgb), 0.08);
+    box-shadow: var(--tr-shadow), 0 0 0 1px rgba(var(--tr-accent-rgb), 0.12);
     overflow: visible;
+    animation: tr-modal-in 0.2s ease-out;
+}
+@keyframes tr-modal-in {
+    from { opacity: 0; transform: translateY(8px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
 }
 .tr-modal__panel--grant::before {
     content: '';
@@ -500,12 +560,123 @@ html:not(.dark) .tr-page {
     color: #fbbf24;
     flex-shrink: 0;
 }
-.tr-modal .soft-select { position: relative; }
+.tr-modal .soft-select { position: relative; width: 100%; }
 .tr-modal .soft-select.open { z-index: 30; }
-.tr-modal .soft-select-menu { z-index: 40; }
-.tr-modal .tr-input { width: 100%; }
-.tr-field { display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.6875rem; font-weight: 700; color: var(--tr-muted); }
-.tr-check { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: var(--tr-muted); }
+.tr-modal .soft-select-menu {
+    z-index: 40;
+    background: var(--tr-surface-2);
+    border-color: var(--tr-border-strong);
+    box-shadow: var(--tr-shadow);
+}
+.tr-modal .soft-select-toggle {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border-radius: var(--tr-radius-sm);
+    border: 1px solid var(--tr-border) !important;
+    background: var(--tr-surface-3) !important;
+    color: var(--tr-text) !important;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: none !important;
+}
+.tr-modal .soft-select-toggle:hover,
+.tr-modal .soft-select.open .soft-select-toggle {
+    border-color: var(--tr-border-strong) !important;
+    background: var(--tr-surface) !important;
+    box-shadow: 0 0 0 3px var(--tr-accent-soft) !important;
+}
+.tr-modal .soft-select-item:hover,
+.tr-modal .soft-select-item.is-active {
+    background: var(--tr-accent-soft);
+    color: var(--tr-accent);
+}
+.tr-modal .tr-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--tr-text);
+    background: var(--tr-surface-3);
+    border: 1px solid var(--tr-border);
+    border-radius: var(--tr-radius-sm);
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.tr-modal .tr-input:focus {
+    border-color: rgba(var(--tr-accent-rgb), 0.55);
+    box-shadow: 0 0 0 3px var(--tr-accent-soft);
+}
+.tr-modal .tr-input::placeholder { color: var(--tr-dim); font-weight: 500; }
+.tr-field { display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--tr-dim); }
+.tr-check {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: var(--tr-radius-sm);
+    border: 1px solid var(--tr-border);
+    background: var(--tr-surface);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: normal;
+    color: var(--tr-muted);
+    cursor: pointer;
+}
+.tr-check input[type="checkbox"] {
+    width: 1rem;
+    height: 1rem;
+    margin-top: 0.1rem;
+    accent-color: var(--tr-accent);
+    flex-shrink: 0;
+}
+.tr-modal__foot .tr-btn {
+    appearance: none;
+    -webkit-appearance: none;
+    border: none;
+    font-family: inherit;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    border-radius: 999px;
+    padding: 0.55rem 1.15rem;
+    min-height: 2.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    transition: transform 0.12s, background 0.15s, border-color 0.15s, opacity 0.15s;
+}
+.tr-modal__foot .tr-btn:active:not(:disabled) { transform: scale(0.98); }
+.tr-modal__foot .tr-btn--ghost {
+    border: 1px solid var(--tr-border);
+    background: var(--tr-surface);
+    color: var(--tr-muted);
+}
+.tr-modal__foot .tr-btn--ghost:hover {
+    color: var(--tr-text);
+    border-color: var(--tr-border-strong);
+    background: var(--tr-surface-3);
+}
+.tr-modal__foot .tr-btn--accent {
+    border: 1px solid rgba(var(--tr-accent-rgb), 0.45);
+    background: linear-gradient(135deg, var(--tr-accent), #f59e0b);
+    color: #1a1208;
+    box-shadow: 0 4px 16px rgba(var(--tr-accent-rgb), 0.35);
+}
+.tr-modal__foot .tr-btn--accent:hover:not(:disabled) {
+    filter: brightness(1.05);
+    box-shadow: 0 6px 20px rgba(var(--tr-accent-rgb), 0.42);
+}
+.tr-modal__foot .tr-btn--accent .material-symbols-outlined { font-size: 1rem; }
+.tr-modal__foot .tr-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    filter: grayscale(0.2);
+}
 
 .hidden { display: none !important; }
 body.tr-modal-open { overflow: hidden; }
