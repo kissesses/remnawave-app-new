@@ -28,11 +28,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Resolve Docker image
+        id: image
+        run: |
+          if [[ "${{ github.repository }}" == *remnawave-app* ]]; then
+            echo "name=kissesses/remnawave-app" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=kissesses/rw-shop" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}
           tags: |
             type=ref,event=tag
             type=raw,value=latest,enable={{is_default_branch}}

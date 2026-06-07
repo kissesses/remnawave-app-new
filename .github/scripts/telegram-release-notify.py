@@ -30,7 +30,56 @@ def _read_body(path: str | None) -> str:
         return ''
 
 
+def _parse_title_line(body: str) -> tuple[str, str]:
+    """Return (title_without_hash, codename) from first markdown H1."""
+    for line in body.splitlines():
+        stripped = line.strip()
+        if stripped.startswith('# '):
+            title = stripped[2:].strip()
+            codename = ''
+            if ' — ' in title:
+                _, codename = title.rsplit(' — ', 1)
+            return title, codename.strip()
+    return '', ''
+
+
+def _extract_lang_block(body: str, lang: str, *, max_items: int = 8) -> str:
+    marker = f'## {lang}'
+    idx = body.find(marker)
+    if idx < 0:
+        alt = f'## 🇬🇧 {lang}' if lang == 'EN' else f'## 🇷🇺 {lang}'
+        idx = body.find(alt)
+        if idx < 0:
+            return ''
+    chunk = body[idx + len(marker):]
+    next_h2 = re.search(r'\n## [^\n]+', chunk)
+    if next_h2:
+        chunk = chunk[: next_h2.start()]
+    items: list[str] = []
+    for line in chunk.splitlines():
+        stripped = line.strip()
+        if stripped.startswith('#### '):
+            if items:
+                items.append('')
+            items.append(f'<b>{html.escape(stripped[5:].strip())}</b>')
+        elif stripped.startswith('- '):
+            items.append(f'• {html.escape(stripped[2:].strip())}')
+        if sum(1 for x in items if x.startswith('•')) >= max_items:
+            break
+    return '\n'.join(items).strip()
+
+
 def _summarize_changelog(body: str, *, max_items: int = 10) -> str:
+    en = _extract_lang_block(body, 'EN', max_items=max_items)
+    ru = _extract_lang_block(body, 'RU', max_items=max_items)
+    if en or ru:
+        parts: list[str] = []
+        if en:
+            parts.append(f'🇬🇧 <b>EN</b>\n{en}')
+        if ru:
+            parts.append(f'🇷🇺 <b>RU</b>\n{ru}')
+        return '\n\n'.join(parts)
+
     items: list[str] = []
     for line in body.splitlines():
         stripped = line.strip()
@@ -95,22 +144,24 @@ def main() -> int:
             + ', '.join(missing),
             file=sys.stderr,
         )
-        print(
-            'Add them in GitHub → Settings → Secrets and variables → Actions '
-            '(names must match exactly).',
-            file=sys.stderr,
-        )
         return 1
 
     repo = (os.environ.get('GITHUB_REPOSITORY') or 'kissesses/remnawave-app').strip()
     image = f'ghcr.io/{repo.lower()}:{tag}'
+    title_line, codename = _parse_title_line(body)
     summary = _summarize_changelog(body)
-    summary_block = f'\n\n{summary}' if summary else ''
 
+    heading = title_line or f'🚀 Remnawave App {tag}'
+    if not heading.startswith('🚀'):
+        heading = f'🚀 {heading}'
+    title_html = f'<b>{html.escape(heading)}</b>'
+    if codename and codename not in heading:
+        title_html += f' — <i>{html.escape(codename)}</i>'
+
+    summary_block = f'\n\n{summary}' if summary else ''
     text = (
-        f'<b>🚀 Remnawave App {html.escape(tag)}</b>\n'
-        f'Опубликован релиз на GitHub.{summary_block}\n\n'
-        f'🔗 <a href="{html.escape(release_url, quote=True)}">Открыть Release</a>\n'
+        f'{title_html}{summary_block}\n\n'
+        f'🔗 <a href="{html.escape(release_url, quote=True)}">GitHub Release</a>\n'
         f'🐳 <code>{html.escape(image)}</code>'
     )
     if len(text) > 4096:

@@ -655,11 +655,13 @@ def user_timeline_page(user_id: int):
         flash('Пользователь не найден', 'danger')
         return redirect(url_for('users_page'))
     avatar_url = url_for('user_avatar', user_id=user_id) if get_telegram_avatar_file_url(user_id) else None
+    common_data = panel_ctx.get_common_template_data()
     return render_template(
         'user_timeline.html',
         user_id=user_id,
         user=user,
         avatar_url=avatar_url,
+        **common_data,
     )
 
 
