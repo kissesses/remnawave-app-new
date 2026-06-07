@@ -296,113 +296,144 @@
 
     <!-- Admins -->
     <div class="acc-pane" data-acc-pane="admins" hidden>
-        <div class="acc-studio">
-            <div class="acc-picker">
-                <div class="acc-picker__toolbar">
+        <div class="acc-admins-layout">
+            <div class="acc-card acc-admins-card">
+                <div class="acc-picker__toolbar acc-admins-toolbar">
                     <div class="acc-search">
                         <span class="material-symbols-outlined">search</span>
                         <input type="search" id="acc-admin-search" class="acc-search__input" placeholder="Поиск админа…" autocomplete="off" />
                     </div>
                     {% if can_edit('settings_access') %}
-                    <a href="{{ url_for('settings_tab_page', tab='access') }}#admins" class="acc-btn acc-btn--ghost acc-btn--sm">+ Новый</a>
+                    <button type="button" class="acc-btn acc-btn--ghost acc-btn--sm" id="acc-admin-create">
+                        <span class="material-symbols-outlined">person_add</span> Новый
+                    </button>
                     {% endif %}
                 </div>
-                <div class="acc-tile-grid" id="acc-admin-grid">
+                <div class="acc-tile-grid acc-admins-grid" id="acc-admin-grid">
                     {% for admin in panel_admins %}
-                    <a href="{{ url_for('settings_tab_page', tab='access', admin_id=admin.id) }}#admins"
-                        class="acc-tile acc-admin-tile {% if edit_admin and edit_admin.id == admin.id %}is-selected{% endif %}"
+                    <button type="button"
+                        class="acc-tile acc-admin-tile"
+                        data-admin-id="{{ admin.id }}"
                         data-label="{{ admin.login | lower }}"
                         data-role="{{ admin.role_name | lower }}">
-                        <span class="acc-tile__icon material-symbols-outlined">person</span>
-                        <span class="acc-tile__label">{{ admin.login }}</span>
-                        <span class="acc-tile__meta">{{ admin.role_name }}</span>
+                        <span class="acc-admin-tile__avatar">{{ admin.login[:1] | upper }}</span>
+                        <span class="acc-tile__body">
+                            <span class="acc-tile__label">{{ admin.login }}</span>
+                            <span class="acc-tile__meta">{{ admin.role_name }}</span>
+                        </span>
+                        <span class="acc-admin-tile__status" data-admin-presence="{{ admin.id }}" aria-hidden="true"></span>
                         <span class="acc-badge {% if admin.is_active %}acc-badge--ok{% else %}acc-badge--muted{% endif %}">
                             {% if admin.is_active %}Активен{% else %}Выкл{% endif %}
                         </span>
-                    </a>
+                        <span class="acc-admin-tile__chevron material-symbols-outlined">chevron_right</span>
+                    </button>
+                    {% else %}
+                    <p class="acc-empty">Администраторов пока нет</p>
                     {% endfor %}
                 </div>
             </div>
+        </div>
+    </div>
 
-            <div class="acc-editor acc-card">
-                {% if can_edit('settings_access') %}
-                <form action="{{ url_for('settings_access_admin_save') }}" method="post" data-submit-mode="native" class="acc-form" autocomplete="off">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                    <input type="hidden" name="admin_id" value="{{ edit_admin.id if edit_admin else '' }}" />
-
-                    <div class="acc-editor__head">
-                        <p class="acc-editor__eyebrow">{% if edit_admin %}Редактирование{% else %}Новый администратор{% endif %}</p>
-                        <h3 class="acc-editor__title">{{ edit_admin.login if edit_admin else 'Учётная запись' }}</h3>
+    <div id="accAdminModal" class="modal-overlay acc-modal" hidden aria-hidden="true">
+        <div class="modal-content acc-admin-modal" role="dialog" aria-modal="true" aria-labelledby="acc-admin-modal-title">
+            <header class="acc-admin-modal__head">
+                <div class="acc-admin-modal__identity">
+                    <span class="acc-admin-modal__avatar" id="acc-admin-modal-avatar">A</span>
+                    <div>
+                        <p class="acc-admin-modal__eyebrow" id="acc-admin-modal-eyebrow">Администратор</p>
+                        <h3 class="acc-admin-modal__title" id="acc-admin-modal-title">—</h3>
+                        <p class="acc-admin-modal__role" id="acc-admin-modal-role">—</p>
                     </div>
+                </div>
+                <div class="acc-admin-modal__head-actions">
+                    <span class="acc-admin-modal__status" id="acc-admin-modal-status" hidden></span>
+                    <button type="button" class="acc-icon-btn" id="acc-admin-modal-close" aria-label="Закрыть">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+            </header>
 
-                    <div class="acc-form-grid">
-                        <div class="acc-field">
-                            <label class="acc-label" for="acc-admin-login">Логин</label>
-                            <input type="text" id="acc-admin-login" name="admin_login" required minlength="3"
-                                value="{{ edit_admin.login if edit_admin else '' }}" class="acc-input" />
+            <nav class="acc-admin-modal__tabs" id="acc-admin-modal-tabs" role="tablist" hidden>
+                <button type="button" class="acc-admin-modal__tab is-active" data-acc-admin-tab="profile" role="tab">
+                    <span class="material-symbols-outlined">badge</span> Профиль
+                </button>
+                <button type="button" class="acc-admin-modal__tab" data-acc-admin-tab="edit" role="tab" id="acc-admin-modal-edit-tab" hidden>
+                    <span class="material-symbols-outlined">edit</span> Редактирование
+                </button>
+            </nav>
+
+            <div class="acc-admin-modal__body">
+                <div class="acc-admin-modal__pane is-active" data-acc-admin-pane="profile" id="acc-admin-modal-profile">
+                    <div class="acc-admin-modal__loading" id="acc-admin-modal-loading">Загрузка…</div>
+                    <div class="acc-admin-modal__profile" id="acc-admin-modal-profile-content" hidden>
+                        <div class="acc-admin-modal__chips" id="acc-admin-modal-chips"></div>
+                        <dl class="acc-admin-modal__meta">
+                            <div><dt>ID</dt><dd id="acc-admin-meta-id">—</dd></div>
+                            <div><dt>Роль</dt><dd id="acc-admin-meta-role">—</dd></div>
+                            <div><dt>Статус</dt><dd id="acc-admin-meta-active">—</dd></div>
+                            <div><dt>Онлайн</dt><dd id="acc-admin-meta-online">—</dd></div>
+                            <div><dt>Раздел</dt><dd id="acc-admin-meta-page">—</dd></div>
+                            <div><dt>Устройство</dt><dd id="acc-admin-meta-device">—</dd></div>
+                            <div><dt>Защита</dt><dd id="acc-admin-meta-security">—</dd></div>
+                            <div><dt>Telegram</dt><dd id="acc-admin-meta-telegram">—</dd></div>
+                            <div><dt>Passkey</dt><dd id="acc-admin-meta-passkeys">—</dd></div>
+                            <div><dt>2FA TOTP</dt><dd id="acc-admin-meta-totp">—</dd></div>
+                            <div><dt>Последний вход</dt><dd id="acc-admin-meta-last-login">—</dd></div>
+                            <div><dt>Создан</dt><dd id="acc-admin-meta-created">—</dd></div>
+                            <div><dt>Обновлён</dt><dd id="acc-admin-meta-updated">—</dd></div>
+                        </dl>
+                        <div class="acc-admin-modal__section" id="acc-admin-perms-wrap" hidden>
+                            <h4 class="acc-admin-modal__section-title">Права доступа</h4>
+                            <p class="acc-admin-modal__section-meta" id="acc-admin-perms-summary">—</p>
+                            <div class="acc-admin-modal__perm-chips" id="acc-admin-perms-chips"></div>
                         </div>
-                        <div class="acc-field">
-                            <label class="acc-label" for="acc-admin-pass">
-                                {% if edit_admin %}Новый пароль{% else %}Пароль{% endif %}
-                            </label>
-                            <input type="password" id="acc-admin-pass" name="admin_password"
-                                {% if not edit_admin %}required{% endif %} minlength="16"
-                                placeholder="{% if edit_admin %}Пусто — без изменений{% else %}Мин. 16 символов{% endif %}"
-                                autocomplete="new-password" class="acc-input" />
-                        </div>
-                        <div class="acc-field">
-                            <label class="acc-label" for="acc-admin-role">Роль</label>
-                            <select id="acc-admin-role" name="admin_role_id" required class="acc-input">
-                                {% for role in panel_roles if panel_is_superadmin or not role.is_superadmin %}
-                                <option value="{{ role.id }}" {% if edit_admin and edit_admin.role_id == role.id %}selected{% endif %}>{{ role.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="acc-field acc-field--check">
-                            <label class="acc-check">
-                                <input type="hidden" name="admin_is_active" value="0" />
-                                <input type="checkbox" name="admin_is_active" value="1"
-                                    {% if not edit_admin or edit_admin.is_active %}checked{% endif %} />
-                                <span>Активен</span>
-                            </label>
+                        <div class="acc-admin-modal__section">
+                            <div class="acc-admin-modal__section-head">
+                                <h4 class="acc-admin-modal__section-title">Последние действия</h4>
+                                <a href="#" class="acc-text-btn" id="acc-admin-audit-link" hidden>Весь журнал</a>
+                            </div>
+                            <ul class="acc-admin-modal__actions" id="acc-admin-recent-actions"></ul>
                         </div>
                     </div>
+                </div>
 
-                    {% if edit_admin %}
-                    <div class="acc-admin-meta">
-                        {% if edit_admin.telegram_username %}
-                        <span class="acc-chip"><span class="material-symbols-outlined">send</span> @{{ edit_admin.telegram_username }}</span>
-                        {% elif edit_admin.telegram_user_id %}
-                        <span class="acc-chip"><span class="material-symbols-outlined">send</span> TG {{ edit_admin.telegram_user_id }}</span>
-                        {% endif %}
-                        <span class="acc-chip"><span class="material-symbols-outlined">shield</span> {{ security_methods.get(edit_admin.auth_security_method, edit_admin.auth_security_method) }}</span>
-                    </div>
-                    {% endif %}
-
-                    <div class="acc-form__actions">
-                        <button type="submit" class="acc-btn acc-btn--primary">Сохранить</button>
-                        {% if edit_admin %}
-                        <button type="submit" formaction="{{ url_for('settings_access_admin_delete', admin_id=edit_admin.id) }}"
-                            formmethod="post" data-confirm="Удалить «{{ edit_admin.login }}»?" class="acc-btn acc-btn--danger">
-                            Удалить
-                        </button>
-                        {% endif %}
-                    </div>
-                </form>
-                {% else %}
-                <div class="acc-form acc-form--readonly">
-                    <div class="acc-editor__head">
-                        <p class="acc-editor__eyebrow">Просмотр</p>
-                        <h3 class="acc-editor__title">{{ edit_admin.login if edit_admin else 'Учётная запись' }}</h3>
-                    </div>
-                    {% if edit_admin %}
-                    <p class="acc-card__desc">Роль: {{ edit_admin.role_name }} · {% if edit_admin.is_active %}активен{% else %}выключен{% endif %}</p>
-                    <p class="acc-info">Режим просмотра. Для изменений нужно право «Администраторы и роли» с уровнем «Редактирование».</p>
+                <div class="acc-admin-modal__pane" data-acc-admin-pane="edit" id="acc-admin-modal-edit-pane" hidden>
+                    {% if can_edit('settings_access') %}
+                    <form action="{{ url_for('settings_access_admin_save') }}" method="post" data-submit-mode="custom" class="acc-form" id="acc-admin-form" autocomplete="off">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                        <input type="hidden" name="admin_id" id="acc-admin-form-id" value="" />
+                        <div class="acc-form-grid">
+                            <div class="acc-field">
+                                <label class="acc-label" for="acc-admin-form-login">Логин</label>
+                                <input type="text" id="acc-admin-form-login" name="admin_login" required minlength="3" class="acc-input" />
+                            </div>
+                            <div class="acc-field">
+                                <label class="acc-label" for="acc-admin-form-pass" id="acc-admin-form-pass-label">Пароль</label>
+                                <input type="password" id="acc-admin-form-pass" name="admin_password" minlength="16"
+                                    placeholder="Мин. 16 символов" autocomplete="new-password" class="acc-input" />
+                            </div>
+                            <div class="acc-field">
+                                <label class="acc-label" for="acc-admin-form-role">Роль</label>
+                                <select id="acc-admin-form-role" name="admin_role_id" required class="acc-input"></select>
+                            </div>
+                            <div class="acc-field acc-field--check">
+                                <label class="acc-check">
+                                    <input type="hidden" name="admin_is_active" value="0" />
+                                    <input type="checkbox" name="admin_is_active" value="1" id="acc-admin-form-active" checked />
+                                    <span>Активен</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="acc-form__actions">
+                            <button type="submit" class="acc-btn acc-btn--primary" id="acc-admin-form-save">Сохранить</button>
+                            <button type="button" class="acc-btn acc-btn--danger" id="acc-admin-form-delete" hidden>Удалить</button>
+                        </div>
+                    </form>
                     {% else %}
-                    <p class="acc-empty">Выберите администратора слева для просмотра</p>
+                    <p class="acc-info">Редактирование доступно только с правом «Администраторы и роли» на уровне «Редактирование».</p>
                     {% endif %}
                 </div>
-                {% endif %}
             </div>
         </div>
     </div>

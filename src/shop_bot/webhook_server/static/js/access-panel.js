@@ -48,6 +48,9 @@
         if (tabId === 'invites') {
             loadInvites();
         }
+        if (tabId === 'admins') {
+            refreshAdminPresenceDots();
+        }
     }
 
     function resolveInitialTab() {
@@ -667,6 +670,428 @@
         });
     }
 
+    const adminState = {
+        currentId: null,
+        detail: null,
+        tab: 'profile',
+    };
+
+    function adminDetailUrl(adminId) {
+        const boot = window.ACCESS_PANEL_BOOT || {};
+        const tpl = boot.adminDetailUrl || '/settings/access/admins/0.json';
+        return tpl.replace('/0.json', `/${adminId}.json`);
+    }
+
+    function adminDeleteUrl(adminId) {
+        const boot = window.ACCESS_PANEL_BOOT || {};
+        const tpl = boot.adminDeleteUrl || '/settings/access/admins/0/delete';
+        return tpl.replace('/0/delete', `/${adminId}/delete`);
+    }
+
+    function formatAgo(seconds) {
+        if (seconds == null) return '—';
+        if (seconds < 15) return 'только что';
+        if (seconds < 60) return `${seconds} сек. назад`;
+        const m = Math.floor(seconds / 60);
+        if (m < 60) return `${m} мин. назад`;
+        return `${Math.floor(m / 60)} ч. назад`;
+    }
+
+    function formatDuration(seconds) {
+        if (seconds == null || seconds < 0) return '—';
+        if (seconds < 60) return `${seconds} сек.`;
+        const m = Math.floor(seconds / 60);
+        if (m < 60) return `${m} мин.`;
+        const h = Math.floor(m / 60);
+        const rm = m % 60;
+        return rm ? `${h} ч. ${rm} мин.` : `${h} ч.`;
+    }
+
+    function presenceStatusLabel(status) {
+        if (status === 'online') return 'В сети';
+        if (status === 'away') return 'Отошёл';
+        return 'Не в сети';
+    }
+
+    function setAdminModalTab(tab) {
+        adminState.tab = tab;
+        document.querySelectorAll('[data-acc-admin-tab]').forEach((btn) => {
+            btn.classList.toggle('is-active', btn.dataset.accAdminTab === tab);
+        });
+        document.querySelectorAll('[data-acc-admin-pane]').forEach((pane) => {
+            pane.classList.toggle('is-active', pane.dataset.accAdminPane === tab);
+            pane.hidden = pane.dataset.accAdminPane !== tab;
+        });
+    }
+
+    function openAdminModalShell() {
+        const modal = $('accAdminModal');
+        if (!modal) return;
+        modal.hidden = false;
+        modal.setAttribute('aria-hidden', 'false');
+        if (typeof window.openModal === 'function') window.openModal('accAdminModal');
+        else modal.classList.add('open');
+    }
+
+    function closeAdminModal() {
+        const modal = $('accAdminModal');
+        if (!modal) return;
+        if (typeof window.closeModal === 'function') window.closeModal('accAdminModal');
+        else modal.classList.remove('open');
+        modal.hidden = true;
+        modal.setAttribute('aria-hidden', 'true');
+        adminState.currentId = null;
+        adminState.detail = null;
+    }
+
+    function fillRoleSelect(roles, selectedId) {
+        const select = $('acc-admin-form-role');
+        if (!select) return;
+        select.innerHTML = (roles || []).map((role) => (
+            `<option value="${role.id}"${Number(selectedId) === Number(role.id) ? ' selected' : ''}>${escapeHtml(role.name)}</option>`
+        )).join('');
+    }
+
+    function renderAdminProfile(data) {
+        const admin = data.admin || {};
+        const presence = data.presence || {};
+        const perms = data.permissions || {};
+
+        $('acc-admin-modal-avatar').textContent = (admin.login || '?')[0]?.toUpperCase() || '?';
+        $('acc-admin-modal-eyebrow').textContent = admin.is_self ? 'Ваш аккаунт' : 'Администратор';
+        $('acc-admin-modal-title').textContent = admin.login || '—';
+        $('acc-admin-modal-role').textContent = admin.is_superadmin
+            ? `${admin.role_name || 'Superadmin'} · полный доступ`
+            : (admin.role_name || '—');
+
+        const statusEl = $('acc-admin-modal-status');
+        if (statusEl) {
+            const status = presence?.status || (presence?.online ? 'online' : 'offline');
+            statusEl.hidden = false;
+            statusEl.textContent = presence?.online
+                ? `${presenceStatusLabel(status)} · ${formatAgo(presence.online_seconds_ago)}`
+                : 'Не в сети';
+            statusEl.className = `acc-admin-modal__status is-${status === 'online' || status === 'away' ? status : 'offline'}`;
+        }
+
+        const chips = [];
+        if (admin.is_superadmin) chips.push('<span class="acc-chip"><span class="material-symbols-outlined">stars</span> Superadmin</span>');
+        if (admin.is_active) chips.push('<span class="acc-chip"><span class="material-symbols-outlined">check_circle</span> Активен</span>');
+        else chips.push('<span class="acc-chip"><span class="material-symbols-outlined">block</span> Выключен</span>');
+        if (admin.telegram_username) chips.push(`<span class="acc-chip"><span class="material-symbols-outlined">send</span> @${escapeHtml(admin.telegram_username)}</span>`);
+        $('acc-admin-modal-chips').innerHTML = chips.join('');
+
+        $('acc-admin-meta-id').textContent = admin.id ?? '—';
+        $('acc-admin-meta-role').textContent = admin.role_name || '—';
+        $('acc-admin-meta-active').textContent = admin.is_active ? 'Да' : 'Нет';
+        $('acc-admin-meta-online').textContent = presence?.online
+            ? `${presenceStatusLabel(presence.status || 'online')} · ${formatAgo(presence.online_seconds_ago)}`
+            : 'Не в сети';
+        $('acc-admin-meta-page').textContent = presence?.page_label || '—';
+        $('acc-admin-meta-device').textContent = presence?.device_label || '—';
+        $('acc-admin-meta-security').textContent = data.security?.label || admin.security_label || '—';
+        $('acc-admin-meta-telegram').textContent = admin.telegram_username
+            ? `@${admin.telegram_username}`
+            : (admin.telegram_user_id ? `ID ${admin.telegram_user_id}` : 'Не привязан');
+        const passkeys = data.passkeys || [];
+        $('acc-admin-meta-passkeys').textContent = passkeys.length
+            ? `${passkeys.length} · ${passkeys.map((p) => p.label || 'Passkey').join(', ')}`
+            : 'Нет';
+        $('acc-admin-meta-totp').textContent = data.totp_enabled ? 'Включён' : 'Выключен';
+        const lastLogin = data.last_login;
+        $('acc-admin-meta-last-login').textContent = lastLogin?.created_at
+            ? `${lastLogin.created_at}${lastLogin.ip ? ` · ${lastLogin.ip}` : ''}`
+            : '—';
+        $('acc-admin-meta-created').textContent = admin.created_at || '—';
+        $('acc-admin-meta-updated').textContent = admin.updated_at || '—';
+
+        const permsWrap = $('acc-admin-perms-wrap');
+        const permsSummary = $('acc-admin-perms-summary');
+        const permsChips = $('acc-admin-perms-chips');
+        if (permsWrap && permsSummary && permsChips) {
+            if (perms.is_superadmin) {
+                permsWrap.hidden = false;
+                permsSummary.textContent = 'Полный доступ ко всем разделам панели';
+                permsChips.innerHTML = '<span class="acc-admin-modal__perm-chip is-edit"><span class="material-symbols-outlined">stars</span> Superadmin</span>';
+            } else if ((perms.groups || []).length) {
+                permsWrap.hidden = false;
+                permsSummary.textContent = `${perms.view_count || 0} просмотр · ${perms.edit_count || 0} редактирование`;
+                permsChips.innerHTML = (perms.groups || []).map((g) => (
+                    `<span class="acc-admin-modal__perm-chip${g.level === 'edit' ? ' is-edit' : ''}">
+                        <span class="material-symbols-outlined">${g.level === 'edit' ? 'edit' : 'visibility'}</span>
+                        ${escapeHtml(g.title)}
+                    </span>`
+                )).join('');
+            } else {
+                permsWrap.hidden = true;
+            }
+        }
+
+        const recentEl = $('acc-admin-recent-actions');
+        const actions = data.recent_actions || [];
+        if (recentEl) {
+            recentEl.innerHTML = actions.length
+                ? actions.map((a) => `
+                    <li>
+                        <span>
+                            <span class="acc-admin-modal__action-name">${escapeHtml(a.action_label || a.action)}</span>
+                            ${a.summary ? `<span class="acc-admin-modal__action-summary">${escapeHtml(a.summary)}</span>` : ''}
+                        </span>
+                        <span class="acc-admin-modal__action-date">${escapeHtml(a.created_at || '')}</span>
+                    </li>`).join('')
+                : '<li class="acc-admin-modal__action-empty">Нет записей</li>';
+        }
+
+        const auditLink = $('acc-admin-audit-link');
+        if (auditLink) {
+            if (data.audit_url) {
+                auditLink.hidden = false;
+                auditLink.href = data.audit_url;
+            } else {
+                auditLink.hidden = true;
+            }
+        }
+
+        $('acc-admin-modal-loading').hidden = true;
+        $('acc-admin-modal-profile-content').hidden = false;
+    }
+
+    function fillAdminEditForm(data) {
+        const admin = data?.admin;
+        const boot = window.ACCESS_PANEL_BOOT || {};
+        const roles = data?.roles || boot.roles || [];
+        const isCreate = !admin;
+
+        $('acc-admin-form-id').value = admin?.id || '';
+        $('acc-admin-form-login').value = admin?.login || '';
+        $('acc-admin-form-pass').value = '';
+        $('acc-admin-form-pass').required = isCreate;
+        $('acc-admin-form-pass').placeholder = isCreate ? 'Мин. 16 символов' : 'Пусто — без изменений';
+        $('acc-admin-form-pass-label').textContent = isCreate ? 'Пароль' : 'Новый пароль';
+        $('acc-admin-form-active').checked = admin ? !!admin.is_active : true;
+        fillRoleSelect(roles, admin?.role_id || roles[0]?.id);
+
+        const deleteBtn = $('acc-admin-form-delete');
+        if (deleteBtn) {
+            deleteBtn.hidden = isCreate;
+            deleteBtn.dataset.adminId = admin?.id || '';
+            deleteBtn.dataset.adminLogin = admin?.login || '';
+        }
+    }
+
+    async function loadAdminDetail(adminId) {
+        $('acc-admin-modal-loading').hidden = false;
+        $('acc-admin-modal-profile-content').hidden = true;
+
+        try {
+            const resp = await fetch(adminDetailUrl(adminId), {
+                credentials: 'same-origin',
+                headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            });
+            const data = await resp.json();
+            if (!data.ok) {
+                window.showToast?.('danger', data.error || 'Не удалось загрузить профиль');
+                closeAdminModal();
+                return null;
+            }
+            adminState.detail = data;
+            renderAdminProfile(data);
+            fillAdminEditForm(data);
+            return data;
+        } catch (_) {
+            window.showToast?.('danger', 'Ошибка сети');
+            closeAdminModal();
+            return null;
+        }
+    }
+
+    async function openAdminModal(adminId, tab) {
+        const boot = window.ACCESS_PANEL_BOOT || {};
+        const isCreate = !adminId;
+
+        adminState.currentId = adminId || null;
+        openAdminModalShell();
+
+        const tabsNav = $('acc-admin-modal-tabs');
+        const editTab = $('acc-admin-modal-edit-tab');
+
+        if (isCreate) {
+            $('acc-admin-modal-avatar').textContent = '+';
+            $('acc-admin-modal-eyebrow').textContent = 'Новая учётная запись';
+            $('acc-admin-modal-title').textContent = 'Администратор';
+            $('acc-admin-modal-role').textContent = 'Заполните поля ниже';
+            $('acc-admin-modal-status').hidden = true;
+            $('acc-admin-modal-chips').innerHTML = '';
+            $('acc-admin-modal-loading').hidden = true;
+            $('acc-admin-modal-profile-content').hidden = true;
+            if (tabsNav) tabsNav.hidden = true;
+            if (editTab) editTab.hidden = !boot.canEditAdmins;
+            fillAdminEditForm(null);
+            setAdminModalTab('edit');
+            return;
+        }
+
+        if (tabsNav) tabsNav.hidden = false;
+        if (editTab) editTab.hidden = true;
+
+        const data = await loadAdminDetail(adminId);
+        if (!data) return;
+
+        if (editTab) editTab.hidden = !data.can_edit;
+        setAdminModalTab(tab || 'profile');
+    }
+
+    async function submitAdminForm(ev) {
+        ev.preventDefault();
+        const form = $('acc-admin-form');
+        if (!form) return;
+
+        const saveBtn = $('acc-admin-form-save');
+        saveBtn?.setAttribute('disabled', 'disabled');
+
+        try {
+            const resp = await fetch(form.action, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: new FormData(form),
+            });
+            const data = await resp.json();
+            if (data.ok) {
+                window.showToast?.('success', data.message || 'Сохранено');
+                closeAdminModal();
+                window.location.href = '/settings/access#admins';
+                return;
+            }
+            window.showToast?.('danger', data.error || data.message || 'Ошибка сохранения');
+        } catch (_) {
+            window.showToast?.('danger', 'Ошибка сети');
+        } finally {
+            saveBtn?.removeAttribute('disabled');
+        }
+    }
+
+    async function deleteAdminFromModal() {
+        const btn = $('acc-admin-form-delete');
+        const adminId = btn?.dataset.adminId;
+        const login = btn?.dataset.adminLogin || '';
+        if (!adminId) return;
+
+        const confirmed = await confirmAction({
+            title: 'Удалить администратора',
+            message: `Удалить «${login}»? Это действие необратимо.`,
+            type: 'warning',
+            confirmText: 'Удалить',
+            cancelText: 'Отмена',
+        });
+        if (!confirmed) return;
+
+        btn.setAttribute('disabled', 'disabled');
+        try {
+            const resp = await fetch(adminDeleteUrl(adminId), {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrf(),
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({ csrf_token: getCsrf() }),
+            });
+            const data = await resp.json();
+            if (data.ok) {
+                window.showToast?.('success', data.message || 'Удалено');
+                closeAdminModal();
+                window.location.href = '/settings/access#admins';
+                return;
+            }
+            window.showToast?.('danger', data.error || data.message || 'Ошибка');
+        } catch (_) {
+            window.showToast?.('danger', 'Ошибка сети');
+        } finally {
+            btn.removeAttribute('disabled');
+        }
+    }
+
+    async function refreshAdminPresenceDots() {
+        const boot = window.ACCESS_PANEL_BOOT || {};
+        const url = boot.presenceUrl || document.body.dataset.presenceUrl;
+        if (!url) return;
+
+        try {
+            const resp = await fetch(url, {
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                cache: 'no-store',
+            });
+            const data = await resp.json();
+            if (!data.ok) return;
+
+            const roster = data.roster || [];
+            const byId = Object.fromEntries(roster.map((item) => [String(item.admin_id), item]));
+
+            document.querySelectorAll('[data-admin-presence]').forEach((dot) => {
+                const item = byId[String(dot.dataset.adminPresence)];
+                dot.classList.remove('is-online', 'is-away');
+                if (item?.status === 'online') dot.classList.add('is-online');
+                else if (item?.status === 'away') dot.classList.add('is-away');
+            });
+        } catch (_) { /* ignore */ }
+    }
+
+    function initAdmins() {
+        const root = $('tab-access');
+        const grid = $('acc-admin-grid');
+        if (!root || !grid) return;
+
+        if (root.dataset.accAdminsBound === '1') return;
+        root.dataset.accAdminsBound = '1';
+
+        grid.addEventListener('click', (ev) => {
+            const tile = ev.target.closest('.acc-admin-tile[data-admin-id]');
+            if (!tile) return;
+            ev.preventDefault();
+            openAdminModal(parseInt(tile.dataset.adminId, 10), 'profile');
+        });
+
+        $('acc-admin-create')?.addEventListener('click', () => openAdminModal(null, 'edit'));
+        $('acc-admin-modal-close')?.addEventListener('click', closeAdminModal);
+        $('accAdminModal')?.addEventListener('click', (ev) => {
+            if (ev.target.id === 'accAdminModal') closeAdminModal();
+        });
+
+        document.querySelectorAll('[data-acc-admin-tab]').forEach((btn) => {
+            btn.addEventListener('click', () => setAdminModalTab(btn.dataset.accAdminTab || 'profile'));
+        });
+
+        $('acc-admin-form')?.addEventListener('submit', submitAdminForm);
+        $('acc-admin-form-delete')?.addEventListener('click', deleteAdminFromModal);
+
+        document.addEventListener('keydown', (ev) => {
+            if (ev.key === 'Escape' && $('accAdminModal')?.classList.contains('open')) closeAdminModal();
+        });
+
+        const boot = window.ACCESS_PANEL_BOOT || {};
+        if (boot.openAdminId) {
+            setTab('admins');
+            openAdminModal(boot.openAdminId, 'profile');
+        }
+    }
+
+    function initAdminsTabPresence() {
+        document.querySelectorAll('.acc-tab[data-acc-tab="admins"]').forEach((btn) => {
+            if (btn.dataset.accPresenceBound === '1') return;
+            btn.dataset.accPresenceBound = '1';
+            btn.addEventListener('click', () => {
+                setTimeout(refreshAdminPresenceDots, 0);
+            });
+        });
+        if (document.querySelector('.acc-pane[data-acc-pane="admins"]:not([hidden])')) {
+            refreshAdminPresenceDots();
+        }
+    }
+
     let accHashListenerBound = false;
 
     function initTabs() {
@@ -714,6 +1139,8 @@
         initAudit();
         initInvites();
         initDuplicateRole();
+        initAdmins();
+        initAdminsTabPresence();
     }
 
     window.reinitAccessPanel = bootstrapAccessPanel;

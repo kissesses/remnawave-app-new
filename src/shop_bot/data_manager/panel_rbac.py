@@ -179,6 +179,7 @@ ENDPOINT_PERMISSIONS: dict[str, str] = {
     "settings_access_role_delete": "settings_access",
     "settings_access_admin_save": "settings_access",
     "settings_access_admin_delete": "settings_access",
+    "settings_access_admin_detail": "settings_access",
     "settings_totp_begin": "settings_access",
     "settings_totp_enable": "settings_access",
     "settings_totp_disable": "settings_access",

@@ -17,6 +17,7 @@ from shop_bot.data_manager import backup_manager
 from shop_bot.data_manager import db_admin
 from shop_bot.data_manager import panel_access
 from shop_bot.data_manager import panel_audit
+from shop_bot.data_manager import panel_presence
 from shop_bot.data_manager import panel_security
 from shop_bot.data_manager import panel_telegram_auth
 from shop_bot.data_manager import panel_totp
@@ -27,7 +28,15 @@ from shop_bot.data_manager.menu_images import (
     build_menu_image_filename,
     get_menu_images_dir,
 )
-from shop_bot.data_manager.panel_rbac import DOCK_COVERAGE, PERMISSION_GROUPS, PERMISSION_RISK, ROLE_PRESETS, allows_permission, normalize_permission_levels
+from shop_bot.data_manager.panel_rbac import (
+    DOCK_COVERAGE,
+    PERMISSION_GROUPS,
+    PERMISSION_RISK,
+    ROLE_PRESETS,
+    allows_permission,
+    count_levels,
+    normalize_permission_levels,
+)
 from shop_bot.data_manager.remnawave_repository import (
     add_device_tier,
     create_host,
@@ -1266,10 +1275,119 @@ def settings_access_role_delete(role_id: int):
     flash(message, 'success' if ok else 'danger')
     return redirect(url_for('settings_tab_page', tab='access'))
 
+def _settings_access_roles_for_form() -> list[dict]:
+    roles = []
+    for role in panel_access.list_roles():
+        if session.get('panel_is_superadmin') or not role.get('is_superadmin'):
+            roles.append({
+                'id': role['id'],
+                'name': role['name'],
+                'is_superadmin': bool(role.get('is_superadmin')),
+            })
+    return roles
+
+
+def _admin_permission_summary(admin: dict) -> dict:
+    levels = normalize_permission_levels(admin.get('permission_levels') or admin.get('permissions'))
+    view_n, edit_n = count_levels(levels)
+    groups = []
+    if not admin.get('is_superadmin'):
+        for group in PERMISSION_GROUPS:
+            group_perms = [pk for pk, _ in group.get('permissions', [])]
+            has_edit = any(levels.get(pk) == 'edit' for pk in group_perms)
+            has_view = any(levels.get(pk) in ('view', 'edit') for pk in group_perms)
+            if has_edit or has_view:
+                groups.append({
+                    'id': group.get('id') or '',
+                    'title': group.get('title') or '',
+                    'level': 'edit' if has_edit else 'view',
+                })
+    return {
+        'view_count': view_n,
+        'edit_count': edit_n,
+        'is_superadmin': bool(admin.get('is_superadmin')),
+        'groups': groups,
+    }
+
+
+@bp.route('/settings/access/admins/<int:admin_id>.json', methods=['GET'])
+@panel_ctx.login_required
+def settings_access_admin_detail(admin_id: int):
+    if not _user_can_settings_tab('access'):
+        return jsonify({'ok': False, 'error': 'Недостаточно прав'}), 403
+
+    admin = panel_access.get_admin(admin_id)
+    if not admin:
+        return jsonify({'ok': False, 'error': 'Администратор не найден'}), 404
+
+    viewer_id = session.get('panel_admin_id')
+    can_edit = _user_can_settings_access_edit()
+    if admin.get('is_superadmin') and not session.get('panel_is_superadmin'):
+        can_edit = False
+
+    presence = panel_presence.get_presence(admin_id)
+    security = panel_security.security_status(admin_id)
+    totp = panel_totp.totp_status(admin_id)
+    passkeys = panel_webauthn.list_credentials(admin_id)
+    recent = panel_audit.list_for_admin(admin_id, limit=10)
+    last_login = next((row for row in recent if (row.get('action') or '') == 'login.success'), None)
+    security_method = (admin.get('auth_security_method') or 'none').strip().lower()
+
+    return jsonify({
+        'ok': True,
+        'admin': {
+            'id': admin['id'],
+            'login': admin['login'],
+            'role_id': admin.get('role_id'),
+            'role_name': admin.get('role_name') or '',
+            'is_superadmin': bool(admin.get('is_superadmin')),
+            'is_active': bool(admin.get('is_active')),
+            'telegram_username': admin.get('telegram_username'),
+            'telegram_user_id': admin.get('telegram_user_id'),
+            'security_method': security_method,
+            'security_label': panel_security.SECURITY_METHOD_LABELS.get(security_method, security_method),
+            'created_at': admin.get('created_at'),
+            'updated_at': admin.get('updated_at'),
+            'is_self': viewer_id == admin_id,
+        },
+        'presence': presence,
+        'security': {
+            'method': security.get('method') or security_method,
+            'label': security.get('label') or panel_security.SECURITY_METHOD_LABELS.get(security_method, security_method),
+            'configured': bool(security.get('configured')),
+            'needs_setup': bool(security.get('needs_setup')),
+        },
+        'totp_enabled': bool(totp.get('enabled')),
+        'passkeys': passkeys,
+        'permissions': _admin_permission_summary(admin),
+        'recent_actions': [
+            {
+                'action': row.get('action') or '',
+                'action_label': row.get('action_label') or row.get('action') or '',
+                'summary': row.get('summary') or '',
+                'created_at': row.get('created_at'),
+                'ip': row.get('ip') or '',
+            }
+            for row in recent
+            if (row.get('action') or '') != 'login.success'
+        ],
+        'last_login': {
+            'created_at': last_login.get('created_at') if last_login else None,
+            'ip': last_login.get('ip') if last_login else None,
+        } if last_login else None,
+        'can_edit': can_edit,
+        'is_self': viewer_id == admin_id,
+        'roles': _settings_access_roles_for_form(),
+        'audit_url': url_for('settings_tab_page', tab='audit', admin=admin.get('login') or ''),
+    })
+
+
 @bp.route('/settings/access/admins', methods=['POST'])
 @panel_ctx.login_required
 def settings_access_admin_save():
     if not _user_can_settings_access_edit():
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'ok': False, 'error': 'Недостаточно прав'}), 403
         flash('Недостаточно прав', 'danger')
         return redirect(url_for('settings_tab_page', tab='access'))
     admin_id = request.form.get('admin_id', type=int)
@@ -1282,7 +1400,10 @@ def settings_access_admin_save():
     if admin_id and not session.get('panel_is_superadmin'):
         existing = panel_access.get_admin(admin_id)
         if existing and existing.get('is_superadmin'):
-            flash('Редактирование Superadmin доступно только superadmin', 'danger')
+            message = 'Редактирование Superadmin доступно только superadmin'
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({'ok': False, 'error': message}), 403
+            flash(message, 'danger')
             return redirect(url_for('settings_tab_page', tab='access'))
     ok, message = panel_access.save_admin(
         admin_id=admin_id,
@@ -1294,6 +1415,13 @@ def settings_access_admin_save():
     )
     if ok:
         panel_ctx.audit('admin.save', {'admin_id': admin_id, 'login': login, 'role_id': role_id})
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        saved = panel_access.get_admin_by_login(login) if ok and not admin_id else panel_access.get_admin(admin_id) if ok and admin_id else None
+        return jsonify({
+            'ok': ok,
+            'message': message,
+            'admin_id': (saved or {}).get('id') or admin_id,
+        }), (200 if ok else 400)
     flash(message, 'success' if ok else 'danger')
     return redirect(url_for('settings_tab_page', tab='access'))
 
@@ -1454,12 +1582,19 @@ def settings_access_invite_revoke(invite_id: int):
 @bp.route('/settings/access/admins/<int:admin_id>/delete', methods=['POST'])
 @panel_ctx.login_required
 def settings_access_admin_delete(admin_id: int):
+    if not _user_can_settings_access_edit():
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'ok': False, 'error': 'Недостаточно прав'}), 403
+        flash('Недостаточно прав', 'danger')
+        return redirect(url_for('settings_tab_page', tab='access'))
     ok, message = panel_access.delete_admin(
         admin_id,
         current_admin_id=session.get('panel_admin_id'),
     )
     if ok:
         panel_ctx.audit('admin.delete', {'admin_id': admin_id})
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({'ok': ok, 'message': message}), (200 if ok else 400)
     flash(message, 'success' if ok else 'danger')
     return redirect(url_for('settings_tab_page', tab='access'))
 
