@@ -36,6 +36,17 @@
 
 {{ dh_stat('stat_no_purchases', 'Не купили ключ', stats.get('no_purchases_count'), 'person_off', 'slate', action_html='<button type="button" class="dh-stat__icon dh-stat__icon--btn" onclick="openUserGroupModal(\'no_purchases\', \'Не купили ключ\')"><span class="material-symbols-outlined">person_off</span></button>') }}
 {{ dh_stat('stat_inactive_buyers', 'Нет активных', stats.get('inactive_buyers_count'), 'history', 'orange', action_html='<button type="button" class="dh-stat__icon dh-stat__icon--btn" onclick="openUserGroupModal(\'inactive_buyers\', \'Нет активных (Покупали)\')"><span class="material-symbols-outlined">history</span></button>') }}
-{{ dh_stat('stat_trials', 'На триале', stats.get('trials_count'), 'card_giftcard', 'pink', action_html='<button type="button" class="dh-stat__icon dh-stat__icon--btn" onclick="openUserGroupModal(\'trials\', \'Пользователи на триале\')"><span class="material-symbols-outlined">card_giftcard</span></button>') }}
+<a href="{{ url_for('trials_page') }}" data-dash-widget="stat_trials_link" class="dh-stat dh-stat--pink dh-stat--link">
+    <div class="dh-stat__glow" aria-hidden="true"></div>
+    <div class="dh-stat__body">
+        <div class="dh-stat__main">
+            <p class="dh-stat__label">Пробный период</p>
+            <h4 class="dh-stat__value">{{ stats.get('trials_count', 0) }} <span class="dh-stat__link-hint">на триале →</span></h4>
+        </div>
+        <span class="dh-stat__icon" aria-hidden="true">
+            <span class="material-symbols-outlined">card_giftcard</span>
+        </span>
+    </div>
+</a>
 {{ dh_stat('stat_active_buyers', 'Купили ключ', stats.get('active_buyers_count'), 'verified_user', 'teal', action_html='<button type="button" class="dh-stat__icon dh-stat__icon--btn" onclick="openUserGroupModal(\'active_buyers\', \'Покупатели с активным ключом\')"><span class="material-symbols-outlined">verified_user</span></button>') }}
 {{ dh_stat('stat_active_keys', 'Активные ключи', stats.get('active_keys_count'), 'vpn_key', 'fuchsia', action_html='<button type="button" class="dh-stat__icon dh-stat__icon--btn" onclick="openUserGroupModal(\'active_keys\', \'Все активные ключи\')"><span class="material-symbols-outlined">vpn_key</span></button>') }}

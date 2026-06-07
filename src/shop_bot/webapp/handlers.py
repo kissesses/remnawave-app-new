@@ -1519,42 +1519,17 @@ def _get_user_transactions(user_id: int, limit: int = 50) -> tuple[list[dict], l
     return payments, balance_ops
 
 async def _create_trial_key(user_id: int, host_name: str) -> dict:
-    user_data = get_user(user_id) or {}
-    raw_user = (user_data.get("username") or f"user{user_id}").lower()
-    clean_step1 = raw_user.replace(".", "_").replace(" ", "")
-    clean_step2 = re.sub(r"[^a-z0-9_-]", "", clean_step1)
-    slug = clean_step2.lstrip("_-")[:16] or f"user{user_id}"
+    from shop_bot.services.trial_service import create_trial_key
 
-    attempt = 1
-    while True:
-        candidate_email = f"trial_{slug}{f'-{attempt}' if attempt > 1 else ''}@bot.local"
-        if not rw_repo.get_key_by_email(candidate_email) or attempt > 100:
-            break
-        attempt += 1
-
-    trial_traffic = int(get_setting("trial_traffic_limit_gb") or 0)
-    trial_hwid = int(get_setting("trial_hwid_limit") or 0)
-    trial_days = int(get_setting("trial_duration_days") or 3)
-
-    result = await remnawave_api.create_or_update_key_on_host(
-        host_name=host_name,
-        email=candidate_email,
-        days_to_add=trial_days,
-        telegram_id=user_id,
-        traffic_limit_gb=trial_traffic if trial_traffic > 0 else None,
-        hwid_limit=trial_hwid if trial_hwid > 0 else None,
-    )
-    if not result:
-        return {"ok": False, "error": "Не удалось создать пробный ключ на сервере"}
-
-    set_trial_used(user_id)
-    new_key_id = rw_repo.record_key_from_payload(user_id=user_id, payload=result, host_name=host_name)
-    key_data = _process_key_data(get_key_by_id(new_key_id) or {})
+    created = await create_trial_key(user_id, host_name, notify=False)
+    if not created.get("ok"):
+        return created
+    key_data = _process_key_data(get_key_by_id(created["key_id"]) or {})
     return {
         "ok": True,
-        "key_id": new_key_id,
+        "key_id": created["key_id"],
         "key": key_data,
-        "message": f"Пробный период на {trial_days} дн. активирован",
+        "message": created.get("message", "Пробный период активирован"),
     }
 
 # ===== API Endpoints =====

@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% block title %}Пробный период{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tool-surface.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/trial-panel.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
+{% endblock %}
+
+{% block content %}
+<div class="tr-page" id="tr-page">
+    <div class="tr-ambient" aria-hidden="true"></div>
+
+    <header class="tr-hero">
+        <div class="tr-hero__main">
+            <p class="tr-hero__eyebrow">
+                <span class="tr-hero__badge">Growth</span>
+                <span>Пробный период</span>
+            </p>
+            <h1 class="tr-hero__title">Управление триалами</h1>
+            <p class="tr-hero__sub">
+                Аналитика, выдача ключей и настройки бесплатного доступа
+                <span class="tr-hero__refresh" id="tr-last-refresh">—</span>
+            </p>
+        </div>
+        <div class="tr-hero__actions">
+            <button type="button" id="tr-refresh-btn" class="tr-btn">
+                <span class="material-symbols-outlined">refresh</span>
+                <span class="tr-btn__label">Обновить</span>
+            </button>
+            {% if can_edit('users') %}
+            <button type="button" id="tr-grant-open" class="tr-btn tr-btn--accent">
+                <span class="material-symbols-outlined">card_giftcard</span>
+                <span class="tr-btn__label">Выдать триал</span>
+            </button>
+            {% endif %}
+        </div>
+    </header>
+
+    <section class="tr-kpi" id="tr-kpi">
+        <article class="tr-kpi__card">
+            <span class="tr-kpi__label">Активные триалы</span>
+            <strong class="tr-kpi__value" data-stat="active">{{ stats.active }}</strong>
+        </article>
+        <article class="tr-kpi__card">
+            <span class="tr-kpi__label">Доступен триал</span>
+            <strong class="tr-kpi__value" data-stat="eligible">{{ stats.eligible }}</strong>
+        </article>
+        <article class="tr-kpi__card">
+            <span class="tr-kpi__label">Истекли за 7 дн.</span>
+            <strong class="tr-kpi__value" data-stat="expired_recent">{{ stats.expired_recent }}</strong>
+        </article>
+        <article class="tr-kpi__card">
+            <span class="tr-kpi__label">Всего активаций</span>
+            <strong class="tr-kpi__value" data-stat="total_activations">{{ stats.total_activations }}</strong>
+        </article>
+        <article class="tr-kpi__card tr-kpi__card--highlight">
+            <span class="tr-kpi__label">Конверсия</span>
+            <strong class="tr-kpi__value" data-stat="conversion_pct">{{ stats.conversion_pct }}%</strong>
+            <span class="tr-kpi__sub" data-stat="converted">{{ stats.converted }} купили</span>
+        </article>
+    </section>
+
+    <section class="tr-card tr-chart-card">
+        <div class="tr-card__head">
+            <h2 class="tr-card__title">Активации за 30 дней</h2>
+        </div>
+        <div class="tr-chart" id="tr-chart" aria-hidden="false"></div>
+    </section>
+
+    <section class="tr-card">
+        <div class="tr-card__head">
+            <h2 class="tr-card__title">Список</h2>
+            <nav class="tr-tabs" id="tr-view-tabs" role="tablist">
+                <button type="button" class="tr-tab is-active" data-tr-view="active">Активные</button>
+                <button type="button" class="tr-tab" data-tr-view="expired">Истекшие</button>
+                <button type="button" class="tr-tab" data-tr-view="all">Все</button>
+                <button type="button" class="tr-tab" data-tr-view="eligible">Доступен триал</button>
+            </nav>
+        </div>
+        <div class="tr-table-wrap">
+            <table class="tr-table" id="tr-table">
+                <thead id="tr-table-head">
+                    <tr>
+                        <th>Пользователь</th>
+                        <th>Сервер</th>
+                        <th>Создан</th>
+                        <th>Истекает</th>
+                        <th>Статус</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="tr-table-body"></tbody>
+            </table>
+        </div>
+        <div id="tr-pagination" class="tr-pagination"></div>
+        <div id="tr-empty" class="tr-empty hidden">
+            <span class="material-symbols-outlined">inbox</span>
+            <p>Нет записей</p>
+        </div>
+    </section>
+
+    <section class="tr-card" id="tr-settings-section">
+        <div class="tr-card__head">
+            <h2 class="tr-card__title">Настройки</h2>
+            <p class="tr-card__sub">Параметры пробного периода для бота и WebApp</p>
+        </div>
+        {% include 'partials/trial_settings_form.html' %}
+    </section>
+</div>
+
+{% if can_edit('users') %}
+<div class="tr-modal hidden" id="tr-grant-modal" role="dialog" aria-modal="true">
+    <div class="tr-modal__backdrop" data-tr-close></div>
+    <div class="tr-modal__panel">
+        <header class="tr-modal__head">
+            <h3>Выдать пробный период</h3>
+            <button type="button" class="tr-icon-btn" data-tr-close><span class="material-symbols-outlined">close</span></button>
+        </header>
+        <div class="tr-modal__body">
+            <label class="tr-field">
+                <span>Telegram ID или @username</span>
+                <input type="text" id="tr-grant-user" class="tr-input" placeholder="123456789 или @user" />
+            </label>
+            <label class="tr-field">
+                <span>Сервер</span>
+                <div class="soft-select tr-soft-select" data-target="tr_grant_host">
+                    <button type="button" class="soft-select-toggle" id="tr_grant_host_toggle">Выберите сервер</button>
+                    <div class="soft-select-menu" id="tr_grant_host_menu"></div>
+                    <select id="tr_grant_host" class="hidden">
+                        <option value="">Выберите сервер</option>
+                        {% for host in grant_hosts %}
+                        <option value="{{ host.host_name }}">{{ host.host_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </label>
+            <label class="tr-check">
+                <input type="checkbox" id="tr-grant-force" />
+                <span>Выдать повторно (игнорировать trial_used)</span>
+            </label>
+        </div>
+        <footer class="tr-modal__foot">
+            <button type="button" class="tr-btn" data-tr-close>Отмена</button>
+            <button type="button" class="tr-btn tr-btn--accent" id="tr-grant-submit">Выдать</button>
+        </footer>
+    </div>
+</div>
+{% endif %}
+
+<div class="tr-modal hidden" id="tr-extend-modal" role="dialog" aria-modal="true">
+    <div class="tr-modal__backdrop" data-tr-close></div>
+    <div class="tr-modal__panel">
+        <header class="tr-modal__head">
+            <h3>Продлить trial-ключ</h3>
+            <button type="button" class="tr-icon-btn" data-tr-close><span class="material-symbols-outlined">close</span></button>
+        </header>
+        <div class="tr-modal__body">
+            <label class="tr-field">
+                <span>Дней (+/-)</span>
+                <input type="number" id="tr-extend-days" class="tr-input" value="3" />
+            </label>
+        </div>
+        <footer class="tr-modal__foot">
+            <button type="button" class="tr-btn" data-tr-close>Отмена</button>
+            <button type="button" class="tr-btn tr-btn--accent" id="tr-extend-submit">Продлить</button>
+        </footer>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+window.__TRIAL_ROUTES__ = {
+    stats: {{ url_for('trials_stats_json')|tojson }},
+    list: {{ url_for('trials_list_partial')|tojson }},
+    settings: {{ url_for('trials_settings_save')|tojson }},
+    grant: {{ url_for('trials_grant')|tojson }},
+    reset: {{ url_for('trials_reset_flag')|tojson }},
+    extend: {{ url_for('trials_extend_key', key_id=0)|tojson }},
+    revoke: {{ url_for('trials_revoke_key', key_id=0)|tojson }},
+    users: {{ url_for('users_page')|tojson }},
+    csrf: {{ csrf_token|tojson }},
+    canEditUsers: {{ can_edit('users')|tojson }},
+    canEditKeys: {{ can_edit('keys')|tojson }},
+    canEditSettings: {{ can_edit('settings_panel')|tojson }},
+};
+</script>
+<script src="{{ url_for('static', filename='js/trial-panel.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
+{% endblock %}

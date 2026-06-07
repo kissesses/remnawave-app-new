@@ -384,24 +384,6 @@ def dashboard_transactions_partial():
         
     return render_template('partials/dashboard_transactions.html', transactions=transactions)
 
-@bp.route('/dashboard/trials.partial')
-@panel_ctx.login_required
-def dashboard_trials_partial():
-    page = request.args.get('page', 1, type=int)
-    per_page = 10
-    recent_trials, total_trials = rw_repo.get_paginated_trials(page=page, per_page=per_page)
-    trials_total_pages = ceil(total_trials / per_page)
-
-    if request.args.get('ajax_pagination') or request.args.get('lazy_load'):
-        return jsonify({
-            "html": render_template('partials/dashboard_trials.html', recent_trials=recent_trials),
-            "current_page": page,
-            "total_pages": trials_total_pages
-        })
-        
-    return render_template('partials/dashboard_trials.html', recent_trials=recent_trials)
-
-
 @bp.route('/dashboard/charts.json')
 @panel_ctx.login_required
 def dashboard_charts_json():

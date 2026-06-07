@@ -27,6 +27,15 @@
     color: var(--panel-text-secondary, rgba(235, 235, 245, 0.6));
 }
 
+.users-page .users-trials-link {
+    color: var(--primary, #fb923c);
+    text-decoration: none;
+    font-weight: 600;
+}
+.users-page .users-trials-link:hover {
+    text-decoration: underline;
+}
+
 .users-header {
     display: flex;
     align-items: flex-end;

@@ -113,7 +113,6 @@ window.__DASHBOARD_LAYOUT__ = {{ dashboard_layout | tojson }};
 window.__DASHBOARD_ROUTES__ = {
     charts: {{ url_for('dashboard_charts_json')|tojson }},
     transactions: {{ url_for('dashboard_transactions_partial')|tojson }},
-    trials: {{ url_for('dashboard_trials_partial')|tojson }},
     userGroups: {{ url_for('dashboard_user_groups_json')|tojson }},
     sshTargets: {{ url_for('dashboard_ssh_targets_json')|tojson }},
     hostSpeedtests: {{ url_for('dashboard_speedtests_json', name='__H__')|tojson }},

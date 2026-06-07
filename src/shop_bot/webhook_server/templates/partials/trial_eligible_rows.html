@@ -1,0 +1,29 @@
+{% for item in items %}
+<tr class="tr-row" data-user-id="{{ item.telegram_id }}">
+    <td>
+        <div class="tr-user">
+            <div class="tr-user__avatar">{% if item.username %}{{ item.username[0] | upper }}{% else %}U{% endif %}</div>
+            <div class="tr-user__meta">
+                <div class="tr-user__name">{% if item.username %}@{{ item.username }}{% else %}User {{ item.telegram_id }}{% endif %}</div>
+                <button type="button" class="tr-user__id" data-copy-id="{{ item.telegram_id }}">{{ item.telegram_id }}</button>
+            </div>
+        </div>
+    </td>
+    <td>
+        {% if item.registration_date %}
+        <span class="tr-date">{{ item.registration_date.split(' ')[0] if item.registration_date is string else item.registration_date }}</span>
+        {% else %}—{% endif %}
+    </td>
+    <td><span class="tr-badge tr-badge--eligible">Доступен</span></td>
+    <td class="tr-actions">
+        <a href="{{ url_for('users_page', q=item.telegram_id) }}" class="tr-icon-btn" title="Профиль">
+            <span class="material-symbols-outlined">person</span>
+        </a>
+        {% if can_edit('users') %}
+        <button type="button" class="tr-icon-btn tr-icon-btn--accent" data-tr-action="grant" title="Выдать триал">
+            <span class="material-symbols-outlined">card_giftcard</span>
+        </button>
+        {% endif %}
+    </td>
+</tr>
+{% endfor %}

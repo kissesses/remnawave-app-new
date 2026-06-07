@@ -926,37 +926,176 @@ def redeem_universal_promo(code: str, user_id: int) -> dict | None:
 
 
 
-def get_paginated_trials(page: int = 1, per_page: int = 10) -> tuple[list[dict[str, Any]], int]:
+def _trial_key_filter(status: str = "all") -> str:
+    base = "COALESCE(k.key_email, '') LIKE 'trial_%'"
+    status = (status or "all").strip().lower()
+    if status == "active":
+        return f"{base} AND (k.expire_at IS NULL OR k.expire_at > {msk_now_sql()})"
+    if status == "expired":
+        return f"{base} AND k.expire_at IS NOT NULL AND k.expire_at <= {msk_now_sql()}"
+    return base
+
+
+def get_paginated_trials(
+    page: int = 1,
+    per_page: int = 10,
+    status: str = "all",
+) -> tuple[list[dict[str, Any]], int]:
     offset = (page - 1) * per_page
-    
-    count_query = "SELECT COUNT(*) FROM vpn_keys WHERE key_email LIKE 'trial_%'"
-    
-    query = """
-        SELECT 
-            k.key_id, 
-            k.key_email, 
-            k.expire_at, 
-            k.created_at, 
-            u.telegram_id, 
+    where_clause = _trial_key_filter(status)
+
+    count_query = f"SELECT COUNT(*) FROM vpn_keys k WHERE {where_clause}"
+
+    query = f"""
+        SELECT
+            k.key_id,
+            k.key_email,
+            k.host_name,
+            k.expire_at,
+            k.created_at,
+            u.telegram_id,
             u.username,
-            u.registration_date
+            u.registration_date,
+            COALESCE(u.trial_used, 0) AS trial_used,
+            CASE
+                WHEN k.expire_at IS NULL OR k.expire_at > {msk_now_sql()} THEN 1
+                ELSE 0
+            END AS is_active
         FROM vpn_keys k
         LEFT JOIN users u ON k.user_id = u.telegram_id
-        WHERE k.key_email LIKE 'trial_%'
+        WHERE {where_clause}
         ORDER BY k.created_at DESC
         LIMIT ? OFFSET ?
     """
-    
+
     with _connect() as conn:
         cursor = conn.cursor()
-        
         cursor.execute(count_query)
         total = int(first_col(cursor.fetchone(), 0))
-        
         cursor.execute(query, (per_page, offset))
         items = [dict(row) for row in cursor.fetchall()]
-        
         return items, total
+
+
+def get_paginated_trial_eligible(page: int = 1, per_page: int = 10) -> tuple[list[dict[str, Any]], int]:
+    offset = (page - 1) * per_page
+    where_clause = "COALESCE(u.trial_used, 0) = 0"
+
+    count_query = f"SELECT COUNT(*) FROM users u WHERE {where_clause}"
+    query = f"""
+        SELECT
+            u.telegram_id,
+            u.username,
+            u.registration_date,
+            u.balance,
+            COALESCE(u.trial_used, 0) AS trial_used
+        FROM users u
+        WHERE {where_clause}
+        ORDER BY u.registration_date DESC
+        LIMIT ? OFFSET ?
+    """
+
+    with _connect() as conn:
+        cursor = conn.cursor()
+        cursor.execute(count_query)
+        total = int(first_col(cursor.fetchone(), 0))
+        cursor.execute(query, (per_page, offset))
+        items = [dict(row) for row in cursor.fetchall()]
+        return items, total
+
+
+def get_trial_stats() -> dict[str, Any]:
+    now_sql = msk_now_sql()
+    seven_days_ago = (get_msk_time() - timedelta(days=7)).strftime("%Y-%m-%d %H:%M:%S")
+
+    with _connect() as conn:
+        cursor = conn.cursor()
+
+        cursor.execute(
+            f"""
+            SELECT COUNT(DISTINCT k.user_id)
+            FROM vpn_keys k
+            WHERE COALESCE(k.key_email, '') LIKE 'trial_%'
+              AND (k.expire_at IS NULL OR k.expire_at > {now_sql})
+            """
+        )
+        active = int(first_col(cursor.fetchone(), 0))
+
+        cursor.execute(
+            "SELECT COUNT(*) FROM users WHERE COALESCE(trial_used, 0) = 0"
+        )
+        eligible = int(first_col(cursor.fetchone(), 0))
+
+        cursor.execute(
+            f"""
+            SELECT COUNT(DISTINCT k.user_id)
+            FROM vpn_keys k
+            WHERE COALESCE(k.key_email, '') LIKE 'trial_%'
+              AND k.expire_at IS NOT NULL
+              AND k.expire_at <= {now_sql}
+              AND k.expire_at >= ?
+            """,
+            (seven_days_ago,),
+        )
+        expired_recent = int(first_col(cursor.fetchone(), 0))
+
+        cursor.execute(
+            "SELECT COUNT(DISTINCT user_id) FROM vpn_keys WHERE COALESCE(key_email, '') LIKE 'trial_%'"
+        )
+        total_activations = int(first_col(cursor.fetchone(), 0))
+
+        cursor.execute(
+            """
+            SELECT COUNT(DISTINCT k.user_id)
+            FROM vpn_keys k
+            WHERE COALESCE(k.key_email, '') LIKE 'trial_%'
+              AND EXISTS (
+                  SELECT 1 FROM transactions t
+                  WHERE t.user_id = k.user_id
+                    AND LOWER(COALESCE(t.status, '')) IN ('paid', 'completed', 'success', 'succeeded')
+                    AND LOWER(COALESCE(t.payment_method, '')) NOT IN ('admin', 'referral')
+              )
+            """
+        )
+        converted = int(first_col(cursor.fetchone(), 0))
+
+    conversion_pct = round((converted / total_activations) * 100, 1) if total_activations else 0.0
+    return {
+        "active": active,
+        "eligible": eligible,
+        "expired_recent": expired_recent,
+        "total_activations": total_activations,
+        "converted": converted,
+        "conversion_pct": conversion_pct,
+    }
+
+
+def get_trial_activations_series(days: int = 30) -> list[dict[str, Any]]:
+    days = max(1, min(int(days or 30), 365))
+    since = (get_msk_time() - timedelta(days=days - 1)).strftime("%Y-%m-%d")
+
+    query = """
+        SELECT DATE(created_at) AS day, COUNT(*) AS count
+        FROM vpn_keys
+        WHERE COALESCE(key_email, '') LIKE 'trial_%'
+          AND DATE(created_at) >= ?
+        GROUP BY DATE(created_at)
+        ORDER BY day ASC
+    """
+
+    with _connect() as conn:
+        cursor = conn.cursor()
+        cursor.execute(query, (since,))
+        rows = [dict(row) for row in cursor.fetchall()]
+
+    by_day = {str(r.get("day")): int(r.get("count") or 0) for r in rows}
+    series: list[dict[str, Any]] = []
+    start = get_msk_time() - timedelta(days=days - 1)
+    for i in range(days):
+        day_dt = start + timedelta(days=i)
+        day_key = day_dt.strftime("%Y-%m-%d")
+        series.append({"day": day_key, "count": by_day.get(day_key, 0)})
+    return series
 
 
 def get_promo_code_usages(code: str) -> list[dict]:

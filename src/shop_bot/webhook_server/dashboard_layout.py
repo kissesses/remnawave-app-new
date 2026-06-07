@@ -43,7 +43,7 @@ WIDGET_CATALOG: list[dict[str, Any]] = [
     {"id": "stat_heleket_ton", "tab": "overview", "label": "Heleket / Ton", "group": "payments", "icon": "payments", "payment": True},
     {"id": "stat_no_purchases", "tab": "overview", "label": "Не купили ключ", "group": "segments", "icon": "person_off"},
     {"id": "stat_inactive_buyers", "tab": "overview", "label": "Нет активных", "group": "segments", "icon": "history"},
-    {"id": "stat_trials", "tab": "overview", "label": "На триале", "group": "segments", "icon": "card_giftcard"},
+    {"id": "stat_trials_link", "tab": "overview", "label": "Пробный период", "group": "segments", "icon": "card_giftcard"},
     {"id": "stat_active_buyers", "tab": "overview", "label": "Купили ключ", "group": "segments", "icon": "verified_user"},
     {"id": "stat_active_keys", "tab": "overview", "label": "Активные ключи", "group": "segments", "icon": "vpn_key"},
     # Analytics
@@ -53,7 +53,6 @@ WIDGET_CATALOG: list[dict[str, Any]] = [
     # Activity
     {"id": "activity_speedtest", "tab": "activity", "label": "Speedtest SSH", "group": "activity", "icon": "speed"},
     {"id": "activity_transactions", "tab": "activity", "label": "Транзакции", "group": "activity", "icon": "receipt_long"},
-    {"id": "activity_trials", "tab": "activity", "label": "Триалы", "group": "activity", "icon": "card_giftcard"},
 ]
 
 WIDGET_IDS = frozenset(w["id"] for w in WIDGET_CATALOG)

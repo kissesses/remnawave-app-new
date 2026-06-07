@@ -31,35 +31,4 @@
             <p>Транзакций пока нет</p>
         </div>
     </article>
-
-    <article data-dash-widget="activity_trials" class="dh-card dh-card--table">
-        <div class="dh-card__head">
-            <div class="dh-card__head-main">
-                <span class="dh-card__head-icon"><span class="material-symbols-outlined">history_toggle_off</span></span>
-                <div>
-                    <h3 class="dh-card__title">Пробные периоды</h3>
-                    <p class="dh-card__subtitle">Активные триалы</p>
-                </div>
-            </div>
-        </div>
-        <div id="trials-wrapper" class="dh-table-wrap">
-            <table class="dh-table">
-                <thead>
-                    <tr>
-                        <th>Пользователь</th>
-                        <th>Дата</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody id="dash-trials" data-fetch-url="{{ url_for('dashboard_trials_partial') }}" data-fetch-interval="120000">
-                    <tr><td colspan="3" class="dh-empty">Загрузка…</td></tr>
-                </tbody>
-            </table>
-        </div>
-        <div id="trials-pagination" class="dh-pagination"></div>
-        <div id="trials-empty" class="dh-empty hidden">
-            <span class="material-symbols-outlined">history_toggle_off</span>
-            <p>Триалов пока нет</p>
-        </div>
-    </article>
 </section>

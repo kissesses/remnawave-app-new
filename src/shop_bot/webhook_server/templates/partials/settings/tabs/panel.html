@@ -142,68 +142,6 @@
                 </div>
             </div>
 
-                            {% set section_id = 'panel-trial' %}
-                <div class="settings-form-section{% if section_id == settings_default_section %} is-section-visible{% endif %}" id="{{ section_id }}">
-                {% set section_title = 'Пробный период' %}
-                {% set section_desc = 'Бесплатный доступ для новых пользователей' %}
-                {% set section_icon = 'timer' %}
-                {% include 'partials/settings/section_header.html' %}
-                <div class="settings-form-section__body">
-                <div class="settings-macos-group">
-                    <div class="settings-macos-list">
-                        <div class="settings-macos-row settings-macos-row--toggle">
-                            <div class="settings-macos-row__body">
-                                <span class="settings-macos-row__title">Пробный период</span>
-                                <span class="settings-macos-row__sub">Бесплатный доступ для новых пользователей</span>
-                            </div>
-                            <input type="hidden" name="trial_enabled" value="false" />
-                            <label class="settings-macos-switch">
-                                <input type="checkbox" name="trial_enabled" value="true" {% if settings.trial_enabled=='true' %}checked{% endif %} />
-                                <span class="settings-macos-switch__track"></span>
-                            </label>
-                        </div>
-                        <div class="settings-macos-row settings-macos-row--field">
-                            <label class="settings-macos-row__field-label" for="trial-duration-days">Длительность (дней)</label>
-                            <div class="settings-macos-row__field-input">
-                                <input type="number" id="trial-duration-days" name="trial_duration_days"
-                                    value="{{ settings.trial_duration_days or '3' }}" min="1" class="settings-macos-input" />
-                            </div>
-                        </div>
-                        <div class="settings-macos-row settings-macos-row--field">
-                            <label class="settings-macos-row__field-label" for="trial-traffic-gb">Трафик (ГБ)</label>
-                            <div class="settings-macos-row__field-input">
-                                <input type="number" id="trial-traffic-gb" name="trial_traffic_limit_gb"
-                                    value="{{ settings.trial_traffic_limit_gb or '0' }}" min="0" class="settings-macos-input" />
-                                <span class="settings-macos-row__field-hint">0 — без лимита</span>
-                            </div>
-                        </div>
-                        <div class="settings-macos-row settings-macos-row--field">
-                            <label class="settings-macos-row__field-label" for="trial-hwid-limit">Лимит HWID</label>
-                            <div class="settings-macos-row__field-input">
-                                <input type="number" id="trial-hwid-limit" name="trial_hwid_limit"
-                                    value="{{ settings.trial_hwid_limit or '0' }}" min="0" class="settings-macos-input" />
-                            </div>
-                        </div>
-                        <div class="settings-macos-row settings-macos-row--field">
-                            <label class="settings-macos-row__field-label" for="trial_host_id">Сервер для триала</label>
-                            <div class="soft-select settings-macos-row__field-input--stretch" data-target="trial_host_id">
-                                <button type="button" class="soft-select-toggle" id="trial_host_id_toggle">
-                                    {% if settings.trial_host_id %}{{ settings.trial_host_id }}{% else %}Выборочно (пользователь выбирает){% endif %}
-                                </button>
-                                <div class="soft-select-menu" id="trial_host_id_menu"></div>
-                                <select name="trial_host_id" id="trial_host_id" class="hidden">
-                                    <option value="">Выборочно (пользователь выбирает)</option>
-                                    {% for host in hosts %}
-                                    <option value="{{ host.host_name }}" {% if settings.trial_host_id==host.host_name %}selected{% endif %}>{{ host.host_name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                </div>
-            </div>
-
                             {% set section_id = 'panel-monitoring' %}
                 <div class="settings-form-section{% if section_id == settings_default_section %} is-section-visible{% endif %}" id="{{ section_id }}">
                 {% set section_title = 'Мониторинг' %}

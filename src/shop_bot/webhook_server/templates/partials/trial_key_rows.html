@@ -1,0 +1,49 @@
+{% for item in items %}
+<tr class="tr-row" data-key-id="{{ item.key_id }}" data-user-id="{{ item.telegram_id }}">
+    <td>
+        <div class="tr-user">
+            <div class="tr-user__avatar">{% if item.username %}{{ item.username[0] | upper }}{% else %}U{% endif %}</div>
+            <div class="tr-user__meta">
+                <div class="tr-user__name">{% if item.username %}@{{ item.username }}{% else %}User {{ item.telegram_id }}{% endif %}</div>
+                <button type="button" class="tr-user__id" data-copy-id="{{ item.telegram_id }}">{{ item.telegram_id }}</button>
+            </div>
+        </div>
+    </td>
+    <td><span class="tr-host">{{ item.host_name or '—' }}</span></td>
+    <td>
+        {% if item.created_at %}
+        <span class="tr-date">{{ item.created_at.split(' ')[0] if item.created_at is string else item.created_at }}</span>
+        {% else %}—{% endif %}
+    </td>
+    <td>
+        {% if item.expire_at %}
+        <span class="tr-date">{{ item.expire_at.split(' ')[0] if item.expire_at is string else item.expire_at }}</span>
+        {% else %}—{% endif %}
+    </td>
+    <td>
+        {% if item.is_active %}
+        <span class="tr-badge tr-badge--active">Активен</span>
+        {% else %}
+        <span class="tr-badge tr-badge--expired">Истёк</span>
+        {% endif %}
+    </td>
+    <td class="tr-actions">
+        <a href="{{ url_for('users_page', q=item.telegram_id) }}" class="tr-icon-btn" title="Профиль">
+            <span class="material-symbols-outlined">person</span>
+        </a>
+        {% if can_edit('keys') %}
+        <button type="button" class="tr-icon-btn" data-tr-action="extend" title="Продлить">
+            <span class="material-symbols-outlined">schedule</span>
+        </button>
+        <button type="button" class="tr-icon-btn tr-icon-btn--danger" data-tr-action="revoke" title="Отозвать">
+            <span class="material-symbols-outlined">block</span>
+        </button>
+        {% endif %}
+        {% if can_edit('users') %}
+        <button type="button" class="tr-icon-btn" data-tr-action="reset" title="Сбросить trial_used">
+            <span class="material-symbols-outlined">restart_alt</span>
+        </button>
+        {% endif %}
+    </td>
+</tr>
+{% endfor %}

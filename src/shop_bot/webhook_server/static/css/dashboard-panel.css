@@ -434,6 +434,23 @@ html:not(.dark) .dh-ambient {
 
 .dh-stat__icon .material-symbols-outlined { font-size: 1.05rem; }
 
+.dh-stat--link {
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.15s, border-color 0.15s;
+}
+.dh-stat--link:hover {
+    transform: translateY(-1px);
+    border-color: var(--dh-border-strong, rgba(255, 255, 255, 0.14));
+}
+.dh-stat__link-hint {
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--dh-stat-accent, var(--dh-accent));
+    opacity: 0.85;
+}
+
 .dh-stat--sky { --dh-stat-accent: #38bdf8; --dh-stat-glow: rgba(56, 189, 248, 0.12); --dh-stat-icon-bg: rgba(56, 189, 248, 0.1); --dh-stat-icon-border: rgba(56, 189, 248, 0.2); }
 .dh-stat--blue { --dh-stat-accent: #60a5fa; --dh-stat-glow: rgba(96, 165, 250, 0.12); --dh-stat-icon-bg: rgba(96, 165, 250, 0.1); --dh-stat-icon-border: rgba(96, 165, 250, 0.2); }
 .dh-stat--green { --dh-stat-accent: #4ade80; --dh-stat-glow: rgba(74, 222, 128, 0.12); --dh-stat-icon-bg: rgba(74, 222, 128, 0.1); --dh-stat-icon-border: rgba(74, 222, 128, 0.2); }

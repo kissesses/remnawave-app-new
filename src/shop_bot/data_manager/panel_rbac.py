@@ -85,7 +85,6 @@ ENDPOINT_PERMISSIONS: dict[str, str] = {
     "run_speedtests_route": "dashboard",
     "dashboard_stats_partial": "dashboard",
     "dashboard_transactions_partial": "dashboard",
-    "dashboard_trials_partial": "dashboard",
     "dashboard_charts_json": "dashboard",
     "dashboard_user_groups_json": "dashboard",
     "dashboard_speedtests_json": "dashboard",
@@ -278,6 +277,15 @@ ENDPOINT_PERMISSIONS: dict[str, str] = {
     "monitor_target_json": "dashboard",
     "monitor_series_json": "dashboard",
     "monitor_clear_metrics": "dashboard",
+    # Trials
+    "trials_page": "dashboard",
+    "trials_stats_json": "dashboard",
+    "trials_list_partial": "dashboard",
+    "trials_settings_save": "settings_panel",
+    "trials_grant": "users",
+    "trials_reset_flag": "users",
+    "trials_extend_key": "keys",
+    "trials_revoke_key": "keys",
     # Node
     "node_page": "node",
     "node_create_ssh_target_route": "node",

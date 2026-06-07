@@ -1,0 +1,54 @@
+<form id="tr-settings-form" class="tr-settings">
+    <div class="tr-settings__list">
+        <div class="tr-settings__row tr-settings__row--toggle">
+            <div class="tr-settings__body">
+                <span class="tr-settings__title">Пробный период</span>
+                <span class="tr-settings__sub">Бесплатный доступ для новых пользователей</span>
+            </div>
+            <input type="hidden" name="trial_enabled" value="false" />
+            <label class="tr-switch">
+                <input type="checkbox" name="trial_enabled" value="true" {% if settings.trial_enabled == 'true' %}checked{% endif %} {% if not can_edit('settings_panel') %}disabled{% endif %} />
+                <span class="tr-switch__track"></span>
+            </label>
+        </div>
+        <div class="tr-settings__row">
+            <label class="tr-settings__label" for="trial-duration-days">Длительность (дней)</label>
+            <input type="number" id="trial-duration-days" name="trial_duration_days"
+                value="{{ settings.trial_duration_days or '3' }}" min="1" class="tr-input" {% if not can_edit('settings_panel') %}disabled{% endif %} />
+        </div>
+        <div class="tr-settings__row">
+            <label class="tr-settings__label" for="trial-traffic-gb">Трафик (ГБ)</label>
+            <input type="number" id="trial-traffic-gb" name="trial_traffic_limit_gb"
+                value="{{ settings.trial_traffic_limit_gb or '0' }}" min="0" class="tr-input" {% if not can_edit('settings_panel') %}disabled{% endif %} />
+            <span class="tr-settings__hint">0 — без лимита</span>
+        </div>
+        <div class="tr-settings__row">
+            <label class="tr-settings__label" for="trial-hwid-limit">Лимит HWID</label>
+            <input type="number" id="trial-hwid-limit" name="trial_hwid_limit"
+                value="{{ settings.trial_hwid_limit or '0' }}" min="0" class="tr-input" {% if not can_edit('settings_panel') %}disabled{% endif %} />
+        </div>
+        <div class="tr-settings__row tr-settings__row--host">
+            <label class="tr-settings__label" for="trial_host_id">Сервер для триала</label>
+            <div class="soft-select tr-soft-select" data-target="trial_host_id">
+                <button type="button" class="soft-select-toggle" id="trial_host_id_toggle" {% if not can_edit('settings_panel') %}disabled{% endif %}>
+                    {% if settings.trial_host_id %}{{ settings.trial_host_id }}{% else %}Выборочно (пользователь выбирает){% endif %}
+                </button>
+                <div class="soft-select-menu" id="trial_host_id_menu"></div>
+                <select name="trial_host_id" id="trial_host_id" class="hidden" {% if not can_edit('settings_panel') %}disabled{% endif %}>
+                    <option value="">Выборочно (пользователь выбирает)</option>
+                    {% for host in hosts %}
+                    <option value="{{ host.host_name }}" {% if settings.trial_host_id == host.host_name %}selected{% endif %}>{{ host.host_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+    {% if can_edit('settings_panel') %}
+    <div class="tr-settings__actions">
+        <button type="submit" class="tr-btn tr-btn--accent">
+            <span class="material-symbols-outlined">save</span>
+            Сохранить настройки
+        </button>
+    </div>
+    {% endif %}
+</form>

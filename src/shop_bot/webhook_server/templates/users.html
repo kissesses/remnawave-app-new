@@ -11,7 +11,7 @@
         <div>
             <p class="users-breadcrumb">Панель</p>
             <h1 class="users-title">Пользователи</h1>
-            <p class="users-subtitle">База клиентов, балансы, подписки и рефералы</p>
+            <p class="users-subtitle">База клиентов, балансы, подписки и рефералы{% if can('dashboard') %} · <a href="{{ url_for('trials_page') }}" class="users-trials-link">Пробный период →</a>{% endif %}</p>
         </div>
     </header>
 

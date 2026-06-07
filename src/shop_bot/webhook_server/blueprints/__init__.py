@@ -13,6 +13,7 @@ from shop_bot.webhook_server.blueprints import (
     settings,
     settings_tools,
     support,
+    trials,
     users,
     webhooks,
 )
@@ -23,6 +24,7 @@ def register_blueprints(app: Flask) -> None:
         auth,
         backups,
         dashboard,
+        trials,
         dev_support,
         support,
         users,

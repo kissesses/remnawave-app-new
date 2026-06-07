@@ -919,8 +919,20 @@ def broadcast_send():
                             break
                 if has_expiring_key: filtered_users.append(user)
             all_users = filtered_users
-        elif mode == 'without_trial' or mode == 'not_used_trial':
+        elif mode == 'not_used_trial':
             all_users = [u for u in all_users if not u.get('trial_used', 0)]
+        elif mode == 'without_trial':
+            filtered_users = []
+            for user in all_users:
+                user_id = user.get('telegram_id')
+                keys = rw_repo.get_keys_for_user(user_id) or []
+                has_trial_key = any(
+                    str(k.get('key_email') or '').lower().startswith('trial_')
+                    for k in keys
+                )
+                if not has_trial_key:
+                    filtered_users.append(user)
+            all_users = filtered_users
         
         if skip_banned:
             banned_data = get_banned_users_data()

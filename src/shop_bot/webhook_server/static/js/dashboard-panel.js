@@ -194,7 +194,7 @@ window.dashCharts = {};
             if (!el) return;
             if (tp <= 1) { el.innerHTML = ''; return; }
 
-            const url = new URL(window.location.href); const key = type === 'transactions' ? 'page' : 'trials_page';
+            const url = new URL(window.location.href); const key = 'page';
             let html = `<div class="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10 shadow-lg backdrop-blur-sm">`;
 
             if (cp > 1) {
@@ -264,7 +264,7 @@ window.dashCharts = {};
             });
         };
 
-        // ===== ФУНКЦИЯ: Загрузка таблиц (Транзакции, Триалы) =====
+        // ===== ФУНКЦИЯ: Загрузка таблицы транзакций =====
         const loadTableData = async (type) => {
             const cont = document.getElementById(`dash-${type}`);
             const wrapper = document.getElementById(`${type}-wrapper`);
@@ -272,8 +272,7 @@ window.dashCharts = {};
             if (!cont) return;
 
             const urlObj = new URL(window.location.href);
-            const pageParam = type === 'transactions' ? 'page' : 'trials_page';
-            const page = urlObj.searchParams.get(pageParam) || 1;
+            const page = urlObj.searchParams.get('page') || 1;
             const baseUrl = cont.dataset.fetchUrl;
 
             try {
@@ -307,9 +306,9 @@ window.dashCharts = {};
 
             e.preventDefault();
             const urlObj = new URL(link.href);
-            const page = urlObj.searchParams.get(type === 'transactions' ? 'page' : 'trials_page');
+            const page = urlObj.searchParams.get('page');
             const cont = document.getElementById(`dash-${type}`);
-            const url = type === 'transactions' ? routes.transactions : routes.trials;
+            const url = routes.transactions;
 
             cont.style.opacity = '0.5';
             const data = await fetchJSON(url, { page, ajax_pagination: 1 });
@@ -323,13 +322,11 @@ window.dashCharts = {};
             cont.style.opacity = '1';
         };
 
-        ['transactions', 'trials'].forEach(t => {
-            const pag = document.getElementById(`${t}-pagination`);
-            if (pag) {
-                pag.addEventListener('click', e => handlePag(e, t));
-            }
-            loadTableData(t);
-        });
+        const txPag = document.getElementById('transactions-pagination');
+        if (txPag) {
+            txPag.addEventListener('click', e => handlePag(e, 'transactions'));
+        }
+        loadTableData('transactions');
 
         // ===== УПРАВЛЕНИЕ ГРАФИКАМИ =====
         window.dashCharts = {};

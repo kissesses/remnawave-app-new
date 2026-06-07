@@ -496,7 +496,8 @@ async def smart_edit_message(message: types.Message, text: str, reply_markup=Non
 async def show_main_menu(message: types.Message, edit_message: bool = False):
     user_id = message.chat.id
     user_db_data, user_keys = get_user(user_id), get_user_keys(user_id)
-    trial_available, is_admin_flag = not (user_db_data and user_db_data.get('trial_used')), is_admin(user_id)
+    from shop_bot.services.trial_service import trial_available_for_user
+    trial_available, is_admin_flag = trial_available_for_user(user_id), is_admin(user_id)
     text = get_setting("main_menu_text") or "🏠 <b>Главное меню</b>\n\nВыберите действие:"
     main_menu_image = get_setting("main_menu_image")
     photo_path = main_menu_image if (main_menu_image and os.path.exists(main_menu_image)) else None
@@ -2097,9 +2098,13 @@ def get_user_router() -> Router:
     @anti_spam
     @registration_required
     async def trial_period_handler(callback: types.CallbackQuery, state: FSMContext):
+        from shop_bot.services.trial_service import is_trial_enabled, trial_available_for_user
+
         user_id = callback.from_user.id
-        user_db_data = get_user(user_id)
-        if user_db_data and user_db_data.get('trial_used'):
+        if not is_trial_enabled():
+            await callback.answer(bot_msg("trial_disabled", "⚠️ Пробный период временно недоступен."), show_alert=True)
+            return
+        if not trial_available_for_user(user_id):
             await callback.answer(bot_msg("trial_already_used", "⚠️ Вы уже активировали пробный период ранее."), show_alert=True)
             return
 
@@ -2144,6 +2149,8 @@ def get_user_router() -> Router:
     # ===== ПРОЦЕДУРА СОЗДАНИЯ ПРОБНОГО КЛЮЧА =====
     # Логика генерации уникального email, регистрации ключа на хосте и уведомления пользователя
     async def process_trial_key_creation(message: types.Message, host_name: str):
+        from shop_bot.services.trial_service import create_trial_key
+
         user_id = message.chat.id
         await smart_edit_message(
             message,
@@ -2156,55 +2163,18 @@ def get_user_router() -> Router:
         )
 
         try:
-            user_data = get_user(user_id) or {}
-            #raw_user, attempt = (user_data.get('username') or f'user{user_id}').lower(), 1
-            #slug = re.sub(r"[^a-z0-9._-]", "_", raw_user).strip("_")[:16] or f"user{user_id}"
-            # Строгая очистка имени для slug
-            raw_user = (user_data.get('username') or f'user{user_id}').lower()
-            # 1. Замена точек на подчеркивание (my.name -> my_name) и удаление пробелов (my name -> myname)
-            clean_step1 = raw_user.replace(".", "_").replace(" ", "")
-            # 2. Оставляем только a-z, 0-9, -, _
-            clean_step2 = re.sub(r"[^a-z0-9_-]", "", clean_step1)
-            # 3. Удаляем спецсимволы в начале строки и обрезаем
-            slug = clean_step2.lstrip("_-")[:16]
-            # 4. Если пусто - используем резервное имя
-            if not slug: slug = f"user{user_id}"
-            
-            attempt = 1
-            while True:
-                candidate_email = f"trial_{slug}{f'-{attempt}' if attempt > 1 else ''}@bot.local"
-                if not rw_repo.get_key_by_email(candidate_email) or attempt > 100: break
-                attempt += 1
-
-            trial_traffic, trial_hwid = int(get_setting("trial_traffic_limit_gb") or 0), int(get_setting("trial_hwid_limit") or 0)
-            result = await remnawave_api.create_or_update_key_on_host(host_name=host_name, email=candidate_email, days_to_add=int(get_setting("trial_duration_days")), telegram_id=user_id, traffic_limit_gb=trial_traffic if trial_traffic > 0 else None, hwid_limit=trial_hwid if trial_hwid > 0 else None)
-            
-            if not result:
+            created = await create_trial_key(user_id, host_name, bot=message.bot)
+            if not created.get("ok"):
                 await smart_edit_message(message, bot_msg("trial_server_error", "❌ <b>Ошибка сервера</b>\nНе удалось сгенерировать конфигурацию. Попробуйте выбрать другой сервер."))
                 return
 
-            set_trial_used(user_id)
-            new_key_id = rw_repo.record_key_from_payload(user_id=user_id, payload=result, host_name=host_name)
+            result = created["payload"]
+            candidate_email = created["email"]
+            new_key_id = created["key_id"]
 
-            try:
-                from shop_bot.data_manager import telegram_notify as tg_notify
-                user_data = get_user(user_id) or {}
-                uname = user_data.get('username')
-                uname_str = f"@{uname}" if uname else "—"
-                trial_txt = (
-                    f"🆓 <b>Пробный период активирован</b>\n"
-                    f"👤 <code>{user_id}</code> {uname_str}\n"
-                    f"🌍 Сервер: <b>{host_name}</b>\n"
-                    f"📧 Email: <code>{candidate_email}</code>\n"
-                    f"⏳ Срок: {get_setting('trial_duration_days')} дн."
-                )
-                await tg_notify.send_notification(message.bot, tg_notify.CATEGORY_TRIAL, trial_txt)
-            except Exception:
-                _log_suppressed("trial_notify")
-            
             try: await message.delete()
             except Exception: _log_suppressed("suppressed")
-            
+
             expiry_dt = datetime.fromtimestamp(result['expiry_timestamp_ms'] / 1000)
             final_text = get_purchase_success_text("new", get_next_key_number(user_id) - 1, expiry_dt, result['connection_string'], email=candidate_email)
             ready_img = get_setting("key_ready_image")

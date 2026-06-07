@@ -98,7 +98,6 @@ SETTINGS_NAV_GROUPS: dict[str, dict[str, str]] = {
 SETTINGS_TAB_SECTIONS: dict[str, list[dict[str, str]]] = {
     "panel": [
         {"id": "panel-system", "label": "Система", "icon": "tune"},
-        {"id": "panel-trial", "label": "Пробный период", "icon": "timer"},
         {"id": "panel-monitoring", "label": "Мониторинг", "icon": "monitoring"},
         {"id": "panel-smtp", "label": "Email / SMTP", "icon": "mail"},
         {"id": "panel-backup", "label": "Бэкапы", "icon": "database"},
@@ -145,7 +144,6 @@ SETTINGS_TAB_CHECKBOXES: dict[str, dict[str, str]] = {
         "stealth_login_clicks_enabled": "1",
     },
     "panel": {
-        "trial_enabled": "false",
         "monitoring_enabled": "false",
         "enable_wal_mode": "0",
         "demo_mode_enabled": "0",
@@ -196,7 +194,6 @@ SETTINGS_TAB_TEXT_KEYS: dict[str, list[str]] = {
         "backup_autobackup_scope",
         "backup_remnawave_mode", "backup_remnawave_compose_dir", "backup_remnawave_ssh_target",
         "backup_remnawave_pg_service", "backup_remnawave_database_url", "backup_remnawave_compose_cmd",
-        "trial_duration_days", "trial_traffic_limit_gb", "trial_hwid_limit", "trial_host_id",
         "monitoring_interval_sec", "monitoring_cpu_threshold", "monitoring_mem_threshold",
         "monitoring_disk_threshold", "monitoring_alert_cooldown_sec",
         "smtp_host", "smtp_port", "smtp_username", "smtp_password",
