@@ -485,6 +485,23 @@ def _load_settings_page_context(tab: str) -> dict:
             'admin_ids_extra': admin_ids_extra,
         }
 
+    if tab == 'anti-fraud':
+        import re
+        from shop_bot.security.email_blocklist import BUILTIN_EMAIL_BLOCKLIST
+        from shop_bot.webhook_server.services.anti_fraud import SIGNAL_DEFINITIONS
+
+        def _count_list_entries(raw: str | None) -> int:
+            if not raw or not str(raw).strip():
+                return 0
+            return len([p for p in re.split(r'[\s,;\n]+', str(raw).strip()) if p.strip()])
+
+        ctx['af_studio'] = {
+            'detectors_total': len(SIGNAL_DEFINITIONS),
+            'builtin_domains': len(BUILTIN_EMAIL_BLOCKLIST),
+            'custom_domains': _count_list_entries(current_settings.get('email_domain_blocklist')),
+            'custom_patterns': _count_list_entries(current_settings.get('email_pattern_blocklist')),
+        }
+
     if tab == 'hosts':
         hosts = get_all_hosts()
         for host in hosts:

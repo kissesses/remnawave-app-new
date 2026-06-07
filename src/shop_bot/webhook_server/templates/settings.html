@@ -30,7 +30,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/database-panel.css') }}" />
 {% endif %}
 {% if active_tab == 'payments' %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/payments-panel.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/payments-panel.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
 {% endif %}
 {% if active_tab == 'stealth-login' %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/stealth-login-panel.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
@@ -282,7 +282,7 @@ window.PAYMENTS_PANEL = {
     baseUrl: {{ (base_url or '') | tojson }},
 };
 </script>
-<script src="{{ url_for('static', filename='js/payments-panel.js') }}"></script>
+<script src="{{ url_for('static', filename='js/payments-panel.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
 <script>
 (function () {
     const orig = window.initInteractiveElements;
@@ -333,6 +333,11 @@ window.PROMO_PANEL_BOOT = {
 <script src="{{ url_for('static', filename='js/audit-panel.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
 {% endif %}
 {% if active_tab == 'anti-fraud' %}
+<script>
+window.AF_PANEL_BOOT = {
+    signalsUrl: {{ url_for('settings_anti_fraud_signals') | tojson }}
+};
+</script>
 <script src="{{ url_for('static', filename='js/anti-fraud-panel.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
 {% endif %}
 {% if active_tab == 'access' %}

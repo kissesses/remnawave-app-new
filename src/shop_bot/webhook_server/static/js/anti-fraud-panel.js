@@ -1,12 +1,15 @@
 /**
- * Anti-Fraud Studio — signal cards + detail modal
+ * Anti-Fraud Studio — Access-style tabs, signals, blocklist
  */
 (function () {
     'use strict';
 
+    const STORAGE_KEY = 'af-studio-tab';
     const LIVE_MS = 60000;
+    const boot = window.AF_PANEL_BOOT || {};
 
     let liveTimer = null;
+    let lastPayload = null;
 
     function $(id) {
         return document.getElementById(id);
@@ -61,6 +64,63 @@
         return parts.slice(0, 2).join(' · ') || JSON.stringify(item).slice(0, 80);
     }
 
+    function setTab(tabId) {
+        const root = $('tab-anti-fraud');
+        if (!root) return;
+
+        root.querySelectorAll('.af-tab').forEach((btn) => {
+            const active = btn.dataset.afTab === tabId;
+            btn.classList.toggle('is-active', active);
+            btn.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+
+        root.querySelectorAll('.af-pane').forEach((pane) => {
+            pane.hidden = pane.dataset.afPane !== tabId;
+        });
+
+        try {
+            localStorage.setItem(STORAGE_KEY, tabId);
+        } catch (_) { /* ignore */ }
+
+        if (history.replaceState) {
+            history.replaceState(null, '', `#${tabId}`);
+        }
+    }
+
+    function resolveInitialTab() {
+        const root = $('tab-anti-fraud');
+        if (!root) return 'overview';
+
+        const hash = (window.location.hash || '').replace(/^#/, '');
+        if (hash && root.querySelector(`.af-pane[data-af-pane="${hash}"]`)) {
+            return hash;
+        }
+
+        try {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored && root.querySelector(`.af-pane[data-af-pane="${stored}"]`)) {
+                return stored;
+            }
+        } catch (_) { /* ignore */ }
+
+        return root.dataset.afDefaultTab || 'overview';
+    }
+
+    function initTabs() {
+        const root = $('tab-anti-fraud');
+        if (!root) return;
+
+        root.querySelectorAll('.af-tab').forEach((btn) => {
+            btn.addEventListener('click', () => setTab(btn.dataset.afTab || 'overview'));
+        });
+
+        root.querySelectorAll('[data-af-goto]').forEach((el) => {
+            el.addEventListener('click', () => setTab(el.dataset.afGoto || 'overview'));
+        });
+
+        setTab(resolveInitialTab());
+    }
+
     function renderSignalCard(signal) {
         const sev = signal.severity || 'info';
         const count = signal.count || 0;
@@ -90,28 +150,69 @@
         const warn = signals.filter((s) => s.severity === 'warn' && s.count > 0).length;
         const err = signals.filter((s) => s.severity === 'error' && s.count > 0).length;
         const active = signals.filter((s) => s.count > 0).length;
+
         if ($('af-stat-total')) $('af-stat-total').textContent = String(active);
         if ($('af-stat-warn')) $('af-stat-warn').textContent = String(warn);
         if ($('af-stat-error')) $('af-stat-error').textContent = String(err);
         if ($('af-stat-generated')) $('af-stat-generated').textContent = formatTime(payload.generatedAt);
+
+        const hubActive = $('af-hub-active');
+        if (hubActive) {
+            hubActive.classList.toggle('af-stat--ok', active > 0);
+            hubActive.querySelector('span:last-child').textContent = `${active} активных`;
+        }
+        const hubWarn = $('af-hub-warn');
+        if (hubWarn) {
+            hubWarn.querySelector('span:last-child').textContent = `${warn} warn`;
+        }
+        const hubError = $('af-hub-error');
+        if (hubError) {
+            hubError.querySelector('span:last-child').textContent = `${err} critical`;
+        }
+
+        renderOverviewAlerts(signals);
+    }
+
+    function renderOverviewAlerts(signals) {
+        const box = $('af-overview-alerts');
+        if (!box) return;
+
+        const active = (signals || []).filter((s) => s.count > 0);
+        if (!active.length) {
+            box.innerHTML = '<p class="af-empty">Активных сигналов нет — всё чисто</p>';
+            return;
+        }
+
+        box.innerHTML = active.slice(0, 6).map((s) => `
+            <button type="button" class="af-alert-row" data-af-open-signal="${escapeHtml(s.key)}">
+                <span class="af-badge af-badge--${escapeHtml(s.severity || 'info')}">${escapeHtml(s.severity || 'info')}</span>
+                <span class="af-alert-row__title">${escapeHtml(s.label)}</span>
+                <span class="af-badge af-badge--info">${s.count}</span>
+                <span class="af-alert-row__meta">${escapeHtml(s.description || '')}</span>
+            </button>
+        `).join('');
     }
 
     async function loadSignals() {
         const grid = $('af-signals-grid');
-        if (!grid) return;
-        grid.innerHTML = '<p class="af-empty">Загрузка…</p>';
-        const { resp, data } = await fetchJson('/settings/anti-fraud/signals');
+        if (grid) grid.innerHTML = '<p class="af-empty">Загрузка…</p>';
+
+        const url = boot.signalsUrl || '/settings/anti-fraud/signals';
+        const { resp, data } = await fetchJson(url);
         if (!resp.ok || !data.ok) {
-            grid.innerHTML = `<p class="af-empty">${escapeHtml(data.error || 'Ошибка загрузки')}</p>`;
-            toast('error', data.error || 'Не удалось загрузить сигналы');
+            const err = data.error || 'Ошибка загрузки';
+            if (grid) grid.innerHTML = `<p class="af-empty">${escapeHtml(err)}</p>`;
+            toast('danger', err);
             return;
         }
+
+        lastPayload = data;
         const signals = data.signals || [];
-        if (!signals.length) {
-            grid.innerHTML = '<p class="af-empty">Нет данных</p>';
-            return;
+        if (grid) {
+            grid.innerHTML = signals.length
+                ? signals.map(renderSignalCard).join('')
+                : '<p class="af-empty">Нет данных</p>';
         }
-        grid.innerHTML = signals.map(renderSignalCard).join('');
         updateStats(data);
     }
 
@@ -120,10 +221,13 @@
         const title = $('af-detail-title');
         const pre = $('af-detail-json');
         if (!modal || !pre) return;
+
         pre.textContent = 'Загрузка…';
         if (title) title.textContent = key;
         modal.showModal();
-        const { resp, data } = await fetchJson(`/settings/anti-fraud/signal/${encodeURIComponent(key)}?limit=100`);
+
+        const base = boot.signalsUrl || '/settings/anti-fraud/signals';
+        const { resp, data } = await fetchJson(`${base.replace(/\/signals\/?$/, `/signal/${encodeURIComponent(key)}`)}?limit=100`);
         if (!resp.ok || !data.ok) {
             pre.textContent = data.error || 'Ошибка';
             return;
@@ -139,6 +243,12 @@
             if (!btn || btn.disabled) return;
             openDetail(btn.dataset.key);
         });
+        $('af-overview-alerts')?.addEventListener('click', (e) => {
+            const row = e.target.closest('[data-af-open-signal]');
+            if (!row) return;
+            setTab('signals');
+            openDetail(row.dataset.afOpenSignal);
+        });
         $('af-live')?.addEventListener('change', (e) => {
             if (liveTimer) {
                 clearInterval(liveTimer);
@@ -150,15 +260,25 @@
         });
     }
 
-    function init() {
+    function initAntiFraudPanel() {
         if (!$('tab-anti-fraud')) return;
+        if (liveTimer) {
+            clearInterval(liveTimer);
+            liveTimer = null;
+        }
+        const liveEl = $('af-live');
+        if (liveEl) liveEl.checked = false;
+
+        initTabs();
         bindEvents();
         loadSignals();
     }
 
+    window.reinitAntiFraudPanel = initAntiFraudPanel;
+
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
+        document.addEventListener('DOMContentLoaded', initAntiFraudPanel);
     } else {
-        init();
+        initAntiFraudPanel();
     }
 })();

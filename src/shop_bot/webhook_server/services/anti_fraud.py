@@ -46,7 +46,7 @@ SIGNAL_DEFINITIONS: dict[str, dict[str, str]] = {
 
 
 def _rows(limit: int, sql: str, params: tuple[Any, ...] = ()) -> list[dict]:
-    raw = _fetch_list(sql, params, "anti-fraud query failed")
+    raw = _fetch_list(sql, (*params, limit), "anti-fraud query failed")
     return [dict(row) for row in raw]
 
 

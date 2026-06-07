@@ -1,7 +1,9 @@
 (function () {
     'use strict';
 
+    const STORAGE_KEY = 'pay-studio-tab';
     const cfg = window.PAYMENTS_PANEL || {};
+    const SEARCH_TABS = new Set(['payments-fiat', 'payments-crypto', 'payments-telegram']);
 
     function getBaseUrl() {
         const domainInput = document.querySelector('#tab-payments [name="domain"]');
@@ -61,10 +63,82 @@
                 if (icon) icon.textContent = prev || 'content_copy';
             }, 1800);
         }).catch(() => {
-            if (typeof window.showToast === 'function') {
-                window.showToast('danger', 'Не удалось скопировать');
-            }
+            window.showToast?.('danger', 'Не удалось скопировать');
         });
+    }
+
+    function setTab(tabId) {
+        const root = document.getElementById('tab-payments');
+        if (!root) return;
+
+        root.querySelectorAll('.pay-channel-tab').forEach((btn) => {
+            const active = btn.dataset.payTab === tabId;
+            btn.classList.toggle('is-active', active);
+            btn.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+
+        root.querySelectorAll('.pay-pane').forEach((pane) => {
+            pane.hidden = pane.dataset.payPane !== tabId;
+        });
+
+        const toolbar = document.getElementById('pay-board-toolbar');
+        if (toolbar) {
+            toolbar.hidden = !SEARCH_TABS.has(tabId);
+        }
+
+        const search = document.getElementById('pay-provider-search');
+        if (search && SEARCH_TABS.has(tabId)) {
+            filterProviders(search.value);
+        }
+
+        try {
+            localStorage.setItem(STORAGE_KEY, tabId);
+        } catch (_) { /* ignore */ }
+
+        if (history.replaceState) {
+            history.replaceState(null, '', `#${tabId}`);
+        }
+    }
+
+    function resolveInitialTab() {
+        const root = document.getElementById('tab-payments');
+        if (!root) return 'payments-general';
+
+        const hash = (window.location.hash || '').replace(/^#/, '');
+        if (hash && root.querySelector(`.pay-pane[data-pay-pane="${hash}"]`)) {
+            return hash;
+        }
+
+        try {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored && root.querySelector(`.pay-pane[data-pay-pane="${stored}"]`)) {
+                return stored;
+            }
+        } catch (_) { /* ignore */ }
+
+        return root.dataset.payDefaultTab || 'payments-general';
+    }
+
+    function filterProviders(query) {
+        const q = (query || '').trim().toLowerCase();
+        const activePane = document.querySelector('#tab-payments .pay-pane:not([hidden])');
+        if (!activePane) return;
+
+        activePane.querySelectorAll('[data-pay-search]').forEach((card) => {
+            const hay = (card.dataset.paySearch || card.textContent || '').toLowerCase();
+            card.classList.toggle('is-filter-hidden', Boolean(q) && !hay.includes(q));
+        });
+    }
+
+    function initTabs() {
+        const root = document.getElementById('tab-payments');
+        if (!root) return;
+
+        root.querySelectorAll('.pay-channel-tab').forEach((btn) => {
+            btn.addEventListener('click', () => setTab(btn.dataset.payTab || 'payments-general'));
+        });
+
+        setTab(resolveInitialTab());
     }
 
     function bindCopyDelegation() {
@@ -92,33 +166,38 @@
         });
     }
 
-    function bindDomainLiveUpdate() {
+    function bindLiveUpdates() {
         const domainInput = document.querySelector('#tab-payments [name="domain"]');
-        if (!domainInput) return;
-        domainInput.addEventListener('input', refreshWebhooks);
-        domainInput.addEventListener('change', refreshWebhooks);
-    }
+        domainInput?.addEventListener('input', refreshWebhooks);
+        domainInput?.addEventListener('change', refreshWebhooks);
 
-    function bindTonSecretLiveUpdate() {
         const tonSecret = document.querySelector('#tab-payments [name="ton_webhook_secret"]');
-        if (!tonSecret) return;
-        tonSecret.addEventListener('input', refreshWebhooks);
-        tonSecret.addEventListener('change', refreshWebhooks);
+        tonSecret?.addEventListener('input', refreshWebhooks);
+        tonSecret?.addEventListener('change', refreshWebhooks);
+
+        document.getElementById('pay-refresh-webhooks')?.addEventListener('click', refreshWebhooks);
+
+        document.getElementById('pay-provider-search')?.addEventListener('input', (e) => {
+            filterProviders(e.target.value);
+        });
     }
 
-    function init() {
+    function initPaymentsPanel() {
         if (!document.getElementById('tab-payments')) return;
+        bindLiveUpdates();
+        initTabs();
         refreshWebhooks();
     }
 
     bindCopyDelegation();
     bindRevealDelegation();
 
-    document.addEventListener('DOMContentLoaded', () => {
-        bindDomainLiveUpdate();
-        bindTonSecretLiveUpdate();
-        init();
-    });
+    window.reinitPaymentsPanel = initPaymentsPanel;
+    window.initPaymentsPanel = initPaymentsPanel;
 
-    window.initPaymentsPanel = init;
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPaymentsPanel);
+    } else {
+        initPaymentsPanel();
+    }
 })();
