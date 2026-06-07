@@ -338,17 +338,6 @@ window.ACCESS_AUTH = {
 window.ACCESS_PANEL_BOOT = {
     rolePresets: {{ role_presets | tojson }},
     dockCoverage: {{ dock_coverage | tojson }},
-    canEditAdmins: {{ can_edit('settings_access') | tojson }},
-    adminDetailUrl: {{ url_for('settings_access_admin_detail', admin_id=0) | tojson }},
-    adminSaveUrl: {{ url_for('settings_access_admin_save') | tojson }},
-    adminDeleteUrl: {{ url_for('settings_access_admin_delete', admin_id=0) | tojson }},
-    presenceUrl: {{ url_for('admin_presence_json') | tojson }},
-    openAdminId: {{ request.args.get('admin_id', type=int) | tojson }},
-    roles: [
-        {% for role in panel_roles if panel_is_superadmin or not role.is_superadmin %}
-        { id: {{ role.id }}, name: {{ role.name | tojson }}, is_superadmin: {{ role.is_superadmin | tojson }} }{% if not loop.last %},{% endif %}
-        {% endfor %}
-    ],
 };
 </script>
 <script src="{{ url_for('static', filename='js/access-auth.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>

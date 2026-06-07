@@ -82,7 +82,7 @@ html[data-design="stealth-admin"] .panel-admins-popover {
     }
 }
 
-/* Popover shell — all layouts */
+/* Popover shell — legacy class names reused inside modal */
 .panel-admins-popover {
     position: fixed;
     z-index: 9100;
@@ -93,6 +93,82 @@ html[data-design="stealth-admin"] .panel-admins-popover {
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+}
+
+/* Admins list modal */
+.modal-overlay.panel-admins-modal:not(.open),
+.modal-overlay.panel-admin-detail-modal:not(.open) {
+    display: none !important;
+}
+
+.panel-admins-modal {
+    z-index: 9800;
+    padding: 1rem;
+    align-items: center;
+    justify-content: center;
+}
+
+.panel-admins-modal.open {
+    display: flex;
+}
+
+.panel-admins-modal__window {
+    width: min(22rem, calc(100vw - 2rem));
+    max-height: min(80vh, 640px);
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    overflow: hidden;
+    border-radius: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(14, 14, 18, 0.96);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+}
+
+html:not(.dark) .panel-admins-modal__window {
+    background: rgba(252, 252, 254, 0.96);
+    border-color: rgba(0, 0, 0, 0.1);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
+}
+
+.panel-admins-modal__window .panel-admins-panels {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+}
+
+.panel-admins-modal__hint {
+    margin: 0;
+    padding: 0.55rem 1rem 0.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    font-size: 0.625rem;
+    color: rgba(255, 255, 255, 0.35);
+    text-align: center;
+}
+
+html:not(.dark) .panel-admins-modal__hint {
+    border-top-color: rgba(0, 0, 0, 0.08);
+    color: rgba(0, 0, 0, 0.4);
+}
+
+.panel-admins-list__chevron {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.25);
+    flex-shrink: 0;
+}
+
+html:not(.dark) .panel-admins-list__chevron {
+    color: rgba(0, 0, 0, 0.25);
+}
+
+.panel-admin-detail-modal.open {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: max(1rem, env(safe-area-inset-top, 0px)) 1rem max(1rem, env(safe-area-inset-bottom, 0px));
+    overflow-y: auto;
 }
 
 html:not(.dark) .panel-admins-popover {
@@ -364,4 +440,96 @@ html:not(.dark) .panel-admins-empty {
 
 .panel-admin-detail__manage:hover {
     text-decoration: underline;
+}
+
+.panel-admin-detail__body {
+    max-height: min(70vh, 560px);
+    overflow-y: auto;
+}
+
+.panel-admin-detail__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-bottom: 0.65rem;
+}
+
+.panel-admin-detail__chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    font-size: 0.625rem;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.panel-admin-detail__chip.is-ok {
+    border-color: rgba(48, 209, 88, 0.35);
+    color: #30d158;
+}
+
+.panel-admin-detail__chip.is-muted {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.panel-admin-detail__section {
+    margin-top: 0.75rem;
+    padding-top: 0.65rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.panel-admin-detail__section-title,
+.panel-admin-detail__section-head h6 {
+    margin: 0 0 0.35rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.panel-admin-detail__section-meta {
+    margin: 0 0 0.4rem;
+    font-size: 0.625rem;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.panel-admin-detail__section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.35rem;
+}
+
+.panel-admin-detail__section-head h6 {
+    margin: 0;
+}
+
+.panel-admin-detail__audit-link {
+    font-size: 0.625rem;
+    font-weight: 700;
+    color: var(--primary, #0a84ff);
+    text-decoration: none;
+}
+
+.panel-admin-detail__perm-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+}
+
+.panel-admin-detail__perm-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.18rem 0.45rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    font-size: 0.5625rem;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.panel-admin-detail__perm-chip.is-edit {
+    border-color: rgba(10, 132, 255, 0.35);
+    color: #0a84ff;
+    background: rgba(10, 132, 255, 0.1);
 }

@@ -1376,9 +1376,11 @@ def settings_access_admin_detail(admin_id: int):
             'ip': last_login.get('ip') if last_login else None,
         } if last_login else None,
         'can_edit': can_edit,
+        'can_manage_admins': can_edit,
         'is_self': viewer_id == admin_id,
         'roles': _settings_access_roles_for_form(),
         'audit_url': url_for('settings_tab_page', tab='audit', admin=admin.get('login') or ''),
+        'settings_access_url': url_for('settings_tab_page', tab='access', admin_id=admin_id) + '#admins',
     })
 
 

@@ -142,7 +142,7 @@ def admin_presence_detail_json(admin_id: int):
             session.get('panel_is_superadmin')
             or 'settings_access' in (session.get('panel_permissions') or [])
         ),
-        'settings_access_url': url_for('settings_tab_page', tab='access', admin_id=admin_id) + '#admins',
+        'settings_access_url': url_for('settings_tab_page', tab='access') + '#admins',
         'recent_actions': [
             {
                 'action': row.get('action') or '',

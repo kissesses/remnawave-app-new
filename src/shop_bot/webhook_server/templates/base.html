@@ -511,7 +511,8 @@
 <body
     class="neon-theme panel-ios bg-[#f2f2f7] dark:bg-black font-display text-[#1c1c1e] dark:text-[#f5f5f7] transition-colors duration-300{% if workspace_embed %} workspace-embed{% endif %}{% if workspace_host %} workspace-host{% endif %}"
     data-workspace-host="{{ '1' if workspace_host else '0' }}"
-    data-presence-url="{{ url_for('admin_presence_json') }}">
+    data-presence-url="{{ url_for('admin_presence_json') }}"
+    data-admin-detail-url="{{ url_for('settings_access_admin_detail', admin_id=0) }}">
     <script>
         (function () {
             if (window.self !== window.top) document.body.classList.add('workspace-embed');
