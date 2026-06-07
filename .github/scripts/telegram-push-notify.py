@@ -53,6 +53,77 @@ def _first_line(message: str) -> str:
     return (message or '').strip().split('\n', 1)[0].strip()
 
 
+def _parse_commit_message(message: str) -> dict[str, str]:
+    text = (message or '').strip()
+    if not text:
+        return {'subject': '', 'en': '', 'ru': ''}
+
+    lines = text.splitlines()
+    subject = lines[0].strip()
+    en_lines: list[str] = []
+    ru_lines: list[str] = []
+    mode: str | None = None
+
+    for line in lines[1:]:
+        stripped = line.strip()
+        if not stripped:
+            continue
+        upper = stripped.upper()
+        if upper.startswith('EN:'):
+            mode = 'en'
+            rest = stripped[3:].strip()
+            if rest:
+                en_lines.append(rest)
+            continue
+        if upper.startswith('RU:'):
+            mode = 'ru'
+            rest = stripped[3:].strip()
+            if rest:
+                ru_lines.append(rest)
+            continue
+        if mode == 'en':
+            en_lines.append(stripped)
+        elif mode == 'ru':
+            ru_lines.append(stripped)
+
+    return {
+        'subject': subject,
+        'en': '\n'.join(en_lines).strip(),
+        'ru': '\n'.join(ru_lines).strip(),
+    }
+
+
+def _truncate(text: str, limit: int = 320) -> str:
+    if len(text) <= limit:
+        return text
+    return text[: limit - 1].rstrip() + '…'
+
+
+def _format_commit_entry(commit: dict) -> str:
+    parsed = _parse_commit_message(str(commit.get('message') or ''))
+    subject = parsed['subject'] or _first_line(str(commit.get('message') or ''))
+    if not subject:
+        return ''
+
+    author = ''
+    author_obj = commit.get('author') or {}
+    if isinstance(author_obj, dict):
+        author = str(author_obj.get('name') or author_obj.get('username') or '').strip()
+
+    cid = str(commit.get('id') or '')[:7]
+    prefix = f'<code>{html.escape(cid)}</code> ' if cid else ''
+    author_suffix = f' <i>— {html.escape(author)}</i>' if author else ''
+
+    blocks = [f'• {prefix}{html.escape(subject)}{author_suffix}']
+
+    if parsed['en']:
+        blocks.append(f'EN: {html.escape(_truncate(parsed["en"]))}')
+    if parsed['ru']:
+        blocks.append(f'RU: {html.escape(_truncate(parsed["ru"]))}')
+
+    return '\n'.join(blocks)
+
+
 def main() -> int:
     token = (os.environ.get('TELEGRAM_RELEASE_BOT_TOKEN') or '').strip()
     chat_id = (os.environ.get('TELEGRAM_RELEASE_CHAT_ID') or '').strip()
@@ -95,33 +166,31 @@ def main() -> int:
     compare_url = f'https://github.com/{repo}/compare/{before}...{sha}' if before and sha else f'https://github.com/{repo}/commits/{branch}'
     commit_url = f'https://github.com/{repo}/commit/{sha}' if sha else compare_url
 
-    lines: list[str] = []
+    entries: list[str] = []
     max_items = 8
     for commit in commits[:max_items]:
         if not isinstance(commit, dict):
             continue
-        msg = _first_line(str(commit.get('message') or ''))
-        if not msg:
-            continue
-        author = ''
-        author_obj = commit.get('author') or {}
-        if isinstance(author_obj, dict):
-            author = str(author_obj.get('name') or author_obj.get('username') or '').strip()
-        cid = str(commit.get('id') or '')[:7]
-        prefix = f'<code>{html.escape(cid)}</code> ' if cid else ''
-        author_suffix = f' <i>— {html.escape(author)}</i>' if author else ''
-        lines.append(f'• {prefix}{html.escape(msg)}{author_suffix}')
+        entry = _format_commit_entry(commit)
+        if entry:
+            entries.append(entry)
 
     omitted = max(0, len(commits) - max_items)
     if omitted:
-        lines.append(f'• … и ещё {omitted}')
+        entries.append(f'• … и ещё {omitted}')
 
-    if not lines:
-        head_msg = _first_line(os.environ.get('GITHUB_HEAD_MESSAGE') or '')
-        if head_msg:
-            lines.append(f'• <code>{html.escape(short_sha)}</code> {html.escape(head_msg)}')
+    if not entries:
+        head_parsed = _parse_commit_message(os.environ.get('GITHUB_HEAD_MESSAGE') or '')
+        head_subject = head_parsed['subject'] or _first_line(os.environ.get('GITHUB_HEAD_MESSAGE') or '')
+        if head_subject:
+            block = f'• <code>{html.escape(short_sha)}</code> {html.escape(head_subject)}'
+            if head_parsed['en']:
+                block += f'\nEN: {html.escape(_truncate(head_parsed["en"]))}'
+            if head_parsed['ru']:
+                block += f'\nRU: {html.escape(_truncate(head_parsed["ru"]))}'
+            entries.append(block)
 
-    commits_block = '\n'.join(lines)
+    commits_block = '\n\n'.join(entries)
     count = len(commits) if commits else 1
     count_label = _commit_word(count)
 
