@@ -162,13 +162,14 @@ html:not(.dark) .settings-page.settings-studio .set-rail {
 
 .settings-page.settings-studio .settings-macos-nav-group {
     margin-bottom: 0.75rem;
+    padding: 0;
 }
 
 .settings-page.settings-studio .settings-macos-nav-group__title {
     display: flex;
     flex-direction: column;
     gap: 0.05rem;
-    margin: 0 0.35rem 0.35rem;
+    margin: 0 0.55rem 0.35rem;
     padding: 0;
     font-size: 0.625rem;
     font-weight: 700;
@@ -193,39 +194,47 @@ html:not(.dark) .settings-page.settings-studio .set-rail {
     opacity: 0.85;
 }
 
-/* Nav links */
-.settings-page.settings-studio .set-rail .tab-link {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.6rem;
+/* Nav links — fixed icon column beats macos-v2 sidebar overrides */
+.settings-page.settings-studio .set-rail .tab-link,
+html[data-design="macos-v2"] .settings-page.settings-studio .settings-sidebar.set-rail .tab-link {
+    display: grid !important;
+    grid-template-columns: 1.5rem minmax(0, 1fr);
+    align-items: center;
+    gap: 0.65rem;
     width: 100%;
-    padding: 0.48rem 0.55rem 0.48rem 0.5rem;
+    padding: 0.48rem 0.55rem !important;
     margin-bottom: 0.12rem;
     border-radius: var(--set-radius-sm);
     border: 1px solid transparent;
     color: var(--set-muted);
     text-decoration: none;
-    transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease, transform 0.14s ease;
+    position: relative;
+    transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease;
 }
 
-.settings-page.settings-studio .set-rail .tab-link::before {
+.settings-page.settings-studio .set-rail .tab-link::before,
+html[data-design="macos-v2"] .settings-page.settings-studio .settings-sidebar.set-rail .tab-link::before {
     display: none !important;
+    content: none !important;
 }
 
-.settings-page.settings-studio .set-rail .tab-link:hover {
+.settings-page.settings-studio .set-rail .tab-link:hover,
+html[data-design="macos-v2"] .settings-page.settings-studio .settings-sidebar.set-rail .tab-link:hover {
     background: var(--set-surface);
     border-color: var(--set-border);
     color: var(--set-text);
 }
 
-.settings-page.settings-studio .set-rail .tab-link.settings-tab-active {
-    background: var(--set-accent-soft);
+.settings-page.settings-studio .set-rail .tab-link.settings-tab-active,
+html[data-design="macos-v2"] .settings-page.settings-studio .settings-sidebar.set-rail .tab-link.settings-tab-active {
+    background: var(--set-accent-soft) !important;
     border-color: rgba(var(--set-accent-rgb), 0.22);
     color: var(--set-accent);
     box-shadow: none !important;
 }
 
-.settings-page.settings-studio .set-rail .tab-link.settings-tab-active .settings-nav-icon {
+.settings-page.settings-studio .set-rail .tab-link.settings-tab-active .settings-nav-icon,
+html[data-design="macos-v2"] .settings-page.settings-studio .settings-sidebar.set-rail .tab-link.settings-tab-active .settings-nav-icon {
     box-shadow: none !important;
 }
 
@@ -261,21 +270,31 @@ html:not(.dark) .settings-page.settings-studio .set-rail {
     color: color-mix(in srgb, var(--set-accent) 55%, var(--set-dim));
 }
 
-.settings-page.settings-studio .set-rail .tab-link .material-symbols-outlined {
-    display: none;
+.settings-page.settings-studio .set-rail .tab-link .material-symbols-outlined,
+html[data-design="macos-v2"] .settings-page.settings-studio .settings-sidebar.set-rail .tab-link > .material-symbols-outlined {
+    display: none !important;
 }
 
-.settings-page.settings-studio .settings-nav-icon {
-    width: 1.45rem;
-    height: 1.45rem;
+.settings-page.settings-studio .settings-nav-icon,
+html[data-design="macos-v2"] .settings-page.settings-studio .settings-sidebar.set-rail .settings-nav-icon {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem !important;
+    height: 1.5rem !important;
     border-radius: 7px;
     box-shadow: none !important;
-    margin-top: 0.05rem;
+    margin: 0 !important;
+    flex-shrink: 0;
+    justify-self: center;
+    align-self: center;
 }
 
-.settings-page.settings-studio .settings-nav-icon .material-symbols-outlined {
+.settings-page.settings-studio .settings-nav-icon .material-symbols-outlined,
+html[data-design="macos-v2"] .settings-page.settings-studio .settings-sidebar.set-rail .settings-nav-icon .material-symbols-outlined {
     display: block !important;
     font-size: 0.875rem;
+    line-height: 1;
 }
 
 /* Nav icon palette */
@@ -586,6 +605,7 @@ html[data-design="macos-v2"] body.workspace-embed .settings-page.settings-studio
 }
 
 html[data-design="macos-v2"] body.workspace-embed .settings-page.settings-studio .set-rail .tab-link {
+    display: flex !important;
     flex-direction: column;
     align-items: center;
     justify-content: center;
@@ -593,8 +613,9 @@ html[data-design="macos-v2"] body.workspace-embed .settings-page.settings-studio
     width: auto;
     min-width: 4rem;
     max-width: 5.25rem;
-    padding: 0.38rem 0.4rem;
+    padding: 0.38rem 0.4rem !important;
     text-align: center;
+    grid-template-columns: unset;
 }
 
 html[data-design="macos-v2"] body.workspace-embed .settings-page.settings-studio .set-link__desc {
@@ -707,14 +728,17 @@ html[data-design="macos-v2"] .settings-page.settings-studio .set-rail .tab-link.
         display: none;
     }
 
-    .settings-page.settings-studio .set-rail .tab-link {
+    .settings-page.settings-studio .set-rail .tab-link,
+    html[data-design="macos-v2"] .settings-page.settings-studio .settings-sidebar.set-rail .tab-link {
+        display: flex !important;
         flex-direction: column;
         align-items: center;
         width: auto;
         min-width: 4rem;
         max-width: 5.25rem;
-        padding: 0.38rem 0.4rem;
+        padding: 0.38rem 0.4rem !important;
         text-align: center;
+        grid-template-columns: unset;
     }
 
     .settings-page.settings-studio .set-link__desc {
