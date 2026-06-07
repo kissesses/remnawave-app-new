@@ -208,6 +208,12 @@ def adjust_balance_route(user_id: int):
     old_balance = get_balance(user_id)
     ok = adjust_user_balance(user_id, delta)
     if ok:
+        panel_ctx.audit('user.balance_adjust', {
+            'user_id': user_id,
+            'delta': float(delta),
+            'old_balance': float(old_balance or 0),
+            'new_balance': float(get_balance(user_id) or 0),
+        })
         try:
             new_balance = get_balance(user_id)
             target_user = get_user(user_id) or {}
@@ -294,6 +300,7 @@ def clear_balance_history_route(user_id: int):
             conn.commit()
         
         logger.info(f"Cleared {deleted_count} balance transactions for user {user_id}")
+        panel_ctx.audit('user.balance_history_clear', {'user_id': user_id, 'rows': deleted_count})
         return jsonify({"ok": True, "message": f"История очищена ({deleted_count} зап.)"})
     except Exception as e:
         logger.error(f"Failed to clear balance history for user {user_id}: {e}")
@@ -318,6 +325,7 @@ def clear_payment_history_route(user_id: int):
             conn.commit()
         
         logger.info(f"Cleared {deleted_count} payment transactions for user {user_id}")
+        panel_ctx.audit('user.payment_history_clear', {'user_id': user_id, 'rows': deleted_count})
         return jsonify({"ok": True, "message": f"История очищена ({deleted_count} зап.)"})
     except Exception as e:
         logger.error(f"Failed to clear payment history for user {user_id}: {e}")
@@ -784,6 +792,7 @@ def toggle_trial_used_route(user_id: int):
             )
             conn.commit()
         
+        panel_ctx.audit('user.trial_toggle', {'user_id': user_id, 'trial_used': new_status})
         return jsonify({
             "ok": True,
             "trial_used": new_status,
@@ -855,10 +864,12 @@ def toggle_block_user_route(user_id):
     is_banned = bool(user.get('is_banned', False))
     if is_banned:
         unban_user(user_id)
+        panel_ctx.audit('user.unban', {'user_id': user_id})
         msg = f"Пользователь {user_id} разблокирован."
         res_ok = True
     else:
         ban_user(user_id)
+        panel_ctx.audit('user.ban', {'user_id': user_id})
         msg = f"Пользователь {user_id} заблокирован."
         res_ok = True
     

@@ -21,6 +21,7 @@ CATEGORY_PAYMENTS = "payments"
 CATEGORY_SQL = "sql"
 CATEGORY_TRIAL = "trial"
 CATEGORY_TICKETS = "tickets"
+CATEGORY_ADMIN = "admin"
 
 ALL_CATEGORIES = (
     CATEGORY_CRM,
@@ -32,6 +33,7 @@ ALL_CATEGORIES = (
     CATEGORY_SQL,
     CATEGORY_TRIAL,
     CATEGORY_TICKETS,
+    CATEGORY_ADMIN,
 )
 
 CATEGORY_LABELS: dict[str, str] = {
@@ -44,6 +46,7 @@ CATEGORY_LABELS: dict[str, str] = {
     CATEGORY_SQL: "SQL / подтверждение БД",
     CATEGORY_TRIAL: "Пробный период",
     CATEGORY_TICKETS: "Тикеты поддержки",
+    CATEGORY_ADMIN: "Действия админов",
 }
 
 CATEGORY_TOPIC_KEYS: dict[str, str] = {
@@ -56,6 +59,7 @@ CATEGORY_TOPIC_KEYS: dict[str, str] = {
     CATEGORY_SQL: "notifications_topic_sql",
     CATEGORY_TRIAL: "notifications_topic_trial",
     CATEGORY_TICKETS: "notifications_topic_tickets",
+    CATEGORY_ADMIN: "notifications_topic_admin",
 }
 
 # legacy fallback (chat, topic) — только если notifications_chat_id пуст

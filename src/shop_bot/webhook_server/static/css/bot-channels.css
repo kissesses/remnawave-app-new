@@ -306,6 +306,37 @@
     gap: 0.5rem;
 }
 
+.bot-notify-admin-audit {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    margin-bottom: 1rem;
+    padding: 0.75rem 0.85rem;
+    border-radius: 0.85rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.bot-notify-admin-audit__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.bot-notify-admin-audit__copy {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    font-size: 0.6875rem;
+    color: rgba(255, 255, 255, 0.48);
+}
+
+.bot-notify-admin-audit__copy strong {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+
 .bot-notify-topic-row {
     display: grid;
     grid-template-columns: minmax(140px, 1.2fr) minmax(120px, 1fr) auto auto;

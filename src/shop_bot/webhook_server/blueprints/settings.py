@@ -385,6 +385,7 @@ def _load_settings_page_context(tab: str) -> dict:
                     tg_notify.CATEGORY_SQL: 'database',
                     tg_notify.CATEGORY_TRIAL: 'timer',
                     tg_notify.CATEGORY_TICKETS: 'confirmation_number',
+                    tg_notify.CATEGORY_ADMIN: 'admin_panel_settings',
                 }.get(cat, 'chat'),
             }
             for cat in tg_notify.ALL_CATEGORIES

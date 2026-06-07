@@ -45,6 +45,8 @@ ALL_SETTINGS_KEYS = [
     "notifications_topic_crm", "notifications_topic_backup", "notifications_topic_secrets",
     "notifications_topic_auth", "notifications_topic_nodes", "notifications_topic_payments",
     "notifications_topic_sql", "notifications_topic_trial", "notifications_topic_tickets",
+    "notifications_topic_admin",
+    "notifications_admin_audit_enabled", "notifications_admin_audit_include_sql",
     "backup_remnawave_mode", "backup_remnawave_compose_dir", "backup_remnawave_ssh_target",
     "backup_remnawave_pg_service", "backup_remnawave_database_url", "backup_remnawave_compose_cmd",
 
@@ -174,6 +176,10 @@ SETTINGS_TAB_CHECKBOXES: dict[str, dict[str, str]] = {
         "enable_fixed_referral_bonus": "false",
         "referral_notify_bonus": "true",
     },
+    "bot": {
+        "notifications_admin_audit_enabled": "true",
+        "notifications_admin_audit_include_sql": "false",
+    },
     "content": {
         "force_subscription": "false",
     },
@@ -211,6 +217,8 @@ SETTINGS_TAB_TEXT_KEYS: dict[str, list[str]] = {
         "notifications_topic_crm", "notifications_topic_backup", "notifications_topic_secrets",
         "notifications_topic_auth", "notifications_topic_nodes", "notifications_topic_payments",
         "notifications_topic_sql", "notifications_topic_trial", "notifications_topic_tickets",
+        "notifications_topic_admin",
+        "notifications_admin_audit_enabled", "notifications_admin_audit_include_sql",
         "backup_telegram_chat_id", "backup_telegram_topic_id",
         "backup_secrets_chat_id", "backup_secrets_topic_id",
     ],
