@@ -1,51 +1,41 @@
-﻿{% from 'partials/dashboard/stat_card.html' import dash_stat_card, dash_stat_spinner %}
+﻿{% from 'partials/dashboard_macros.html' import dh_stat, dh_spinner %}
 
-{{ dash_stat_card('stat_users', 'Пользователей', stats.get('user_count') if stats.get('user_count') is not none else dash_stat_spinner('sky'), 'group', 'sky') }}
-{{ dash_stat_card('stat_keys', 'Ключей', stats.get('total_keys') if stats.get('total_keys') is not none else dash_stat_spinner('blue'), 'vpn_key', 'blue') }}
-{{ dash_stat_card('stat_earned', 'Заработано', ('{:,.0f}'.format(stats.get('total_spent', 0)).replace(',', ' ') ~ ' ₽') if stats.get('total_spent') is not none else dash_stat_spinner('green'), 'payments', 'green') }}
-{{ dash_stat_card('stat_hosts', 'Серверов', stats.get('host_count') if stats.get('host_count') is not none else dash_stat_spinner('amber'), 'dns', 'amber') }}
-{{ dash_stat_card('stat_tickets', 'Тикеты', open_tickets_count if open_tickets_count is not none else dash_stat_spinner('red'), 'confirmation_number', 'red') }}
+{% macro money(val) %}{{ "{:,.0f}".format(val or 0).replace(",", " ") }} ₽{% endmacro %}
 
-<div class="dashboard-kpi-group-label payment-stat-block" data-kpi-group="payments">Платежи</div>
+{{ dh_stat('stat_users', 'Пользователей', stats.get('user_count'), 'group', 'sky') }}
+{{ dh_stat('stat_keys', 'Ключей', stats.get('total_keys'), 'vpn_key', 'blue') }}
+{{ dh_stat('stat_earned', 'Заработано', money(stats.get('total_spent')) if stats.get('total_spent') is not none else none, 'payments', 'green') }}
+{{ dh_stat('stat_hosts', 'Серверов', stats.get('host_count'), 'dns', 'amber') }}
+{{ dh_stat('stat_tickets', 'Тикеты', open_tickets_count if open_tickets_count is not none else none, 'confirmation_number', 'red') }}
 
-{{ dash_stat_card('stat_yookassa', 'YooKassa', ('{:,.0f}'.format(stats.get('yookassa_income', 0)).replace(',', ' ') ~ ' ₽') if stats.get('yookassa_income') is not none else dash_stat_spinner('indigo'), 'account_balance_wallet', 'indigo', 'payment-stat-block') }}
-{{ dash_stat_card('stat_platega', 'Platega', ('{:,.0f}'.format(stats.get('platega_income', 0)).replace(',', ' ') ~ ' ₽') if stats.get('platega_income') is not none else dash_stat_spinner('cyan'), 'credit_card', 'cyan', 'payment-stat-block') }}
-{{ dash_stat_card('stat_stars', 'TG Stars', ('{:,.0f}'.format(stats.get('stars_income', 0)).replace(',', ' ') ~ ' ₽') if stats.get('stars_income') is not none else dash_stat_spinner('amber'), 'grade', 'amber', 'payment-stat-block') }}
-{{ dash_stat_card('stat_cryptobot', 'CryptoBot', ('{:,.0f}'.format(stats.get('cryptobot_income', 0)).replace(',', ' ') ~ ' ₽') if stats.get('cryptobot_income') is not none else dash_stat_spinner('violet'), 'currency_bitcoin', 'violet', 'payment-stat-block') }}
+{{ dh_stat('stat_yookassa', 'YooKassa', money(stats.get('yookassa_income')) if stats.get('yookassa_income') is not none else none, 'account_balance_wallet', 'indigo', payment=true) }}
+{{ dh_stat('stat_platega', 'Platega', money(stats.get('platega_income')) if stats.get('platega_income') is not none else none, 'credit_card', 'cyan', payment=true) }}
+{{ dh_stat('stat_stars', 'TG Stars', money(stats.get('stars_income')) if stats.get('stars_income') is not none else none, 'grade', 'amber', payment=true) }}
+{{ dh_stat('stat_cryptobot', 'CryptoBot', money(stats.get('cryptobot_income')) if stats.get('cryptobot_income') is not none else none, 'currency_bitcoin', 'violet', payment=true) }}
 
-<div data-dash-widget="stat_heleket_ton" class="dash-stat-card dash-stat-card--cyan payment-stat-block" id="toggle-stats-card">
-    <div class="dash-stat-card__border" aria-hidden="true"></div>
-    <div class="dash-stat-card__glow" aria-hidden="true"></div>
-    <div class="dash-stat-card__shine" aria-hidden="true"></div>
-    <div class="dash-stat-card__body dash-stat-card__body--toggle">
-        <div class="dash-stat-card__main">
-            <div id="view-stat-heleket" class="stat-view">
-                <p class="dash-stat-card__label">Heleket</p>
-                <div class="dash-stat-card__value">
-                    {% if stats.get('heleket_income') is not none %}
-                    {{ "{:,.0f}".format(stats.get('heleket_income', 0)).replace(",", " ") }} ₽
-                    {% else %}{{ dash_stat_spinner('cyan') }}{% endif %}
-                </div>
-            </div>
-            <div id="view-stat-ton" class="stat-view hidden">
-                <p class="dash-stat-card__label">TonConnect</p>
-                <div class="dash-stat-card__value dash-stat-card__value--emerald">
-                    {% if stats.get('tonconnect_income') is not none %}
-                    {{ "{:,.0f}".format(stats.get('tonconnect_income', 0)).replace(",", " ") }} ₽
-                    {% else %}{{ dash_stat_spinner('cyan') }}{% endif %}
-                </div>
-            </div>
+<div data-dash-widget="stat_heleket_ton" class="dh-stat dh-stat--cyan payment-stat-block" id="toggle-stats-card">
+    <div class="dh-stat__glow" aria-hidden="true"></div>
+    <div class="dh-stat__body dh-stat__body--toggle">
+        <div id="view-stat-heleket" class="dh-stat__main stat-view">
+            <p class="dh-stat__label">Heleket</p>
+            <h4 class="dh-stat__value">
+                {% if stats.get('heleket_income') is not none %}{{ money(stats.get('heleket_income')) }}{% else %}{{ dh_spinner('cyan') }}{% endif %}
+            </h4>
         </div>
-        <button type="button" class="dash-stat-card__icon dash-stat-card__icon--btn" onclick="toggleStat(event)" title="Переключить Heleket / TonConnect">
+        <div id="view-stat-ton" class="dh-stat__main stat-view hidden">
+            <p class="dh-stat__label">TonConnect</p>
+            <h4 class="dh-stat__value dh-stat__value--accent">
+                {% if stats.get('tonconnect_income') is not none %}{{ money(stats.get('tonconnect_income')) }}{% else %}{{ dh_spinner('cyan') }}{% endif %}
+            </h4>
+        </div>
+        <button type="button" class="dh-stat__icon dh-stat__icon--btn" onclick="toggleStat(event)" title="Переключить Heleket / TonConnect">
             <span class="material-symbols-outlined" id="toggle-stat-icon">payments</span>
         </button>
     </div>
 </div>
 
-<div class="dashboard-kpi-group-label" data-kpi-group="segments">Сегменты</div>
-
-{{ dash_stat_card('stat_no_purchases', 'Не купили ключ', stats.get('no_purchases_count') if stats.get('no_purchases_count') is not none else dash_stat_spinner('slate'), 'person_off', 'slate', onclick="openUserGroupModal('no_purchases', 'Не купили ключ')") }}
-{{ dash_stat_card('stat_inactive_buyers', 'Нет активных', stats.get('inactive_buyers_count') if stats.get('inactive_buyers_count') is not none else dash_stat_spinner('orange'), 'history', 'orange', onclick="openUserGroupModal('inactive_buyers', 'Нет активных (Покупали)')") }}
-{{ dash_stat_card('stat_trials', 'На триале', stats.get('trials_count') if stats.get('trials_count') is not none else dash_stat_spinner('pink'), 'card_giftcard', 'pink', onclick="openUserGroupModal('trials', 'Пользователи на триале')") }}
-{{ dash_stat_card('stat_active_buyers', 'Купили ключ', stats.get('active_buyers_count') if stats.get('active_buyers_count') is not none else dash_stat_spinner('teal'), 'verified_user', 'teal', onclick="openUserGroupModal('active_buyers', 'Покупатели с активным ключом')") }}
-{{ dash_stat_card('stat_active_keys', 'Активные ключи', stats.get('active_keys_count') if stats.get('active_keys_count') is not none else dash_stat_spinner('fuchsia'), 'vpn_key', 'fuchsia', onclick="openUserGroupModal('active_keys', 'Все активные ключи')") }}
+{{ dh_stat('stat_no_purchases', 'Не купили ключ', stats.get('no_purchases_count'), 'person_off', 'slate', action_html='<button type="button" class="dh-stat__icon dh-stat__icon--btn" onclick="openUserGroupModal(\'no_purchases\', \'Не купили ключ\')"><span class="material-symbols-outlined">person_off</span></button>') }}
+{{ dh_stat('stat_inactive_buyers', 'Нет активных', stats.get('inactive_buyers_count'), 'history', 'orange', action_html='<button type="button" class="dh-stat__icon dh-stat__icon--btn" onclick="openUserGroupModal(\'inactive_buyers\', \'Нет активных (Покупали)\')"><span class="material-symbols-outlined">history</span></button>') }}
+{{ dh_stat('stat_trials', 'На триале', stats.get('trials_count'), 'card_giftcard', 'pink', action_html='<button type="button" class="dh-stat__icon dh-stat__icon--btn" onclick="openUserGroupModal(\'trials\', \'Пользователи на триале\')"><span class="material-symbols-outlined">card_giftcard</span></button>') }}
+{{ dh_stat('stat_active_buyers', 'Купили ключ', stats.get('active_buyers_count'), 'verified_user', 'teal', action_html='<button type="button" class="dh-stat__icon dh-stat__icon--btn" onclick="openUserGroupModal(\'active_buyers\', \'Покупатели с активным ключом\')"><span class="material-symbols-outlined">verified_user</span></button>') }}
+{{ dh_stat('stat_active_keys', 'Активные ключи', stats.get('active_keys_count'), 'vpn_key', 'fuchsia', action_html='<button type="button" class="dh-stat__icon dh-stat__icon--btn" onclick="openUserGroupModal(\'active_keys\', \'Все активные ключи\')"><span class="material-symbols-outlined">vpn_key</span></button>') }}

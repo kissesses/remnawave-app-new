@@ -1,0 +1,85 @@
+<section data-dash-widget="analytics_income" class="dh-card dh-card--income">
+    <div class="dh-card__head">
+        <div class="dh-card__head-main">
+            <span class="dh-card__head-icon" aria-hidden="true"><span class="material-symbols-outlined">payments</span></span>
+            <div>
+                <h3 class="dh-card__title">Аналитика доходов</h3>
+                <div class="dh-pills" role="group" aria-label="Период">
+                    <button type="button" class="dash-period-btn dh-pill" id="p-today" onclick="setIncomePeriod('today', this)">Сегодня</button>
+                    <button type="button" class="dash-period-btn dh-pill" id="p-7d" onclick="setIncomePeriod('7d', this)">7 дней</button>
+                    <button type="button" class="dash-period-btn dh-pill is-active" id="p-30d" onclick="setIncomePeriod('30d', this)">30 дней</button>
+                    <button type="button" class="dash-period-btn dh-pill" id="p-3m" onclick="setIncomePeriod('3m', this)">3 мес</button>
+                    <button type="button" class="dash-period-btn dh-pill" id="p-6m" onclick="setIncomePeriod('6m', this)">6 мес</button>
+                    <button type="button" class="dash-period-btn dh-pill" id="p-12m" onclick="setIncomePeriod('12m', this)">1 год</button>
+                    <button type="button" class="dash-period-btn dh-pill" id="p-all" onclick="setIncomePeriod('all', this)">Все</button>
+                </div>
+            </div>
+        </div>
+        <div class="dh-finance-total">
+            <span class="dh-stat__label">Итого</span>
+            <span id="period-total" class="dh-stat__value dh-stat__value--accent">— ₽</span>
+        </div>
+    </div>
+    <div class="dh-card__body">
+        <div class="dh-grid-analytics">
+            <div class="dh-chart-box"><canvas id="incomeChart"></canvas></div>
+            <div class="dh-finance">
+                <div class="dh-finance-tiles">
+                <div class="dh-finance-tile dh-finance-tile--topups">
+                    <div class="dh-finance-tile__head">
+                        <div>
+                            <div class="dh-card__title">Баланс</div>
+                            <p class="dh-card__subtitle">Пополнения</p>
+                        </div>
+                        <span id="finance-topups-count" class="dh-chip__value">0 шт.</span>
+                    </div>
+                    <div id="finance-topups-amount" class="dh-stat__value">0 ₽</div>
+                    <div class="dh-finance-tile__bar"><span id="finance-topups-bar"></span></div>
+                </div>
+                <div class="dh-finance-tile dh-finance-tile--subs">
+                    <div class="dh-finance-tile__head">
+                        <div>
+                            <div class="dh-card__title">Подписки</div>
+                            <p class="dh-card__subtitle">Покупки</p>
+                        </div>
+                        <span id="finance-subscriptions-count" class="dh-chip__value">0 шт.</span>
+                    </div>
+                    <div id="finance-subscriptions-amount" class="dh-stat__value">0 ₽</div>
+                    <div class="dh-finance-tile__bar"><span id="finance-subscriptions-bar"></span></div>
+                </div>
+                </div>
+                <div class="dh-finance__foot">
+                    <div><span class="dh-stat__label">Всего операций</span><strong id="finance-total-count">0 шт.</strong></div>
+                    <div><span class="dh-stat__label">Итого</span><strong id="finance-total-amount" class="dh-stat__value--accent">0 ₽</strong></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="dh-grid-2">
+    <section data-dash-widget="analytics_users" class="dh-card">
+        <div class="dh-card__head">
+            <div class="dh-card__head-main">
+                <span class="dh-card__head-icon"><span class="material-symbols-outlined">person_add</span></span>
+                <div>
+                    <h3 class="dh-card__title">Новые пользователи</h3>
+                    <p class="dh-card__subtitle">Регистрации за период</p>
+                </div>
+            </div>
+        </div>
+        <div class="dh-card__body dh-chart-box dh-chart-box--sm"><canvas id="newUsersChart"></canvas></div>
+    </section>
+    <section data-dash-widget="analytics_keys" class="dh-card">
+        <div class="dh-card__head">
+            <div class="dh-card__head-main">
+                <span class="dh-card__head-icon"><span class="material-symbols-outlined">vpn_key</span></span>
+                <div>
+                    <h3 class="dh-card__title">Новые ключи</h3>
+                    <p class="dh-card__subtitle">Выданные ключи за период</p>
+                </div>
+            </div>
+        </div>
+        <div class="dh-card__body dh-chart-box dh-chart-box--sm"><canvas id="newKeysChart"></canvas></div>
+    </section>
+</div>

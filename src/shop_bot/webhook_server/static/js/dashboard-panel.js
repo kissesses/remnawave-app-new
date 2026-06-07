@@ -1,22 +1,10 @@
 /**
- * Dashboard panel — charts, tabs, auto-refresh, modals
+ * Dashboard panel — charts, tables, speedtest, user groups.
  */
 (function () {
     'use strict';
 
-    function cfg() {
-        return window.__DASHBOARD_CONFIG__ || { urls: {} };
-    }
-
-    function togglePaymentStats() {
-        const statsCont = document.getElementById('dash-stats');
-        const icon = document.getElementById('icon-toggle-payments');
-        if (!statsCont) return;
-        const isHidden = statsCont.classList.toggle('hide-payments');
-        localStorage.setItem('hide_payment_stats', isHidden);
-        if (icon) icon.textContent = isHidden ? 'visibility_off' : 'visibility';
-        if (typeof window.refreshDashboardSection === 'function') window.refreshDashboardSection('dash-stats');
-    }
+    const routes = window.__DASHBOARD_ROUTES__ || {};
 
     function applyToggleStat(mode) {
         const hView = document.getElementById('view-stat-heleket');
@@ -34,28 +22,42 @@
         }
     }
 
-    function toggleStat(event) {
+    window.toggleStat = function (event) {
         if (event) event.stopPropagation();
         const current = localStorage.getItem('dashboard_toggle_stat') || 'heleket';
         const next = current === 'heleket' ? 'ton' : 'heleket';
         localStorage.setItem('dashboard_toggle_stat', next);
         applyToggleStat(next);
-    }
+    };
 
-    function initDashboardPage() {
-        const c = cfg();
-
-        const isHidden = localStorage.getItem('hide_payment_stats') === 'true';
-        document.querySelectorAll('[data-fetch-url]').forEach(el => {
-            [...el.childNodes].forEach(n => { if (n.nodeType === 3) n.remove(); });
-        });
-        if (isHidden) {
-            document.getElementById('dash-stats')?.classList.add('hide-payments');
-            const icon = document.getElementById('icon-toggle-payments');
-            if (icon) icon.textContent = 'visibility_off';
+    window.togglePaymentStats = function () {
+        const statsCont = document.getElementById('dash-stats');
+        const icon = document.getElementById('icon-toggle-payments');
+        if (!statsCont) return;
+        const isHidden = statsCont.classList.toggle('hide-payments');
+        localStorage.setItem('hide_payment_stats', isHidden);
+        if (icon) icon.textContent = isHidden ? 'visibility_off' : 'visibility';
+        if (typeof window.refreshDashboardSection === 'function') {
+            window.refreshDashboardSection('dash-stats');
         }
-        applyToggleStat(localStorage.getItem('dashboard_toggle_stat') || 'heleket');
+    };
 
+    (function initPaymentVisibility() {
+        const isHidden = localStorage.getItem('hide_payment_stats') === 'true';
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('[data-fetch-url]').forEach((el) => {
+                [...el.childNodes].forEach((n) => { if (n.nodeType === 3) n.remove(); });
+            });
+            if (isHidden) {
+                document.getElementById('dash-stats')?.classList.add('hide-payments');
+                const icon = document.getElementById('icon-toggle-payments');
+                if (icon) icon.textContent = 'visibility_off';
+            }
+            applyToggleStat(localStorage.getItem('dashboard_toggle_stat') || 'heleket');
+        });
+    })();
+
+    document.addEventListener('DOMContentLoaded', () => {
 window.dashCharts = {};
         window.topChart = null;
         window.detailChart = null;
@@ -93,11 +95,9 @@ window.dashCharts = {};
                 type: 'line',
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    animation: false,
                     interaction: { intersect: false, mode: 'index' },
                     layout: { padding: { top: 4, bottom: 4, left: 0, right: 4 } },
                     plugins: {
-                        decimation: { enabled: true, algorithm: 'lttb', samples: 120 },
                         legend: { display: true, position: 'top', align: 'end', labels: { color: theme.legend, boxWidth: 8, boxHeight: 8, padding: 16, usePointStyle: true, pointStyle: 'circle', font: { family: 'Inter', size: 10, weight: '600' } } },
                         tooltip: {
                             backgroundColor: theme.tooltip.backgroundColor,
@@ -236,12 +236,19 @@ window.dashCharts = {};
 
                     const trimmedHtml = html.trim();
                     if (el.innerHTML !== trimmedHtml) {
-                        el.innerHTML = trimmedHtml;
-                        [...el.childNodes].forEach(n => { if (n.nodeType === 3) n.remove(); });
+                        el.style.opacity = '0.5';
+                        setTimeout(() => {
+                            el.innerHTML = trimmedHtml;
+                            // Удалить текстовые узлы (BOM, пробелы) из grid-контейнеров
+                            [...el.childNodes].forEach(n => { if (n.nodeType === 3) n.remove(); });
+                            el.style.opacity = '1';
+                        }, 150);
                     }
                 }
             } catch (e) { console.error(`Refresh error (${id}):`, e); }
         };
+
+        window.refreshDashboardSection = refreshSection;
 
         const initAutoRefresh = () => {
             document.querySelectorAll('[data-fetch-url][data-fetch-interval]').forEach(el => {
@@ -256,7 +263,6 @@ window.dashCharts = {};
                 }
             });
         };
-        window.refreshDashboardSection = refreshSection;
 
         // ===== ФУНКЦИЯ: Загрузка таблиц (Транзакции, Триалы) =====
         const loadTableData = async (type) => {
@@ -303,7 +309,7 @@ window.dashCharts = {};
             const urlObj = new URL(link.href);
             const page = urlObj.searchParams.get(type === 'transactions' ? 'page' : 'trials_page');
             const cont = document.getElementById(`dash-${type}`);
-            const url = type === 'transactions' ? c.urls.transactionsPartial : c.urls.trialsPartial;
+            const url = type === 'transactions' ? routes.transactions : routes.trials;
 
             cont.style.opacity = '0.5';
             const data = await fetchJSON(url, { page, ajax_pagination: 1 });
@@ -322,6 +328,7 @@ window.dashCharts = {};
             if (pag) {
                 pag.addEventListener('click', e => handlePag(e, t));
             }
+            loadTableData(t);
         });
 
         // ===== УПРАВЛЕНИЕ ГРАФИКАМИ =====
@@ -343,13 +350,13 @@ window.dashCharts = {};
                         label,
                         data: dates.map(d => obj[d] || 0),
                         borderColor: color,
-                        backgroundColor: 'transparent',
-                        fill: false,
-                        tension: 0.15,
+                        backgroundColor: createGrad(ctx, colorRgba, 0.18, 0.04),
+                        fill: true,
+                        tension: 0.4,
                         pointBackgroundColor: color,
                         pointBorderColor: 'rgba(11, 15, 14, 0.8)',
-                        pointBorderWidth: 1,
-                        pointRadius: dataLen > 30 ? 0 : 2,
+                        pointBorderWidth: 2,
+                        pointRadius: dataLen > 40 ? 0 : dataLen > 20 ? 2 : 3,
                         pointHoverRadius: 6,
                         pointHoverBorderWidth: 2,
                         pointHoverBorderColor: 'rgba(11, 15, 14, 0.9)',
@@ -406,7 +413,7 @@ window.dashCharts = {};
         };
 
         const refreshCharts = async () => {
-            const data = await fetchJSON(c.urls.chartsJson, { period: currentIncomePeriod });
+            const data = await fetchJSON(`${routes.charts}?period=${currentIncomePeriod}`);
             if (!data) return;
 
             if (!window.dashCharts['newUsersChart']) {
@@ -503,9 +510,9 @@ window.dashCharts = {};
                 label: method,
                 data: dates.map(d => (incomeData[d] && incomeData[d][method]) || 0),
                 borderColor: methodColors[method] || '#94a3b8',
-                backgroundColor: 'transparent',
-                fill: false,
-                tension: 0.15,
+                backgroundColor: createGrad(ctx, hexToRgba(methodColors[method] || '#94a3b8', 1), 0.15, 0.03),
+                fill: true,
+                tension: 0.4,
                 pointRadius: (ctx) => {
                     const val = ctx.dataset.data[ctx.dataIndex];
                     return val > 0 ? (dataLen > 50 ? 0 : dataLen > 25 ? 2 : 3) : 0;
@@ -614,9 +621,9 @@ window.dashCharts = {};
                 label: method,
                 data: dates.map(d => (incomeData[d] && incomeData[d][method]) || 0),
                 borderColor: methodColors[method] || '#94a3b8',
-                backgroundColor: 'transparent',
-                fill: false,
-                tension: 0.15,
+                backgroundColor: createGrad(chart.ctx, hexToRgba(methodColors[method] || '#94a3b8', 1), 0.15, 0.03),
+                fill: true,
+                tension: 0.4,
                 pointRadius: (ctx) => {
                     const val = ctx.dataset.data[ctx.dataIndex];
                     return val > 0 ? (dataLen2 > 50 ? 0 : dataLen2 > 25 ? 2 : 3) : 0;
@@ -645,7 +652,10 @@ window.dashCharts = {};
             chart.update('none');
         };
 
-        // charts: lazy init on analytics tab
+        refreshCharts();
+
+        // Автообновление графиков раз в 2 минуты
+        setInterval(refreshCharts, 120000);
 
         // ===== ФУНКЦИЯ: Загрузка SSH данных =====
         const targetSelect = document.getElementById('st-target');
@@ -655,7 +665,7 @@ window.dashCharts = {};
         let sshTargetsData = [];
 
         const loadSSHTargets = async () => {
-            const data = await fetchJSON(c.urls.sshTargetsJson);
+            const data = await fetchJSON(routes.sshTargets);
             if (data && data.targets) {
                 sshTargetsData = data.targets;
                 targetSelect.innerHTML = data.targets.map(t => `<option value="${t.target_name}">${t.target_name}</option>`).join('');
@@ -695,7 +705,7 @@ window.dashCharts = {};
 
         const loadTop = async () => {
             if (!targetSelect?.value || !topCanvas) return;
-            const data = await fetchJSON(c.urls.hostSpeedtestsTemplate.replace('__H__', encodeURIComponent(targetSelect.value)), { limit: 60 });
+            const data = await fetchJSON(`${routes.hostSpeedtests.replace("__H__", encodeURIComponent(targetSelect.value))}`, { limit: 60 });
             if (!data?.ok) return;
             const items = (data.items || []).slice().reverse();
             if (latestBox) {
@@ -735,8 +745,8 @@ window.dashCharts = {};
                             label: 'Загрузка',
                             data: items.map(it => parseFloat(it.download_mbps) || 0),
                             borderColor: '#22d3ee',
-                            backgroundColor: 'transparent',
-                            fill: false, tension: 0.15,
+                            backgroundColor: createGrad(ctx, 'rgba(34, 211, 238, 1)', 0.18, 0.04),
+                            fill: true, tension: 0.4,
                             pointRadius: stLen > 40 ? 0 : stLen > 20 ? 2 : 3,
                             pointHoverRadius: 6,
                             pointBackgroundColor: '#22d3ee',
@@ -750,8 +760,8 @@ window.dashCharts = {};
                             label: 'Отдача',
                             data: items.map(it => parseFloat(it.upload_mbps) || 0),
                             borderColor: '#00bfff',
-                            backgroundColor: 'transparent',
-                            fill: false, tension: 0.15,
+                            backgroundColor: createGrad(ctx, 'rgba(0, 191, 255, 1)', 0.15, 0.03),
+                            fill: true, tension: 0.4,
                             pointRadius: stLen > 40 ? 0 : stLen > 20 ? 2 : 3,
                             pointHoverRadius: 6,
                             pointBackgroundColor: '#00bfff',
@@ -778,7 +788,7 @@ window.dashCharts = {};
             });
         };
 
-        // speedtest: lazy init on activity tab
+        if (targetSelect) loadSSHTargets();
 
 
         // ===== ФУНКЦИЯ: Формы Speedtest =====
@@ -792,7 +802,7 @@ window.dashCharts = {};
                 } catch (e) { closeModal('speedtestRunningModal'); }
             });
         };
-        handleForm('st-run-form', () => c.urls.runSpeedtestTemplate.replace('__T__', encodeURIComponent(targetSelect.value)), 800);
+        handleForm('st-run-form', () => `${routes.speedtestRun.replace("__T__", encodeURIComponent(targetSelect.value))}`, 800);
         handleForm('st-run-all-form', () => document.getElementById('st-run-all-form').action, 1200);
 
         // ===== МОДАЛЬНЫЕ ОКНА =====
@@ -821,10 +831,10 @@ window.dashCharts = {};
                         label: metricLabel,
                         data: items.map(it => Number(it[metric] || 0)),
                         borderColor: metricColor,
-                        backgroundColor: 'transparent',
+                        backgroundColor: createGrad(ctx, metricColorRgba, 0.18, 0.04),
                         borderWidth: 2.5,
-                        fill: false,
-                        tension: 0.15,
+                        fill: true,
+                        tension: 0.4,
                         pointRadius: dtLen > 40 ? 0 : dtLen > 20 ? 2 : 3,
                         pointHoverRadius: 6,
                         pointBackgroundColor: metricColor,
@@ -1068,7 +1078,7 @@ window.dashCharts = {};
             openModal('userGroupModal');
 
             try {
-                const data = await fetchJSON(c.urls.userGroupsJson);
+                const data = await fetchJSON(routes.userGroups);
                 if (data && data.ok && data.groups && data.groups[groupKey]) {
                     const list = data.groups[groupKey];
                     _ugmAllItems = list;
@@ -1104,94 +1114,28 @@ window.dashCharts = {};
 
         initAutoRefresh();
 
-        (function initDashClock() {
-            const el = document.getElementById('dash-live-clock');
-            if (!el) return;
-            function tick() {
-                el.textContent = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-            }
-            tick();
-            setInterval(tick, 30000);
-        })();
-
         (function initDashTabs() {
             const tabs = document.querySelectorAll('#dash-tabs .dash-tab');
             const panels = document.querySelectorAll('.dash-tab-panel');
-            const indicator = document.getElementById('dash-tab-indicator');
-            const tabsNav = document.getElementById('dash-tabs');
             let monitorStarted = false;
-            let analyticsStarted = false;
-            let activityStarted = false;
-
-            function moveTabIndicator(activeTab) {
-                if (!indicator || !activeTab || !tabsNav) return;
-                const navRect = tabsNav.getBoundingClientRect();
-                const tabRect = activeTab.getBoundingClientRect();
-                indicator.style.width = `${tabRect.width}px`;
-                indicator.style.height = `${tabRect.height}px`;
-                indicator.style.transform = `translate(${tabRect.left - navRect.left}px, ${tabRect.top - navRect.top}px)`;
-            }
-
-            function initAnalytics() {
-                if (analyticsStarted) return;
-                analyticsStarted = true;
-                refreshCharts();
-                setInterval(refreshCharts, 120000);
-            }
-
-            function initActivity() {
-                if (activityStarted) return;
-                activityStarted = true;
-                ['transactions', 'trials'].forEach(t => loadTableData(t));
-                if (targetSelect) loadSSHTargets();
-            }
 
             function showTab(name) {
-                if (name === 'overview') {
-                    document.getElementById('dash-kpi-zone')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    name = 'resources';
-                }
-                tabs.forEach(t => {
-                    const active = t.dataset.tab === name;
-                    t.classList.toggle('is-active', active);
-                    t.setAttribute('aria-selected', active ? 'true' : 'false');
-                });
-                panels.forEach(p => {
-                    const show = p.dataset.tabPanel === name;
-                    p.classList.toggle('hidden', !show);
-                    p.classList.toggle('dash-tab-panel--enter', show);
-                });
-                moveTabIndicator(document.querySelector(`#dash-tabs .dash-tab[data-tab="${name}"]`));
+                tabs.forEach(t => t.classList.toggle('is-active', t.dataset.tab === name));
+                panels.forEach(p => p.classList.toggle('hidden', p.dataset.tabPanel !== name));
                 if (name === 'resources' && !monitorStarted && typeof window.initDashboardMonitor === 'function') {
                     monitorStarted = true;
                     window.initDashboardMonitor();
                 }
-                if (name === 'analytics') initAnalytics();
-                if (name === 'activity') initActivity();
                 const path = location.pathname;
-                history.replaceState(null, '', name === 'resources' && !location.hash ? path : `${path}#${name}`);
+                history.replaceState(null, '', name === 'overview' ? path : `${path}#${name}`);
             }
             window.switchDashTab = showTab;
 
             tabs.forEach(t => t.addEventListener('click', () => showTab(t.dataset.tab)));
-            window.addEventListener('resize', () => moveTabIndicator(document.querySelector('#dash-tabs .dash-tab.is-active')));
-            let hash = (location.hash || '').replace('#', '');
-            if (hash === 'overview') hash = 'resources';
+            const hash = (location.hash || '').replace('#', '');
             if (hash && document.querySelector(`[data-tab-panel="${hash}"]`)) {
                 showTab(hash);
-            } else {
-                showTab('resources');
             }
-            requestAnimationFrame(() => {
-                moveTabIndicator(document.querySelector('#dash-tabs .dash-tab.is-active'));
-            });
         })();
-
-    }
-
-    window.initDashboardPage = initDashboardPage;
-    window.togglePaymentStats = togglePaymentStats;
-    window.toggleStat = toggleStat;
-
-    document.addEventListener('DOMContentLoaded', initDashboardPage);
+    });
 })();

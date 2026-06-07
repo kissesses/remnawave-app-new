@@ -1,0 +1,97 @@
+<div id="speedtestRunningModal" class="modal-overlay dh-modal">
+    <div class="modal-content">
+        <div class="dh-modal__row">
+            <span class="dh-spinner" aria-hidden="true"></span>
+            <div>
+                <div class="dh-card__title">Идёт измерение скорости…</div>
+                <p class="dh-card__subtitle" style="text-transform:none;letter-spacing:0;">Пожалуйста, подождите 10–30 секунд</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="speedtestModal" class="modal-overlay modal-xl dh-modal">
+    <div class="modal-content">
+        <div class="dh-card__head">
+            <div class="dh-card__head-main">
+                <span class="dh-card__head-icon"><span class="material-symbols-outlined">speed</span></span>
+                <div>
+                    <h5 class="dh-card__title">Скорость — <span id="st-modal-host"></span></h5>
+                    <p class="dh-card__subtitle">Детальный график</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeModal('speedtestModal')" class="dh-btn dh-btn--ghost" aria-label="Закрыть">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="dh-card__body">
+            <div class="dh-modal__toolbar">
+                <label>Метрика:
+                    <select id="st-metric" class="dh-select">
+                        <option value="download_mbps" selected>Загрузка (Mbps)</option>
+                        <option value="upload_mbps">Отдача (Mbps)</option>
+                        <option value="ping_ms">Пинг (ms)</option>
+                    </select>
+                </label>
+                <label>Период:
+                    <select id="st-range" class="dh-select">
+                        <option value="24">24 точки</option>
+                        <option value="60" selected>60 точек</option>
+                        <option value="120">120 точек</option>
+                    </select>
+                </label>
+                <button type="button" id="st-refresh" class="dh-btn dh-btn--accent">
+                    <span class="material-symbols-outlined">refresh</span> Обновить
+                </button>
+            </div>
+            <div class="dh-chart-box"><canvas id="st-detail-canvas"></canvas></div>
+        </div>
+    </div>
+</div>
+
+<div id="userGroupModal" class="modal-overlay modal-xl dh-modal">
+    <div class="modal-content">
+        <div class="dh-card__head">
+            <div class="dh-card__head-main">
+                <span id="userGroupModalIcon" class="dh-card__head-icon"><span class="material-symbols-outlined">group</span></span>
+                <div>
+                    <div class="dh-hero__eyebrow">
+                        <span>Сегмент пользователей</span>
+                        <span id="userGroupModalCount" class="dh-chip__value">—</span>
+                    </div>
+                    <h5 class="dh-hero__title dh-hero__title--sm" id="userGroupModalTitle">Пользователи</h5>
+                    <p id="userGroupModalDesc" class="dh-hero__sub-text"></p>
+                </div>
+            </div>
+            <div class="dh-hero__actions">
+                <button type="button" onclick="loadAllUserGroup()" id="ugm-load-all-btn" class="dh-btn" title="Загрузить всех">
+                    <span class="material-symbols-outlined">download_for_offline</span> Все
+                </button>
+                <button type="button" onclick="copyUserGroupIds()" class="dh-btn dh-btn--ghost" title="Скопировать ID">
+                    <span class="material-symbols-outlined">content_copy</span>
+                </button>
+                <button type="button" onclick="closeModal('userGroupModal')" class="dh-btn dh-btn--ghost" aria-label="Закрыть">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+        </div>
+        <div class="dh-card__body">
+            <div id="userGroupModalContent" class="dh-table-wrap" style="max-height:56vh;overflow-y:auto;">
+                <table class="dh-table">
+                    <thead>
+                        <tr>
+                            <th>Пользователь</th>
+                            <th>Финансы</th>
+                            <th>Ключ / срок</th>
+                            <th id="th_months_bought" class="hidden">Куплено мес.</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userGroupModalBody">
+                        <tr><td colspan="5" class="dh-empty">Загрузка…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

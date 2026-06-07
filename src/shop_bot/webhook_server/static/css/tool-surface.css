@@ -10,6 +10,7 @@
 .pms-page,
 .mtm-page,
 .bv-page,
+.dh-page,
 .btn-cstr-page,
 #tab-broadcast,
 #tab-promo,
@@ -35,6 +36,7 @@ html:not(.dark) .prx-page,
 html:not(.dark) .pms-page,
 html:not(.dark) .mtm-page,
 html:not(.dark) .bv-page,
+html:not(.dark) .dh-page,
 html:not(.dark) .btn-cstr-page,
 html:not(.dark) #tab-broadcast,
 html:not(.dark) #tab-promo {
@@ -53,6 +55,7 @@ html:not(.dark) #tab-promo {
 .prx-aurora,
 .prx-grid-bg,
 .bv-ambient,
+.dh-ambient,
 #tab-broadcast.brx-layout::before {
     display: none !important;
 }
@@ -61,6 +64,7 @@ html:not(.dark) #tab-promo {
 .brc-banner,
 .prx-hero,
 .bv-hero,
+.dh-hero,
 .btn-cstr-hero {
     margin-bottom: 1rem;
     padding: 1rem 1.1rem;

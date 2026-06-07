@@ -1,0 +1,39 @@
+{% macro dh_spinner(tone='primary') %}
+<span class="dh-spinner dh-spinner--{{ tone }}" aria-hidden="true"></span>
+{% endmacro %}
+
+{% macro dh_stat(widget_id, label, value, icon, tone='sky', payment=false, action_html='') %}
+<div data-dash-widget="{{ widget_id }}" class="dh-stat dh-stat--{{ tone }}{% if payment %} payment-stat-block{% endif %}">
+    <div class="dh-stat__glow" aria-hidden="true"></div>
+    <div class="dh-stat__body">
+        <div class="dh-stat__main">
+            <p class="dh-stat__label">{{ label }}</p>
+            <h4 class="dh-stat__value">
+                {% if value is not none %}{{ value }}{% else %}{{ dh_spinner(tone) }}{% endif %}
+            </h4>
+        </div>
+        {% if action_html %}
+        {{ action_html|safe }}
+        {% else %}
+        <span class="dh-stat__icon" aria-hidden="true">
+            <span class="material-symbols-outlined">{{ icon }}</span>
+        </span>
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}
+
+{% macro dh_card_head(icon, title, subtitle='', actions='') %}
+<div class="dh-card__head">
+    <div class="dh-card__head-main">
+        <span class="dh-card__head-icon" aria-hidden="true">
+            <span class="material-symbols-outlined">{{ icon }}</span>
+        </span>
+        <div>
+            <h3 class="dh-card__title">{{ title }}</h3>
+            {% if subtitle %}<p class="dh-card__subtitle">{{ subtitle }}</p>{% endif %}
+        </div>
+    </div>
+    {% if actions %}{{ actions|safe }}{% endif %}
+</div>
+{% endmacro %}

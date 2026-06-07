@@ -2,82 +2,130 @@
 {% block title %}Главная{% endblock %}
 
 {% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tool-surface.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard-panel.css') }}" />
-<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard-panel-themes.css') }}" />
-<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard-panel-lite.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard-studio.css') }}" />
 {% endblock %}
 
 {% block content %}
-<div class="dashboard-page dashboard-page--lite" id="dashboard-page">
+<div class="dh-page" id="dh-page">
+    <div class="dh-ambient" aria-hidden="true"></div>
 
-    <section class="dash-panel-card dash-panel-card--head">
-        {% include 'partials/dashboard/header.html' %}
-        {% include 'partials/dashboard_onboarding.html' %}
-    </section>
-
-    <section class="dash-panel-card" id="dash-kpi-zone" aria-label="Ключевые показатели">
-        <header class="dash-section-head">
-            <div class="dash-section-head__main">
-                <p class="dash-section-head__eyebrow">Показатели</p>
-                <h2 class="dash-section-head__title">Ключевые метрики</h2>
+    <header class="dh-hero dash-hero" id="dash-hero">
+        <div class="dh-hero__main dash-hero__main">
+            <div class="dh-hero__top dash-hero__top">
+                <p class="dh-hero__eyebrow dash-hero__eyebrow">
+                    <span class="dh-hero__badge">Control</span>
+                    <span class="dash-hero__eyebrow-text">Главная</span>
+                </p>
+                <button type="button" id="dash-open-studio" class="dh-btn dh-btn--accent dash-hero__studio" title="Dashboard Studio">
+                    <span class="material-symbols-outlined">dashboard_customize</span>
+                    <span class="dash-hero__studio-label">Настроить</span>
+                </button>
             </div>
-            <p class="dash-section-head__meta">
-                <span class="dash-section-head__dot" aria-hidden="true"></span>
-                Автообновление · 2 мин
+            <h1 id="dash-custom-title" class="dh-hero__title dash-hero__title">
+                {{ dashboard_layout.options.title if dashboard_layout and dashboard_layout.options.title else 'Панель управления' }}
+            </h1>
+            <p id="dash-custom-subtitle" class="dh-hero__sub dash-hero__sub">
+                <span class="dh-hero__sub-text dash-hero__sub-text">
+                    {{ dashboard_layout.options.subtitle if dashboard_layout and dashboard_layout.options.subtitle else 'Статистика, мониторинг и аналитика в реальном времени' }}
+                </span>
+                <button type="button" onclick="togglePaymentStats()" class="dh-btn dh-btn--ghost" id="btn-toggle-payments" title="Скрыть/показать доход">
+                    <span class="material-symbols-outlined" id="icon-toggle-payments">visibility</span>
+                </button>
             </p>
-        </header>
-        {% include 'partials/dashboard/kpi.html' %}
-    </section>
-
-    <section class="dash-panel-card dash-panel-card--workspace">
-        <nav class="dashboard-tabs" id="dash-tabs" role="tablist" aria-label="Разделы главной страницы">
-            <span class="dashboard-tabs__indicator" id="dash-tab-indicator" aria-hidden="true"></span>
-            <button type="button" class="dash-tab is-active" data-tab="resources" role="tab" aria-selected="true">
-                <span class="material-symbols-outlined" aria-hidden="true">monitoring</span>
-                <span>Ресурсы</span>
-            </button>
-            <button type="button" class="dash-tab" data-tab="analytics" role="tab" aria-selected="false">
-                <span class="material-symbols-outlined" aria-hidden="true">analytics</span>
-                <span>Аналитика</span>
-            </button>
-            <button type="button" class="dash-tab" data-tab="activity" role="tab" aria-selected="false">
-                <span class="material-symbols-outlined" aria-hidden="true">bolt</span>
-                <span>Активность</span>
-            </button>
-        </nav>
-
-        <div class="dashboard-workspace" id="dashboard-workspace">
-            {% include 'partials/dashboard/tab_resources.html' %}
-            {% include 'partials/dashboard/tab_analytics.html' %}
-            {% include 'partials/dashboard/tab_activity.html' %}
         </div>
-    </section>
+        <div id="dash-header-chips" class="dh-chips dash-hero__chips">
+            <div data-dash-widget="chip_bot" class="dh-chip">
+                <span class="dh-chip__dot {{ 'dh-chip__dot--on' if main_running else 'dh-chip__dot--off' }}"></span>
+                <div>
+                    <div class="dh-chip__label">Бот</div>
+                    <div class="dh-chip__value">{{ 'Online' if main_running else 'Offline' }}</div>
+                </div>
+            </div>
+            <div data-dash-widget="chip_support" class="dh-chip">
+                <span class="dh-chip__dot {{ 'dh-chip__dot--on' if support_running else 'dh-chip__dot--idle' }}"></span>
+                <div>
+                    <div class="dh-chip__label">Support</div>
+                    <div class="dh-chip__value">{{ 'Online' if support_running else 'Offline' }}</div>
+                </div>
+            </div>
+            <a data-dash-widget="chip_tickets" href="{{ url_for('support_list_page') }}" class="dh-chip dh-chip--warn">
+                <span class="material-symbols-outlined">confirmation_number</span>
+                <div>
+                    <div class="dh-chip__label">Тикеты</div>
+                    <div class="dh-chip__value">{{ open_tickets_count or 0 }} откр.</div>
+                </div>
+            </a>
+            <a data-dash-widget="chip_nodes" href="{{ url_for('node_page') }}" class="dh-chip">
+                <span class="material-symbols-outlined">hub</span>
+                <div>
+                    <div class="dh-chip__label">Ноды</div>
+                    <div class="dh-chip__value">Управление</div>
+                </div>
+            </a>
+        </div>
+    </header>
 
-    {% include 'partials/dashboard/modals.html' %}
-    {% include 'partials/dashboard_studio_modal.html' %}
+    <nav class="dh-tabs dash-tabs" id="dash-tabs" role="tablist">
+        <button type="button" class="dh-tab dash-tab is-active" data-tab="overview" role="tab">
+            <span class="material-symbols-outlined">dashboard</span> Обзор
+        </button>
+        <button type="button" class="dh-tab dash-tab" data-tab="resources" role="tab">
+            <span class="material-symbols-outlined">monitoring</span> Ресурсы
+        </button>
+        <button type="button" class="dh-tab dash-tab" data-tab="analytics" role="tab">
+            <span class="material-symbols-outlined">analytics</span> Аналитика
+        </button>
+        <button type="button" class="dh-tab dash-tab" data-tab="activity" role="tab">
+            <span class="material-symbols-outlined">bolt</span> Активность
+        </button>
+    </nav>
 
-    <script>window.__DASHBOARD_LAYOUT__ = {{ dashboard_layout | tojson }};</script>
-    <script>
-        window.__DASHBOARD_CONFIG__ = {
-            urls: {
-                transactionsPartial: {{ url_for('dashboard_transactions_partial') | tojson }},
-                trialsPartial: {{ url_for('dashboard_trials_partial') | tojson }},
-                chartsJson: {{ url_for('dashboard_charts_json') | tojson }},
-                sshTargetsJson: {{ url_for('dashboard_ssh_targets_json') | tojson }},
-                userGroupsJson: {{ url_for('dashboard_user_groups_json') | tojson }},
-                hostSpeedtestsTemplate: {{ url_for('host_speedtests_json', host_name='__H__') | tojson }},
-                runSpeedtestTemplate: {{ url_for('node_run_ssh_target_speedtest_route', target_name='__T__') | tojson }}
-            }
-        };
-    </script>
+    <div id="dash-panel-overview" class="dash-tab-panel dh-tab-panel" data-tab-panel="overview">
+        <section id="dash-stats" class="dh-stats"
+            data-fetch-url="{{ url_for('dashboard_stats_partial') }}" data-fetch-interval="120000">
+            {% set _stats_html %}{% include 'partials/dashboard_stats.html' %}{% endset %}{{ _stats_html|strip_bom }}
+        </section>
+    </div>
+
+    <div id="dash-panel-resources" class="dash-tab-panel dh-tab-panel hidden" data-tab-panel="resources">
+        {% include 'partials/dashboard_monitor.html' %}
+    </div>
+
+    <div id="dash-panel-analytics" class="dash-tab-panel dh-tab-panel hidden" data-tab-panel="analytics">
+        {% include 'partials/dashboard_analytics.html' %}
+    </div>
+
+    <div id="dash-panel-activity" class="dash-tab-panel dh-tab-panel hidden" data-tab-panel="activity">
+        {% if can('settings_hosts') or can('node') %}
+        <div data-dash-widget="activity_speedtest">
+            {% include 'partials/dashboard_speedtest.html' %}
+        </div>
+        {% endif %}
+        {% include 'partials/dashboard_activity_tables.html' %}
+    </div>
 </div>
+
+{% include 'partials/dashboard_modals.html' %}
+{% include 'partials/dashboard_studio_modal.html' %}
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+window.__DASHBOARD_LAYOUT__ = {{ dashboard_layout | tojson }};
+window.__DASHBOARD_ROUTES__ = {
+    charts: {{ url_for('dashboard_charts_json')|tojson }},
+    transactions: {{ url_for('dashboard_transactions_partial')|tojson }},
+    trials: {{ url_for('dashboard_trials_partial')|tojson }},
+    userGroups: {{ url_for('dashboard_user_groups_json')|tojson }},
+    sshTargets: {{ url_for('dashboard_ssh_targets_json')|tojson }},
+    hostSpeedtests: {{ url_for('host_speedtests_json', host_name='__H__')|tojson }},
+    speedtestRun: {{ url_for('node_run_ssh_target_speedtest_route', target_name='__T__')|tojson }}
+};
+</script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-<script src="{{ url_for('static', filename='js/dashboard-panel.js') }}"></script>
-<script src="{{ url_for('static', filename='js/dashboard-studio.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard-panel.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
+<script src="{{ url_for('static', filename='js/dashboard-studio.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
 {% include 'partials/dashboard_monitor_scripts.html' %}
 {% endblock %}

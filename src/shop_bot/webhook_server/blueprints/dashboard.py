@@ -207,14 +207,6 @@ def dashboard_page():
         'dashboard.html',
         hosts=_monitor_ssh_hosts(),
         ssh_targets=_monitor_ssh_targets(),
-        stats={},
-        chart_data={},
-        transactions=[],
-        recent_trials=[],
-        trials_current_page=1,
-        trials_total_pages=1,
-        current_page=1,
-        total_pages=1,
         dashboard_layout=layout,
         onboarding_checklist=build_onboarding_checklist(),
         **common_data
@@ -391,7 +383,6 @@ def dashboard_trials_partial():
             "total_pages": trials_total_pages
         })
         
-    return render_template('partials/dashboard_trials.html', recent_trials=recent_trials)
     return render_template('partials/dashboard_trials.html', recent_trials=recent_trials)
 
 

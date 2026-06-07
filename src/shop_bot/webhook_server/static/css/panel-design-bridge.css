@@ -100,8 +100,14 @@ html:not(.dark)[data-design="glass"] .backups-hero__title {
 }
 
 html:not(.dark)[data-design="glass"] .backups-hero__sub,
-html:not(.dark)[data-design="glass"] .backups-hero__crumb {
+html:not(.dark)[data-design="glass"] .backups-hero__crumb,
+html:not(.dark)[data-design="glass"] .dh-hero__sub-text,
+html:not(.dark)[data-design="glass"] .dh-hero__title {
     color: rgba(0, 0, 0, 0.45);
+}
+
+html:not(.dark)[data-design="glass"] .dh-hero__title {
+    color: #111;
 }
 
 /* ── Settings on Glass / Stealth ── */
