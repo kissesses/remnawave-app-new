@@ -25,7 +25,7 @@
 <div class="pay-pill">
     <input type="hidden" name="{{ name }}" value="{{ hidden_value }}" />
     <span class="pay-pill__label">{{ label }}</span>
-    <label>
+    <label class="pay-pill__switch">
         <input type="checkbox" name="{{ name }}" value="{{ value }}" class="pay-pill__input"
             {% if id %}id="{{ id }}"{% endif %}{% if checked %} checked{% endif %} />
         <span class="pay-pill__track" aria-hidden="true"></span>
@@ -123,35 +123,27 @@
                         <div class="pay-info-grid">
                             <label class="pay-info-chip">
                                 <span class="pay-info-chip__text">ID пользователя</span>
-                                <span class="pay-pill" style="padding:0;border:none;background:transparent;">
-                                    <input type="checkbox" name="pay_info_id" value="1" data-field="id"
-                                        class="pay-pill__input pay-info-toggle"{% if pay_info.id == 1 %} checked{% endif %} />
-                                    <span class="pay-pill__track" aria-hidden="true"></span>
-                                </span>
+                                <input type="checkbox" name="pay_info_id" value="1" data-field="id"
+                                    class="pay-pill__input pay-info-toggle"{% if pay_info.id == 1 %} checked{% endif %} />
+                                <span class="pay-pill__track" aria-hidden="true"></span>
                             </label>
                             <label class="pay-info-chip">
                                 <span class="pay-info-chip__text">Username</span>
-                                <span class="pay-pill" style="padding:0;border:none;background:transparent;">
-                                    <input type="checkbox" name="pay_info_username" value="1" data-field="username"
-                                        class="pay-pill__input pay-info-toggle"{% if pay_info.username == 1 %} checked{% endif %} />
-                                    <span class="pay-pill__track" aria-hidden="true"></span>
-                                </span>
+                                <input type="checkbox" name="pay_info_username" value="1" data-field="username"
+                                    class="pay-pill__input pay-info-toggle"{% if pay_info.username == 1 %} checked{% endif %} />
+                                <span class="pay-pill__track" aria-hidden="true"></span>
                             </label>
                             <label class="pay-info-chip">
                                 <span class="pay-info-chip__text">Имя</span>
-                                <span class="pay-pill" style="padding:0;border:none;background:transparent;">
-                                    <input type="checkbox" name="pay_info_first_name" value="1" data-field="first_name"
-                                        class="pay-pill__input pay-info-toggle"{% if pay_info.first_name == 1 %} checked{% endif %} />
-                                    <span class="pay-pill__track" aria-hidden="true"></span>
-                                </span>
+                                <input type="checkbox" name="pay_info_first_name" value="1" data-field="first_name"
+                                    class="pay-pill__input pay-info-toggle"{% if pay_info.first_name == 1 %} checked{% endif %} />
+                                <span class="pay-pill__track" aria-hidden="true"></span>
                             </label>
                             <label class="pay-info-chip">
                                 <span class="pay-info-chip__text">Хост</span>
-                                <span class="pay-pill" style="padding:0;border:none;background:transparent;">
-                                    <input type="checkbox" name="pay_info_host_name" value="1" data-field="host_name"
-                                        class="pay-pill__input pay-info-toggle"{% if pay_info.host_name == 1 %} checked{% endif %} />
-                                    <span class="pay-pill__track" aria-hidden="true"></span>
-                                </span>
+                                <input type="checkbox" name="pay_info_host_name" value="1" data-field="host_name"
+                                    class="pay-pill__input pay-info-toggle"{% if pay_info.host_name == 1 %} checked{% endif %} />
+                                <span class="pay-pill__track" aria-hidden="true"></span>
                             </label>
                         </div>
                     </div>
@@ -169,7 +161,7 @@
                         <div class="pay-pill">
                             <input type="hidden" name="skip_email" value="0" />
                             <span class="pay-pill__label">Вкл</span>
-                            <label>
+                            <label class="pay-pill__switch">
                                 <input type="checkbox" name="skip_email" value="1" id="skip_email" class="pay-pill__input"
                                     {% if settings.skip_email == '1' %}checked{% endif %} />
                                 <span class="pay-pill__track" aria-hidden="true"></span>

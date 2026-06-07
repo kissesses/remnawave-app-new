@@ -30,7 +30,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/database-panel.css') }}" />
 {% endif %}
 {% if active_tab == 'payments' %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/payments-panel.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/payments-panel.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
 {% endif %}
 {% if active_tab == 'stealth-login' %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/stealth-login-panel.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />

@@ -339,22 +339,16 @@ html:not(.dark) #tab-payments.pay-panel {
     line-height: 1.4;
 }
 
-/* Toggle pill */
+/* Toggle pill — macOS-style switch */
 .pay-pill {
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
-    padding: 0.3rem 0.55rem;
-    border-radius: 999px;
-    border: 1px solid var(--pay-border);
-    background: var(--pay-surface-2);
-    cursor: pointer;
+    gap: 0.45rem;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: default;
     user-select: none;
-    transition: background 0.15s ease, border-color 0.15s ease;
-}
-
-.pay-pill:hover {
-    border-color: rgba(var(--pay-accent-rgb), 0.25);
 }
 
 .pay-pill__label {
@@ -366,48 +360,71 @@ html:not(.dark) #tab-payments.pay-panel {
     white-space: nowrap;
 }
 
+.pay-pill__switch {
+    position: relative;
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    cursor: pointer;
+}
+
 .pay-pill__input {
     position: absolute;
     opacity: 0;
     width: 0;
     height: 0;
+    margin: 0;
     pointer-events: none;
 }
 
 .pay-pill__track {
     position: relative;
-    width: 2rem;
-    height: 1.125rem;
+    display: inline-block;
+    box-sizing: border-box;
+    width: 2.65rem;
+    height: 1.55rem;
     border-radius: 999px;
-    background: rgba(128, 128, 128, 0.25);
-    transition: background 0.2s ease;
+    background: rgba(120, 120, 128, 0.32);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    overflow: hidden;
     flex-shrink: 0;
+    transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 .pay-pill__track::after {
     content: '';
     position: absolute;
-    top: 2px;
+    top: 50%;
     left: 2px;
-    width: calc(1.125rem - 4px);
-    height: calc(1.125rem - 4px);
+    right: auto;
+    width: 1.2rem;
+    height: 1.2rem;
     border-radius: 50%;
     background: #fff;
-    transition: transform 0.2s ease;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+    transform: translateY(-50%);
+    transition: left 0.15s ease, right 0.15s ease, transform 0.15s ease;
 }
 
 .pay-pill__input:checked + .pay-pill__track {
-    background: var(--pay-accent);
+    background: #34c759;
+    border-color: rgba(52, 199, 89, 0.45);
 }
 
 .pay-pill__input:checked + .pay-pill__track::after {
-    transform: translateX(0.875rem);
+    left: auto;
+    right: 2px;
+    transform: translateY(-50%);
 }
 
 .pay-pill__input:focus-visible + .pay-pill__track {
     outline: 2px solid rgba(var(--pay-accent-rgb), 0.5);
     outline-offset: 2px;
+}
+
+html:not(.dark) #tab-payments.pay-panel .pay-pill__track {
+    background: rgba(120, 120, 128, 0.22);
+    border-color: rgba(0, 0, 0, 0.08);
 }
 
 /* Pay-info chips */
@@ -434,6 +451,19 @@ html:not(.dark) #tab-payments.pay-panel {
     background: var(--pay-surface-2);
     cursor: pointer;
     transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.pay-info-chip .pay-pill__input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    margin: 0;
+    pointer-events: none;
+}
+
+.pay-info-chip .pay-pill__track {
+    flex-shrink: 0;
 }
 
 .pay-info-chip:hover {
