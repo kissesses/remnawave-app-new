@@ -109,27 +109,41 @@
 </div>
 
 {% if can_edit('users') %}
-<div class="tr-modal hidden" id="tr-grant-modal" role="dialog" aria-modal="true">
+<div class="tr-modal hidden" id="tr-grant-modal" role="dialog" aria-modal="true" aria-labelledby="tr-grant-title">
     <div class="tr-modal__backdrop" data-tr-close></div>
-    <div class="tr-modal__panel">
+    <div class="tr-modal__panel tr-modal__panel--grant">
         <header class="tr-modal__head">
-            <h3>Выдать пробный период</h3>
-            <button type="button" class="tr-icon-btn" data-tr-close><span class="material-symbols-outlined">close</span></button>
+            <div class="tr-modal__head-main">
+                <span class="tr-modal__icon" aria-hidden="true"><span class="material-symbols-outlined">card_giftcard</span></span>
+                <div>
+                    <h3 id="tr-grant-title">Выдать пробный период</h3>
+                    <p class="tr-modal__sub">Ручная активация trial-ключа на выбранном сервере</p>
+                </div>
+            </div>
+            <button type="button" class="tr-modal__close" data-tr-close aria-label="Закрыть">
+                <span class="material-symbols-outlined">close</span>
+            </button>
         </header>
         <div class="tr-modal__body">
+            {% if not grant_hosts %}
+            <p class="tr-modal__alert">
+                <span class="material-symbols-outlined">warning</span>
+                Нет видимых серверов. Включите хост в <strong>Ноды</strong> или задайте сервер в настройках ниже.
+            </p>
+            {% endif %}
             <label class="tr-field">
                 <span>Telegram ID или @username</span>
-                <input type="text" id="tr-grant-user" class="tr-input" placeholder="123456789 или @user" />
+                <input type="text" id="tr-grant-user" class="tr-input" placeholder="123456789 или @user" autocomplete="off" />
             </label>
             <label class="tr-field">
                 <span>Сервер</span>
                 <div class="soft-select tr-soft-select" data-target="tr_grant_host">
                     <button type="button" class="soft-select-toggle" id="tr_grant_host_toggle">Выберите сервер</button>
                     <div class="soft-select-menu" id="tr_grant_host_menu"></div>
-                    <select id="tr_grant_host" class="hidden">
+                    <select id="tr_grant_host" class="hidden" {% if not grant_hosts %}disabled{% endif %}>
                         <option value="">Выберите сервер</option>
                         {% for host in grant_hosts %}
-                        <option value="{{ host.host_name }}">{{ host.host_name }}</option>
+                        <option value="{{ host.host_name }}" {% if settings.trial_host_id == host.host_name %}selected{% endif %}>{{ host.host_name }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -141,7 +155,7 @@
         </div>
         <footer class="tr-modal__foot">
             <button type="button" class="tr-btn" data-tr-close>Отмена</button>
-            <button type="button" class="tr-btn tr-btn--accent" id="tr-grant-submit">Выдать</button>
+            <button type="button" class="tr-btn tr-btn--accent" id="tr-grant-submit" {% if not grant_hosts %}disabled{% endif %}>Выдать</button>
         </footer>
     </div>
 </div>

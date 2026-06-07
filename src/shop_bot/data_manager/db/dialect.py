@@ -46,44 +46,50 @@ _BOOL_COLS = (
 )
 
 
+def _bool_col_ref(col: str) -> str:
+    """Column reference with optional table alias (u.trial_used)."""
+    return rf"(?:\w+\.)?{col}"
+
+
 def _adapt_pg_booleans(sql: str) -> str:
     if is_sqlite():
         return sql
     text = sql
     for col in _BOOL_COLS:
+        cref = _bool_col_ref(col)
         text = re.sub(
-            rf"COALESCE\(\s*{col}\s*,\s*0\s*\)\s*=\s*1",
-            f"(COALESCE({col}, false) IS TRUE)",
+            rf"COALESCE\(\s*({cref})\s*,\s*0\s*\)\s*=\s*1",
+            r"(COALESCE(\1, false) IS TRUE)",
             text,
             flags=re.IGNORECASE,
         )
         text = re.sub(
-            rf"COALESCE\(\s*{col}\s*,\s*0\s*\)\s*=\s*0",
-            f"(COALESCE({col}, false) IS NOT TRUE)",
+            rf"COALESCE\(\s*({cref})\s*,\s*0\s*\)\s*=\s*0",
+            r"(COALESCE(\1, false) IS NOT TRUE)",
             text,
             flags=re.IGNORECASE,
         )
         text = re.sub(
-            rf"NOT COALESCE\(\s*{col}\s*,\s*0\s*\)",
-            f"NOT COALESCE({col}, false)",
+            rf"NOT COALESCE\(\s*({cref})\s*,\s*0\s*\)",
+            r"NOT COALESCE(\1, false)",
             text,
             flags=re.IGNORECASE,
         )
         text = re.sub(
-            rf"COALESCE\(\s*{col}\s*,\s*0\s*\)",
-            f"COALESCE({col}, false)",
+            rf"COALESCE\(\s*({cref})\s*,\s*0\s*\)",
+            r"COALESCE(\1, false)",
             text,
             flags=re.IGNORECASE,
         )
         # SQLite uses 0/1 for booleans; PostgreSQL columns are BOOLEAN.
         text = re.sub(
-            rf"\b{col}\s*=\s*(%s|\?)",
-            f"{col} = ((\\1)::int <> 0)",
+            rf"\b({cref})\s*=\s*(%s|\?)",
+            r"\1 = ((\2)::int <> 0)",
             text,
             flags=re.IGNORECASE,
         )
-        text = re.sub(rf"\b{col}\s*=\s*1\b", f"{col} = true", text, flags=re.IGNORECASE)
-        text = re.sub(rf"\b{col}\s*=\s*0\b", f"{col} = false", text, flags=re.IGNORECASE)
+        text = re.sub(rf"\b({cref})\s*=\s*1\b", r"\1 = true", text, flags=re.IGNORECASE)
+        text = re.sub(rf"\b({cref})\s*=\s*0\b", r"\1 = false", text, flags=re.IGNORECASE)
     return text
 
 

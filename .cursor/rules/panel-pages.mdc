@@ -1,0 +1,47 @@
+---
+description: Новые страницы и UI панели webhook_server
+globs: src/shop_bot/webhook_server/**/*
+alwaysApply: false
+---
+
+# Страницы панели (эталоны: monitor, backups, trials)
+
+## Перед кодом — открыть эталон
+
+Сверить с существующей страницей того же типа:
+- [`monitor.html`](src/shop_bot/webhook_server/templates/monitor.html) + `mn-*` CSS
+- [`backups.html`](src/shop_bot/webhook_server/templates/backups.html) + `bv-*` CSS
+- [`settings.html`](src/shop_bot/webhook_server/templates/settings.html) — CSRF, формы
+
+## render_template + get_common_template_data()
+
+`get_common_template_data()` уже передаёт: `settings`, `brand_title`, `app_version`, `bot_status`, `project_info`, `other_settings`, счётчики тикетов и др.
+
+```python
+# ❌ дубль kwargs → TypeError
+return render_template('page.html', settings=get_all_settings(), **common)
+
+# ✅ только уникальные ключи страницы
+return render_template('page.html', stats=stats, hosts=hosts, **common)
+```
+
+Перед `render_template` — grep по ключам в `template_data.py` и blueprint.
+
+## Шаблоны и статика
+
+- **Без Tailwind** на dashboard/monitor/trials/backups — только свои префиксы (`mn-`, `bv-`, `tr-`, `dh-`).
+- CSS/JS: `?v={{ app_version }}` в `{% block head %}` / scripts.
+- CSRF в inline JSON: `{{ csrf_token() | tojson }}`, не `csrf_token`.
+- Routes в `window.__*_ROUTES__`: только `url_for(...) | tojson`.
+
+## Новая страница — обязательный wiring
+
+1. Blueprint + `register_blueprints` в `blueprints/__init__.py`
+2. `ENDPOINT_PERMISSIONS` в `panel_rbac.py`
+3. Dock в `factory.py` (`_workspace_dock_registry`)
+4. `panel_topbar.html` + `panel_glass_sidebar.html`
+5. `workspace_host` в `factory.py`, если страница как dashboard/monitor
+
+## Дубли
+
+Не дублировать виджеты/таблицы на dashboard, если есть отдельная страница — ссылка-карточка достаточна.

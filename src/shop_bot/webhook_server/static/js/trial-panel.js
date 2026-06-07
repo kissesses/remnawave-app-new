@@ -148,13 +148,44 @@
         }
     }
 
+    function setGrantHostValue(hostName) {
+        const sel = $('#tr_grant_host');
+        if (!sel || sel.disabled) return;
+        if (hostName && Array.from(sel.options).some((o) => o.value === hostName)) {
+            sel.value = hostName;
+        }
+        sel.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    function openGrantModal(presetUserId) {
+        const m = document.getElementById('tr-grant-modal');
+        if (!m) return;
+        m.classList.remove('hidden');
+        document.body.classList.add('tr-modal-open');
+
+        const userInput = $('#tr-grant-user');
+        if (userInput) {
+            userInput.value = presetUserId ? String(presetUserId) : '';
+        }
+
+        const settingsHost = ($('#trial_host_id')?.value || '').trim();
+        if (settingsHost) setGrantHostValue(settingsHost);
+        else setGrantHostValue($('#tr_grant_host')?.value || '');
+
+        window.setTimeout(() => userInput?.focus(), 60);
+    }
+
     function openModal(id) {
         const m = document.getElementById(id);
-        if (m) m.classList.remove('hidden');
+        if (!m) return;
+        m.classList.remove('hidden');
+        document.body.classList.add('tr-modal-open');
     }
 
     function closeModals() {
         $$('.tr-modal').forEach((m) => m.classList.add('hidden'));
+        document.body.classList.remove('tr-modal-open');
+        $$('.soft-select.open').forEach((w) => w.classList.remove('open'));
         extendKeyId = null;
     }
 
@@ -267,8 +298,12 @@
 
         $('#tr-settings-form')?.addEventListener('submit', saveSettings);
 
-        $('#tr-grant-open')?.addEventListener('click', () => openModal('tr-grant-modal'));
+        $('#tr-grant-open')?.addEventListener('click', () => openGrantModal());
         $$('[data-tr-close]').forEach((el) => el.addEventListener('click', closeModals));
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModals();
+        });
 
         $('#tr-grant-submit')?.addEventListener('click', () => {
             const user = $('#tr-grant-user')?.value;
@@ -300,13 +335,13 @@
                 handleReset(parseInt(userId, 10));
             } else if (action === 'grant' && userId) {
                 const hostSel = $('#tr_grant_host');
-                if (hostSel && !hostSel.value) {
-                    openModal('tr-grant-modal');
-                    const grantUser = $('#tr-grant-user');
-                    if (grantUser) grantUser.value = userId;
+                const settingsHost = ($('#trial_host_id')?.value || '').trim();
+                const host = hostSel?.value || settingsHost;
+                if (!host) {
+                    openGrantModal(userId);
                     return;
                 }
-                handleGrant(userId, hostSel?.value, false);
+                handleGrant(userId, host, false);
             }
 
             const copyBtn = e.target.closest('[data-copy-id]');
