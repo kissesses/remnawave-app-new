@@ -195,10 +195,60 @@ def _monitor_ssh_targets():
         return []
 
 
+def _build_dashboard_stats(hide_payments: bool = False) -> dict:
+    stats = {
+        "user_count": get_user_count(),
+        "total_keys": get_total_keys_count(),
+        "total_spent": get_total_spent_sum(),
+        "host_count": len(get_all_hosts()),
+    }
+
+    if not hide_payments:
+        stats.update({
+            "yookassa_income": get_total_spent_by_method("YooKassa"),
+            "platega_income": get_total_spent_by_method("Platega"),
+            "stars_income": get_total_spent_by_method("Telegram Stars"),
+            "cryptobot_income": get_total_spent_by_method("CryptoBot"),
+            "heleket_income": get_total_spent_by_method("Heleket"),
+            "tonconnect_income": get_total_spent_by_method("TON Connect"),
+        })
+    else:
+        stats.update({
+            "yookassa_income": 0.0,
+            "platega_income": 0.0,
+            "stars_income": 0.0,
+            "cryptobot_income": 0.0,
+            "heleket_income": 0.0,
+            "tonconnect_income": 0.0,
+        })
+
+    try:
+        from shop_bot.data_manager.database import get_dashboard_user_groups
+        groups = get_dashboard_user_groups()
+        stats["no_purchases_count"] = len(groups["no_purchases"])
+        stats["inactive_buyers_count"] = len(groups["inactive_buyers"])
+        stats["trials_count"] = len(groups["trials"])
+        stats["active_buyers_count"] = len(groups["active_buyers"])
+        stats["active_keys_count"] = len(groups["active_keys"])
+    except Exception as e:
+        logger.error(f"Failed to get user groups stats: {e}")
+        stats["no_purchases_count"] = 0
+        stats["inactive_buyers_count"] = 0
+        stats["trials_count"] = 0
+        stats["active_buyers_count"] = 0
+        stats["active_keys_count"] = 0
+
+    return stats
+
+
 @bp.route('/dashboard')
 @panel_ctx.login_required
 def dashboard_page():
     common_data = panel_ctx.get_common_template_data()
+    try:
+        common_data['open_tickets_count'] = get_open_tickets_count()
+    except Exception:
+        common_data['open_tickets_count'] = 0
     admin_id = session.get('panel_admin_id')
     layout = dash_layout.get_admin_layout(admin_id)
     from shop_bot.webhook_server.services.onboarding_checklist import build_onboarding_checklist
@@ -209,6 +259,7 @@ def dashboard_page():
         ssh_targets=_monitor_ssh_targets(),
         dashboard_layout=layout,
         onboarding_checklist=build_onboarding_checklist(),
+        stats=_build_dashboard_stats(),
         **common_data
     )
 
@@ -299,54 +350,13 @@ def run_speedtests_route():
 @panel_ctx.login_required
 def dashboard_stats_partial():
     hide_payments = request.args.get('hide_payments') == 'true'
-    
-    stats = {
-        "user_count": get_user_count(),
-        "total_keys": get_total_keys_count(),
-        "total_spent": get_total_spent_sum(),
-        "host_count": len(get_all_hosts())
-    }
+    stats = _build_dashboard_stats(hide_payments=hide_payments)
 
-    if not hide_payments:
-        stats.update({
-            "yookassa_income": get_total_spent_by_method("YooKassa"),
-            "platega_income": get_total_spent_by_method("Platega"),
-            "stars_income": get_total_spent_by_method("Telegram Stars"),
-            "cryptobot_income": get_total_spent_by_method("CryptoBot"),
-            "heleket_income": get_total_spent_by_method("Heleket"),
-            "tonconnect_income": get_total_spent_by_method("TON Connect")
-        })
-    else:
-        stats.update({
-            "yookassa_income": 0.0,
-            "platega_income": 0.0,
-            "stars_income": 0.0,
-            "cryptobot_income": 0.0,
-            "heleket_income": 0.0,
-            "tonconnect_income": 0.0
-        })
-        
     common_data = panel_ctx.get_common_template_data()
     try:
         common_data['open_tickets_count'] = get_open_tickets_count()
-    except:
+    except Exception:
         common_data['open_tickets_count'] = 0
-
-    try:
-        from shop_bot.data_manager.database import get_dashboard_user_groups
-        groups = get_dashboard_user_groups()
-        stats["no_purchases_count"] = len(groups["no_purchases"])
-        stats["inactive_buyers_count"] = len(groups["inactive_buyers"])
-        stats["trials_count"] = len(groups["trials"])
-        stats["active_buyers_count"] = len(groups["active_buyers"])
-        stats["active_keys_count"] = len(groups["active_keys"])
-    except Exception as e:
-        logger.error(f"Failed to get user groups stats: {e}")
-        stats["no_purchases_count"] = 0
-        stats["inactive_buyers_count"] = 0
-        stats["trials_count"] = 0
-        stats["active_buyers_count"] = 0
-        stats["active_keys_count"] = 0
 
     html = render_template('partials/dashboard_stats.html', stats=stats, **common_data)
     return html.lstrip('\ufeff')
