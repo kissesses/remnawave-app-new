@@ -15,6 +15,8 @@ GLOBAL_LAYOUT_KEY = "panel_dashboard_layout"
 ADMIN_PREFS_PREFIX = "panel_dashboard_prefs_"
 
 VALID_TABS = ("overview", "resources", "analytics", "activity")
+WORKSPACE_TABS = ("resources", "analytics", "activity")
+PINNED_TAB = "overview"
 VALID_INCOME_PERIODS = ("today", "7d", "30d", "3m", "6m", "12m", "all")
 VALID_STATS_COLUMNS = (2, 3, 4, 5)
 VALID_TITLE_SIZES = ("sm", "md", "lg")
@@ -74,7 +76,7 @@ WIDGET_GROUPS: dict[str, str] = {
 }
 
 TAB_LABELS: dict[str, str] = {
-    "overview": "Обзор",
+    "overview": "KPI на главной",
     "resources": "Ресурсы",
     "analytics": "Аналитика",
     "activity": "Активность",
@@ -87,13 +89,13 @@ def _default_widgets_for_tab(tab: str) -> list[str]:
 
 def default_layout() -> dict[str, Any]:
     return {
-        "tabs": list(VALID_TABS),
+        "tabs": list(WORKSPACE_TABS),
         "widgets": {tab: _default_widgets_for_tab(tab) for tab in VALID_TABS},
         "header_widgets": _default_widgets_for_tab("header"),
         "options": {
             "title": "",
             "subtitle": "",
-            "default_tab": "overview",
+            "default_tab": "resources",
             "stats_columns": 5,
             "hide_payments_default": False,
             "default_income_period": "30d",
@@ -131,7 +133,8 @@ def normalize_layout(raw: dict[str, Any] | None) -> dict[str, Any]:
         return base
 
     tabs = _sanitize_widget_list(raw.get("tabs"))
-    tabs = [t for t in tabs if t in VALID_TABS] or list(VALID_TABS)
+    tabs = [t for t in tabs if t in VALID_TABS] or list(WORKSPACE_TABS)
+    tabs = [t for t in tabs if t in WORKSPACE_TABS] or list(WORKSPACE_TABS)
 
     widgets_in: dict[str, Any] = raw.get("widgets") if isinstance(raw.get("widgets"), dict) else {}
     widgets: dict[str, list[str]] = {}
@@ -153,9 +156,11 @@ def normalize_layout(raw: dict[str, Any] | None) -> dict[str, Any]:
     if subtitle:
         options["subtitle"] = subtitle
 
-    default_tab = str(opts_in.get("default_tab") or "overview")
-    if default_tab not in VALID_TABS:
-        default_tab = "overview"
+    default_tab = str(opts_in.get("default_tab") or "resources")
+    if default_tab == "overview":
+        default_tab = "resources"
+    if default_tab not in WORKSPACE_TABS:
+        default_tab = "resources"
     options["default_tab"] = default_tab
 
     try:
@@ -270,6 +275,7 @@ def catalog_for_client() -> dict[str, Any]:
     return {
         "widgets": WIDGET_CATALOG,
         "groups": WIDGET_GROUPS,
-        "tabs": [{"id": t, "label": TAB_LABELS[t]} for t in VALID_TABS],
+        "tabs": [{"id": t, "label": TAB_LABELS[t]} for t in WORKSPACE_TABS],
+        "pinned_tab": {"id": PINNED_TAB, "label": TAB_LABELS[PINNED_TAB]},
         "defaults": default_layout(),
     }

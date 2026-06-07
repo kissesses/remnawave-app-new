@@ -48,7 +48,7 @@
 
     const TAB_HINTS = {
         header: 'Чипы статуса в шапке. Ниже — оформление заголовка.',
-        overview: 'Карточки метрик на вкладке «Обзор».',
+        overview: 'KPI-карточки на главной (всегда видны).',
         resources: 'Блоки мониторинга и графиков.',
         analytics: 'Графики доходов и регистраций.',
         activity: 'Speedtest, транзакции и триалы.',
@@ -148,7 +148,7 @@
         if (!opts) return;
         const o = opts;
 
-        const pageHead = document.querySelector('.dash-page-head');
+        const pageHead = document.querySelector('.dashboard-page .dash-page-head, .dashboard-page .dashboard-header');
         if (pageHead) {
             pageHead.classList.remove('dash-title-sm', 'dash-title-md', 'dash-title-lg', 'dash-no-eyebrow');
             pageHead.classList.add(`dash-title-${o.title_size || 'md'}`);
@@ -169,7 +169,7 @@
             tabs.classList.add(`dash-tabs-${o.tab_style || 'glass'}`);
         }
 
-        ['dash-resources', 'dash-panel-analytics', 'dash-panel-activity'].forEach((id) => {
+        ['dash-panel-resources', 'dash-panel-analytics', 'dash-panel-activity'].forEach((id) => {
             const el = document.getElementById(id);
             if (!el) return;
             el.classList.remove('dash-density-compact', 'dash-density-normal', 'dash-density-relaxed');
@@ -280,14 +280,14 @@
                     </label>
                     <label class="dash-design-check">
                         <input type="checkbox" id="dash-opt-show-eyebrow" />
-                        <span>Показывать бейдж Control</span>
+                        <span>Показывать бейдж «Панель управления»</span>
                     </label>
                     <label class="dash-design-check">
                         <input type="checkbox" id="dash-opt-compact-header" />
                         <span>Компактная шапка (скрыть чипы статуса)</span>
                     </label>
                     <div class="dash-design-preview dash-design-preview--hero" aria-hidden="true">
-                        <div class="dash-design-preview__eyebrow${o.show_eyebrow !== false ? '' : ' is-off'}">Control · Главная</div>
+                        <div class="dash-design-preview__eyebrow${o.show_eyebrow !== false ? '' : ' is-off'}">Панель управления · Главная</div>
                         <div class="dash-design-preview__title dash-design-preview__title--${o.title_size || 'md'}">${o.title || 'Дашборд'}</div>
                         <div class="dash-design-preview__sub">${o.subtitle || 'Статистика, мониторинг и аналитика'}</div>
                     </div>
@@ -397,7 +397,7 @@
 
         const titleEl = document.getElementById('dash-custom-title');
         const subEl = document.getElementById('dash-custom-subtitle');
-        const subTextEl = subEl?.querySelector('.dash-hero__sub-text');
+        const subTextEl = subEl?.querySelector('.dashboard-subtitle__text, .dash-hero__sub-text');
         if (titleEl) titleEl.textContent = opts.title || 'Дашборд';
         const subtitle = opts.subtitle || 'Статистика, мониторинг и аналитика';
         if (subTextEl) subTextEl.textContent = subtitle;
@@ -426,7 +426,7 @@
         ['resources', 'analytics', 'activity'].forEach((tab) => {
             const ids = (cfg.widgets && cfg.widgets[tab]) || [];
             applyWidgetVisibility(tab, ids);
-            const root = tab === 'resources' ? document.getElementById('dash-resources')
+            const root = tab === 'resources' ? document.getElementById('dash-panel-resources')
                 : tab === 'analytics' ? document.getElementById('dash-panel-analytics')
                     : document.getElementById('dash-panel-activity');
             if (root) {
@@ -470,11 +470,11 @@
             if (btn) window.setIncomePeriod(opts.default_income_period, btn);
         }
 
-        const defaultTab = opts.default_tab;
+        const defaultTab = opts.default_tab === 'overview' ? 'resources' : opts.default_tab;
         if (defaultTab && !window.location.hash) {
             const tabBtn = document.querySelector(`.dash-tab[data-tab="${defaultTab}"]`);
             if (tabBtn && typeof window.switchDashTab === 'function') {
-                window.switchDashTab(defaultTab, tabBtn);
+                window.switchDashTab(defaultTab);
             }
         }
     }
@@ -546,6 +546,9 @@
         if (!nav) return;
         const items = [
             { id: 'header', label: 'Шапка', icon: 'web_asset' },
+            catalog.pinned_tab
+                ? { id: catalog.pinned_tab.id, label: catalog.pinned_tab.label, icon: 'grid_view' }
+                : { id: 'overview', label: 'KPI на главной', icon: 'grid_view' },
             ...(catalog.tabs || []),
             { id: 'behavior', label: 'Поведение', icon: 'tune' },
         ];
@@ -569,7 +572,7 @@
         ensureDefaultTabSelect();
         set('dash-opt-title', o.title || '');
         set('dash-opt-subtitle', o.subtitle || '');
-        set('dash-opt-default-tab', o.default_tab || 'overview');
+        set('dash-opt-default-tab', o.default_tab || 'resources');
         set('dash-opt-stats-cols', String(o.stats_columns || 5));
         set('dash-opt-income-period', o.default_income_period || '30d');
         set('dash-opt-refresh', String(Math.round((o.refresh_interval_ms || 120000) / 1000)));
@@ -601,7 +604,7 @@
         if (subEl) o.subtitle = subEl.value.trim();
 
         const defaultTabEl = document.getElementById('dash-opt-default-tab');
-        if (defaultTabEl) o.default_tab = defaultTabEl.value || 'overview';
+        if (defaultTabEl) o.default_tab = defaultTabEl.value || 'resources';
 
         const colsEl = document.getElementById('dash-opt-stats-cols');
         if (colsEl) o.stats_columns = parseInt(colsEl.value || '5', 10);
@@ -629,7 +632,7 @@
             tabWrap.querySelectorAll('[data-dash-tab]').forEach((inp) => {
                 if (inp.checked) tabs.push(inp.dataset.dashTab);
             });
-            draft.tabs = tabs.length ? tabs : ['overview'];
+            draft.tabs = tabs.length ? tabs : ['resources', 'analytics', 'activity'];
         }
     }
 
@@ -734,15 +737,15 @@
     }
 
     function hookRefreshSection() {
-        const orig = window.refreshSection;
+        const orig = window.refreshDashboardSection;
         if (typeof orig !== 'function' || orig.__dashStudioWrapped) return;
-        window.refreshSection = async function wrappedRefresh(id) {
+        window.refreshDashboardSection = async function wrappedRefresh(id) {
             await orig(id);
             if (id === 'dash-stats' && layout) {
                 applyWidgetVisibility('overview', (layout.widgets && layout.widgets.overview) || []);
             }
         };
-        window.refreshSection.__dashStudioWrapped = true;
+        window.refreshDashboardSection.__dashStudioWrapped = true;
     }
 
     function bindEvents() {
