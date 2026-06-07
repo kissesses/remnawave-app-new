@@ -246,28 +246,32 @@
                     </div>
 
                     <div class="bot-notify-admin-audit">
-                        <input type="hidden" name="notifications_admin_audit_enabled" value="false" />
-                        <label class="bot-notify-admin-audit__row settings-macos-switch-row">
+                        <div class="bot-notify-admin-audit__row">
                             <span class="bot-notify-admin-audit__copy">
                                 <strong>Журнал действий админов</strong>
                                 <span>Каждая запись audit → топик «Действия админов» (или DM админам)</span>
                             </span>
-                            <input type="checkbox" class="settings-macos-switch__input" name="notifications_admin_audit_enabled"
-                                value="true" id="notifications_admin_audit_enabled"
-                                {% if settings.get('notifications_admin_audit_enabled', 'true') == 'true' %}checked{% endif %} />
-                            <span class="settings-macos-switch__track" aria-hidden="true"></span>
-                        </label>
-                        <input type="hidden" name="notifications_admin_audit_include_sql" value="false" />
-                        <label class="bot-notify-admin-audit__row settings-macos-switch-row">
+                            <input type="hidden" name="notifications_admin_audit_enabled" value="false" />
+                            <label class="settings-macos-switch">
+                                <input type="checkbox" name="notifications_admin_audit_enabled"
+                                    value="true" id="notifications_admin_audit_enabled"
+                                    {% if settings.get('notifications_admin_audit_enabled', 'true') == 'true' %}checked{% endif %} />
+                                <span class="settings-macos-switch__track" aria-hidden="true"></span>
+                            </label>
+                        </div>
+                        <div class="bot-notify-admin-audit__row">
                             <span class="bot-notify-admin-audit__copy">
                                 <strong>SQL-запросы в журнал</strong>
                                 <span>Иначе <code>db.query</code> не дублируется в Telegram (шумно)</span>
                             </span>
-                            <input type="checkbox" class="settings-macos-switch__input" name="notifications_admin_audit_include_sql"
-                                value="true" id="notifications_admin_audit_include_sql"
-                                {% if settings.get('notifications_admin_audit_include_sql') == 'true' %}checked{% endif %} />
-                            <span class="settings-macos-switch__track" aria-hidden="true"></span>
-                        </label>
+                            <input type="hidden" name="notifications_admin_audit_include_sql" value="false" />
+                            <label class="settings-macos-switch">
+                                <input type="checkbox" name="notifications_admin_audit_include_sql"
+                                    value="true" id="notifications_admin_audit_include_sql"
+                                    {% if settings.get('notifications_admin_audit_include_sql') == 'true' %}checked{% endif %} />
+                                <span class="settings-macos-switch__track" aria-hidden="true"></span>
+                            </label>
+                        </div>
                     </div>
 
                     <div class="bot-notify-topics">

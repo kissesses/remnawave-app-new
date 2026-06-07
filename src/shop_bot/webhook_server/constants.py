@@ -218,7 +218,6 @@ SETTINGS_TAB_TEXT_KEYS: dict[str, list[str]] = {
         "notifications_topic_auth", "notifications_topic_nodes", "notifications_topic_payments",
         "notifications_topic_sql", "notifications_topic_trial", "notifications_topic_tickets",
         "notifications_topic_admin",
-        "notifications_admin_audit_enabled", "notifications_admin_audit_include_sql",
         "backup_telegram_chat_id", "backup_telegram_topic_id",
         "backup_secrets_chat_id", "backup_secrets_topic_id",
     ],
