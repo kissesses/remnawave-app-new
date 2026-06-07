@@ -138,7 +138,7 @@
             if (showLabels && point.day) {
                 const label = document.createElement('span');
                 label.className = 'tr-chart__label';
-                label.textContent = point.day.slice(5);
+                label.textContent = point.day.slice(8) || point.day.slice(5);
                 wrap.appendChild(label);
             }
             chart.appendChild(wrap);

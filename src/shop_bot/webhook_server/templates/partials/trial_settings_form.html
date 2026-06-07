@@ -11,21 +11,23 @@
                 <span class="tr-switch__track"></span>
             </label>
         </div>
-        <div class="tr-settings__row">
-            <label class="tr-settings__label" for="trial-duration-days">Длительность (дней)</label>
-            <input type="number" id="trial-duration-days" name="trial_duration_days"
-                value="{{ settings.trial_duration_days or '3' }}" min="1" class="tr-input" {% if not can_edit('settings_panel') %}disabled{% endif %} />
-        </div>
-        <div class="tr-settings__row">
-            <label class="tr-settings__label" for="trial-traffic-gb">Трафик (ГБ)</label>
-            <input type="number" id="trial-traffic-gb" name="trial_traffic_limit_gb"
-                value="{{ settings.trial_traffic_limit_gb or '0' }}" min="0" class="tr-input" {% if not can_edit('settings_panel') %}disabled{% endif %} />
-            <span class="tr-settings__hint">0 — без лимита</span>
-        </div>
-        <div class="tr-settings__row">
-            <label class="tr-settings__label" for="trial-hwid-limit">Лимит HWID</label>
-            <input type="number" id="trial-hwid-limit" name="trial_hwid_limit"
-                value="{{ settings.trial_hwid_limit or '0' }}" min="0" class="tr-input" {% if not can_edit('settings_panel') %}disabled{% endif %} />
+        <div class="tr-settings__grid">
+            <div class="tr-settings__row">
+                <label class="tr-settings__label" for="trial-duration-days">Длительность (дней)</label>
+                <input type="number" id="trial-duration-days" name="trial_duration_days"
+                    value="{{ settings.trial_duration_days or '3' }}" min="1" class="tr-input" {% if not can_edit('settings_panel') %}disabled{% endif %} />
+            </div>
+            <div class="tr-settings__row">
+                <label class="tr-settings__label" for="trial-traffic-gb">Трафик (ГБ)</label>
+                <input type="number" id="trial-traffic-gb" name="trial_traffic_limit_gb"
+                    value="{{ settings.trial_traffic_limit_gb or '0' }}" min="0" class="tr-input" {% if not can_edit('settings_panel') %}disabled{% endif %} />
+                <span class="tr-settings__hint">0 — без лимита</span>
+            </div>
+            <div class="tr-settings__row">
+                <label class="tr-settings__label" for="trial-hwid-limit">Лимит HWID</label>
+                <input type="number" id="trial-hwid-limit" name="trial_hwid_limit"
+                    value="{{ settings.trial_hwid_limit or '0' }}" min="0" class="tr-input" {% if not can_edit('settings_panel') %}disabled{% endif %} />
+            </div>
         </div>
         <div class="tr-settings__row tr-settings__row--host">
             <label class="tr-settings__label" for="trial_host_id">Сервер для триала</label>
@@ -45,7 +47,7 @@
     </div>
     {% if can_edit('settings_panel') %}
     <div class="tr-settings__actions">
-        <button type="submit" class="tr-btn tr-btn--accent">
+        <button type="submit" class="tr-btn tr-btn--primary">
             <span class="material-symbols-outlined">save</span>
             Сохранить настройки
         </button>

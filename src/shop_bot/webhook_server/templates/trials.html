@@ -8,19 +8,19 @@
 
 {% block content %}
 <div class="tr-page" id="tr-page">
-    <div class="tr-ambient" aria-hidden="true"></div>
-
     <header class="tr-hero">
-        <div class="tr-hero__main">
-            <p class="tr-hero__eyebrow">
-                <span class="tr-hero__badge">Growth</span>
-                <span>Пробный период</span>
-            </p>
-            <h1 class="tr-hero__title">Управление триалами</h1>
-            <p class="tr-hero__sub">
-                Аналитика, выдача ключей и настройки бесплатного доступа
-                <span class="tr-hero__refresh" id="tr-last-refresh">—</span>
-            </p>
+        <div class="tr-hero__brand">
+            <div class="tr-hero__icon" aria-hidden="true">
+                <span class="material-symbols-outlined">hourglass_top</span>
+            </div>
+            <div class="tr-hero__copy">
+                <p class="tr-hero__eyebrow">Growth · Пробный период</p>
+                <h1 class="tr-hero__title">Управление триалами</h1>
+                <p class="tr-hero__sub">
+                    Аналитика, выдача ключей и настройки бесплатного доступа
+                    <span class="tr-hero__refresh" id="tr-last-refresh">—</span>
+                </p>
+            </div>
         </div>
         <div class="tr-hero__actions">
             <button type="button" id="tr-refresh-btn" class="tr-btn">
@@ -28,7 +28,7 @@
                 <span class="tr-btn__label">Обновить</span>
             </button>
             {% if can_edit('users') %}
-            <button type="button" id="tr-grant-open" class="tr-btn tr-btn--accent">
+            <button type="button" id="tr-grant-open" class="tr-btn tr-btn--primary">
                 <span class="material-symbols-outlined">card_giftcard</span>
                 <span class="tr-btn__label">Выдать триал</span>
             </button>
@@ -36,73 +36,98 @@
         </div>
     </header>
 
-    <section class="tr-kpi" id="tr-kpi">
+    <section class="tr-kpi" id="tr-kpi" aria-label="Сводка">
         <article class="tr-kpi__card">
-            <span class="tr-kpi__label">Активные триалы</span>
-            <strong class="tr-kpi__value" data-stat="active">{{ stats.active }}</strong>
+            <span class="material-symbols-outlined tr-kpi__icon">play_circle</span>
+            <div class="tr-kpi__body">
+                <span class="tr-kpi__label">Активные триалы</span>
+                <strong class="tr-kpi__value" data-stat="active">{{ stats.active }}</strong>
+            </div>
         </article>
         <article class="tr-kpi__card">
-            <span class="tr-kpi__label">Доступен триал</span>
-            <strong class="tr-kpi__value" data-stat="eligible">{{ stats.eligible }}</strong>
+            <span class="material-symbols-outlined tr-kpi__icon">person_add</span>
+            <div class="tr-kpi__body">
+                <span class="tr-kpi__label">Доступен триал</span>
+                <strong class="tr-kpi__value" data-stat="eligible">{{ stats.eligible }}</strong>
+            </div>
         </article>
         <article class="tr-kpi__card">
-            <span class="tr-kpi__label">Истекли за 7 дн.</span>
-            <strong class="tr-kpi__value" data-stat="expired_recent">{{ stats.expired_recent }}</strong>
+            <span class="material-symbols-outlined tr-kpi__icon">history</span>
+            <div class="tr-kpi__body">
+                <span class="tr-kpi__label">Истекли за 7 дн.</span>
+                <strong class="tr-kpi__value" data-stat="expired_recent">{{ stats.expired_recent }}</strong>
+            </div>
         </article>
         <article class="tr-kpi__card">
-            <span class="tr-kpi__label">Всего активаций</span>
-            <strong class="tr-kpi__value" data-stat="total_activations">{{ stats.total_activations }}</strong>
+            <span class="material-symbols-outlined tr-kpi__icon">insights</span>
+            <div class="tr-kpi__body">
+                <span class="tr-kpi__label">Всего активаций</span>
+                <strong class="tr-kpi__value" data-stat="total_activations">{{ stats.total_activations }}</strong>
+            </div>
         </article>
-        <article class="tr-kpi__card tr-kpi__card--highlight">
-            <span class="tr-kpi__label">Конверсия</span>
-            <strong class="tr-kpi__value" data-stat="conversion_pct">{{ stats.conversion_pct }}%</strong>
-            <span class="tr-kpi__sub" data-stat="converted">{{ stats.converted }} купили</span>
+        <article class="tr-kpi__card tr-kpi__card--accent">
+            <span class="material-symbols-outlined tr-kpi__icon">trending_up</span>
+            <div class="tr-kpi__body">
+                <span class="tr-kpi__label">Конверсия</span>
+                <strong class="tr-kpi__value" data-stat="conversion_pct">{{ stats.conversion_pct }}%</strong>
+                <span class="tr-kpi__sub" data-stat="converted">{{ stats.converted }} купили</span>
+            </div>
         </article>
     </section>
 
-    <section class="tr-card tr-chart-card">
-        <div class="tr-card__head">
-            <h2 class="tr-card__title">Активации за 30 дней</h2>
-        </div>
-        <div class="tr-chart" id="tr-chart" aria-hidden="false"></div>
-    </section>
+    <div class="tr-layout">
+        <section class="tr-card tr-chart-card">
+            <div class="tr-card__head">
+                <div>
+                    <h2 class="tr-card__title">Активации за 30 дней</h2>
+                    <p class="tr-card__sub">Динамика выдачи пробных ключей</p>
+                </div>
+            </div>
+            <div class="tr-chart" id="tr-chart" aria-hidden="false"></div>
+        </section>
 
-    <section class="tr-card">
-        <div class="tr-card__head">
-            <h2 class="tr-card__title">Список</h2>
-            <nav class="tr-tabs" id="tr-view-tabs" role="tablist">
-                <button type="button" class="tr-tab is-active" data-tr-view="active">Активные</button>
-                <button type="button" class="tr-tab" data-tr-view="expired">Истекшие</button>
-                <button type="button" class="tr-tab" data-tr-view="all">Все</button>
-                <button type="button" class="tr-tab" data-tr-view="eligible">Доступен триал</button>
-            </nav>
-        </div>
-        <div class="tr-table-wrap">
-            <table class="tr-table" id="tr-table">
-                <thead id="tr-table-head">
-                    <tr>
-                        <th>Пользователь</th>
-                        <th>Сервер</th>
-                        <th>Создан</th>
-                        <th>Истекает</th>
-                        <th>Статус</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody id="tr-table-body"></tbody>
-            </table>
-        </div>
-        <div id="tr-pagination" class="tr-pagination"></div>
-        <div id="tr-empty" class="tr-empty hidden">
-            <span class="material-symbols-outlined">inbox</span>
-            <p>Нет записей</p>
-        </div>
-    </section>
+        <section class="tr-card tr-list-card">
+            <div class="tr-card__head">
+                <div>
+                    <h2 class="tr-card__title">Список</h2>
+                    <p class="tr-card__sub">Trial-ключи и пользователи с доступным триалом</p>
+                </div>
+                <nav class="tr-tabs" id="tr-view-tabs" role="tablist" aria-label="Фильтр списка">
+                    <button type="button" class="tr-tab is-active" data-tr-view="active">Активные</button>
+                    <button type="button" class="tr-tab" data-tr-view="expired">Истекшие</button>
+                    <button type="button" class="tr-tab" data-tr-view="all">Все</button>
+                    <button type="button" class="tr-tab" data-tr-view="eligible">Доступен</button>
+                </nav>
+            </div>
+            <div class="tr-table-wrap">
+                <table class="tr-table" id="tr-table">
+                    <thead id="tr-table-head">
+                        <tr>
+                            <th>Пользователь</th>
+                            <th>Сервер</th>
+                            <th>Создан</th>
+                            <th>Истекает</th>
+                            <th>Статус</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="tr-table-body"></tbody>
+                </table>
+            </div>
+            <div id="tr-pagination" class="tr-pagination"></div>
+            <div id="tr-empty" class="tr-empty hidden">
+                <span class="material-symbols-outlined">inbox</span>
+                <p>Нет записей</p>
+            </div>
+        </section>
+    </div>
 
     <section class="tr-card" id="tr-settings-section">
         <div class="tr-card__head">
-            <h2 class="tr-card__title">Настройки</h2>
-            <p class="tr-card__sub">Параметры пробного периода для бота и WebApp</p>
+            <div>
+                <h2 class="tr-card__title">Настройки</h2>
+                <p class="tr-card__sub">Параметры пробного периода для бота и WebApp</p>
+            </div>
         </div>
         {% include 'partials/trial_settings_form.html' %}
     </section>
@@ -111,7 +136,7 @@
 {% if can_edit('users') %}
 <div class="tr-modal hidden" id="tr-grant-modal" role="dialog" aria-modal="true" aria-labelledby="tr-grant-title">
     <div class="tr-modal__backdrop" data-tr-close></div>
-    <div class="tr-modal__panel tr-modal__panel--grant">
+    <div class="tr-modal__panel">
         <header class="tr-modal__head">
             <div class="tr-modal__head-main">
                 <span class="tr-modal__icon" aria-hidden="true"><span class="material-symbols-outlined">card_giftcard</span></span>
@@ -155,7 +180,7 @@
         </div>
         <footer class="tr-modal__foot">
             <button type="button" class="tr-btn tr-btn--ghost" data-tr-close>Отмена</button>
-            <button type="button" class="tr-btn tr-btn--accent tr-btn--solid" id="tr-grant-submit" {% if not grant_hosts %}disabled{% endif %}>
+            <button type="button" class="tr-btn tr-btn--primary" id="tr-grant-submit" {% if not grant_hosts %}disabled{% endif %}>
                 <span class="material-symbols-outlined">card_giftcard</span>
                 Выдать
             </button>
@@ -167,7 +192,7 @@
 {% if can_edit('keys') %}
 <div class="tr-modal hidden" id="tr-extend-modal" role="dialog" aria-modal="true" aria-labelledby="tr-extend-title">
     <div class="tr-modal__backdrop" data-tr-close></div>
-    <div class="tr-modal__panel tr-modal__panel--grant">
+    <div class="tr-modal__panel">
         <header class="tr-modal__head">
             <div class="tr-modal__head-main">
                 <span class="tr-modal__icon" aria-hidden="true"><span class="material-symbols-outlined">schedule</span></span>
@@ -188,7 +213,7 @@
         </div>
         <footer class="tr-modal__foot">
             <button type="button" class="tr-btn tr-btn--ghost" data-tr-close>Отмена</button>
-            <button type="button" class="tr-btn tr-btn--accent tr-btn--solid" id="tr-extend-submit">
+            <button type="button" class="tr-btn tr-btn--primary" id="tr-extend-submit">
                 <span class="material-symbols-outlined">schedule</span>
                 Продлить
             </button>

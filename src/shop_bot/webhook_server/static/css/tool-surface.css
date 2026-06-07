@@ -13,6 +13,8 @@
 .dh-page,
 .mn-page,
 .tr-page,
+#tab-database.db-panel,
+#tab-hosts.hst-panel,
 .btn-cstr-page,
 #tab-broadcast,
 #tab-promo,
@@ -41,6 +43,8 @@ html:not(.dark) .bv-page,
 html:not(.dark) .dh-page,
 html:not(.dark) .mn-page,
 html:not(.dark) .tr-page,
+html:not(.dark) #tab-database.db-panel,
+html:not(.dark) #tab-hosts.hst-panel,
 html:not(.dark) .btn-cstr-page,
 html:not(.dark) #tab-broadcast,
 html:not(.dark) #tab-promo {
@@ -118,6 +122,35 @@ html:not(.dark) #tab-promo {
 
 .bv-hero__orb {
     display: none;
+}
+
+.tr-ambient {
+    display: none !important;
+}
+
+.tr-hero {
+    margin-bottom: 1rem;
+    padding: 1rem 1.1rem;
+    border-radius: var(--ts-radius-lg);
+    border: 1px solid var(--ts-border);
+    background: var(--ts-surface);
+    box-shadow: var(--ts-shadow);
+}
+
+.tr-kpi__card,
+.tr-card {
+    backdrop-filter: none;
+    box-shadow: var(--ts-shadow);
+}
+
+#tab-database.db-panel .db-hero,
+#tab-hosts.hst-panel .hst-hero {
+    margin-bottom: 1rem;
+    padding: 1rem 1.1rem;
+    border-radius: var(--ts-radius-lg);
+    border: 1px solid var(--ts-border);
+    background: var(--ts-surface);
+    box-shadow: var(--ts-shadow);
 }
 
 .bv-hero__title {

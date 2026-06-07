@@ -17,7 +17,6 @@
     {% elif not gate.unlocked %}
     <div class="db-vault" id="db-stepup-gate">
         <div class="db-vault__card">
-            <div class="db-vault__glow" aria-hidden="true"></div>
             <div class="db-vault__icon" aria-hidden="true">
                 <span class="material-symbols-outlined">verified_user</span>
             </div>
@@ -28,10 +27,10 @@
             <form id="db-stepup-totp-form" class="db-vault__form" autocomplete="off">
                 <input type="text" id="db-stepup-totp-code" class="db-input db-input--totp"
                     inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="000000" aria-label="Код TOTP" />
-                <button type="submit" class="db-btn db-btn--primary db-btn--glow">Подтвердить</button>
+                <button type="submit" class="db-btn db-btn--primary">Подтвердить</button>
             </form>
             {% elif gate.method == 'passkey' %}
-            <button type="button" id="db-stepup-passkey-btn" class="db-btn db-btn--primary db-btn--glow">
+            <button type="button" id="db-stepup-passkey-btn" class="db-btn db-btn--primary">
                 <span class="material-symbols-outlined">passkey</span>
                 Подтвердить Passkey
             </button>
@@ -47,9 +46,6 @@
     {% else %}
     <div class="db-panel__unlocked" id="db-panel-unlocked" data-source="{{ database_source or 'shopbot' }}">
         <header class="db-hero">
-            <div class="db-hero__glow" aria-hidden="true"></div>
-            <div class="db-hero__glow db-hero__glow--2" aria-hidden="true"></div>
-
             <div class="db-hero__row">
                 <div class="db-hero__brand">
                     <div class="db-hero__icon" aria-hidden="true">
