@@ -77,7 +77,7 @@ ALL_SETTINGS_KEYS = [
 
 SETTINGS_TAB_IDS = [
     "panel", "database", "stealth-login", "bot", "payments", "hosts", "referrals", "content",
-    "access", "audit", "broadcast", "promo", "logs", "webapp", "remnawave", "mail-templates",
+    "access", "audit", "anti-fraud", "broadcast", "promo", "logs", "webapp", "remnawave", "mail-templates",
 ]
 
 SETTINGS_NAV_GROUPS: dict[str, dict[str, str]] = {
@@ -134,7 +134,7 @@ SETTINGS_TAB_SECTIONS: dict[str, list[dict[str, str]]] = {
     ],
 }
 
-SETTINGS_FORM_TABS = frozenset({"panel", "stealth-login", "bot", "payments", "referrals", "content"})
+SETTINGS_FORM_TABS = frozenset({"panel", "stealth-login", "bot", "payments", "referrals", "content", "anti-fraud"})
 
 # Per-tab checkbox keys and default when absent from submitted form.
 SETTINGS_TAB_CHECKBOXES: dict[str, dict[str, str]] = {
@@ -169,10 +169,6 @@ SETTINGS_TAB_CHECKBOXES: dict[str, dict[str, str]] = {
         "enable_referrals": "false",
         "enable_fixed_referral_bonus": "false",
         "referral_notify_bonus": "true",
-    },
-    "anti-fraud": {
-        "email_domain_blocklist": "",
-        "email_pattern_blocklist": "",
     },
     "content": {
         "force_subscription": "false",
