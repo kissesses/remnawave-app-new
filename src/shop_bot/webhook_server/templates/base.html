@@ -170,6 +170,16 @@
 
         .modal-overlay.open {
             display: flex;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            align-items: flex-start;
+            justify-content: center;
+            padding: max(1rem, env(safe-area-inset-top, 0px)) 1rem max(1rem, env(safe-area-inset-bottom, 0px));
+        }
+
+        .modal-overlay.open .modal-content {
+            margin: auto 0;
+            flex-shrink: 0;
         }
 
         body.has-modal-open {
@@ -673,12 +683,11 @@
             window.openModal = function (modalId) {
                 const modal = document.getElementById(modalId);
                 if (!modal) return;
-                /* Модалки внутри .settings-main (macOS v2): перенос в body, если предок с filter/transform */
+                /* Модалки внутри scroll/transform-контейнеров: перенос в body */
                 if (
                     modal.classList.contains('modal-overlay')
                     && modal.parentElement
                     && modal.parentElement !== document.body
-                    && modal.closest('.settings-main, .settings-page')
                 ) {
                     document.body.appendChild(modal);
                 }

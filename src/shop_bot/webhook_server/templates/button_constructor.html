@@ -249,14 +249,14 @@
 
 <!-- Add Button Modal -->
 <div id="addButtonModal" class="modal-overlay">
-    <div class="modal-content max-w-md">
-        <div class="p-4 border-b border-white/10 flex items-center justify-between">
+    <div class="modal-content max-w-md btn-cstr-modal">
+        <div class="btn-cstr-modal__head p-4 border-b border-white/10 flex items-center justify-between">
             <h5 class="text-white font-bold">Новая кнопка</h5>
             <button type="button" onclick="closeModal('addButtonModal')" class="text-white/50 hover:text-white">
                 <span class="material-symbols-outlined">close</span>
             </button>
         </div>
-        <div class="p-6 space-y-4">
+        <div class="btn-cstr-modal__body p-6 space-y-4">
             <div class="btn-cstr-field" style="margin:0">
                 <label for="new-button-id">ID</label>
                 <input type="text" id="new-button-id" placeholder="my_button" required />
@@ -311,7 +311,7 @@
                 <input type="text" id="new-emoji-id" />
             </div>
         </div>
-        <div class="p-4 border-t border-white/10 flex justify-end gap-2">
+        <div class="btn-cstr-modal__foot p-4 border-t border-white/10 flex justify-end gap-2">
             <button type="button" onclick="closeModal('addButtonModal')" class="btn-cstr-btn">Отмена</button>
             <button type="button" id="confirm-add-button" class="btn-cstr-btn btn-cstr-btn--primary">Добавить</button>
         </div>
@@ -320,14 +320,14 @@
 
 <!-- Help Modal -->
 <div id="buttonHelpModal" class="modal-overlay modal-xl">
-    <div class="modal-content">
-        <div class="p-4 border-b border-white/10 flex items-center justify-between">
+    <div class="modal-content btn-cstr-modal">
+        <div class="btn-cstr-modal__head p-4 border-b border-white/10 flex items-center justify-between">
             <h5 class="text-white font-bold">Справочник кнопок и callback</h5>
             <button type="button" onclick="closeModal('buttonHelpModal')" class="text-white/50 hover:text-white">
                 <span class="material-symbols-outlined">close</span>
             </button>
         </div>
-        <div class="p-6">
+        <div class="btn-cstr-modal__body p-6">
             <div class="mb-4 p-3 rounded-xl border border-primary/20 bg-primary/5">
                 <p class="text-[11px] text-white/70 leading-relaxed">
                     <strong class="text-primary">Подсказка:</strong> ID кнопки произвольный. Важно поле <span class="text-amber-400 font-semibold">Callback / URL</span> — по нему бот выполняет действие.
@@ -336,7 +336,7 @@
             </div>
             <input type="text" id="help-search" placeholder="Поиск…"
                 class="w-full mb-4 bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white text-sm" />
-            <div class="overflow-x-auto max-h-[60vh] custom-scroll">
+            <div class="overflow-x-auto custom-scroll">
                 <table class="w-full text-xs">
                     <thead class="bg-primary/10 sticky top-0">
                         <tr>
@@ -352,7 +352,7 @@
                 </table>
             </div>
         </div>
-        <div class="p-4 border-t border-white/10 flex justify-end">
+        <div class="btn-cstr-modal__foot p-4 border-t border-white/10 flex justify-end">
             <button type="button" onclick="closeModal('buttonHelpModal')" class="btn-cstr-btn btn-cstr-btn--primary">Закрыть</button>
         </div>
     </div>

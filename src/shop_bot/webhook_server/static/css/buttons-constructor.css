@@ -727,6 +727,37 @@
     gap: 0.35rem;
 }
 
+/* Modals — scrollable body, sticky header/footer */
+.btn-cstr-modal.modal-content {
+    display: flex;
+    flex-direction: column;
+    max-height: min(90vh, calc(100dvh - 2rem));
+    overflow: hidden;
+}
+
+.btn-cstr-modal__head,
+.btn-cstr-modal__foot {
+    flex-shrink: 0;
+}
+
+.btn-cstr-modal__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+body.has-modal-open.workspace-embed {
+    overflow: hidden;
+}
+
+body.workspace-embed .modal-overlay.open {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+}
+
 /* Help modal */
 .btn-cstr-help-row {
     cursor: pointer;
