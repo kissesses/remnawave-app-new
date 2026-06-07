@@ -72,10 +72,11 @@
             if (avatarPh) avatarPh.hidden = true;
         }
 
-        const devName = document.getElementById('about-dev-name');
-        if (devName) {
-            devName.textContent = user.login || user.name || project.author || devName.textContent;
-            if (user.html_url) devName.href = user.html_url;
+        const devLink = document.getElementById('about-dev-name');
+        const devLabel = devLink?.querySelector('.about-studio-dev');
+        if (devLink && devLabel) {
+            devLabel.textContent = user.login || user.name || project.author || devLabel.textContent;
+            if (user.html_url) devLink.href = user.html_url;
         }
 
         const bio = document.getElementById('about-dev-bio');
