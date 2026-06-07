@@ -52,6 +52,10 @@
 {% if active_tab == 'hosts' %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/hosts-panel.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
 {% endif %}
+{% if active_tab == 'panel' %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/content-panel.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/panel-panel.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
+{% endif %}
 {% if active_tab == 'webapp' %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/webapp-panel.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
 {% endif %}
@@ -68,7 +72,7 @@
 {% set form_tabs = ['panel', 'stealth-login', 'bot', 'payments', 'referrals', 'content', 'anti-fraud'] %}
 {% set show_save_btn = active_tab in form_tabs %}
 {% set settings_nav_items = [
-    {'id': 'panel', 'label': 'Панель', 'desc': 'Доступ, база данных и системные функции', 'icon': 'dashboard', 'perm': 'settings_panel', 'group': 'system'},
+    {'id': 'panel', 'label': 'Панель', 'desc': 'Panel Studio — система, мониторинг, SMTP и бэкапы', 'icon': 'dashboard', 'perm': 'settings_panel', 'group': 'system'},
     {'id': 'database', 'label': 'База данных', 'desc': 'Состояние PostgreSQL, бэкапы и обслуживание', 'icon': 'database', 'perm': 'db_manage', 'group': 'system'},
     {'id': 'stealth-login', 'label': 'Скрытый вход', 'desc': 'Маскировка страницы /login и способы разблокировки', 'icon': 'visibility_off', 'perm': 'settings_panel', 'group': 'system'},
     {'id': 'bot', 'label': 'Настройка ботов' if not (all_settings_ok and support_settings_ok) else 'Боты', 'desc': 'Конфигурация основного бота и службы поддержки', 'icon': 'smart_toy', 'perm': 'settings_bot', 'group': 'system'},
@@ -393,5 +397,19 @@ window.BOT_PANEL_BOOT = {
 {% endif %}
 {% if active_tab == 'webapp' %}
 {% include 'partials/settings/webapp_scripts.html' %}
+{% endif %}
+{% if active_tab == 'panel' %}
+<script src="{{ url_for('static', filename='js/panel-panel.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
+<script>
+(function () {
+    const orig = window.initInteractiveElements;
+    if (typeof orig === 'function') {
+        window.initInteractiveElements = function () {
+            orig.apply(this, arguments);
+            if (typeof window.reinitPanelPanel === 'function') window.reinitPanelPanel();
+        };
+    }
+})();
+</script>
 {% endif %}
 {% endblock %}

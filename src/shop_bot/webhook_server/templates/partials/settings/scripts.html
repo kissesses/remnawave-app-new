@@ -357,6 +357,9 @@
             if (typeof window.reinitWebappPanel === 'function') {
                 window.reinitWebappPanel();
             }
+            if (typeof window.reinitPanelPanel === 'function') {
+                window.reinitPanelPanel();
+            }
         } catch (e) { console.error('Smart Refresh failed:', e); }
     }
     // ===== Конец умного обновления =====

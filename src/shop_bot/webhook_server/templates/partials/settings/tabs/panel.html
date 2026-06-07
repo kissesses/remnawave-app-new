@@ -1,430 +1,387 @@
-    <section id="tab-panel" class="tab-content settings-tab-sectioned">
-        {% include 'partials/settings/section_nav.html' %}
-        {% set settings_default_section = tab_sections[0].id if tab_sections else 'panel-system' %}
-        <div class="space-y-8">
-
-                            {% set section_id = 'panel-system' %}
-                <div class="settings-form-section{% if section_id == settings_default_section %} is-section-visible{% endif %}" id="{{ section_id }}">
-                {% set section_title = 'Система' %}
-                {% set section_desc = 'Автозапуск, WAL и сводка о панели' %}
-                {% set section_icon = 'tune' %}
-                {% include 'partials/settings/section_header.html' %}
-                <div class="settings-form-section__body">
-
-                <div class="settings-macos-group">
-                    <p class="settings-macos-group__caption">Управление</p>
-                    <div class="settings-macos-list">
-                        {% if can('settings_access') %}
-                        <a href="{{ url_for('settings_tab_page', tab='access') }}" class="settings-macos-row settings-macos-row--link">
-                            <span class="settings-macos-row__glyph material-symbols-outlined">shield_person</span>
-                            <span class="settings-macos-row__body">
-                                <span class="settings-macos-row__title">Администраторы и роли</span>
-                                <span class="settings-macos-row__sub">{{ panel_system_meta.admins_count if panel_system_meta else 0 }} активных учётных записей</span>
-                            </span>
-                            <span class="material-symbols-outlined settings-macos-row__chevron">chevron_right</span>
-                        </a>
-                        {% endif %}
-                        {% if can('settings_audit') or can('settings_access') %}
-                        <a href="{{ url_for('settings_tab_page', tab='audit') }}" class="settings-macos-row settings-macos-row--link">
-                            <span class="settings-macos-row__glyph material-symbols-outlined">policy</span>
-                            <span class="settings-macos-row__body">
-                                <span class="settings-macos-row__title">Журнал аудита</span>
-                                <span class="settings-macos-row__sub">Audit Studio — действия администраторов</span>
-                            </span>
-                            <span class="material-symbols-outlined settings-macos-row__chevron">chevron_right</span>
-                        </a>
-                        {% endif %}
-                        {% if dev_support_enabled and (can('dev_support') or panel_is_superadmin) %}
-                        <a href="{{ url_for('developer_support_page') }}" class="settings-macos-row settings-macos-row--link">
-                            <span class="settings-macos-row__glyph material-symbols-outlined">developer_mode</span>
-                            <span class="settings-macos-row__body">
-                                <span class="settings-macos-row__title">Поддержка разработчика</span>
-                                <span class="settings-macos-row__sub">Тикеты автору проекта · привязка Ed25519</span>
-                            </span>
-                            <span class="material-symbols-outlined settings-macos-row__chevron">chevron_right</span>
-                        </a>
-                        {% endif %}
-                        {% if dev_support_hub_enabled and can('dev_support_hub') %}
-                        <a href="{{ url_for('developer_page') }}" class="settings-macos-row settings-macos-row--link">
-                            <span class="settings-macos-row__glyph material-symbols-outlined">inbox</span>
-                            <span class="settings-macos-row__body">
-                                <span class="settings-macos-row__title">Support Hub Inbox</span>
-                                <span class="settings-macos-row__sub">Входящие тикеты с клиентских панелей</span>
-                            </span>
-                            <span class="material-symbols-outlined settings-macos-row__chevron">chevron_right</span>
-                        </a>
-                        {% endif %}
-                        <button type="button" class="settings-macos-row settings-macos-row--link" id="settings-open-admins-online">
-                            <span class="settings-macos-row__glyph material-symbols-outlined">groups</span>
-                            <span class="settings-macos-row__body">
-                                <span class="settings-macos-row__title">Администраторы онлайн</span>
-                                <span class="settings-macos-row__sub"><span class="panel-admins-online-count">0</span> в панели сейчас</span>
-                            </span>
-                            <span class="material-symbols-outlined settings-macos-row__chevron">chevron_right</span>
-                        </button>
-                        <a href="{{ url_for('settings_tab_page', tab='stealth-login') }}" class="settings-macos-row settings-macos-row--link">
-                            <span class="settings-macos-row__glyph material-symbols-outlined">visibility_off</span>
-                            <span class="settings-macos-row__body">
-                                <span class="settings-macos-row__title">Скрытый вход</span>
-                                <span class="settings-macos-row__sub">Маскировка /login, hotkey и секретный URL</span>
-                            </span>
-                            <span class="material-symbols-outlined settings-macos-row__chevron">chevron_right</span>
-                        </a>
-                        {% if can('settings_content') or can('settings_mail_templates') %}
-                        <a href="{{ url_for('settings_tab_page', tab='content') }}#mail" class="settings-macos-row settings-macos-row--link">
-                            <span class="settings-macos-row__glyph material-symbols-outlined">mail</span>
-                            <span class="settings-macos-row__body">
-                                <span class="settings-macos-row__title">Шаблоны почты</span>
-                                <span class="settings-macos-row__sub">Notifications Studio → вкладка «Почта»</span>
-                            </span>
-                            <span class="material-symbols-outlined settings-macos-row__chevron">chevron_right</span>
-                        </a>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <div class="settings-macos-group">
-                    <p class="settings-macos-group__caption">Параметры</p>
-                    <div class="settings-macos-list">
-                        <div class="settings-macos-row settings-macos-row--toggle">
-                            <div class="settings-macos-row__body">
-                                <span class="settings-macos-row__title">WAL режим БД</span>
-                                <span class="settings-macos-row__sub">ВКЛ — HDD, ВЫКЛ — SSD/NVMe</span>
-                            </div>
-                            <input type="hidden" name="enable_wal_mode" value="0" />
-                            <label class="settings-macos-switch">
-                                <input type="checkbox" name="enable_wal_mode" value="1" {% if settings.enable_wal_mode=='1' %}checked{% endif %} />
-                                <span class="settings-macos-switch__track"></span>
-                            </label>
-                        </div>
-
-                        <div class="settings-macos-row settings-macos-row--toggle">
-                            <div class="settings-macos-row__body">
-                                <span class="settings-macos-row__title">Автозапуск бота</span>
-                                <span class="settings-macos-row__sub">Запуск после ребута сервера</span>
-                            </div>
-                            <input type="hidden" name="auto_start_bot" value="0" />
-                            <label class="settings-macos-switch">
-                                <input type="checkbox" name="auto_start_bot" value="1" {% if other_settings.auto_start_bot=='1' %}checked{% endif %} />
-                                <span class="settings-macos-switch__track"></span>
-                            </label>
-                        </div>
-
-                        <div class="settings-macos-row settings-macos-row--toggle">
-                            <div class="settings-macos-row__body">
-                                <span class="settings-macos-row__title">Демо режим</span>
-                                <span class="settings-macos-row__sub">Скрыть реальные данные на дашборде</span>
-                            </div>
-                            <input type="hidden" name="demo_mode_enabled" value="0" />
-                            <label class="settings-macos-switch">
-                                <input type="checkbox" name="demo_mode_enabled" value="1" {% if settings.demo_mode_enabled=='1' %}checked{% endif %} />
-                                <span class="settings-macos-switch__track"></span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                {% if panel_system_meta %}
-                <div class="settings-macos-group">
-                    <p class="settings-macos-group__caption">О системе</p>
-                    <div class="settings-macos-list settings-macos-list--static">
-                        <div class="settings-macos-row settings-macos-row--info">
-                            <span class="settings-macos-row__title">Версия</span>
-                            <span class="settings-macos-row__value">v{{ panel_system_meta.version }}{% if panel_system_meta.image_tag %} · {{ panel_system_meta.image_tag }}{% endif %}</span>
-                        </div>
-                        <div class="settings-macos-row settings-macos-row--info">
-                            <span class="settings-macos-row__title">База данных</span>
-                            <span class="settings-macos-row__value">{{ panel_system_meta.db_engine }}{% if panel_system_meta.wal_enabled %} · WAL{% endif %}</span>
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
-                </div>
+{% set psm = panel_system_meta or {} %}
+<section id="tab-panel" class="tab-content pnl-panel cnt-panel">
+    <header class="cnt-hub">
+        <div class="cnt-hub__intro">
+            <div class="cnt-hub__icon" aria-hidden="true">
+                <span class="material-symbols-outlined">dashboard</span>
             </div>
-
-                            {% set section_id = 'panel-monitoring' %}
-                <div class="settings-form-section{% if section_id == settings_default_section %} is-section-visible{% endif %}" id="{{ section_id }}">
-                {% set section_title = 'Мониторинг' %}
-                {% set section_desc = 'Уведомления о нагрузке на сервер' %}
-                {% set section_icon = 'monitoring' %}
-                {% include 'partials/settings/section_header.html' %}
-                <div class="settings-form-section__body">
-                <div class="settings-macos-group">
-                    <div class="settings-macos-list">
-                        <div class="settings-macos-row settings-macos-row--toggle">
-                            <div class="settings-macos-row__body">
-                                <span class="settings-macos-row__title">Мониторинг ресурсов</span>
-                                <span class="settings-macos-row__sub">Алерты в Telegram при перегрузке</span>
-                            </div>
-                            <input type="hidden" name="monitoring_enabled" value="false" />
-                            <label class="settings-macos-switch">
-                                <input type="checkbox" name="monitoring_enabled" value="true" {% if (settings.monitoring_enabled or 'true')=='true' %}checked{% endif %} />
-                                <span class="settings-macos-switch__track"></span>
-                            </label>
-                        </div>
-                        <div class="settings-macos-row settings-macos-row--field">
-                            <label class="settings-macos-row__field-label" for="monitoring-interval-sec">Интервал (сек)</label>
-                            <div class="settings-macos-row__field-input">
-                                <input type="number" id="monitoring-interval-sec" name="monitoring_interval_sec"
-                                    value="{{ settings.monitoring_interval_sec or '300' }}" min="30" class="settings-macos-input" />
-                            </div>
-                        </div>
-                        <div class="settings-macos-row settings-macos-row--field">
-                            <label class="settings-macos-row__field-label" for="monitoring-cooldown-sec">Кулдаун (сек)</label>
-                            <div class="settings-macos-row__field-input">
-                                <input type="number" id="monitoring-cooldown-sec" name="monitoring_alert_cooldown_sec"
-                                    value="{{ settings.monitoring_alert_cooldown_sec or '3600' }}" min="60" class="settings-macos-input" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="settings-macos-group">
-                    <p class="settings-macos-group__caption">Пороги уведомлений (%)</p>
-                    <div class="settings-macos-list">
-                        <div class="settings-macos-row settings-macos-row--field">
-                            <label class="settings-macos-row__field-label" for="monitoring-cpu-threshold">CPU</label>
-                            <div class="settings-macos-row__field-input">
-                                <input type="number" id="monitoring-cpu-threshold" name="monitoring_cpu_threshold"
-                                    value="{{ settings.monitoring_cpu_threshold or '90' }}" min="10" max="100" class="settings-macos-input" />
-                            </div>
-                        </div>
-                        <div class="settings-macos-row settings-macos-row--field">
-                            <label class="settings-macos-row__field-label" for="monitoring-mem-threshold">RAM</label>
-                            <div class="settings-macos-row__field-input">
-                                <input type="number" id="monitoring-mem-threshold" name="monitoring_mem_threshold"
-                                    value="{{ settings.monitoring_mem_threshold or '90' }}" min="10" max="100" class="settings-macos-input" />
-                            </div>
-                        </div>
-                        <div class="settings-macos-row settings-macos-row--field">
-                            <label class="settings-macos-row__field-label" for="monitoring-disk-threshold">Диск</label>
-                            <div class="settings-macos-row__field-input">
-                                <input type="number" id="monitoring-disk-threshold" name="monitoring_disk_threshold"
-                                    value="{{ settings.monitoring_disk_threshold or '90' }}" min="10" max="100" class="settings-macos-input" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                </div>
+            <div>
+                <h2 class="cnt-hub__title">Panel Studio</h2>
+                <p class="cnt-hub__desc">Система · мониторинг · SMTP · бэкапы</p>
             </div>
-
-                            {% set section_id = 'panel-smtp' %}
-                <div class="settings-form-section{% if section_id == settings_default_section %} is-section-visible{% endif %}" id="{{ section_id }}">
-                {% set section_title = 'Email / SMTP' %}
-                {% set section_desc = 'Почтовые уведомления и рассылки' %}
-                {% set section_icon = 'mail' %}
-                {% include 'partials/settings/section_header.html' %}
-                <div class="settings-form-section__body">
-                <div class="settings-macos-group">
-                    <div class="settings-macos-list">
-                        <div class="settings-macos-row settings-macos-row--toggle">
-                            <div class="settings-macos-row__body">
-                                <span class="settings-macos-row__title">SMTP</span>
-                                <span class="settings-macos-row__sub">Почтовые уведомления панели и WebApp</span>
-                            </div>
-                            <input type="hidden" name="smtp_enabled" value="0" />
-                            <label class="settings-macos-switch">
-                                <input type="checkbox" name="smtp_enabled" value="1" {% if settings.smtp_enabled=='1' %}checked{% endif %} />
-                                <span class="settings-macos-switch__track"></span>
-                            </label>
-                        </div>
-                        <div class="settings-macos-row settings-macos-row--field">
-                            <label class="settings-macos-row__field-label" for="smtp-host">SMTP-сервер</label>
-                            <div class="settings-macos-row__field-input settings-macos-row__field-input--stretch">
-                                <input type="text" id="smtp-host" name="smtp_host" value="{{ settings.smtp_host or '' }}" placeholder="smtp.example.com" class="settings-macos-input settings-macos-input--stretch" />
-                            </div>
-                        </div>
-                        <div class="settings-macos-row settings-macos-row--field">
-                            <label class="settings-macos-row__field-label" for="smtp-port">Порт</label>
-                            <div class="settings-macos-row__field-input">
-                                <input type="number" id="smtp-port" name="smtp_port" value="{{ settings.smtp_port or '587' }}" min="1" max="65535" class="settings-macos-input" />
-                            </div>
-                        </div>
-                        <div class="settings-macos-row settings-macos-row--field">
-                            <label class="settings-macos-row__field-label" for="smtp-username">Логин</label>
-                            <div class="settings-macos-row__field-input settings-macos-row__field-input--stretch">
-                                <input type="text" id="smtp-username" name="smtp_username" value="{{ settings.smtp_username or '' }}" autocomplete="off" class="settings-macos-input settings-macos-input--stretch" />
-                            </div>
-                        </div>
-                        <div class="settings-macos-row settings-macos-row--field">
-                            <label class="settings-macos-row__field-label" for="smtp-password">Пароль</label>
-                            <div class="settings-macos-row__field-input settings-macos-row__field-input--stretch">
-                                <input type="password" id="smtp-password" name="smtp_password" value="{{ settings.smtp_password or '' }}" autocomplete="new-password" placeholder="Оставьте пустым, чтобы не менять" class="settings-macos-input settings-macos-input--stretch" />
-                            </div>
-                        </div>
-                        <div class="settings-macos-row settings-macos-row--field">
-                            <label class="settings-macos-row__field-label" for="smtp-from-email">Email отправителя</label>
-                            <div class="settings-macos-row__field-input settings-macos-row__field-input--stretch">
-                                <input type="email" id="smtp-from-email" name="smtp_from_email" value="{{ settings.smtp_from_email or '' }}" placeholder="noreply@example.com" class="settings-macos-input settings-macos-input--stretch" />
-                            </div>
-                        </div>
-                        <div class="settings-macos-row settings-macos-row--field">
-                            <label class="settings-macos-row__field-label" for="smtp-from-name">Имя отправителя</label>
-                            <div class="settings-macos-row__field-input settings-macos-row__field-input--stretch">
-                                <input type="text" id="smtp-from-name" name="smtp_from_name" value="{{ settings.smtp_from_name or '' }}" placeholder="Remnawave ShopBot" class="settings-macos-input settings-macos-input--stretch" />
-                            </div>
-                        </div>
-                        <div class="settings-macos-row settings-macos-row--field">
-                            <label class="settings-macos-row__field-label" for="smtp-encryption">Шифрование</label>
-                            <div class="settings-macos-row__field-input settings-macos-row__field-input--stretch">
-                                {% set enc = settings.smtp_encryption or 'starttls' %}
-                                <select id="smtp-encryption" name="smtp_encryption" class="settings-macos-input settings-macos-input--stretch">
-                                    <option value="starttls" {% if enc == 'starttls' %}selected{% endif %}>STARTTLS (587)</option>
-                                    <option value="ssl" {% if enc == 'ssl' %}selected{% endif %}>SSL/TLS (465)</option>
-                                    <option value="none" {% if enc == 'none' %}selected{% endif %}>Без шифрования</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="settings-macos-row settings-macos-row--field">
-                            <label class="settings-macos-row__field-label" for="smtp-notify-emails">Получатели уведомлений</label>
-                            <div class="settings-macos-row__field-input settings-macos-row__field-input--stretch">
-                                <input type="text" id="smtp-notify-emails" name="smtp_notify_emails" value="{{ settings.smtp_notify_emails or '' }}" placeholder="admin@example.com, ops@example.com" class="settings-macos-input settings-macos-input--stretch" />
-                            </div>
-                            <span class="settings-macos-row__field-hint">Через запятую или пробел</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="settings-macos-group">
-                    <p class="settings-macos-group__caption">Типы уведомлений</p>
-                    <div class="settings-macos-list">
-                        <div class="settings-macos-row settings-macos-row--toggle">
-                            <div class="settings-macos-row__body">
-                                <span class="settings-macos-row__title">Сброс пароля</span>
-                                <span class="settings-macos-row__sub">WebApp — код на email</span>
-                            </div>
-                            <input type="hidden" name="smtp_notify_password_reset" value="0" />
-                            <label class="settings-macos-switch">
-                                <input type="checkbox" name="smtp_notify_password_reset" value="1" {% if settings.smtp_notify_password_reset=='1' %}checked{% endif %} />
-                                <span class="settings-macos-switch__track"></span>
-                            </label>
-                        </div>
-                        <div class="settings-macos-row settings-macos-row--toggle">
-                            <div class="settings-macos-row__body">
-                                <span class="settings-macos-row__title">Истечение ключа</span>
-                                <span class="settings-macos-row__sub">Напоминания пользователям с auth_email</span>
-                            </div>
-                            <input type="hidden" name="smtp_notify_key_expiry" value="0" />
-                            <label class="settings-macos-switch">
-                                <input type="checkbox" name="smtp_notify_key_expiry" value="1" {% if settings.smtp_notify_key_expiry=='1' %}checked{% endif %} />
-                                <span class="settings-macos-switch__track"></span>
-                            </label>
-                        </div>
-                        <div class="settings-macos-row settings-macos-row--toggle">
-                            <div class="settings-macos-row__body">
-                                <span class="settings-macos-row__title">Чеки об оплате</span>
-                                <span class="settings-macos-row__sub">Покупка, продление, пополнение</span>
-                            </div>
-                            <input type="hidden" name="smtp_notify_payment_receipt" value="0" />
-                            <label class="settings-macos-switch">
-                                <input type="checkbox" name="smtp_notify_payment_receipt" value="1" {% if settings.smtp_notify_payment_receipt=='1' %}checked{% endif %} />
-                                <span class="settings-macos-switch__track"></span>
-                            </label>
-                        </div>
-                        <div class="settings-macos-row settings-macos-row--toggle">
-                            <div class="settings-macos-row__body">
-                                <span class="settings-macos-row__title">Вход в панель</span>
-                                <span class="settings-macos-row__sub">Успешные и неудачные попытки входа</span>
-                            </div>
-                            <input type="hidden" name="smtp_notify_login" value="0" />
-                            <label class="settings-macos-switch">
-                                <input type="checkbox" name="smtp_notify_login" value="1" {% if settings.smtp_notify_login=='1' %}checked{% endif %} />
-                                <span class="settings-macos-switch__track"></span>
-                            </label>
-                        </div>
-                        <div class="settings-macos-row settings-macos-row--toggle">
-                            <div class="settings-macos-row__body">
-                                <span class="settings-macos-row__title">Мониторинг ресурсов</span>
-                                <span class="settings-macos-row__sub">CPU, RAM, диск — дублирование Telegram-алертов</span>
-                            </div>
-                            <input type="hidden" name="smtp_notify_monitoring" value="0" />
-                            <label class="settings-macos-switch">
-                                <input type="checkbox" name="smtp_notify_monitoring" value="1" {% if settings.smtp_notify_monitoring=='1' %}checked{% endif %} />
-                                <span class="settings-macos-switch__track"></span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                <div class="settings-macos-group">
-                    <p class="settings-macos-group__caption">Проверка</p>
-                    <div class="settings-macos-list">
-                        <div class="settings-macos-row settings-macos-row--field">
-                            <label class="settings-macos-row__field-label" for="smtp-test-to">Тестовый email</label>
-                            <div class="settings-macos-row__field-input settings-macos-row__field-input--stretch settings-macos-row__field-input--action">
-                                <input type="email" id="smtp-test-to" value="{{ (settings.smtp_notify_emails or '').split(',')[0].strip() }}" placeholder="test@example.com" class="settings-macos-input settings-macos-input--stretch" />
-                                <button type="button" id="smtp-test-btn" class="settings-macos-btn-secondary">
-                                    <span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-0.2em;">send</span>
-                                    Отправить тест
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                </div>
-            </div>
-
-                            {% set section_id = 'panel-backup' %}
-                <div class="settings-form-section{% if section_id == settings_default_section %} is-section-visible{% endif %}" id="{{ section_id }}">
-                {% set section_title = 'Бэкапы' %}
-                {% set section_desc = 'Автобэкап, хранение архивов и центр восстановления' %}
-                {% set section_icon = 'database' %}
-                {% include 'partials/settings/section_header.html' %}
-                <div class="settings-form-section__body">
-                <div class="settings-macos-group">
-                    <p class="settings-macos-group__caption">Управление</p>
-                    <div class="settings-macos-list">
-                        <a href="{{ url_for('settings_tab_page', tab='database') }}" class="settings-macos-row settings-macos-row--link">
-                            <span class="settings-macos-row__glyph material-symbols-outlined">storage</span>
-                            <span class="settings-macos-row__body">
-                                <span class="settings-macos-row__title">База данных</span>
-                                <span class="settings-macos-row__sub">Состояние, 2FA-доступ, обслуживание</span>
-                            </span>
-                            <span class="material-symbols-outlined settings-macos-row__chevron">chevron_right</span>
-                        </a>
-                        <a href="{{ url_for('backups_page') }}" class="settings-macos-row settings-macos-row--link">
-                            <span class="settings-macos-row__glyph material-symbols-outlined">database</span>
-                            <span class="settings-macos-row__body">
-                                <span class="settings-macos-row__title">Центр бэкапов</span>
-                                <span class="settings-macos-row__sub">Архивы, восстановление, ротация</span>
-                            </span>
-                            <span class="material-symbols-outlined settings-macos-row__chevron">chevron_right</span>
-                        </a>
-                    </div>
-                </div>
-                <div class="settings-macos-group">
-                    <p class="settings-macos-group__caption">Автобэкап</p>
-                    <div class="settings-macos-list">
-                        <div class="settings-macos-row settings-macos-row--info">
-                            <span class="settings-macos-row__glyph material-symbols-outlined">info</span>
-                            <span class="settings-macos-row__body">
-                                <span class="settings-macos-row__title">Настройки автобэкапа — в Центре бэкапов</span>
-                                <span class="settings-macos-row__sub">
-                                    Интервал:
-                                    {% if (settings.backup_interval_days or '0') == '0' %}выключен{% else %}каждые {{ settings.backup_interval_days }} д.{% endif %}
-                                    · хранить {{ settings.backup_keep_count or '7' }} арх.
-                                    · Telegram {% if settings.backup_autobackup_telegram != '0' %}вкл{% else %}выкл{% endif %}
-                                </span>
-                            </span>
-                            <a href="{{ url_for('backups_page') }}" class="settings-macos-row__link">Открыть</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="settings-macos-group">
-                    <p class="settings-macos-group__caption">Параметры архива</p>
-                    <div class="settings-macos-list">
-                        <div class="settings-macos-row settings-macos-row--toggle">
-                            <div class="settings-macos-row__body">
-                                <span class="settings-macos-row__title">Включать .env в бэкап проекта</span>
-                                <span class="settings-macos-row__sub">docker-compose, ключи, пароли</span>
-                            </div>
-                            <input type="hidden" name="backup_include_env" value="0" />
-                            <label class="settings-macos-switch">
-                                <input type="checkbox" name="backup_include_env" value="1" {% if settings.backup_include_env == '1' %}checked{% endif %} />
-                                <span class="settings-macos-switch__track"></span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                </div>
-            </div>
-
         </div>
-    </section>
+        <div class="cnt-hub__stats">
+            {% if psm.version %}
+            <span class="cnt-stat" title="Версия панели">
+                <span class="material-symbols-outlined">info</span>
+                <span>v{{ psm.version }}{% if psm.image_tag %} · {{ psm.image_tag }}{% endif %}</span>
+            </span>
+            {% endif %}
+            <span class="cnt-stat">
+                <span class="material-symbols-outlined">groups</span>
+                <span>{{ psm.admins_count or 0 }} админов</span>
+            </span>
+            <span class="cnt-stat{% if (settings.monitoring_enabled or 'true') == 'true' %} cnt-stat--ok{% endif %}">
+                <span class="material-symbols-outlined">monitoring</span>
+                <span>{% if (settings.monitoring_enabled or 'true') == 'true' %}Мониторинг{% else %}Мониторинг off{% endif %}</span>
+            </span>
+            <span class="cnt-stat{% if settings.smtp_enabled == '1' %} cnt-stat--ok{% endif %}">
+                <span class="material-symbols-outlined">mail</span>
+                <span>SMTP {% if settings.smtp_enabled == '1' %}on{% else %}off{% endif %}</span>
+            </span>
+        </div>
+        <div class="bmsg-hub__actions">
+            <button type="button" class="bmsg-link-chip" id="settings-open-admins-online">
+                <span class="material-symbols-outlined">groups</span>
+                <span class="panel-admins-online-count">0</span> онлайн
+            </button>
+            {% if can('settings_access') %}
+            <a class="bmsg-link-chip" href="{{ url_for('settings_tab_page', tab='access') }}">
+                <span class="material-symbols-outlined">shield_person</span> Доступ
+            </a>
+            {% endif %}
+            <a class="bmsg-link-chip" href="{{ url_for('settings_tab_page', tab='database') }}">
+                <span class="material-symbols-outlined">storage</span> База данных
+            </a>
+        </div>
+    </header>
+
+    <nav class="cnt-tabs pnl-workspace-nav" aria-label="Разделы панели">
+        {% for sec in tab_sections %}
+        <button type="button" class="cnt-tab{% if loop.first %} is-active{% endif %}" data-pnl-pane="{{ sec.id }}">
+            <span class="material-symbols-outlined">{{ sec.icon }}</span>
+            {{ sec.label }}
+        </button>
+        {% endfor %}
+    </nav>
+
+    <div class="pnl-board">
+        <div class="pnl-pane" data-pnl-pane="panel-system">
+            <div class="pnl-pane__grid pnl-pane__grid--links">
+                {% if can('settings_access') %}
+                <a href="{{ url_for('settings_tab_page', tab='access') }}" class="pnl-nav-card">
+                    <div class="pnl-nav-card__top">
+                        <span class="pnl-nav-card__icon"><span class="material-symbols-outlined">shield_person</span></span>
+                        <span class="material-symbols-outlined pnl-nav-card__chevron">chevron_right</span>
+                    </div>
+                    <h3 class="pnl-nav-card__title">Администраторы и роли</h3>
+                    <p class="pnl-nav-card__sub">{{ psm.admins_count or 0 }} активных учётных записей</p>
+                </a>
+                {% endif %}
+                {% if can('settings_audit') or can('settings_access') %}
+                <a href="{{ url_for('settings_tab_page', tab='audit') }}" class="pnl-nav-card">
+                    <div class="pnl-nav-card__top">
+                        <span class="pnl-nav-card__icon"><span class="material-symbols-outlined">policy</span></span>
+                        <span class="material-symbols-outlined pnl-nav-card__chevron">chevron_right</span>
+                    </div>
+                    <h3 class="pnl-nav-card__title">Журнал аудита</h3>
+                    <p class="pnl-nav-card__sub">Audit Studio — действия администраторов</p>
+                </a>
+                {% endif %}
+                {% if dev_support_enabled and (can('dev_support') or panel_is_superadmin) %}
+                <a href="{{ url_for('developer_support_page') }}" class="pnl-nav-card">
+                    <div class="pnl-nav-card__top">
+                        <span class="pnl-nav-card__icon"><span class="material-symbols-outlined">developer_mode</span></span>
+                        <span class="material-symbols-outlined pnl-nav-card__chevron">chevron_right</span>
+                    </div>
+                    <h3 class="pnl-nav-card__title">Поддержка разработчика</h3>
+                    <p class="pnl-nav-card__sub">Тикеты автору · Ed25519</p>
+                </a>
+                {% endif %}
+                <a href="{{ url_for('settings_tab_page', tab='stealth-login') }}" class="pnl-nav-card">
+                    <div class="pnl-nav-card__top">
+                        <span class="pnl-nav-card__icon"><span class="material-symbols-outlined">visibility_off</span></span>
+                        <span class="material-symbols-outlined pnl-nav-card__chevron">chevron_right</span>
+                    </div>
+                    <h3 class="pnl-nav-card__title">Скрытый вход</h3>
+                    <p class="pnl-nav-card__sub">Маскировка /login · hotkey · secret URL</p>
+                </a>
+                {% if can('settings_content') or can('settings_mail_templates') %}
+                <a href="{{ url_for('settings_tab_page', tab='content') }}#mail" class="pnl-nav-card">
+                    <div class="pnl-nav-card__top">
+                        <span class="pnl-nav-card__icon"><span class="material-symbols-outlined">mail</span></span>
+                        <span class="material-symbols-outlined pnl-nav-card__chevron">chevron_right</span>
+                    </div>
+                    <h3 class="pnl-nav-card__title">Шаблоны почты</h3>
+                    <p class="pnl-nav-card__sub">Notifications Studio → Почта</p>
+                </a>
+                {% endif %}
+            </div>
+
+            <div class="pnl-pane__grid" style="margin-top:0.65rem;">
+                <article class="cnt-card">
+                    <div class="cnt-card__head">
+                        <div>
+                            <h3 class="cnt-card__title">Параметры системы</h3>
+                            <p class="cnt-card__desc">WAL, автозапуск и демо-режим</p>
+                        </div>
+                    </div>
+                    <div class="cnt-toggle-row">
+                        <div>
+                            <div class="cnt-toggle-row__label">WAL режим БД</div>
+                            <div class="cnt-toggle-row__hint">ВКЛ — HDD, ВЫКЛ — SSD/NVMe</div>
+                        </div>
+                        <input type="hidden" name="enable_wal_mode" value="0" />
+                        <label class="settings-macos-switch">
+                            <input type="checkbox" name="enable_wal_mode" value="1" {% if settings.enable_wal_mode == '1' %}checked{% endif %} />
+                            <span class="settings-macos-switch__track"></span>
+                        </label>
+                    </div>
+                    <div class="cnt-toggle-row">
+                        <div>
+                            <div class="cnt-toggle-row__label">Автозапуск бота</div>
+                            <div class="cnt-toggle-row__hint">Запуск после ребута сервера</div>
+                        </div>
+                        <input type="hidden" name="auto_start_bot" value="0" />
+                        <label class="settings-macos-switch">
+                            <input type="checkbox" name="auto_start_bot" value="1" {% if other_settings.auto_start_bot == '1' %}checked{% endif %} />
+                            <span class="settings-macos-switch__track"></span>
+                        </label>
+                    </div>
+                    <div class="cnt-toggle-row" style="margin-bottom:0;">
+                        <div>
+                            <div class="cnt-toggle-row__label">Демо режим</div>
+                            <div class="cnt-toggle-row__hint">Скрыть реальные данные на дашборде</div>
+                        </div>
+                        <input type="hidden" name="demo_mode_enabled" value="0" />
+                        <label class="settings-macos-switch">
+                            <input type="checkbox" name="demo_mode_enabled" value="1" {% if settings.demo_mode_enabled == '1' %}checked{% endif %} />
+                            <span class="settings-macos-switch__track"></span>
+                        </label>
+                    </div>
+                </article>
+
+                {% if psm %}
+                <article class="cnt-card">
+                    <div class="cnt-card__head">
+                        <div>
+                            <h3 class="cnt-card__title">О системе</h3>
+                            <p class="cnt-card__desc">Сводка окружения</p>
+                        </div>
+                    </div>
+                    <div class="pnl-kpi-row" style="margin-bottom:0;">
+                        <div class="pnl-kpi">
+                            <div class="pnl-kpi__label">Версия</div>
+                            <div class="pnl-kpi__val">v{{ psm.version or '—' }}</div>
+                        </div>
+                        <div class="pnl-kpi">
+                            <div class="pnl-kpi__label">База данных</div>
+                            <div class="pnl-kpi__val">{{ psm.db_engine }}{% if psm.wal_enabled %} · WAL{% endif %}</div>
+                        </div>
+                    </div>
+                </article>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="pnl-pane" data-pnl-pane="panel-monitoring" hidden>
+            <div class="pnl-pane__grid">
+                <article class="cnt-card">
+                    <div class="cnt-card__head">
+                        <div>
+                            <h3 class="cnt-card__title">Мониторинг ресурсов</h3>
+                            <p class="cnt-card__desc">Алерты в Telegram при перегрузке</p>
+                        </div>
+                    </div>
+                    <div class="cnt-toggle-row">
+                        <div>
+                            <div class="cnt-toggle-row__label">Мониторинг включён</div>
+                            <div class="cnt-toggle-row__hint">CPU, RAM, диск</div>
+                        </div>
+                        <input type="hidden" name="monitoring_enabled" value="false" />
+                        <label class="settings-macos-switch">
+                            <input type="checkbox" name="monitoring_enabled" value="true" {% if (settings.monitoring_enabled or 'true') == 'true' %}checked{% endif %} />
+                            <span class="settings-macos-switch__track"></span>
+                        </label>
+                    </div>
+                    <div class="cnt-grid-2">
+                        <label class="cnt-field">
+                            <span class="cnt-label">Интервал (сек)</span>
+                            <input type="number" id="monitoring-interval-sec" name="monitoring_interval_sec" class="cnt-input"
+                                value="{{ settings.monitoring_interval_sec or '300' }}" min="30" />
+                        </label>
+                        <label class="cnt-field">
+                            <span class="cnt-label">Кулдаун (сек)</span>
+                            <input type="number" id="monitoring-cooldown-sec" name="monitoring_alert_cooldown_sec" class="cnt-input"
+                                value="{{ settings.monitoring_alert_cooldown_sec or '3600' }}" min="60" />
+                        </label>
+                    </div>
+                </article>
+
+                <article class="cnt-card">
+                    <div class="cnt-card__head">
+                        <div>
+                            <h3 class="cnt-card__title">Пороги (%)</h3>
+                            <p class="cnt-card__desc">При превышении — уведомление</p>
+                        </div>
+                    </div>
+                    <div class="cnt-grid-2">
+                        <label class="cnt-field">
+                            <span class="cnt-label">CPU</span>
+                            <input type="number" id="monitoring-cpu-threshold" name="monitoring_cpu_threshold" class="cnt-input"
+                                value="{{ settings.monitoring_cpu_threshold or '90' }}" min="10" max="100" />
+                        </label>
+                        <label class="cnt-field">
+                            <span class="cnt-label">RAM</span>
+                            <input type="number" id="monitoring-mem-threshold" name="monitoring_mem_threshold" class="cnt-input"
+                                value="{{ settings.monitoring_mem_threshold or '90' }}" min="10" max="100" />
+                        </label>
+                        <label class="cnt-field">
+                            <span class="cnt-label">Диск</span>
+                            <input type="number" id="monitoring-disk-threshold" name="monitoring_disk_threshold" class="cnt-input"
+                                value="{{ settings.monitoring_disk_threshold or '90' }}" min="10" max="100" />
+                        </label>
+                    </div>
+                </article>
+            </div>
+        </div>
+
+        <div class="pnl-pane" data-pnl-pane="panel-smtp" hidden>
+            <div class="pnl-pane__grid">
+                <article class="cnt-card">
+                    <div class="cnt-card__head">
+                        <div>
+                            <h3 class="cnt-card__title">SMTP-сервер</h3>
+                            <p class="cnt-card__desc">Почтовые уведомления панели и WebApp</p>
+                        </div>
+                    </div>
+                    <div class="cnt-toggle-row">
+                        <div>
+                            <div class="cnt-toggle-row__label">SMTP включён</div>
+                        </div>
+                        <input type="hidden" name="smtp_enabled" value="0" />
+                        <label class="settings-macos-switch">
+                            <input type="checkbox" name="smtp_enabled" value="1" {% if settings.smtp_enabled == '1' %}checked{% endif %} />
+                            <span class="settings-macos-switch__track"></span>
+                        </label>
+                    </div>
+                    <div class="cnt-grid-2">
+                        <label class="cnt-field">
+                            <span class="cnt-label">SMTP-сервер</span>
+                            <input type="text" id="smtp-host" name="smtp_host" class="cnt-input" value="{{ settings.smtp_host or '' }}" placeholder="smtp.example.com" />
+                        </label>
+                        <label class="cnt-field">
+                            <span class="cnt-label">Порт</span>
+                            <input type="number" id="smtp-port" name="smtp_port" class="cnt-input" value="{{ settings.smtp_port or '587' }}" min="1" max="65535" />
+                        </label>
+                        <label class="cnt-field">
+                            <span class="cnt-label">Логин</span>
+                            <input type="text" id="smtp-username" name="smtp_username" class="cnt-input" value="{{ settings.smtp_username or '' }}" autocomplete="off" />
+                        </label>
+                        <label class="cnt-field">
+                            <span class="cnt-label">Пароль</span>
+                            <input type="password" id="smtp-password" name="smtp_password" class="cnt-input" value="{{ settings.smtp_password or '' }}" autocomplete="new-password" placeholder="Пусто — не менять" />
+                        </label>
+                        <label class="cnt-field">
+                            <span class="cnt-label">Email отправителя</span>
+                            <input type="email" id="smtp-from-email" name="smtp_from_email" class="cnt-input" value="{{ settings.smtp_from_email or '' }}" placeholder="noreply@example.com" />
+                        </label>
+                        <label class="cnt-field">
+                            <span class="cnt-label">Имя отправителя</span>
+                            <input type="text" id="smtp-from-name" name="smtp_from_name" class="cnt-input" value="{{ settings.smtp_from_name or '' }}" placeholder="Remnawave ShopBot" />
+                        </label>
+                        <label class="cnt-field">
+                            <span class="cnt-label">Шифрование</span>
+                            {% set enc = settings.smtp_encryption or 'starttls' %}
+                            <select id="smtp-encryption" name="smtp_encryption" class="cnt-input">
+                                <option value="starttls" {% if enc == 'starttls' %}selected{% endif %}>STARTTLS (587)</option>
+                                <option value="ssl" {% if enc == 'ssl' %}selected{% endif %}>SSL/TLS (465)</option>
+                                <option value="none" {% if enc == 'none' %}selected{% endif %}>Без шифрования</option>
+                            </select>
+                        </label>
+                        <label class="cnt-field">
+                            <span class="cnt-label">Получатели</span>
+                            <input type="text" id="smtp-notify-emails" name="smtp_notify_emails" class="cnt-input" value="{{ settings.smtp_notify_emails or '' }}" placeholder="admin@example.com" />
+                        </label>
+                    </div>
+                    <div class="pnl-smtp-test" style="margin-top:0.65rem;">
+                        <input type="email" id="smtp-test-to" class="cnt-input" value="{{ (settings.smtp_notify_emails or '').split(',')[0].strip() }}" placeholder="test@example.com" />
+                        <button type="button" id="smtp-test-btn" class="cnt-btn cnt-btn--primary">
+                            <span class="material-symbols-outlined">send</span> Тест
+                        </button>
+                    </div>
+                </article>
+
+                <article class="cnt-card">
+                    <div class="cnt-card__head">
+                        <div>
+                            <h3 class="cnt-card__title">Типы уведомлений</h3>
+                            <p class="cnt-card__desc">Какие события дублировать на email</p>
+                        </div>
+                    </div>
+                    {% for item in [
+                        ('smtp_notify_password_reset', 'Сброс пароля', 'WebApp — код на email'),
+                        ('smtp_notify_key_expiry', 'Истечение ключа', 'Напоминания с auth_email'),
+                        ('smtp_notify_payment_receipt', 'Чеки об оплате', 'Покупка, продление, top-up'),
+                        ('smtp_notify_login', 'Вход в панель', 'Успешные и неудачные попытки'),
+                        ('smtp_notify_monitoring', 'Мониторинг', 'Дублирование Telegram-алертов')
+                    ] %}
+                    <div class="cnt-toggle-row">
+                        <div>
+                            <div class="cnt-toggle-row__label">{{ item[1] }}</div>
+                            <div class="cnt-toggle-row__hint">{{ item[2] }}</div>
+                        </div>
+                        <input type="hidden" name="{{ item[0] }}" value="0" />
+                        <label class="settings-macos-switch">
+                            <input type="checkbox" name="{{ item[0] }}" value="1" {% if settings.get(item[0]) == '1' %}checked{% endif %} />
+                            <span class="settings-macos-switch__track"></span>
+                        </label>
+                    </div>
+                    {% endfor %}
+                </article>
+            </div>
+        </div>
+
+        <div class="pnl-pane" data-pnl-pane="panel-backup" hidden>
+            <div class="pnl-pane__grid pnl-pane__grid--links">
+                <a href="{{ url_for('settings_tab_page', tab='database') }}" class="pnl-nav-card">
+                    <div class="pnl-nav-card__top">
+                        <span class="pnl-nav-card__icon"><span class="material-symbols-outlined">storage</span></span>
+                        <span class="material-symbols-outlined pnl-nav-card__chevron">chevron_right</span>
+                    </div>
+                    <h3 class="pnl-nav-card__title">База данных</h3>
+                    <p class="pnl-nav-card__sub">Database Studio · 2FA · обслуживание</p>
+                </a>
+                <a href="{{ url_for('backups_page') }}" class="pnl-nav-card">
+                    <div class="pnl-nav-card__top">
+                        <span class="pnl-nav-card__icon"><span class="material-symbols-outlined">database</span></span>
+                        <span class="material-symbols-outlined pnl-nav-card__chevron">chevron_right</span>
+                    </div>
+                    <h3 class="pnl-nav-card__title">Центр бэкапов</h3>
+                    <p class="pnl-nav-card__sub">Архивы · восстановление · ротация</p>
+                </a>
+            </div>
+
+            <div class="pnl-info-banner" style="margin-top:0.65rem;">
+                <span class="material-symbols-outlined">info</span>
+                <div>
+                    <strong>Автобэкап</strong> настраивается в Центре бэкапов:
+                    {% if (settings.backup_interval_days or '0') == '0' %}выключен{% else %}каждые {{ settings.backup_interval_days }} д.{% endif %}
+                    · хранить {{ settings.backup_keep_count or '7' }} арх.
+                    · Telegram {% if settings.backup_autobackup_telegram != '0' %}вкл{% else %}выкл{% endif %}
+                    — <a href="{{ url_for('backups_page') }}">Открыть</a>
+                </div>
+            </div>
+
+            <article class="cnt-card">
+                <div class="cnt-card__head">
+                    <div>
+                        <h3 class="cnt-card__title">Параметры архива</h3>
+                        <p class="cnt-card__desc">Состав project backup</p>
+                    </div>
+                </div>
+                <div class="cnt-toggle-row" style="margin-bottom:0;">
+                    <div>
+                        <div class="cnt-toggle-row__label">Включать .env в бэкап</div>
+                        <div class="cnt-toggle-row__hint">docker-compose, ключи, пароли</div>
+                    </div>
+                    <input type="hidden" name="backup_include_env" value="0" />
+                    <label class="settings-macos-switch">
+                        <input type="checkbox" name="backup_include_env" value="1" {% if settings.backup_include_env == '1' %}checked{% endif %} />
+                        <span class="settings-macos-switch__track"></span>
+                    </label>
+                </div>
+            </article>
+        </div>
+    </div>
+</section>
