@@ -145,7 +145,7 @@
                     <div class="wapp-tile-grid" id="wapp-designs-grid">
                         {% for d in webapp_designs %}
                         <label class="wapp-tile{% if d.id == default_design %} is-default{% endif %}{% if d.id in webapp_enabled_design_list %} is-enabled{% endif %}"
-                            data-design-id="{{ d.id }}" data-group="{% if d.id == 'ios' %}mobile{% elif d.id == 'desktop' %}desktop{% elif d.id in ['stealth','stealth-glass'] %}stealth{% elif d.id == 'glass-hub' %}glass{% else %}classic{% endif %}" data-label="{{ d.label }}" style="--wapp-accent: {{ d.accent }}">
+                            data-design-id="{{ d.id }}" data-group="{% if d.id == 'ios' %}mobile{% elif d.id == 'desktop' %}desktop{% elif d.id in ['stealth','stealth-glass'] %}stealth{% elif d.id in ['glass-hub','nova'] %}glass{% else %}classic{% endif %}" data-label="{{ d.label }}" style="--wapp-accent: {{ d.accent }}">
                             <input type="checkbox" name="webapp_design_enabled" value="{{ d.id }}" class="wapp-tile__enable sr-only"
                                 {% if d.id in webapp_enabled_design_list %}checked{% endif %} />
                             <input type="radio" name="wapp_default_pick" value="{{ d.id }}" class="wapp-tile__default sr-only"

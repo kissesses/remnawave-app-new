@@ -15,7 +15,7 @@
             var mobile = window.matchMedia('(max-width: 768px)').matches ||
                 /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent || '');
             var design = localStorage.getItem(key) || cfg.default || 'classic';
-            if (['ios', 'desktop', 'stealth', 'stealth-glass', 'glass-hub'].indexOf(design) === -1) design = 'classic';
+            if (['ios', 'desktop', 'stealth', 'stealth-glass', 'glass-hub', 'nova'].indexOf(design) === -1) design = 'classic';
             if (enabled && enabled.indexOf(design) === -1) design = cfg.default || enabled[0] || 'classic';
             if (mobile && design === 'desktop') design = enabled && enabled.indexOf('classic') !== -1 ? 'classic' : (cfg.default || 'classic');
             if (enabled && enabled.indexOf(design) === -1) design = enabled[0] || 'classic';

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 
-WEBAPP_DESIGN_IDS = ("classic", "ios", "desktop", "stealth", "stealth-glass", "glass-hub")
+WEBAPP_DESIGN_IDS = ("classic", "ios", "desktop", "stealth", "stealth-glass", "glass-hub", "nova")
 
 WEBAPP_DESIGNS: list[dict[str, str]] = [
     {
@@ -48,6 +48,13 @@ WEBAPP_DESIGNS: list[dict[str, str]] = [
         "desc": "Дашборд: приветствие, подписка, баланс и рефералы",
         "icon": "dashboard",
         "accent": "#3b82f6",
+    },
+    {
+        "id": "nova",
+        "label": "Nova",
+        "desc": "Премиум-кабинет с нижней навигацией и быстрыми действиями",
+        "icon": "auto_awesome",
+        "accent": "#6366f1",
     },
 ]
 

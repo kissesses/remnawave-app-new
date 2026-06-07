@@ -27,6 +27,12 @@ html:not([data-webapp-design="glass-hub"]) #webapp-glass-hub-dashboard {
     display: none !important;
 }
 
+html:not([data-webapp-design="nova"]) #webapp-nova-header,
+html:not([data-webapp-design="nova"]) #webapp-nova-tabbar,
+html:not([data-webapp-design="nova"]) #webapp-nova-dashboard {
+    display: none !important;
+}
+
 /* Classic: neutral page shell (no ios/desktop padding bleed) */
 html[data-webapp-design="classic"] #main-page,
 html[data-webapp-design="classic"] #purchase-page,
@@ -67,6 +73,11 @@ html[data-webapp-design="stealth"] #webapp-theme-fab {
 html[data-webapp-design="stealth-glass"] #webapp-theme-fab,
 html[data-webapp-design="glass-hub"] #webapp-theme-fab {
     bottom: calc(20px + env(safe-area-inset-bottom));
+}
+
+html[data-webapp-design="nova"] #webapp-theme-fab {
+    bottom: calc(72px + env(safe-area-inset-bottom));
+    right: max(14px, env(safe-area-inset-right));
 }
 
 html[data-webapp-design="desktop"] #webapp-theme-fab {

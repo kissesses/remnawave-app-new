@@ -29,6 +29,7 @@ DESIGN_GROUP_MAP: dict[str, str] = {
     "stealth": "stealth",
     "stealth-glass": "stealth",
     "glass-hub": "glass",
+    "nova": "glass",
 }
 
 DESIGN_LABELS: dict[str, str] = {d["id"]: d["label"] for d in WEBAPP_DESIGNS}
@@ -409,6 +410,7 @@ def render_preview_html(
         "stealth": "background:#020202 radial-gradient(circle at 70% 20%, rgba(255,35,87,.25), transparent 55%)",
         "stealth-glass": "background:linear-gradient(180deg,rgba(139,92,246,.15),#0b0f19)",
         "glass-hub": "background:linear-gradient(180deg,rgba(59,130,246,.18),#0b0e14 45%)",
+        "nova": "background:linear-gradient(180deg,rgba(99,102,241,.22),#0f1117 45%);padding-bottom:52px",
     }
     body_style = bg_styles.get(design_id, bg_styles["classic"])
 
@@ -445,6 +447,29 @@ def render_preview_html(
                 <div style="height:72px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06)"></div>
             </div>
         </div>"""
+    elif design_id == "nova":
+        layout = f"""
+        <div style="padding:14px 16px 8px;display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:8px">{logo_html}<strong style="font-size:13px">{title_e}</strong></div>
+            <span style="font-size:10px;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1)">0 ₽</span>
+        </div>
+        <div style="padding:0 16px;display:grid;gap:10px">
+            <div style="height:64px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07)"></div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+                <div style="height:52px;border-radius:10px;background:rgba(99,102,241,.15)"></div>
+                <div style="height:52px;border-radius:10px;background:rgba(255,255,255,.04)"></div>
+                <div style="height:52px;border-radius:10px;background:rgba(255,255,255,.04)"></div>
+                <div style="height:52px;border-radius:10px;background:rgba(255,255,255,.04)"></div>
+            </div>
+            <div style="height:80px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06)"></div>
+        </div>
+        <nav style="position:absolute;left:0;right:0;bottom:0;height:52px;background:rgba(15,17,23,.92);border-top:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-around;align-items:center">
+            <span style="width:20px;height:20px;border-radius:6px;background:{accent_e}55"></span>
+            <span style="width:20px;height:20px;border-radius:6px;background:rgba(255,255,255,.1)"></span>
+            <span style="width:20px;height:20px;border-radius:6px;background:rgba(255,255,255,.1)"></span>
+            <span style="width:20px;height:20px;border-radius:6px;background:rgba(255,255,255,.1)"></span>
+            <span style="width:20px;height:20px;border-radius:6px;background:rgba(255,255,255,.1)"></span>
+        </nav>"""
     elif design_id == "ios":
         layout = f"""
         <div style="padding:16px;display:grid;gap:12px">

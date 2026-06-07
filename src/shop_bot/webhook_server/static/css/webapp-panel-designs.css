@@ -65,6 +65,24 @@
     background: linear-gradient(90deg, rgba(59, 130, 246, 0.35) 0%, rgba(59, 130, 246, 0.35) 32%, rgba(255, 255, 255, 0.06) 32%, rgba(255, 255, 255, 0.06) 66%, rgba(255, 255, 255, 0.06) 66%);
 }
 
+.webapp-panel-design-card__preview--nova {
+    background: linear-gradient(180deg, rgba(99, 102, 241, 0.25) 0%, #0f1117 40%, #0f1117 100%);
+    position: relative;
+    box-shadow: inset 0 -10px 0 rgba(99, 102, 241, 0.2);
+}
+
+.webapp-panel-design-card__preview--nova::after {
+    content: "";
+    position: absolute;
+    bottom: 4px;
+    left: 6px;
+    right: 6px;
+    height: 14px;
+    border-radius: 4px 4px 0 0;
+    background: rgba(15, 17, 23, 0.85);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
 .webapp-panel-design-card__body p {
     margin: 0.2rem 0 0;
     font-size: 0.65rem;

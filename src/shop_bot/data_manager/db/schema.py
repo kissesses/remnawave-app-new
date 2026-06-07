@@ -604,7 +604,7 @@ def _ensure_webapp_settings_table(cursor: sqlite3.Cursor):
             cursor.execute("ALTER TABLE webapp_settings ADD COLUMN webapp_default_design TEXT DEFAULT 'classic'")
         if "webapp_enabled_designs" not in columns:
             cursor.execute(
-                "ALTER TABLE webapp_settings ADD COLUMN webapp_enabled_designs TEXT DEFAULT 'classic,ios,desktop,stealth,stealth-glass,glass-hub'"
+                "ALTER TABLE webapp_settings ADD COLUMN webapp_enabled_designs TEXT DEFAULT 'classic,ios,desktop,stealth,stealth-glass,glass-hub,nova'"
             )
         if "webapp_theme_picker" not in columns:
             cursor.execute("ALTER TABLE webapp_settings ADD COLUMN webapp_theme_picker INTEGER DEFAULT 1")
@@ -624,7 +624,7 @@ def _ensure_webapp_design_columns(cursor) -> None:
         cursor,
         "webapp_settings",
         "webapp_enabled_designs",
-        "TEXT DEFAULT 'classic,ios,desktop,stealth,stealth-glass,glass-hub'",
+        "TEXT DEFAULT 'classic,ios,desktop,stealth,stealth-glass,glass-hub,nova'",
     )
     _ensure_table_column(cursor, "webapp_settings", "webapp_theme_picker", "INTEGER DEFAULT 1")
 
