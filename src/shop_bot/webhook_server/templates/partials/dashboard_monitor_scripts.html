@@ -42,10 +42,30 @@
         }
 
         function getStatusColor(value, thresholds = { warning: 70, critical: 90 }) {
-            if (value == null) return 'text-white/50';
-            if (value >= thresholds.critical) return 'text-red-400';
-            if (value >= thresholds.warning) return 'text-yellow-400';
-            return 'text-primary';
+            if (value == null) return 'dh-status--muted';
+            if (value >= thresholds.critical) return 'dh-status--critical';
+            if (value >= thresholds.warning) return 'dh-status--warn';
+            return 'dh-status--ok';
+        }
+
+        function progressFillClass(percent) {
+            if (percent >= 90) return 'dh-progress__fill--critical';
+            if (percent >= 70) return 'dh-progress__fill--warn';
+            return 'dh-progress__fill--ok';
+        }
+
+        function metricRow(label, percent, fillClass, extraHtml) {
+            return `
+                <div class="dh-metric-item">
+                    <div class="dh-metric-item__label">
+                        <span>${label}</span>
+                        <span class="${getStatusColor(percent)}">${fmtPct(percent)}</span>
+                    </div>
+                    <div class="dh-progress">
+                        <div class="dh-progress__fill ${fillClass}" style="width:${percent || 0}%"></div>
+                    </div>
+                    ${extraHtml || ''}
+                </div>`;
         }
 
         function calculateNetworkSpeed(currentData, sourceId = 'default') {
@@ -110,13 +130,13 @@
             const speedTotal = fmtBytes(networkSpeed.totalSpeed) + '/с';
             const speedUp = fmtBytes(networkSpeed.upSpeed) + '/с';
             const speedDown = fmtBytes(networkSpeed.downSpeed) + '/с';
-            document.getElementById('network-stat').innerHTML = `<span class="text-blue-400">${speedTotal}</span>`;
+            document.getElementById('network-stat').innerHTML = `<span class="dh-status--net">${speedTotal}</span>`;
             document.getElementById('network-trend').innerHTML = `↓${speedDown}  ↑${speedUp}`;
         }
 
         function renderLocal(el, data) {
             if (!data || !data.ok) {
-                el.innerHTML = `<div class="flex items-center justify-center p-4 h-full text-red-500 gap-2"><span class="material-symbols-outlined text-sm">error</span> <span class="text-[10px] font-bold tracking-widest uppercase">${data?.error || 'Сбой получения данных'}</span></div>`;
+                el.innerHTML = `<div class="dh-metrics-error"><span class="material-symbols-outlined">error</span><span>${data?.error || 'Сбой получения данных'}</span></div>`;
                 return;
             }
             const cpu = data.cpu || {};
@@ -124,61 +144,27 @@
             const sw = data.swap || {};
             const disks = (data.disks || []);
 
-            let diskHtml = disks.map(d => `
-                <div>
-                    <div class="flex justify-between text-[9px] font-bold uppercase tracking-widest text-white/50 mb-1.5">
-                        <span>${d.mountpoint || d.device}</span>
-                        <span class="${getStatusColor(d.percent)}">${fmtPct(d.percent)}</span>
-                    </div>
-                    <div class="w-full h-1.5 bg-black/40 rounded-full overflow-hidden">
-                        <div class="h-full ${d.percent >= 90 ? 'bg-red-500' : d.percent >= 70 ? 'bg-yellow-400' : 'bg-primary'} transition-none" style="width: ${d.percent || 0}%"></div>
-                    </div>
-                </div>
-            `).join('');
+            const diskHtml = disks.map((d) => metricRow(
+                d.mountpoint || d.device || 'Disk',
+                d.percent,
+                progressFillClass(d.percent || 0)
+            )).join('');
 
             el.innerHTML = `
-                <div class="grid grid-cols-2 gap-3 mb-4">
-                     <div class="bg-black/20 rounded-xl p-3 border border-white/5 flex flex-col justify-center items-center">
-                        <div class="text-[8px] uppercase tracking-widest text-white/40 font-bold mb-1">Хостнейм</div>
-                        <div class="text-[11px] font-bold text-white truncate w-full text-center" title="${data.hostname}">${data.hostname || '—'}</div>
+                <div class="dh-metric-meta">
+                    <div class="dh-metric-meta__tile">
+                        <div class="dh-metric-meta__label">Хостнейм</div>
+                        <div class="dh-metric-meta__value" title="${data.hostname || ''}">${data.hostname || '—'}</div>
                     </div>
-                    <div class="bg-black/20 rounded-xl p-3 border border-white/5 flex flex-col justify-center items-center">
-                        <div class="text-[8px] uppercase tracking-widest text-white/40 font-bold mb-1">Uptime</div>
-                        <div class="text-[11px] font-bold text-primary">${secsToDHMS(data.uptime_sec)}</div>
+                    <div class="dh-metric-meta__tile">
+                        <div class="dh-metric-meta__label">Uptime</div>
+                        <div class="dh-metric-meta__value dh-status--ok">${secsToDHMS(data.uptime_sec)}</div>
                     </div>
                 </div>
-
-                <div class="space-y-4 pr-1">
-                    <div>
-                        <div class="flex justify-between text-[9px] font-bold uppercase tracking-widest text-white/50 mb-1.5">
-                            <span>CPU (${cpu.count_logical || '—'} cores)</span>
-                            <span class="${getStatusColor(cpu.percent)}">${fmtPct(cpu.percent)}</span>
-                        </div>
-                        <div class="w-full h-1.5 bg-black/40 rounded-full overflow-hidden">
-                            <div class="h-full bg-primary transition-none" style="width: ${cpu.percent || 0}%"></div>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="flex justify-between text-[9px] font-bold uppercase tracking-widest text-white/50 mb-1.5">
-                            <span>RAM</span>
-                            <span class="${getStatusColor(mem.percent)}">${fmtPct(mem.percent)}</span>
-                        </div>
-                        <div class="w-full h-1.5 bg-black/40 rounded-full overflow-hidden">
-                            <div class="h-full bg-green-500 transition-none" style="width: ${mem.percent || 0}%"></div>
-                        </div>
-                        <div class="mt-1 flex justify-end text-[8px] text-white/30 font-mono tracking-tighter">${fmtBytes(mem.used)} / ${fmtBytes(mem.total)}</div>
-                    </div>
-                    ${sw.total ? `
-                    <div>
-                        <div class="flex justify-between text-[9px] font-bold uppercase tracking-widest text-white/50 mb-1.5">
-                            <span>SWAP</span>
-                            <span class="${getStatusColor(sw.percent)}">${fmtPct(sw.percent)}</span>
-                        </div>
-                        <div class="w-full h-1.5 bg-black/40 rounded-full overflow-hidden">
-                            <div class="h-full bg-purple-500 transition-none" style="width: ${sw.percent || 0}%"></div>
-                        </div>
-                    </div>` : ''}
-                    
+                <div class="dh-metric-stack">
+                    ${metricRow(`CPU (${cpu.count_logical || '—'} cores)`, cpu.percent, 'dh-progress__fill--cpu')}
+                    ${metricRow('RAM', mem.percent, 'dh-progress__fill--ram', `<div class="dh-metric-item__extra">${fmtBytes(mem.used)} / ${fmtBytes(mem.total)}</div>`)}
+                    ${sw.total ? metricRow('SWAP', sw.percent, 'dh-progress__fill--swap') : ''}
                     ${diskHtml}
                 </div>
             `;
@@ -186,7 +172,7 @@
 
         function renderRemote(el, data) {
             if (!data || !data.ok) {
-                el.innerHTML = `<div class="flex items-center justify-center p-3 text-red-500 gap-2"><span class="material-symbols-outlined text-sm">error</span> <span class="text-[9px] font-bold tracking-widest uppercase">${data?.error || 'Сбой данных'}</span></div>`;
+                el.innerHTML = `<div class="dh-metrics-error"><span class="material-symbols-outlined">error</span><span>${data?.error || 'Сбой данных'}</span></div>`;
                 return;
             }
             const cpu = { percent: data.cpu_percent || 0, count: data.cpu_count || '—' };
@@ -194,46 +180,20 @@
             const disk = { percent: data.disk_percent || 0, mountpoint: data.disk_mountpoint || '/' };
 
             el.innerHTML = `
-                 <div class="grid grid-cols-2 gap-2 mb-3">
-                     <div class="bg-black/20 rounded-lg p-2.5 border border-white/5 flex flex-col items-center justify-center">
-                        <div class="text-[8px] uppercase tracking-widest text-white/40 font-bold mb-1">Система</div>
-                        <div class="text-[10px] font-bold text-white truncate w-full text-center" title="${data.uname}">${data.uname || '—'}</div>
+                <div class="dh-metric-meta dh-metric-meta--compact">
+                    <div class="dh-metric-meta__tile">
+                        <div class="dh-metric-meta__label">Система</div>
+                        <div class="dh-metric-meta__value" title="${data.uname || ''}">${data.uname || '—'}</div>
                     </div>
-                    <div class="bg-black/20 rounded-lg p-2.5 border border-white/5 flex flex-col items-center justify-center">
-                        <div class="text-[8px] uppercase tracking-widest text-white/40 font-bold mb-1">Uptime</div>
-                        <div class="text-[10px] font-bold text-blue-400 truncate">${secsToDHMS(data.uptime_sec)}</div>
+                    <div class="dh-metric-meta__tile">
+                        <div class="dh-metric-meta__label">Uptime</div>
+                        <div class="dh-metric-meta__value dh-status--net">${secsToDHMS(data.uptime_sec)}</div>
                     </div>
                 </div>
-
-                <div class="space-y-3 pt-1">
-                    <div>
-                        <div class="flex justify-between text-[9px] font-bold uppercase tracking-widest text-white/50 mb-1.5">
-                            <span>CPU (${cpu.count} ЯДЕР)</span>
-                            <span class="${getStatusColor(cpu.percent)}">${fmtPct(cpu.percent)}</span>
-                        </div>
-                        <div class="w-full h-1.5 bg-black/40 rounded-full overflow-hidden">
-                            <div class="h-full bg-primary transition-none" style="width: ${cpu.percent}%"></div>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="flex justify-between text-[9px] font-bold uppercase tracking-widest text-white/50 mb-1.5">
-                            <span>RAM</span>
-                            <span class="${getStatusColor(mem.percent)}">${fmtPct(mem.percent)}</span>
-                        </div>
-                        <div class="w-full h-1.5 bg-black/40 rounded-full overflow-hidden">
-                            <div class="h-full bg-green-500 transition-none" style="width: ${mem.percent}%"></div>
-                        </div>
-                        <div class="mt-1 flex justify-end text-[8px] text-white/30 font-mono tracking-tighter">${mem.used_mb}MB / ${mem.total_mb}MB</div>
-                    </div>
-                    <div>
-                        <div class="flex justify-between text-[9px] font-bold uppercase tracking-widest text-white/50 mb-1.5">
-                            <span>DISK (${disk.mountpoint})</span>
-                            <span class="${getStatusColor(disk.percent)}">${fmtPct(disk.percent)}</span>
-                        </div>
-                        <div class="w-full h-1.5 bg-black/40 rounded-full overflow-hidden">
-                            <div class="h-full bg-yellow-400 transition-none" style="width: ${disk.percent}%"></div>
-                        </div>
-                    </div>
+                <div class="dh-metric-stack">
+                    ${metricRow(`CPU (${cpu.count} ядер)`, cpu.percent, 'dh-progress__fill--cpu')}
+                    ${metricRow('RAM', mem.percent, 'dh-progress__fill--ram', `<div class="dh-metric-item__extra">${mem.used_mb} MB / ${mem.total_mb} MB</div>`)}
+                    ${metricRow(`DISK (${disk.mountpoint})`, disk.percent, progressFillClass(disk.percent))}
                 </div>
             `;
         }
@@ -614,12 +574,8 @@
 
             document.querySelectorAll('.period-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
-                    document.querySelectorAll('.period-btn').forEach(b => {
-                        b.classList.remove('bg-primary/20', 'text-primary', 'hover:bg-primary/30');
-                        b.classList.add('bg-white/10', 'text-white/50', 'hover:text-white', 'hover:bg-white/5');
-                    });
-                    btn.classList.remove('bg-white/10', 'text-white/50', 'hover:text-white', 'hover:bg-white/5');
-                    btn.classList.add('bg-primary/20', 'text-primary', 'hover:bg-primary/30');
+                    document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('is-active'));
+                    btn.classList.add('is-active');
                     currentPeriod = parseInt(btn.getAttribute('data-period') || '6', 10);
                     refreshCharts();
                 });

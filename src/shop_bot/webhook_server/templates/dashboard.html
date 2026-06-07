@@ -2,9 +2,9 @@
 {% block title %}Главная{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/tool-surface.css') }}" />
-<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard-panel.css') }}" />
-<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard-studio.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tool-surface.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard-panel.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard-studio.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
 {% endblock %}
 
 {% block content %}
