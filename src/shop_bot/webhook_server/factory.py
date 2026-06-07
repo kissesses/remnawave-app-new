@@ -18,7 +18,9 @@ from shop_bot.data_manager import dev_support_client
 from shop_bot.data_manager import panel_presence
 from shop_bot.data_manager.db.connection import get_msk_time
 from shop_bot.data_manager.panel_rbac import (
+    ENDPOINT_ANY_PERMISSIONS,
     ENDPOINT_PERMISSIONS,
+    PANEL_GLOBAL_READ_ENDPOINTS,
     SETTINGS_TAB_PERMISSIONS,
     allows_permission,
     normalize_permission_levels,
@@ -492,8 +494,15 @@ def create_webhook_app(bot_controller_instance):
             flash('Завершите настройку защиты аккаунта для доступа к панели.', 'warning')
             return redirect(url_for('totp_setup_page'))
 
+        if (
+            endpoint in PANEL_GLOBAL_READ_ENDPOINTS
+            and request.method in ('GET', 'HEAD', 'OPTIONS')
+        ):
+            return None
+
         required = ENDPOINT_PERMISSIONS.get(endpoint)
-        if required:
+        any_required = ENDPOINT_ANY_PERMISSIONS.get(endpoint)
+        if required or any_required:
             need_edit = request.method not in ('GET', 'HEAD', 'OPTIONS')
             levels = session.get('panel_permission_levels') or normalize_permission_levels(
                 session.get('panel_permissions') or []
@@ -505,7 +514,15 @@ def create_webhook_app(bot_controller_instance):
                     or allows_permission(levels, 'settings_access', require_edit=False)
                 )
             )
-            if not audit_ok and not allows_permission(levels, required, require_edit=need_edit):
+            perm_ok = False
+            if any_required:
+                perm_ok = any(
+                    allows_permission(levels, perm, require_edit=need_edit)
+                    for perm in any_required
+                )
+            elif required:
+                perm_ok = allows_permission(levels, required, require_edit=need_edit)
+            if not audit_ok and not perm_ok:
                 if request.path.startswith('/api/') or request.is_json or settings_api_wants_json():
                     return jsonify({'ok': False, 'error': 'forbidden', 'message': 'Недостаточно прав'}), 403
                 flash('Недостаточно прав для этого раздела', 'danger')

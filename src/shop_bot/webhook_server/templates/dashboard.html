@@ -14,10 +14,12 @@
     <header class="dh-hero dash-hero" id="dash-hero">
         <div class="dh-hero__main dash-hero__main">
             <div class="dh-hero__top dash-hero__top">
+                {% if not dashboard_layout or dashboard_layout.options.show_eyebrow != false %}
                 <p class="dh-hero__eyebrow dash-hero__eyebrow">
                     <span class="dh-hero__badge">Control</span>
                     <span class="dash-hero__eyebrow-text">Главная</span>
                 </p>
+                {% endif %}
                 <button type="button" id="dash-open-studio" class="dh-btn dh-btn--accent dash-hero__studio" title="Dashboard Studio">
                     <span class="material-symbols-outlined">dashboard_customize</span>
                     <span class="dash-hero__studio-label">Настроить</span>
@@ -83,6 +85,7 @@
     </nav>
 
     <div id="dash-panel-overview" class="dash-tab-panel dh-tab-panel" data-tab-panel="overview">
+        {% include 'partials/dashboard_onboarding.html' %}
         <section id="dash-stats" class="dh-stats"
             data-fetch-url="{{ url_for('dashboard_stats_partial') }}" data-fetch-interval="120000">
             {% set _stats_html %}{% include 'partials/dashboard_stats.html' %}{% endset %}{{ _stats_html|strip_bom }}
@@ -120,7 +123,7 @@ window.__DASHBOARD_ROUTES__ = {
     trials: {{ url_for('dashboard_trials_partial')|tojson }},
     userGroups: {{ url_for('dashboard_user_groups_json')|tojson }},
     sshTargets: {{ url_for('dashboard_ssh_targets_json')|tojson }},
-    hostSpeedtests: {{ url_for('host_speedtests_json', host_name='__H__')|tojson }},
+    hostSpeedtests: {{ url_for('dashboard_speedtests_json', name='__H__')|tojson }},
     speedtestRun: {{ url_for('node_run_ssh_target_speedtest_route', target_name='__T__')|tojson }}
 };
 </script>

@@ -88,6 +88,7 @@ ENDPOINT_PERMISSIONS: dict[str, str] = {
     "dashboard_trials_partial": "dashboard",
     "dashboard_charts_json": "dashboard",
     "dashboard_user_groups_json": "dashboard",
+    "dashboard_speedtests_json": "dashboard",
     "dashboard_layout_config": "dashboard",
     "dashboard_layout_prefs_get": "dashboard",
     "dashboard_layout_prefs_save": "dashboard",
@@ -382,6 +383,17 @@ ENDPOINT_PERMISSIONS: dict[str, str] = {
     "developer_support_inbox_detail": "dev_support_hub",
     "developer_support_inbox_reply": "dev_support_hub",
     "developer_support_inbox_attachment": "dev_support_hub",
+}
+
+# Read-only endpoints available to any authenticated panel session.
+PANEL_GLOBAL_READ_ENDPOINTS: frozenset[str] = frozenset({
+    "admin_presence_json",
+    "support_badge_counts_json",
+})
+
+# Endpoint allowed if the admin has view access to any listed permission.
+ENDPOINT_ANY_PERMISSIONS: dict[str, tuple[str, ...]] = {
+    "host_speedtests_json": ("settings_hosts", "node", "dashboard"),
 }
 
 SETTINGS_TAB_PERMISSIONS: dict[str, str] = {

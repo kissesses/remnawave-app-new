@@ -286,6 +286,17 @@ def backup_download_route(name: str):
 @bp.route('/admin/db/backup/delete', methods=['POST'])
 @panel_ctx.login_required
 def backup_delete_route():
+    admin_id = session.get('panel_admin_id')
+    try:
+        aid = int(admin_id) if admin_id is not None else 0
+    except (TypeError, ValueError):
+        aid = 0
+    if panel_stepup.required_stepup_method(aid) and not panel_stepup.has_valid_stepup(panel_stepup.SCOPE_DESTRUCTIVE):
+        msg = 'Подтвердите 2FA перед удалением архива.'
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'ok': False, 'error': msg, 'stepup_required': True}), 403
+        flash(msg, 'warning')
+        return redirect(url_for('backups_page'))
     name = (request.form.get('name') or '').strip()
     if not name and request.is_json:
         name = (request.get_json(silent=True) or {}).get('name', '').strip()

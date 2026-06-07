@@ -416,13 +416,52 @@ def dashboard_charts_json():
 @bp.route('/dashboard/user_groups.json')
 @panel_ctx.login_required
 def dashboard_user_groups_json():
+    group_key = (request.args.get('group') or '').strip()
+    if not group_key:
+        return jsonify({"ok": False, "error": "Укажите параметр group"}), 400
+    try:
+        offset = max(0, int(request.args.get('offset') or 0))
+    except (TypeError, ValueError):
+        offset = 0
+    try:
+        limit = min(max(1, int(request.args.get('limit') or 200)), 500)
+    except (TypeError, ValueError):
+        limit = 200
     try:
         from shop_bot.data_manager.database import get_dashboard_user_groups
         groups = get_dashboard_user_groups()
-        return jsonify({"ok": True, "groups": groups})
+        if group_key not in groups:
+            return jsonify({"ok": False, "error": "Неизвестная группа"}), 400
+        items = groups[group_key]
+        total = len(items)
+        return jsonify({
+            "ok": True,
+            "group": group_key,
+            "total": total,
+            "offset": offset,
+            "limit": limit,
+            "items": items[offset:offset + limit],
+        })
     except Exception as e:
         logger.error(f"Error fetching user groups: {e}")
         return jsonify({"ok": False, "error": str(e)}), 500
+
+
+@bp.route('/dashboard/speedtests/<name>.json')
+@panel_ctx.login_required
+def dashboard_speedtests_json(name: str):
+    try:
+        limit = int(request.args.get('limit') or 20)
+    except (TypeError, ValueError):
+        limit = 20
+    limit = min(max(1, limit), 120)
+    try:
+        from shop_bot.data_manager.remnawave_repository import get_speedtests
+        items = get_speedtests(name, limit=limit) or []
+        return jsonify({'ok': True, 'items': items})
+    except Exception as e:
+        logger.error("Dashboard speedtests error for %s: %s", name, e)
+        return jsonify({'ok': False, 'error': str(e)}), 500
 
 
 @bp.route('/dashboard/monitor/local.json')
@@ -494,6 +533,10 @@ def monitor_clear_metrics():
             deleted_metrics,
             deleted_speedtests,
         )
+        panel_ctx.audit('dashboard.metrics_clear', {
+            'deleted_metrics': deleted_metrics,
+            'deleted_speedtests': deleted_speedtests,
+        })
         return jsonify({
             "ok": True,
             "message": f"Очищено: {deleted_metrics} метрик, {deleted_speedtests} тестов. БД сжата.",

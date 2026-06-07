@@ -813,6 +813,123 @@ html:not(.dark) .dh-stat__value--accent { color: #16a34a; }
     border-top: 1px solid var(--dh-border);
 }
 
+/* Onboarding checklist */
+.dh-page .dash-onboarding {
+    margin-bottom: 1.25rem;
+    padding: 1rem 1.1rem;
+    border-radius: var(--dh-radius-lg);
+    border: 1px solid var(--dh-border);
+    background: var(--dh-surface);
+    backdrop-filter: var(--dh-blur);
+    box-shadow: var(--dh-shadow);
+}
+
+.dh-page .dash-onboarding__progress {
+    height: 3px;
+    margin: -1rem -1.1rem 0.85rem;
+    border-radius: var(--dh-radius-lg) var(--dh-radius-lg) 0 0;
+    background: var(--dh-surface-2);
+    overflow: hidden;
+}
+
+.dh-page .dash-onboarding__progress-bar {
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--dh-accent), rgba(var(--dh-accent-rgb), 0.55));
+    transition: width 0.5s ease;
+}
+
+.dh-page .dash-onboarding__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.85rem;
+}
+
+.dh-page .dash-onboarding__eyebrow {
+    margin: 0 0 0.25rem;
+    font-size: 0.5625rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--dh-dim);
+}
+
+.dh-page .dash-onboarding__title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--dh-text);
+}
+
+.dh-page .dash-onboarding__sub {
+    margin: 0.25rem 0 0;
+    font-size: 0.75rem;
+    color: var(--dh-muted);
+}
+
+.dh-page .dash-onboarding__dismiss {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border: 1px solid var(--dh-border);
+    border-radius: 10px;
+    background: var(--dh-surface-2);
+    color: var(--dh-muted);
+    cursor: pointer;
+}
+
+.dh-page .dash-onboarding__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.dh-page .dash-onboarding__item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding: 0.55rem 0.65rem;
+    border-radius: var(--dh-radius-sm);
+    border: 1px solid var(--dh-border);
+    background: var(--dh-surface-2);
+}
+
+.dh-page .dash-onboarding__item.is-done {
+    opacity: 0.72;
+}
+
+.dh-page .dash-onboarding__status {
+    font-size: 1.1rem;
+    color: var(--dh-dim);
+    flex-shrink: 0;
+}
+
+.dh-page .dash-onboarding__item.is-done .dash-onboarding__status {
+    color: var(--dh-accent);
+}
+
+.dh-page .dash-onboarding__label {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--dh-text);
+    text-decoration: none;
+}
+
+.dh-page .dash-onboarding__hint {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.6875rem;
+    color: var(--dh-dim);
+}
+
 /* Resources / Monitor — spacing (Tailwind utilities not loaded on dashboard) */
 .dh-monitor {
     display: flex;

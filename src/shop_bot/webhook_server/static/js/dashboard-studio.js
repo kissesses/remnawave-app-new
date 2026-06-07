@@ -148,7 +148,8 @@
         if (!opts) return;
         const o = opts;
 
-        const pageHead = document.querySelector('.dashboard-page .dash-page-head, .dashboard-page .dashboard-header');
+        const pageHead = document.getElementById('dash-hero')
+            || document.querySelector('.dh-hero, .dash-hero, .dashboard-page .dash-page-head, .dashboard-page .dashboard-header');
         if (pageHead) {
             pageHead.classList.remove('dash-title-sm', 'dash-title-md', 'dash-title-lg', 'dash-no-eyebrow');
             pageHead.classList.add(`dash-title-${o.title_size || 'md'}`);
@@ -398,13 +399,13 @@
         const titleEl = document.getElementById('dash-custom-title');
         const subEl = document.getElementById('dash-custom-subtitle');
         const subTextEl = subEl?.querySelector('.dashboard-subtitle__text, .dash-hero__sub-text');
-        const titleText = opts.title || 'Главная';
+        const titleText = opts.title || 'Панель управления';
         if (titleEl) {
             const gradEl = titleEl.querySelector('.dashboard-title__gradient');
             if (gradEl) gradEl.textContent = titleText;
             else titleEl.textContent = titleText;
         }
-        const subtitle = opts.subtitle || 'Статистика, мониторинг и аналитика';
+        const subtitle = opts.subtitle || 'Статистика, мониторинг и аналитика в реальном времени';
         if (subTextEl) subTextEl.textContent = subtitle;
         else if (subEl) subEl.textContent = subtitle;
 
@@ -468,6 +469,9 @@
             document.querySelectorAll('[data-fetch-interval]').forEach((el) => {
                 el.dataset.fetchInterval = String(interval);
             });
+            if (typeof window.restartDashboardAutoRefresh === 'function') {
+                window.restartDashboardAutoRefresh();
+            }
         }
 
         if (opts.default_income_period && typeof window.setIncomePeriod === 'function') {

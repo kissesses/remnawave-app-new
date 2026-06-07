@@ -496,7 +496,10 @@ window.dashCharts = {};
         };
 
         const initIncomeChart = (incomeData) => {
-            const ctx = document.getElementById('incomeChart').getContext('2d');
+            const canvas = document.getElementById('incomeChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
             const dates = Object.keys(incomeData || {}).sort();
 
             const methods = new Set();
@@ -1078,12 +1081,15 @@ window.dashCharts = {};
             openModal('userGroupModal');
 
             try {
-                const data = await fetchJSON(routes.userGroups);
-                if (data && data.ok && data.groups && data.groups[groupKey]) {
-                    const list = data.groups[groupKey];
+                const data = await fetchJSON(
+                    `${routes.userGroups}?group=${encodeURIComponent(groupKey)}&limit=500`
+                );
+                if (data && data.ok && Array.isArray(data.items)) {
+                    const list = data.items;
                     _ugmAllItems = list;
                     list.forEach(item => { if (item.telegram_id) window.currentUserGroupIds.push(item.telegram_id); });
-                    if (countEl) countEl.textContent = `${list.length} шт.`;
+                    const total = typeof data.total === 'number' ? data.total : list.length;
+                    if (countEl) countEl.textContent = `${total} шт.`;
 
                     if (list.length === 0) {
                         bodyEl.innerHTML = `<tr><td colspan="${_ugmColCount + 1}" class="p-8 text-center"><div class="inline-flex flex-col items-center gap-2"><div class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/30"><span class="material-symbols-outlined text-lg">inbox</span></div><span class="text-xs text-white/35 font-bold">Список пуст</span></div></td></tr>`;
@@ -1110,6 +1116,12 @@ window.dashCharts = {};
                 if (countEl) countEl.textContent = 'ошибка';
                 bodyEl.innerHTML = `<tr><td colspan="${_ugmColCount + 1}" class="p-8 text-center text-red-300 text-xs font-bold">Ошибка сети</td></tr>`;
             }
+        };
+
+        window.restartDashboardAutoRefresh = () => {
+            Object.values(autoRefreshRegistry).forEach((timerId) => clearInterval(timerId));
+            Object.keys(autoRefreshRegistry).forEach((key) => delete autoRefreshRegistry[key]);
+            initAutoRefresh();
         };
 
         initAutoRefresh();

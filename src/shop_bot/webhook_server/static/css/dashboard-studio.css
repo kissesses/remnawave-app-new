@@ -751,7 +751,8 @@ html:not(.dark) .dash-design-preview {
 /* --- Applied dashboard design tokens --- */
 .dash-title-sm .dash-hero__title { font-size: 1.5rem; }
 .dash-title-lg .dash-hero__title { font-size: 2.25rem; }
-.dash-no-eyebrow .dash-hero__eyebrow { display: none; }
+.dash-no-eyebrow .dash-hero__eyebrow,
+.dash-no-eyebrow .dh-hero__eyebrow { display: none; }
 
 #dash-stats.dash-density-compact > [data-dash-widget] {
     min-height: 64px !important;

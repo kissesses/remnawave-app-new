@@ -114,9 +114,6 @@ def update_setting(key: str, value: str):
 def get_other_value(key: str) -> str | None:
     return _fetch_val("SELECT value FROM other WHERE key = ?", (key,), None, f"Не удалось получить other-значение для {key}")
 
-
-    return _fetch_val("SELECT value FROM other WHERE key = ?", (key,), None, f"Не удалось получить other-значение для {key}")
-
 # =========================
 
 
@@ -127,11 +124,6 @@ def set_other_value(key: str, value: str) -> bool:
         (key, value),
         f"Не удалось установить other-значение для {key}"
     )
-    return cursor is not None
-
-
-
-
     return cursor is not None
 
 # ====================================
