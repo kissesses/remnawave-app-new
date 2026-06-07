@@ -310,12 +310,12 @@ def _load_settings_page_context(tab: str) -> dict:
         'tab_sections': SETTINGS_TAB_SECTIONS.get(tab, []),
     }
 
+    panel_version = ''
     try:
         from shop_bot.webhook_server.modules.update import get_current_version, get_image_tag_label
-        ctx['app_version'] = get_current_version()
+        panel_version = get_current_version()
         ctx['app_image_tag'] = get_image_tag_label()
     except Exception:
-        ctx['app_version'] = ''
         ctx['app_image_tag'] = ''
 
     if tab == 'stealth-login':
@@ -352,7 +352,7 @@ def _load_settings_page_context(tab: str) -> dict:
         except Exception:
             admins_active = 0
         ctx['panel_system_meta'] = {
-            'version': ctx.get('app_version') or '',
+            'version': panel_version or '',
             'image_tag': ctx.get('app_image_tag') or '',
             'db_engine': 'PostgreSQL' if is_postgresql() else 'SQLite',
             'wal_enabled': current_settings.get('enable_wal_mode') == '1',
@@ -511,8 +511,7 @@ def _render_settings_tab(tab: str):
     tab_ctx = _load_settings_page_context(tab)
     return render_template(
         'settings.html',
-        **common_data,
-        **tab_ctx,
+        **{**common_data, **tab_ctx},
     )
 
 

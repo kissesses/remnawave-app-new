@@ -54,7 +54,6 @@ def developer_support_page():
             **panel_ctx.get_common_template_data(),
             dev_support_enabled=False,
             dev_support_state={},
-            app_version=get_current_version(),
             panel_domain=_panel_domain(),
         )
     if not _can_dev_support(edit=False):
@@ -69,7 +68,6 @@ def developer_support_page():
         **panel_ctx.get_common_template_data(),
         dev_support_enabled=True,
         dev_support_state=state,
-        app_version=get_current_version(),
         panel_domain=domain,
     )
 
