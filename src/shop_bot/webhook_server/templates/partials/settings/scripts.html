@@ -360,6 +360,9 @@
             if (typeof window.reinitPanelPanel === 'function') {
                 window.reinitPanelPanel();
             }
+            if (typeof window.reinitSettingsStudio === 'function') {
+                window.reinitSettingsStudio();
+            }
         } catch (e) { console.error('Smart Refresh failed:', e); }
     }
     // ===== Конец умного обновления =====

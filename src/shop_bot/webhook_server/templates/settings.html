@@ -5,6 +5,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/settings-ios.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/webapp-panel-designs.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/settings-macos.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/settings-studio.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
 {% if active_tab == 'broadcast' %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/settings-tool-pages.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/broadcast-history.css') }}" />
@@ -98,7 +99,9 @@
 {% set page_desc = active_nav.desc if active_nav else '' %}
 {% endif %}
 
-<div class="settings-page">
+{% set active_group = settings_nav_groups.get(active_nav.group, {}) if active_nav else {} %}
+
+<div class="settings-page settings-studio">
 
 <header class="settings-header">
     <div>
@@ -116,13 +119,24 @@
     {% endif %}
 </header>
 
-<div class="settings-shell">
-<nav class="settings-sidebar settings-macos-sidebar no-scrollbar" id="settings-nav" aria-label="Разделы настроек">
-    <div class="settings-macos-search-wrap">
-        <span class="material-symbols-outlined" aria-hidden="true">search</span>
-        <input type="search" id="settings-macos-search" class="settings-macos-search" placeholder="Поиск" autocomplete="off" aria-label="Поиск разделов настроек" />
-    </div>
-    <div class="settings-macos-nav-rail" id="settings-macos-nav-rail">
+<div class="settings-shell set-shell">
+<nav class="settings-sidebar settings-macos-sidebar set-rail no-scrollbar" id="settings-nav" aria-label="Разделы настроек">
+    <header class="set-rail__head">
+        <div class="set-rail__brand">
+            <div class="set-rail__mark" aria-hidden="true">
+                <span class="material-symbols-outlined">tune</span>
+            </div>
+            <div>
+                <p class="set-rail__eyebrow">Settings Studio</p>
+                <h1 class="set-rail__title">Настройки</h1>
+            </div>
+        </div>
+        <div class="settings-macos-search-wrap set-rail__search">
+            <span class="material-symbols-outlined" aria-hidden="true">search</span>
+            <input type="search" id="settings-macos-search" class="settings-macos-search" placeholder="Поиск разделов…" autocomplete="off" aria-label="Поиск разделов настроек" />
+        </div>
+    </header>
+    <div class="settings-macos-nav-rail set-rail__nav" id="settings-macos-nav-rail">
     {% set ns = namespace(last_group='') %}
     {% for item in settings_nav_items %}
     {% if (can(item.perm) or (item.id == 'content' and can('settings_mail_templates')) or (item.id == 'audit' and can('settings_access')) or (item.id == 'anti-fraud' and can('settings_access')) or (item.id == 'access' and needs_security_setup)) and (not item.get('needs_webapp') or webapp_exists) %}
@@ -130,65 +144,66 @@
     {% if ns.last_group != '' %}</div>{% endif %}
     <div class="settings-macos-nav-group" data-group="{{ item.group }}">
     {% set group_meta = settings_nav_groups.get(item.group, {}) %}
-    <p class="settings-macos-nav-group__title">{{ group_meta.label or item.group }}</p>
+    <p class="settings-macos-nav-group__title">
+        <span class="set-group__label">{{ group_meta.label or item.group }}</span>
+        {% if group_meta.desc %}<span class="set-group__desc">{{ group_meta.desc }}</span>{% endif %}
+    </p>
     {% set ns.last_group = item.group %}
     {% endif %}
     <a href="{{ url_for('settings_tab_page', tab=item.id) }}"
        class="tab-link{% if item.id == active_tab %} settings-tab-active{% endif %}"
        data-settings-label="{{ item.label | lower }}"
-       title="{{ item.label }}">
+       data-settings-desc="{{ item.desc | lower }}"
+       title="{{ item.label }} — {{ item.desc }}">
         <span class="settings-nav-icon settings-nav-icon--{{ item.id }}" aria-hidden="true">
             <span class="material-symbols-outlined">{{ item.icon }}</span>
         </span>
-        <span class="settings-nav-label">{{ item.label }}</span>
+        <span class="set-link__text">
+            <span class="settings-nav-label">{{ item.label }}</span>
+            <span class="set-link__desc">{{ item.desc }}</span>
+        </span>
     </a>
     {% endif %}
     {% endfor %}
     {% if ns.last_group != '' %}</div>{% endif %}
     </div>
+    <footer class="set-rail__foot">
+        <div class="set-rail__stats" aria-label="Статус системы">
+            <span class="set-stat {{ 'set-stat--on' if main_running else 'set-stat--bad' }}" title="Основной бот">
+                <span class="set-stat__dot"></span> Бот
+            </span>
+            <span class="set-stat {{ 'set-stat--on' if support_running else 'set-stat--bad' }}" title="Support-бот">
+                <span class="set-stat__dot"></span> Support
+            </span>
+            <button type="button" class="set-stat set-stat--btn" id="settings-hero-admins-online" title="Администраторы онлайн">
+                <span class="material-symbols-outlined">groups</span>
+                <span class="panel-admins-online-count">0</span> онлайн
+            </button>
+            {% if app_version %}
+            <span class="set-stat set-stat--muted" title="Версия панели">v{{ app_version }}</span>
+            {% endif %}
+        </div>
+    </footer>
 </nav>
 
-<div class="settings-main">
-
-<div class="settings-macos-hero">
-    <div class="settings-macos-hero__row">
-        <div class="settings-macos-hero__main">
-            {% if active_nav %}
-            <span class="settings-nav-icon settings-macos-hero__icon settings-nav-icon--{{ active_nav.id }}" aria-hidden="true">
-                <span class="material-symbols-outlined">{{ active_nav.icon }}</span>
-            </span>
+<div class="settings-main set-main">
+    <div class="set-main__toolbar">
+        <div class="set-main__context">
+            {% if active_group.label %}
+            <span class="set-main__group">{{ active_group.label }}</span>
+            <span class="set-main__sep" aria-hidden="true">/</span>
             {% endif %}
-            <div>
-                <h1 class="settings-macos-hero__title">{{ page_title }}</h1>
-                {% if page_desc %}
-                <p class="settings-macos-hero__desc">{{ page_desc }}</p>
-                {% endif %}
-            </div>
+            <span class="set-main__tab">{{ page_title }}</span>
         </div>
         {% if show_save_btn %}
-        <button type="submit" form="settings-tab-form" class="settings-save-btn settings-save-btn--macos">
+        <button type="submit" form="settings-tab-form" class="settings-save-btn set-save">
             <span class="material-symbols-outlined">check_circle</span>
             <span>Сохранить</span>
         </button>
         {% endif %}
     </div>
-    <p class="settings-macos-hero__embed-title">{{ page_title }}</p>
-    <div class="settings-macos-hero__chips">
-        <span class="settings-macos-chip {{ 'is-ok' if main_running else 'is-bad' }}" title="Основной бот">
-            <span class="settings-macos-chip__dot"></span> Бот
-        </span>
-        <span class="settings-macos-chip {{ 'is-ok' if support_running else 'is-bad' }}" title="Support-бот">
-            <span class="settings-macos-chip__dot"></span> Support
-        </span>
-        <button type="button" class="settings-macos-chip settings-macos-chip--btn" id="settings-hero-admins-online" title="Администраторы онлайн">
-            <span class="material-symbols-outlined">groups</span>
-            <span class="panel-admins-online-count">0</span> онлайн
-        </button>
-        {% if app_version %}
-        <span class="settings-macos-chip settings-macos-chip--muted" title="Версия панели">v{{ app_version }}</span>
-        {% endif %}
-    </div>
-</div>
+
+<div class="set-main__scroll">
 
 {% if not (all_settings_ok and support_settings_ok) %}
 <div class="settings-alert settings-alert--inline">
@@ -234,6 +249,7 @@
 {% include 'partials/settings_other_modals.html' %}
 {% endif %}
 
+</div><!-- .set-main__scroll -->
 </div><!-- .settings-main -->
 </div><!-- .settings-shell -->
 </div><!-- .settings-page -->
@@ -243,22 +259,9 @@
 {% block scripts %}
 <script>window.ACTIVE_SETTINGS_TAB = {{ active_tab | tojson }};</script>
 <script src="{{ url_for('static', filename='js/settings-page.js') }}"></script>
+<script src="{{ url_for('static', filename='js/settings-studio.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
 <script>
 (function () {
-    const input = document.getElementById('settings-macos-search');
-    if (input) {
-        input.addEventListener('input', () => {
-            const q = input.value.trim().toLowerCase();
-            document.querySelectorAll('#settings-nav .tab-link').forEach((link) => {
-                const label = link.dataset.settingsLabel || link.textContent.toLowerCase();
-                link.classList.toggle('hidden', q.length > 0 && !label.includes(q));
-            });
-            document.querySelectorAll('#settings-nav .settings-macos-nav-group').forEach((group) => {
-                const visible = group.querySelector('.tab-link:not(.hidden)');
-                group.classList.toggle('hidden', !visible);
-            });
-        });
-    }
     function openAdminsOnline() {
         if (typeof window.PanelPresence?.open === 'function') {
             window.PanelPresence.open();
@@ -276,7 +279,6 @@
             || window.parent?.document?.getElementById('panel-admins-online-btn-glass');
         btn?.click();
     }
-    document.getElementById('settings-hero-admins-online')?.addEventListener('click', openAdminsOnline);
     document.getElementById('settings-open-admins-online')?.addEventListener('click', openAdminsOnline);
 })();
 </script>

@@ -1,0 +1,735 @@
+/* Settings Studio — premium shell (sidebar, rail, toolbar) */
+
+.settings-page.settings-studio {
+    --set-text: var(--sp-text, #f4f4f5);
+    --set-muted: var(--sp-text-secondary, rgba(235, 235, 245, 0.62));
+    --set-dim: var(--sp-text-tertiary, rgba(235, 235, 245, 0.38));
+    --set-surface: rgba(255, 255, 255, 0.035);
+    --set-surface-2: rgba(255, 255, 255, 0.065);
+    --set-surface-3: rgba(0, 0, 0, 0.18);
+    --set-border: rgba(255, 255, 255, 0.09);
+    --set-accent: var(--sp-accent, var(--primary, #0a84ff));
+    --set-accent-rgb: var(--primary-rgb, 10, 132, 255);
+    --set-accent-soft: rgba(var(--set-accent-rgb), 0.12);
+    --set-ok: #30d158;
+    --set-ok-soft: rgba(48, 209, 88, 0.12);
+    --set-bad: #ff453a;
+    --set-bad-soft: rgba(255, 69, 58, 0.12);
+    --set-radius: 14px;
+    --set-radius-sm: 10px;
+    padding-bottom: 0;
+}
+
+html:not(.dark) .settings-page.settings-studio {
+    --set-text: #1c1c1e;
+    --set-muted: rgba(0, 0, 0, 0.55);
+    --set-dim: rgba(0, 0, 0, 0.4);
+    --set-surface: rgba(0, 0, 0, 0.02);
+    --set-surface-2: rgba(0, 0, 0, 0.045);
+    --set-surface-3: rgba(0, 0, 0, 0.03);
+    --set-border: rgba(0, 0, 0, 0.08);
+    --set-accent-soft: rgba(var(--set-accent-rgb), 0.08);
+}
+
+/* Hide legacy header — rail brand replaces it */
+.settings-page.settings-studio .settings-header {
+    display: none !important;
+}
+
+/* ── Shell frame ── */
+.settings-page.settings-studio .settings-shell.set-shell {
+    grid-template-columns: minmax(248px, 280px) minmax(0, 1fr);
+    gap: 0;
+    min-height: calc(100vh - 2rem);
+    border-radius: calc(var(--set-radius) + 2px);
+    border: 1px solid var(--set-border);
+    background: linear-gradient(155deg, var(--set-surface) 0%, var(--set-surface-2) 48%, rgba(255, 255, 255, 0.02) 100%);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.04) inset,
+        0 24px 64px rgba(0, 0, 0, 0.22);
+    overflow: hidden;
+}
+
+html:not(.dark) .settings-page.settings-studio .settings-shell.set-shell {
+    background: linear-gradient(155deg, #fafafa 0%, #f3f3f5 52%, #ececef 100%);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.9) inset,
+        0 20px 48px rgba(0, 0, 0, 0.08);
+}
+
+/* ── Left rail ── */
+.settings-page.settings-studio .set-rail {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    padding: 0 !important;
+    border: none !important;
+    border-right: 1px solid var(--set-border) !important;
+    border-radius: 0 !important;
+    background: var(--set-surface-3) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    max-height: none !important;
+    position: sticky;
+    top: 0;
+    align-self: stretch;
+}
+
+html:not(.dark) .settings-page.settings-studio .set-rail {
+    background: rgba(0, 0, 0, 0.025) !important;
+}
+
+.set-rail__head {
+    flex-shrink: 0;
+    padding: 1rem 0.85rem 0.75rem;
+    border-bottom: 1px solid var(--set-border);
+}
+
+.set-rail__brand {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin-bottom: 0.75rem;
+}
+
+.set-rail__mark {
+    width: 2.35rem;
+    height: 2.35rem;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--set-accent-soft);
+    color: var(--set-accent);
+    flex-shrink: 0;
+    border: 1px solid rgba(var(--set-accent-rgb), 0.18);
+}
+
+.set-rail__mark .material-symbols-outlined {
+    font-size: 1.25rem;
+}
+
+.set-rail__eyebrow {
+    margin: 0;
+    font-size: 0.5625rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--set-dim);
+}
+
+.set-rail__title {
+    margin: 0.08rem 0 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.1;
+    color: var(--set-text);
+}
+
+.settings-page.settings-studio .set-rail__search,
+.settings-page.settings-studio .settings-macos-search-wrap {
+    display: flex !important;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0;
+    padding: 0.42rem 0.62rem;
+    border-radius: var(--set-radius-sm);
+    background: var(--set-surface);
+    border: 1px solid var(--set-border);
+    box-shadow: none;
+}
+
+.settings-page.settings-studio .set-rail__search .material-symbols-outlined {
+    font-size: 1rem;
+    color: var(--set-dim);
+    flex-shrink: 0;
+}
+
+.settings-page.settings-studio .settings-macos-search {
+    font-size: 0.8125rem;
+    color: var(--set-text);
+}
+
+/* Nav groups */
+.settings-page.settings-studio .set-rail__nav {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0.65rem 0.55rem 0.5rem;
+}
+
+.settings-page.settings-studio .settings-macos-nav-group {
+    margin-bottom: 0.75rem;
+}
+
+.settings-page.settings-studio .settings-macos-nav-group__title {
+    display: flex;
+    flex-direction: column;
+    gap: 0.05rem;
+    margin: 0 0.35rem 0.35rem;
+    padding: 0;
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--set-dim);
+    background: none;
+    border: none;
+}
+
+.set-group__label {
+    display: block;
+}
+
+.set-group__desc {
+    display: block;
+    font-size: 0.5625rem;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--set-dim);
+    opacity: 0.85;
+}
+
+/* Nav links */
+.settings-page.settings-studio .set-rail .tab-link {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    width: 100%;
+    padding: 0.48rem 0.55rem 0.48rem 0.5rem;
+    margin-bottom: 0.12rem;
+    border-radius: var(--set-radius-sm);
+    border: 1px solid transparent;
+    color: var(--set-muted);
+    text-decoration: none;
+    transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease, transform 0.14s ease;
+}
+
+.settings-page.settings-studio .set-rail .tab-link::before {
+    display: none !important;
+}
+
+.settings-page.settings-studio .set-rail .tab-link:hover {
+    background: var(--set-surface);
+    border-color: var(--set-border);
+    color: var(--set-text);
+}
+
+.settings-page.settings-studio .set-rail .tab-link.settings-tab-active {
+    background: var(--set-accent-soft);
+    border-color: rgba(var(--set-accent-rgb), 0.22);
+    color: var(--set-accent);
+    box-shadow: none !important;
+}
+
+.settings-page.settings-studio .set-rail .tab-link.settings-tab-active .settings-nav-icon {
+    box-shadow: none !important;
+}
+
+.set-link__text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.08rem;
+    min-width: 0;
+    flex: 1;
+}
+
+.settings-page.settings-studio .set-rail .settings-nav-label {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    color: inherit;
+}
+
+.set-link__desc {
+    display: block;
+    font-size: 0.625rem;
+    font-weight: 500;
+    line-height: 1.3;
+    color: var(--set-dim);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.settings-page.settings-studio .set-rail .tab-link.settings-tab-active .set-link__desc {
+    color: color-mix(in srgb, var(--set-accent) 55%, var(--set-dim));
+}
+
+.settings-page.settings-studio .set-rail .tab-link .material-symbols-outlined {
+    display: none;
+}
+
+.settings-page.settings-studio .settings-nav-icon {
+    width: 1.45rem;
+    height: 1.45rem;
+    border-radius: 7px;
+    box-shadow: none !important;
+    margin-top: 0.05rem;
+}
+
+.settings-page.settings-studio .settings-nav-icon .material-symbols-outlined {
+    display: block !important;
+    font-size: 0.875rem;
+}
+
+/* Nav icon palette */
+.settings-page.settings-studio .settings-nav-icon--panel { background: linear-gradient(180deg, #98989d 0%, #636366 100%); }
+.settings-page.settings-studio .settings-nav-icon--database { background: linear-gradient(180deg, #64d2ff 0%, #007aff 100%); }
+.settings-page.settings-studio .settings-nav-icon--stealth-login { background: linear-gradient(180deg, #8e8e93 0%, #48484a 100%); }
+.settings-page.settings-studio .settings-nav-icon--bot { background: linear-gradient(180deg, #5bd66a 0%, #28a745 100%); }
+.settings-page.settings-studio .settings-nav-icon--access { background: linear-gradient(180deg, #409cff 0%, #007aff 100%); }
+.settings-page.settings-studio .settings-nav-icon--audit { background: linear-gradient(180deg, #c77dff 0%, #8e44ad 100%); }
+.settings-page.settings-studio .settings-nav-icon--anti-fraud { background: linear-gradient(180deg, #ff6961 0%, #c0392b 100%); }
+.settings-page.settings-studio .settings-nav-icon--payments { background: linear-gradient(180deg, #ffb340 0%, #ff9500 100%); }
+.settings-page.settings-studio .settings-nav-icon--hosts { background: linear-gradient(180deg, #7d7aff 0%, #5856d6 100%); }
+.settings-page.settings-studio .settings-nav-icon--referrals { background: linear-gradient(180deg, #64d2ff 0%, #32ade6 100%); }
+.settings-page.settings-studio .settings-nav-icon--content { background: linear-gradient(180deg, #ff6482 0%, #ff2d55 100%); }
+.settings-page.settings-studio .settings-nav-icon--broadcast { background: linear-gradient(180deg, #ff6961 0%, #ff3b30 100%); }
+.settings-page.settings-studio .settings-nav-icon--promo { background: linear-gradient(180deg, #ffe066 0%, #ffcc00 100%); }
+.settings-page.settings-studio .settings-nav-icon--promo .material-symbols-outlined { color: #3a3000; }
+.settings-page.settings-studio .settings-nav-icon--logs { background: linear-gradient(180deg, #aeaeb2 0%, #8e8e93 100%); }
+.settings-page.settings-studio .settings-nav-icon--webapp { background: linear-gradient(180deg, #5e5ce6 0%, #3634a3 100%); }
+.settings-page.settings-studio .settings-nav-icon--remnawave { background: linear-gradient(180deg, #c77dff 0%, #af52de 100%); }
+
+/* Rail footer — KPI pills */
+.set-rail__foot {
+    flex-shrink: 0;
+    padding: 0.65rem 0.75rem 0.85rem;
+    border-top: 1px solid var(--set-border);
+}
+
+.set-rail__stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.set-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28rem;
+    padding: 0.28rem 0.55rem;
+    border-radius: 999px;
+    border: 1px solid var(--set-border);
+    background: var(--set-surface);
+    font-size: 0.625rem;
+    font-weight: 650;
+    color: var(--set-muted);
+    white-space: nowrap;
+    transition: border-color 0.14s ease, background 0.14s ease;
+}
+
+.set-stat .material-symbols-outlined {
+    font-size: 0.85rem;
+}
+
+.set-stat--on {
+    border-color: rgba(48, 209, 88, 0.32);
+    background: var(--set-ok-soft);
+    color: var(--set-ok);
+}
+
+.set-stat--bad {
+    border-color: rgba(255, 69, 58, 0.32);
+    background: var(--set-bad-soft);
+    color: var(--set-bad);
+}
+
+.set-stat--btn {
+    cursor: pointer;
+    font: inherit;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.set-stat--btn:hover {
+    background: var(--set-surface-2);
+    border-color: rgba(var(--set-accent-rgb), 0.22);
+}
+
+.set-stat--muted {
+    color: var(--set-dim);
+}
+
+.set-stat__dot {
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+}
+
+/* ── Main content area ── */
+.settings-page.settings-studio .set-main {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    padding: 0 !important;
+    overflow: hidden;
+}
+
+.settings-page.settings-studio .set-main__scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 1rem 1.35rem 1.75rem;
+}
+
+.set-main__toolbar {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.65rem 1.35rem;
+    border-bottom: 1px solid var(--set-border);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+html:not(.dark) .set-main__toolbar {
+    background: rgba(255, 255, 255, 0.55);
+}
+
+.set-main__context {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 0;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    color: var(--set-dim);
+}
+
+.set-main__group {
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 650;
+    font-size: 0.5625rem;
+}
+
+.set-main__sep {
+    opacity: 0.45;
+}
+
+.set-main__tab {
+    color: var(--set-text);
+    font-weight: 600;
+    font-size: 0.75rem;
+    letter-spacing: -0.01em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Hide duplicate shell hero — tabs have their own studio hubs */
+.settings-page.settings-studio .settings-macos-hero {
+    display: none !important;
+}
+
+/* Save button — clean, no neon glow */
+.settings-page.settings-studio .settings-save-btn,
+.settings-page.settings-studio .set-save {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.48rem 0.95rem;
+    border-radius: 999px;
+    border: 1px solid rgba(var(--set-accent-rgb), 0.35);
+    background: var(--set-accent);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 650;
+    letter-spacing: 0;
+    box-shadow: none !important;
+    transition: opacity 0.14s ease, transform 0.14s ease, background 0.14s ease;
+}
+
+.settings-page.settings-studio .settings-save-btn:hover,
+.settings-page.settings-studio .set-save:hover {
+    opacity: 0.92;
+    box-shadow: none !important;
+}
+
+.settings-page.settings-studio .settings-save-btn:active,
+.settings-page.settings-studio .set-save:active {
+    transform: scale(0.98);
+}
+
+.settings-page.settings-studio .settings-save-btn .material-symbols-outlined {
+    font-size: 1rem;
+}
+
+.settings-save-btn--macos {
+    display: none !important;
+}
+
+/* Alerts */
+.settings-page.settings-studio .settings-alert {
+    margin: 0 0 0.85rem;
+    border-radius: var(--set-radius-sm);
+    border: 1px solid rgba(255, 159, 10, 0.28);
+    background: rgba(255, 159, 10, 0.08);
+}
+
+/* Section nav — remove neon active glow */
+.settings-page.settings-studio .settings-section-nav__link.is-active {
+    box-shadow: none !important;
+}
+
+/* ── macos-v2 integration ── */
+html[data-design="macos-v2"] .settings-page.settings-studio {
+    min-height: calc(100vh - 2rem);
+}
+
+html[data-design="macos-v2"] .settings-page.settings-studio .settings-shell.set-shell::before {
+    display: none;
+}
+
+html[data-design="macos-v2"] .settings-page.settings-studio .settings-shell.set-shell {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+html[data-design="macos-v2"] .settings-page.settings-studio .set-main__scroll {
+    max-height: none;
+}
+
+/* Embed / dock window */
+html[data-design="macos-v2"] body.workspace-embed .settings-page.settings-studio {
+    height: 100%;
+    min-height: 0;
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-page.settings-studio .settings-shell.set-shell {
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    background: rgba(22, 22, 24, 0.98);
+}
+
+html:not(.dark)[data-design="macos-v2"] body.workspace-embed .settings-page.settings-studio .settings-shell.set-shell {
+    background: rgba(246, 246, 248, 0.98);
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-page.settings-studio .set-rail {
+    position: relative;
+    flex-shrink: 0;
+    flex-direction: column;
+    height: auto;
+    min-height: 0;
+    border-right: none !important;
+    border-bottom: 1px solid var(--set-border) !important;
+    background: rgba(0, 0, 0, 0.2) !important;
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-page.settings-studio .set-rail__head {
+    display: none;
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-page.settings-studio .set-rail__foot {
+    display: none;
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-page.settings-studio .set-rail__nav {
+    flex-direction: row;
+    align-items: stretch;
+    flex: none;
+    padding: 0.45rem 0.5rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    mask-image: linear-gradient(90deg, transparent, #000 0.5rem, #000 calc(100% - 0.5rem), transparent);
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-page.settings-studio .set-rail__nav::-webkit-scrollbar {
+    display: none;
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-page.settings-studio .settings-macos-nav-group {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0 0.65rem 0 0;
+    border-right: 1px solid var(--set-border);
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-page.settings-studio .settings-macos-nav-group:last-child {
+    border-right: none;
+    padding-right: 0;
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-page.settings-studio .settings-macos-nav-group__title {
+    margin: 0 0.15rem 0 0;
+    padding: 0.2rem 0.38rem;
+    border-radius: 6px;
+    font-size: 0.5625rem;
+    background: var(--set-surface);
+    border: 1px solid var(--set-border);
+    pointer-events: none;
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-page.settings-studio .set-group__desc {
+    display: none;
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-page.settings-studio .set-rail .tab-link {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    width: auto;
+    min-width: 4rem;
+    max-width: 5.25rem;
+    padding: 0.38rem 0.4rem;
+    text-align: center;
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-page.settings-studio .set-link__desc {
+    display: none;
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-page.settings-studio .set-rail .settings-nav-label {
+    font-size: 0.5625rem;
+    font-weight: 600;
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-page.settings-studio .settings-nav-icon {
+    width: 1.65rem;
+    height: 1.65rem;
+    margin-top: 0;
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-page.settings-studio .set-main {
+    flex: 1;
+    min-height: 0;
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-page.settings-studio .set-main__toolbar {
+    padding: 0.45rem 1rem;
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-page.settings-studio .set-main__scroll {
+    padding: 0.75rem 1rem 1.15rem;
+}
+
+html[data-design="macos-v2"] body.workspace-embed .settings-page.settings-studio .set-rail .tab-link.settings-tab-active {
+    box-shadow: none !important;
+}
+
+html[data-design="macos-v2"] .settings-page.settings-studio .set-rail .tab-link.settings-tab-active {
+    box-shadow: none !important;
+}
+
+@media (max-width: 900px) {
+    html[data-design="macos-v2"] .settings-page.settings-studio .set-rail .tab-link.settings-tab-active {
+        box-shadow: none !important;
+    }
+}
+
+/* Mobile — horizontal dock nav */
+@media (max-width: 900px) {
+    .settings-page.settings-studio .settings-shell.set-shell {
+        display: flex;
+        flex-direction: column;
+        grid-template-columns: unset;
+        min-height: auto;
+    }
+
+    .settings-page.settings-studio .set-rail {
+        position: static;
+        border-right: none !important;
+        border-bottom: 1px solid var(--set-border) !important;
+    }
+
+    .set-rail__head {
+        padding: 0.75rem 0.75rem 0.55rem;
+    }
+
+    .set-rail__brand {
+        margin-bottom: 0.55rem;
+    }
+
+    .set-rail__foot {
+        display: none;
+    }
+
+    .settings-page.settings-studio .set-rail__nav {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding: 0.45rem 0.5rem;
+        scrollbar-width: none;
+        mask-image: linear-gradient(90deg, transparent, #000 0.5rem, #000 calc(100% - 0.5rem), transparent);
+    }
+
+    .settings-page.settings-studio .set-rail__nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    .settings-page.settings-studio .settings-macos-nav-group {
+        flex-direction: row;
+        align-items: center;
+        flex-wrap: nowrap;
+        gap: 0.25rem;
+        margin: 0;
+        padding: 0 0.65rem 0 0;
+        border-right: 1px solid var(--set-border);
+    }
+
+    .settings-page.settings-studio .settings-macos-nav-group:last-child {
+        border-right: none;
+    }
+
+    .settings-page.settings-studio .settings-macos-nav-group__title {
+        margin: 0 0.15rem 0 0;
+        padding: 0.2rem 0.38rem;
+        border-radius: 6px;
+        background: var(--set-surface);
+        border: 1px solid var(--set-border);
+        white-space: nowrap;
+    }
+
+    .settings-page.settings-studio .set-group__desc {
+        display: none;
+    }
+
+    .settings-page.settings-studio .set-rail .tab-link {
+        flex-direction: column;
+        align-items: center;
+        width: auto;
+        min-width: 4rem;
+        max-width: 5.25rem;
+        padding: 0.38rem 0.4rem;
+        text-align: center;
+    }
+
+    .settings-page.settings-studio .set-link__desc {
+        display: none;
+    }
+
+    .settings-page.settings-studio .set-rail .settings-nav-label {
+        font-size: 0.5625rem;
+    }
+
+    .settings-page.settings-studio .settings-nav-icon {
+        margin-top: 0;
+    }
+
+    .settings-page.settings-studio .set-main__scroll {
+        padding: 0.85rem 1rem 1.35rem;
+    }
+}
