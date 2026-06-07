@@ -994,33 +994,93 @@ html:not(.dark) .db-btn--glass { background: rgba(255, 255, 255, 0.65); }
 .db-terminal .db-panel__grid td { color: rgba(255, 255, 255, 0.85); border-color: rgba(255, 255, 255, 0.05); }
 
 .db-panel__modal {
-    position: fixed;
+    --db-text: var(--panel-text, #f4f4f5);
+    --db-muted: var(--panel-text-secondary, rgba(235, 235, 245, 0.55));
+    --db-dim: var(--panel-text-tertiary, rgba(235, 235, 245, 0.38));
+    --db-modal-surface: #1c1c1e;
+    --db-modal-surface-2: #2c2c2e;
+    --db-surface: var(--db-modal-surface);
+    --db-surface-2: var(--db-modal-surface-2);
+    --db-border: rgba(255, 255, 255, 0.1);
+    --db-border-soft: rgba(255, 255, 255, 0.08);
+    --db-accent: var(--primary, #0a84ff);
+    --db-accent-rgb: var(--primary-rgb, 10, 132, 255);
+    --db-accent-soft: rgba(var(--db-accent-rgb), 0.12);
+    --db-bad: #ff453a;
+    --db-bad-soft: rgba(255, 69, 58, 0.1);
+    --db-radius: 12px;
+    --db-radius-sm: 10px;
+    position: fixed !important;
     inset: 0;
-    z-index: 1200;
+    z-index: 12050;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    padding: 1rem;
+    justify-content: flex-start;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: max(1rem, env(safe-area-inset-top, 0px)) 1rem max(2rem, env(safe-area-inset-bottom, 0px));
+    box-sizing: border-box;
+    color: var(--db-text);
+}
+
+html:not(.dark) .db-panel__modal {
+    --db-text: #1c1c1e;
+    --db-muted: rgba(0, 0, 0, 0.55);
+    --db-dim: rgba(0, 0, 0, 0.42);
+    --db-modal-surface: #ffffff;
+    --db-modal-surface-2: #f5f5f7;
+    --db-border: rgba(0, 0, 0, 0.08);
+    --db-border-soft: rgba(0, 0, 0, 0.06);
+}
+
+.db-panel__modal:not(.hidden)::before,
+.db-panel__modal:not(.hidden)::after {
+    content: '';
+    flex: 1 0 auto;
+    width: 100%;
+    min-height: 0;
+    pointer-events: none;
 }
 
 .db-panel__modal.hidden { display: none !important; }
 
 .db-panel__modal-backdrop {
-    position: absolute;
+    position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.45);
+    z-index: 0;
+    background: rgba(0, 0, 0, 0.55);
 }
 
 .db-panel__modal-card {
     position: relative;
+    z-index: 1;
     width: min(960px, 100%);
     max-height: min(90vh, 900px);
+    margin: 0 auto;
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
     border-radius: var(--db-radius);
     border: 1px solid var(--db-border);
-    background: var(--db-surface);
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+    background: var(--db-modal-surface);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
+}
+
+.db-panel__modal-card .db-panel__grid-wrap--modal {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+    overflow: auto;
+}
+
+.db-panel__modal-card .db-schema-wrap {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+    overflow: auto;
 }
 
 .db-panel__modal-head {
@@ -1040,3 +1100,13 @@ html:not(.dark) .db-btn--glass { background: rgba(255, 255, 255, 0.65); }
 .db-panel__page-label { font-size: 0.72rem; font-variant-numeric: tabular-nums; color: var(--db-dim); }
 
 #tab-database .hidden { display: none !important; }
+
+html.db-modal-open,
+html.db-modal-open body {
+    overflow: hidden;
+}
+
+html.db-modal-open body.workspace-embed {
+    overflow: hidden;
+    touch-action: none;
+}

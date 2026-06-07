@@ -370,7 +370,7 @@
                     </div>
                     <div class="bot-status-card__meta" id="bot-status-webapp-title">{{ bs.webapp_title or 'VPN' if bs.webapp_enabled else 'Выключен' }}</div>
                     <div class="bot-status-card__actions">
-                        <a href="{{ url_for('settings_tab_page', tab='content') }}" class="bot-btn">
+                        <a href="{{ url_for('settings_tab_page', tab='webapp') }}" class="bot-btn">
                             <span class="material-symbols-outlined">settings</span>
                             Настройки
                         </a>

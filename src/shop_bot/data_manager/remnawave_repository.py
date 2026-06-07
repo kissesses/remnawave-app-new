@@ -373,6 +373,7 @@ _LEGACY_FORWARDERS = (
     "update_other_setting",
     "get_webapp_settings",
     "update_webapp_settings",
+    "increment_webapp_design_stat",
 )
 
 for _name in _LEGACY_FORWARDERS:

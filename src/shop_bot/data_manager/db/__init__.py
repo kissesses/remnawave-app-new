@@ -113,6 +113,7 @@ from shop_bot.data_manager.db.settings import (
     get_all_other_settings,
     get_webapp_settings,
     update_webapp_settings,
+    increment_webapp_design_stat,
 )
 
 from shop_bot.data_manager.db.buttons import (

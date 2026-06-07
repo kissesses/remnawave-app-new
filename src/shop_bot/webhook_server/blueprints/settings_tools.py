@@ -541,6 +541,13 @@ def webapp_save():
         if default_design not in WEBAPP_DESIGN_IDS or default_design not in enabled:
             default_design = enabled[0]
         enabled_str = ','.join(parse_enabled_designs(','.join(enabled)))
+        ab_design_b = (request.form.get('ab_design_b') or '').strip()
+        if ab_design_b and ab_design_b not in WEBAPP_DESIGN_IDS:
+            ab_design_b = ''
+        try:
+            ab_percent = max(0, min(50, int(request.form.get('ab_percent') or 0)))
+        except (TypeError, ValueError):
+            ab_percent = 0
 
         rw_repo.update_webapp_settings(
             webapp_title=title,
@@ -552,12 +559,110 @@ def webapp_save():
             webapp_default_design=default_design,
             webapp_enabled_designs=enabled_str,
             webapp_theme_picker=1 if theme_picker else 0,
+            webapp_maintenance_text=(request.form.get('maintenance_text') or '').strip(),
+            webapp_welcome_text=(request.form.get('welcome_text') or '').strip(),
+            webapp_accent_color=(request.form.get('accent_color') or '').strip(),
+            webapp_show_trial=1 if request.form.get('show_trial') == 'true' else 0,
+            webapp_show_referrals=1 if request.form.get('show_referrals') == 'true' else 0,
+            webapp_show_howto=1 if request.form.get('show_howto') == 'true' else 0,
+            webapp_show_topup=1 if request.form.get('show_topup') == 'true' else 0,
+            webapp_ab_design_b=ab_design_b,
+            webapp_ab_percent=ab_percent,
         )
-        return jsonify({'ok': True, 'message': 'Настройки Webapp сохранены'})
+        panel_ctx.audit('webapp.save', {'enabled': enable, 'domain': domen, 'designs': enabled_str})
+        return jsonify({'ok': True, 'message': 'Настройки WebApp сохранены'})
     except Exception as e:
         logger.error(f"Ошибка сохранения настроек Webapp: {e}")
         return jsonify({'ok': False, 'error': str(e)}), 500
 # ===== Конец роута webapp_save =====
+
+@bp.route('/settings/webapp/health.json', methods=['GET'])
+@panel_ctx.login_required
+def webapp_health():
+    if not _user_can_webapp():
+        return jsonify({'ok': False, 'error': 'Forbidden'}), 403
+    from shop_bot.webhook_server.modules import webapp_panel
+
+    webapp = rw_repo.get_webapp_settings() or {}
+    health = webapp_panel.check_health(webapp)
+    return jsonify({'ok': True, 'health': health})
+
+
+@bp.route('/settings/webapp/meta.json', methods=['GET'])
+@panel_ctx.login_required
+def webapp_meta():
+    if not _user_can_webapp():
+        return jsonify({'ok': False, 'error': 'Forbidden'}), 403
+    from shop_bot.webhook_server.modules import webapp_panel
+
+    webapp = rw_repo.get_webapp_settings() or {}
+    settings = rw_repo.get_all_settings() or {}
+    meta = webapp_panel.build_webapp_meta(
+        webapp,
+        settings,
+        bot_username=(settings.get('telegram_bot_username') or '').strip().lstrip('@'),
+    )
+    return jsonify({'ok': True, 'meta': meta})
+
+
+@bp.route('/settings/webapp/preview/<design_id>', methods=['GET'])
+@panel_ctx.login_required
+def webapp_preview(design_id: str):
+    if not _user_can_webapp():
+        return 'Forbidden', 403
+    from flask import make_response
+    from shop_bot.webapp.designs import WEBAPP_DESIGN_IDS
+    from shop_bot.webhook_server.modules import webapp_panel
+
+    if design_id not in WEBAPP_DESIGN_IDS:
+        return 'Not found', 404
+    device = (request.args.get('device') or 'mobile').strip().lower()
+    title = (request.args.get('title') or '').strip()
+    logo = (request.args.get('logo') or '').strip()
+    accent = (request.args.get('accent') or '').strip()
+    if not title:
+        webapp = rw_repo.get_webapp_settings() or {}
+        title = (webapp.get('webapp_title') or 'VPN').strip()
+        logo = logo or (webapp.get('webapp_logo') or '').strip()
+        accent = accent or (webapp.get('webapp_accent_color') or '').strip()
+    body = webapp_panel.render_preview_html(
+        design_id,
+        device=device,
+        title=title,
+        logo=logo,
+        accent=accent,
+    )
+    resp = make_response(body)
+    resp.headers['Content-Type'] = 'text/html; charset=utf-8'
+    resp.headers['Cache-Control'] = 'private, no-cache'
+    resp.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    return resp
+
+
+@bp.route('/settings/webapp/logs.json', methods=['GET'])
+@panel_ctx.login_required
+def webapp_logs():
+    if not _user_can_webapp():
+        return jsonify({'ok': False, 'error': 'Forbidden'}), 403
+    from shop_bot.webhook_server.modules import webapp_panel
+
+    try:
+        lines = int(request.args.get('lines', 80))
+    except ValueError:
+        lines = 80
+    return jsonify({'ok': True, 'lines': webapp_panel.tail_webapp_logs(lines)})
+
+
+def _user_can_webapp() -> bool:
+    from flask import session
+    from shop_bot.data_manager.panel_rbac import allows_permission, normalize_permission_levels
+
+    if session.get('panel_is_superadmin'):
+        return True
+    levels = session.get('panel_permission_levels') or normalize_permission_levels(
+        session.get('panel_permissions') or []
+    )
+    return allows_permission(levels, 'other_webapp', require_edit=False)
 
 # ===== ШАБЛОНЫ РАССЫЛКИ (Broadcast Studio) =====
 @bp.route('/settings/broadcast/presets')

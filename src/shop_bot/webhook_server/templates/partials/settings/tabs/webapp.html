@@ -1,0 +1,408 @@
+{% set meta = webapp_meta or {} %}
+{% set wa = webapp or {} %}
+{% set default_design = wa.webapp_default_design or 'classic' %}
+{% set selected_label = meta.default_design_label or default_design %}
+
+<section id="tab-webapp" class="tab-content wapp-panel">
+    {% for alert in meta.alerts or [] %}
+    <div class="wapp-alert wapp-alert--{{ alert.level or 'warn' }}" role="alert">
+        <span class="material-symbols-outlined" aria-hidden="true">{% if alert.level == 'bad' %}error{% else %}warning{% endif %}</span>
+        <div>{{ alert.text }}</div>
+    </div>
+    {% endfor %}
+
+    <header class="wapp-hub">
+        <div class="wapp-hub__intro">
+            <div class="wapp-hub__icon" aria-hidden="true">
+                <span class="material-symbols-outlined">language</span>
+            </div>
+            <div>
+                <h2 class="wapp-hub__title">WebApp Studio</h2>
+                <p class="wapp-hub__desc">Кабинет пользователя · Telegram Mini App · порт <code>:8000</code></p>
+            </div>
+        </div>
+        <div class="wapp-hub__stats">
+            <span class="wapp-stat{% if meta.enabled %} wapp-stat--on{% endif %}" id="wapp-status-pill">
+                <span class="material-symbols-outlined">{% if meta.enabled %}check_circle{% else %}cancel{% endif %}</span>
+                <span class="wapp-stat__text">{{ 'Включён' if meta.enabled else 'Выключен' }}</span>
+            </span>
+            <span class="wapp-stat" id="wapp-domain-pill" title="Домен">
+                <span class="material-symbols-outlined">link</span>
+                <span>{{ meta.domain_display or 'Не задан' }}</span>
+            </span>
+            <span class="wapp-stat" id="wapp-designs-pill">
+                <span class="material-symbols-outlined">palette</span>
+                <span>{{ meta.enabled_design_count or 0 }} / {{ meta.total_designs or 6 }} дизайнов</span>
+            </span>
+            <span class="wapp-stat wapp-stat--muted" id="wapp-health-pill" title="Доступность">
+                <span class="material-symbols-outlined">monitor_heart</span>
+                <span>—</span>
+            </span>
+        </div>
+        <div class="wapp-hub__actions">
+            <a href="{{ meta.public_url or '#' }}" target="_blank" rel="noopener" class="wapp-btn wapp-btn--ghost" id="wapp-open-link">
+                <span class="material-symbols-outlined">open_in_new</span>
+                Открыть
+            </a>
+            <button type="button" class="wapp-btn wapp-btn--ghost" id="wapp-copy-deeplink" title="TG Deep Link">
+                <span class="material-symbols-outlined">send</span>
+                Deep Link
+            </button>
+            <div class="wapp-enable">
+                <span class="wapp-enable__label">WebApp</span>
+                <label class="settings-macos-switch" title="Включить WebApp">
+                    <input type="checkbox" id="webapp_enable" {% if wa.webapp_enable %}checked{% endif %} />
+                    <span class="settings-macos-switch__track"></span>
+                </label>
+            </div>
+        </div>
+    </header>
+
+    <nav class="wapp-workspace-nav" aria-label="Разделы WebApp Studio">
+        <button type="button" class="wapp-workspace-btn is-active" data-wapp-workspace="design">Дизайн</button>
+        <button type="button" class="wapp-workspace-btn" data-wapp-workspace="branding">Брендинг</button>
+        <button type="button" class="wapp-workspace-btn" data-wapp-workspace="deploy">Деплой</button>
+        <button type="button" class="wapp-workspace-btn" data-wapp-workspace="modules">Модули</button>
+        <button type="button" class="wapp-workspace-btn" data-wapp-workspace="overview">Обзор</button>
+    </nav>
+
+    <form id="webapp-settings-form" class="wapp-form" data-submit-mode="custom">
+        <div class="wapp-workspace-pane" data-wapp-pane="design">
+            <div class="wapp-studio">
+                <div class="wapp-preview-pane" aria-label="Предпросмотр дизайна">
+                    <div class="wapp-preview-pane__head">
+                        <div>
+                            <p class="wapp-preview-pane__eyebrow">Предпросмотр</p>
+                            <h3 class="wapp-preview-pane__title" id="wapp-preview-title">{{ selected_label }}</h3>
+                        </div>
+                        <div class="wapp-preview-pane__actions">
+                            <div class="wapp-device-toggle" role="group" aria-label="Устройство">
+                                <button type="button" class="wapp-device-btn is-active" data-device="mobile" title="Mobile">
+                                    <span class="material-symbols-outlined">smartphone</span>
+                                </button>
+                                <button type="button" class="wapp-device-btn" data-device="desktop" title="Desktop">
+                                    <span class="material-symbols-outlined">desktop_windows</span>
+                                </button>
+                            </div>
+                            <button type="button" class="wapp-icon-btn" id="wapp-preview-reload" title="Обновить">
+                                <span class="material-symbols-outlined">refresh</span>
+                            </button>
+                            <a href="#" class="wapp-icon-btn" id="wapp-preview-open" target="_blank" rel="noopener" title="Открыть preview" hidden>
+                                <span class="material-symbols-outlined">fullscreen</span>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="wapp-preview-pane__body">
+                        <div class="wapp-preview-empty" id="wapp-preview-empty">
+                            <span class="material-symbols-outlined">touch_app</span>
+                            <p>Выберите дизайн в галерее — здесь появится предпросмотр</p>
+                        </div>
+                        <div class="wapp-preview-loading" id="wapp-preview-loading" hidden>
+                            <span class="wapp-preview-loading__spin"></span>
+                            <span>Загрузка…</span>
+                        </div>
+                        <div class="wapp-browser" id="wapp-preview-browser" hidden>
+                            <div class="wapp-browser__chrome">
+                                <span class="wapp-browser__dots"><i></i><i></i><i></i></span>
+                                <span class="wapp-browser__url" id="wapp-preview-url">{{ meta.public_url or 'preview' }}</span>
+                            </div>
+                            <div class="wapp-browser__viewport">
+                                <iframe id="wapp-preview-iframe" title="WebApp preview" sandbox="allow-scripts allow-same-origin"></iframe>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wapp-picker">
+                    <div class="wapp-picker__head">
+                        <label class="wapp-search">
+                            <span class="material-symbols-outlined">search</span>
+                            <input type="search" id="wapp-design-search" placeholder="Поиск дизайна…" autocomplete="off" />
+                        </label>
+                        <span class="wapp-picker__count"><span id="wapp-design-count">{{ webapp_designs | length }}</span> шаблонов</span>
+                    </div>
+                    <div class="wapp-filters" role="tablist">
+                        {% for g in meta.design_groups or [] %}
+                        <button type="button" class="wapp-filter{% if g.id == 'all' %} is-active{% endif %}" data-group="{{ g.id }}" role="tab">{{ g.label }}</button>
+                        {% endfor %}
+                    </div>
+                    <div class="wapp-picker__tools">
+                        <label class="wapp-field wapp-field--inline">
+                            <span>Дизайн по умолчанию</span>
+                            <select name="webapp_default_design" id="webapp_default_design">
+                                {% for d in webapp_designs %}
+                                <option value="{{ d.id }}" data-design-label="{{ d.label }}"
+                                    {% if default_design == d.id %}selected{% endif %}
+                                    {% if d.id not in webapp_enabled_design_list %}hidden disabled{% endif %}>{{ d.label }}</option>
+                                {% endfor %}
+                            </select>
+                        </label>
+                        <label class="wapp-check-inline">
+                            <input type="checkbox" id="webapp_theme_picker" {% if wa.webapp_theme_picker is none or wa.webapp_theme_picker|int != 0 %}checked{% endif %} />
+                            <span>Палитра в кабинете</span>
+                        </label>
+                    </div>
+                    <div class="wapp-tile-grid" id="wapp-designs-grid">
+                        {% for d in webapp_designs %}
+                        <label class="wapp-tile{% if d.id == default_design %} is-default{% endif %}{% if d.id in webapp_enabled_design_list %} is-enabled{% endif %}"
+                            data-design-id="{{ d.id }}" data-group="{% if d.id == 'ios' %}mobile{% elif d.id == 'desktop' %}desktop{% elif d.id in ['stealth','stealth-glass'] %}stealth{% elif d.id == 'glass-hub' %}glass{% else %}classic{% endif %}" data-label="{{ d.label }}" style="--wapp-accent: {{ d.accent }}">
+                            <input type="checkbox" name="webapp_design_enabled" value="{{ d.id }}" class="wapp-tile__enable sr-only"
+                                {% if d.id in webapp_enabled_design_list %}checked{% endif %} />
+                            <input type="radio" name="wapp_default_pick" value="{{ d.id }}" class="wapp-tile__default sr-only"
+                                {% if default_design == d.id %}checked{% endif %} />
+                            <div class="wapp-tile__preview webapp-panel-design-card__preview webapp-panel-design-card__preview--{{ d.id }}"></div>
+                            <div class="wapp-tile__body">
+                                <div class="wapp-tile__title">
+                                    <span class="material-symbols-outlined">{{ d.icon }}</span>
+                                    <strong>{{ d.label }}</strong>
+                                </div>
+                                <p>{{ d.desc }}</p>
+                            </div>
+                            <span class="wapp-tile__badge wapp-tile__badge--default" title="По умолчанию">★</span>
+                            <span class="wapp-tile__badge wapp-tile__badge--on material-symbols-outlined">check_circle</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="wapp-workspace-pane hidden" data-wapp-pane="branding">
+            <div class="wapp-cards">
+                <article class="wapp-card">
+                    <header class="wapp-card__head">
+                        <span class="wapp-card__glyph material-symbols-outlined">badge</span>
+                        <div><h3>Идентичность</h3><p>Название и акцентный цвет кабинета</p></div>
+                    </header>
+                    <div class="wapp-card__body wapp-card__grid">
+                        <label class="wapp-field">
+                            <span>Название магазина</span>
+                            <input type="text" name="webapp_title" id="webapp_title" value="{{ wa.webapp_title or '' }}" placeholder="Remna VPN" maxlength="48" />
+                        </label>
+                        <label class="wapp-field">
+                            <span>Accent color</span>
+                            <div class="wapp-color-row">
+                                <input type="color" id="webapp_accent_picker" value="{{ wa.webapp_accent_color or '#0a84ff' }}" />
+                                <input type="text" name="webapp_accent_color" id="webapp_accent_color" value="{{ wa.webapp_accent_color or '' }}" placeholder="#0a84ff" />
+                            </div>
+                        </label>
+                        <label class="wapp-field wapp-field--span2">
+                            <span>Приветствие (Glass Hub)</span>
+                            <input type="text" name="webapp_welcome_text" id="webapp_welcome_text" value="{{ wa.webapp_welcome_text or '' }}" placeholder="Добро пожаловать!" maxlength="120" />
+                        </label>
+                    </div>
+                </article>
+                <article class="wapp-card">
+                    <header class="wapp-card__head">
+                        <span class="wapp-card__glyph material-symbols-outlined">image</span>
+                        <div><h3>Ассеты</h3><p>Логотип и favicon по URL</p></div>
+                    </header>
+                    <div class="wapp-card__body wapp-card__grid">
+                        <label class="wapp-field">
+                            <span>Логотип (URL)</span>
+                            <div class="wapp-asset-row">
+                                <input type="url" name="webapp_logo" id="webapp_logo" value="{{ wa.webapp_logo or '' }}" placeholder="https://…" />
+                                <div class="wapp-asset-preview" id="webapp-logo-preview-wrap">
+                                    <img id="webapp-logo-preview" src="{{ wa.webapp_logo or '' }}" alt="" {% if not wa.webapp_logo %}hidden{% endif %} />
+                                    <span class="material-symbols-outlined" id="webapp-logo-placeholder" {% if wa.webapp_logo %}hidden{% endif %}>image</span>
+                                </div>
+                            </div>
+                        </label>
+                        <label class="wapp-field">
+                            <span>Favicon (URL)</span>
+                            <div class="wapp-asset-row">
+                                <input type="url" name="webapp_icon" id="webapp_icon" value="{{ wa.webapp_icon or '' }}" placeholder="https://…" />
+                                <div class="wapp-asset-preview" id="webapp-icon-preview-wrap">
+                                    <img id="webapp-icon-preview" src="{{ wa.webapp_icon or '' }}" alt="" {% if not wa.webapp_icon %}hidden{% endif %} />
+                                    <span class="material-symbols-outlined" id="webapp-icon-placeholder" {% if wa.webapp_icon %}hidden{% endif %}>language</span>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </article>
+                <article class="wapp-card">
+                    <header class="wapp-card__head">
+                        <span class="wapp-card__glyph material-symbols-outlined">fullscreen</span>
+                        <div><h3>Telegram</h3><p>Режим отображения в Mini App</p></div>
+                    </header>
+                    <div class="wapp-card__body">
+                        <label class="wapp-switch-row">
+                            <div><strong>TG FullScreen</strong><p>Расширенная safe-area для Telegram 6.0+</p></div>
+                            <label class="settings-macos-switch">
+                                <input type="checkbox" id="tg_fullscreen" {% if wa.tg_fullscreen %}checked{% endif %} />
+                                <span class="settings-macos-switch__track"></span>
+                            </label>
+                        </label>
+                    </div>
+                </article>
+                <article class="wapp-card wapp-card--span2">
+                    <header class="wapp-card__head">
+                        <span class="wapp-card__glyph material-symbols-outlined">construction</span>
+                        <div><h3>Maintenance</h3><p>Сообщение при выключенном WebApp</p></div>
+                    </header>
+                    <div class="wapp-card__body">
+                        <label class="wapp-field">
+                            <span>Текст страницы недоступности</span>
+                            <textarea name="webapp_maintenance_text" id="webapp_maintenance_text" rows="3" placeholder="Кабинет временно недоступен. Попробуйте позже.">{{ wa.webapp_maintenance_text or '' }}</textarea>
+                        </label>
+                    </div>
+                </article>
+            </div>
+        </div>
+
+        <div class="wapp-workspace-pane hidden" data-wapp-pane="deploy">
+            <div class="wapp-health-grid" id="wapp-health-grid">
+                <div class="wapp-health-card" data-health="port"><span class="material-symbols-outlined">router</span><strong>:8000</strong><span class="wapp-health-card__val">—</span></div>
+                <div class="wapp-health-card" data-health="dns"><span class="material-symbols-outlined">dns</span><strong>DNS</strong><span class="wapp-health-card__val">—</span></div>
+                <div class="wapp-health-card" data-health="ssl"><span class="material-symbols-outlined">lock</span><strong>SSL</strong><span class="wapp-health-card__val">—</span></div>
+                <div class="wapp-health-card" data-health="http"><span class="material-symbols-outlined">http</span><strong>HTTP</strong><span class="wapp-health-card__val">—</span></div>
+            </div>
+            <div class="wapp-cards">
+                <article class="wapp-card wapp-card--span2">
+                    <header class="wapp-card__head">
+                        <span class="wapp-card__glyph material-symbols-outlined">link</span>
+                        <div><h3>Домен</h3><p>Публичный адрес кабинета</p></div>
+                    </header>
+                    <div class="wapp-card__body wapp-card__grid">
+                        <label class="wapp-field wapp-field--span2">
+                            <span>Доменное имя</span>
+                            <input type="text" name="webapp_domen" id="webapp_domen" value="{{ wa.webapp_domen or '' }}" placeholder="lk.example.com" />
+                        </label>
+                    </div>
+                </article>
+                <article class="wapp-card wapp-card--span2">
+                    <header class="wapp-card__head">
+                        <span class="wapp-card__glyph material-symbols-outlined">code</span>
+                        <div><h3>Nginx</h3><p>Готовый server block</p></div>
+                        <button type="button" class="wapp-btn wapp-btn--ghost wapp-btn--sm" id="wapp-copy-nginx">Копировать</button>
+                    </header>
+                    <div class="wapp-card__body">
+                        <pre class="wapp-code" id="wapp-nginx-config">{{ meta.nginx_config or '' }}</pre>
+                    </div>
+                </article>
+                <article class="wapp-card wapp-card--span2">
+                    <header class="wapp-card__head">
+                        <span class="wapp-card__glyph material-symbols-outlined">checklist</span>
+                        <div><h3>Checklist деплоя</h3></div>
+                    </header>
+                    <ul class="wapp-checklist">
+                        <li>A-запись домена → IP сервера</li>
+                        <li>Nginx upstream <code>remnawave-app:8000</code></li>
+                        <li>SSL: <code>certbot --nginx -d ваш-домен</code></li>
+                        <li>Включить WebApp и перезапустить бота</li>
+                        <li>Проверить Deep Link в Telegram</li>
+                    </ul>
+                </article>
+            </div>
+        </div>
+
+        <div class="wapp-workspace-pane hidden" data-wapp-pane="modules">
+            <div class="wapp-cards">
+                {% set mods = meta.modules or {} %}
+                <article class="wapp-card">
+                    <header class="wapp-card__head"><span class="wapp-card__glyph material-symbols-outlined">timer</span><div><h3>Триал</h3><p>Блок активации пробного периода</p></div></header>
+                    <div class="wapp-card__body">
+                        <label class="wapp-switch-row">
+                            <div><strong>Показывать в WebApp</strong><p>Глобально: {{ 'вкл' if mods.trial.global else 'выкл' }}</p></div>
+                            <label class="settings-macos-switch"><input type="checkbox" id="webapp_show_trial" {% if wa.webapp_show_trial is none or wa.webapp_show_trial|int != 0 %}checked{% endif %} /><span class="settings-macos-switch__track"></span></label>
+                        </label>
+                        <a href="{{ url_for('settings_tab_page', tab='content') }}#trial" class="wapp-link">Настройки триала →</a>
+                    </div>
+                </article>
+                <article class="wapp-card">
+                    <header class="wapp-card__head"><span class="wapp-card__glyph material-symbols-outlined">group_add</span><div><h3>Рефералы</h3><p>Партнёрская программа</p></div></header>
+                    <div class="wapp-card__body">
+                        <label class="wapp-switch-row">
+                            <div><strong>Показывать в WebApp</strong><p>Глобально: {{ 'вкл' if mods.referrals.global else 'выкл' }}</p></div>
+                            <label class="settings-macos-switch"><input type="checkbox" id="webapp_show_referrals" {% if wa.webapp_show_referrals is none or wa.webapp_show_referrals|int != 0 %}checked{% endif %} /><span class="settings-macos-switch__track"></span></label>
+                        </label>
+                        <a href="{{ url_for('settings_tab_page', tab='referrals') }}" class="wapp-link">Referrals Studio →</a>
+                    </div>
+                </article>
+                <article class="wapp-card">
+                    <header class="wapp-card__head"><span class="wapp-card__glyph material-symbols-outlined">menu_book</span><div><h3>How-to</h3><p>Инструкции подключения</p></div></header>
+                    <div class="wapp-card__body">
+                        <label class="wapp-switch-row">
+                            <div><strong>Показывать в WebApp</strong><p>Контент: {{ 'есть' if mods.howto.global else 'пусто' }}</p></div>
+                            <label class="settings-macos-switch"><input type="checkbox" id="webapp_show_howto" {% if wa.webapp_show_howto is none or wa.webapp_show_howto|int != 0 %}checked{% endif %} /><span class="settings-macos-switch__track"></span></label>
+                        </label>
+                        <a href="{{ url_for('settings_tab_page', tab='content') }}" class="wapp-link">Content Studio →</a>
+                    </div>
+                </article>
+                <article class="wapp-card">
+                    <header class="wapp-card__head"><span class="wapp-card__glyph material-symbols-outlined">account_balance_wallet</span><div><h3>Пополнение</h3><p>Top-up баланса</p></div></header>
+                    <div class="wapp-card__body">
+                        <label class="wapp-switch-row">
+                            <div><strong>Показывать в WebApp</strong></div>
+                            <label class="settings-macos-switch"><input type="checkbox" id="webapp_show_topup" {% if wa.webapp_show_topup is none or wa.webapp_show_topup|int != 0 %}checked{% endif %} /><span class="settings-macos-switch__track"></span></label>
+                        </label>
+                    </div>
+                </article>
+            </div>
+        </div>
+
+        <div class="wapp-workspace-pane hidden" data-wapp-pane="overview">
+            <div class="wapp-kpi-row">
+                <div class="wapp-kpi"><div class="wapp-kpi__val" id="wapp-kpi-picks">{{ meta.analytics.total_picks or 0 }}</div><div class="wapp-kpi__lbl">Выборов дизайна</div></div>
+                <div class="wapp-kpi"><div class="wapp-kpi__val" id="wapp-kpi-popular">{{ meta.analytics.popular_label or '—' }}</div><div class="wapp-kpi__lbl">Популярный дизайн</div></div>
+                <div class="wapp-kpi"><div class="wapp-kpi__val">{{ meta.enabled_design_count or 0 }}</div><div class="wapp-kpi__lbl">Активных тем</div></div>
+            </div>
+            <div class="wapp-cards">
+                <article class="wapp-card wapp-card--span2">
+                    <header class="wapp-card__head"><span class="wapp-card__glyph material-symbols-outlined">science</span><div><h3>A/B default design</h3><p>Часть пользователей получит альтернативный дизайн</p></div></header>
+                    <div class="wapp-card__body wapp-card__grid">
+                        <label class="wapp-field">
+                            <span>Вариант B</span>
+                            <select id="webapp_ab_design_b">
+                                <option value="">— выключено —</option>
+                                {% for d in webapp_designs %}
+                                <option value="{{ d.id }}" {% if (wa.webapp_ab_design_b or '') == d.id %}selected{% endif %}>{{ d.label }}</option>
+                                {% endfor %}
+                            </select>
+                        </label>
+                        <label class="wapp-field">
+                            <span>Доля B, %</span>
+                            <input type="number" id="webapp_ab_percent" min="0" max="50" value="{{ wa.webapp_ab_percent or 0 }}" />
+                        </label>
+                    </div>
+                </article>
+                <article class="wapp-card wapp-card--span2">
+                    <header class="wapp-card__head">
+                        <span class="wapp-card__glyph material-symbols-outlined">analytics</span>
+                        <div><h3>Статистика дизайнов</h3></div>
+                        <button type="button" class="wapp-btn wapp-btn--ghost wapp-btn--sm" id="wapp-refresh-stats">Обновить</button>
+                    </header>
+                    <div class="wapp-card__body">
+                        <div class="wapp-stats-bars" id="wapp-stats-bars">
+                            {% for d in webapp_designs %}
+                            {% set uses = (meta.analytics.design_stats or {}).get(d.id, 0) %}
+                            <div class="wapp-stats-bar" data-design="{{ d.id }}">
+                                <span class="wapp-stats-bar__label">{{ d.label }}</span>
+                                <div class="wapp-stats-bar__track"><i style="width:{{ (uses * 100 // (meta.analytics.total_picks or 1)) if meta.analytics.total_picks else 0 }}%;background:{{ d.accent }}"></i></div>
+                                <span class="wapp-stats-bar__val">{{ uses }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </article>
+                <article class="wapp-card wapp-card--span2">
+                    <header class="wapp-card__head">
+                        <span class="wapp-card__glyph material-symbols-outlined">article</span>
+                        <div><h3>Лог WebApp</h3><p>Строки с меткой [WEBAPP]</p></div>
+                        <button type="button" class="wapp-btn wapp-btn--ghost wapp-btn--sm" id="wapp-refresh-logs">Обновить</button>
+                    </header>
+                    <div class="wapp-card__body">
+                        <pre class="wapp-log" id="wapp-log-view">Загрузка…</pre>
+                    </div>
+                </article>
+            </div>
+        </div>
+
+        <footer class="wapp-form-foot">
+            <button type="submit" class="wapp-btn wapp-btn--primary" id="btn-save-webapp">
+                <span class="material-symbols-outlined">save</span>
+                Сохранить настройки
+            </button>
+        </footer>
+    </form>
+</section>

@@ -167,6 +167,16 @@ def update_webapp_settings(
     webapp_default_design: str = None,
     webapp_enabled_designs: str = None,
     webapp_theme_picker: int = None,
+    webapp_maintenance_text: str = None,
+    webapp_welcome_text: str = None,
+    webapp_accent_color: str = None,
+    webapp_show_trial: int = None,
+    webapp_show_referrals: int = None,
+    webapp_show_howto: int = None,
+    webapp_show_topup: int = None,
+    webapp_design_stats: str = None,
+    webapp_ab_design_b: str = None,
+    webapp_ab_percent: int = None,
 ) -> bool:
     try:
         updates = []
@@ -198,6 +208,36 @@ def update_webapp_settings(
         if webapp_theme_picker is not None:
             updates.append("webapp_theme_picker = ?")
             params.append(int(webapp_theme_picker))
+        if webapp_maintenance_text is not None:
+            updates.append("webapp_maintenance_text = ?")
+            params.append(webapp_maintenance_text)
+        if webapp_welcome_text is not None:
+            updates.append("webapp_welcome_text = ?")
+            params.append(webapp_welcome_text)
+        if webapp_accent_color is not None:
+            updates.append("webapp_accent_color = ?")
+            params.append(webapp_accent_color)
+        if webapp_show_trial is not None:
+            updates.append("webapp_show_trial = ?")
+            params.append(int(webapp_show_trial))
+        if webapp_show_referrals is not None:
+            updates.append("webapp_show_referrals = ?")
+            params.append(int(webapp_show_referrals))
+        if webapp_show_howto is not None:
+            updates.append("webapp_show_howto = ?")
+            params.append(int(webapp_show_howto))
+        if webapp_show_topup is not None:
+            updates.append("webapp_show_topup = ?")
+            params.append(int(webapp_show_topup))
+        if webapp_design_stats is not None:
+            updates.append("webapp_design_stats = ?")
+            params.append(webapp_design_stats)
+        if webapp_ab_design_b is not None:
+            updates.append("webapp_ab_design_b = ?")
+            params.append(webapp_ab_design_b)
+        if webapp_ab_percent is not None:
+            updates.append("webapp_ab_percent = ?")
+            params.append(int(webapp_ab_percent))
         
         if not updates:
             return False
@@ -208,4 +248,25 @@ def update_webapp_settings(
     except Exception as e:
         logging.error(f"Ошибка при обновлении настроек webapp: {e}")
         return False
+
+
+def increment_webapp_design_stat(design_id: str) -> bool:
+    from shop_bot.webapp.designs import WEBAPP_DESIGN_IDS
+    import json
+
+    if design_id not in WEBAPP_DESIGN_IDS:
+        return False
+    row = _fetch_row("SELECT webapp_design_stats FROM webapp_settings WHERE id = 1")
+    raw = (row or {}).get("webapp_design_stats") or "{}"
+    try:
+        stats = json.loads(raw) if raw else {}
+        if not isinstance(stats, dict):
+            stats = {}
+    except json.JSONDecodeError:
+        stats = {}
+    stats[design_id] = int(stats.get(design_id, 0)) + 1
+    return _exec(
+        "UPDATE webapp_settings SET webapp_design_stats = ? WHERE id = 1",
+        (json.dumps(stats, ensure_ascii=False),),
+    )
 

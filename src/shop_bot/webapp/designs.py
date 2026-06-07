@@ -67,7 +67,7 @@ def parse_enabled_designs(raw: str | None) -> list[str]:
     return result or ["classic"]
 
 
-def build_design_config(settings: dict | None) -> dict:
+def build_design_config(settings: dict | None, user_id: int | None = None) -> dict:
     settings = settings or {}
     enabled = parse_enabled_designs(settings.get("webapp_enabled_designs"))
     default = (settings.get("webapp_default_design") or "classic").strip()
@@ -75,6 +75,14 @@ def build_design_config(settings: dict | None) -> dict:
         default = "classic"
     if default not in enabled:
         default = enabled[0]
+    ab_b = (settings.get("webapp_ab_design_b") or "").strip()
+    try:
+        ab_pct = max(0, min(50, int(settings.get("webapp_ab_percent") or 0)))
+    except (TypeError, ValueError):
+        ab_pct = 0
+    if user_id and ab_b in WEBAPP_DESIGN_IDS and ab_b in enabled and ab_pct > 0:
+        if (int(user_id) % 100) < ab_pct:
+            default = ab_b
     picker_raw = settings.get("webapp_theme_picker")
     picker_enabled = True
     if picker_raw is not None:
@@ -86,5 +94,5 @@ def build_design_config(settings: dict | None) -> dict:
     }
 
 
-def build_design_config_json(settings: dict | None) -> str:
-    return json.dumps(build_design_config(settings), ensure_ascii=False)
+def build_design_config_json(settings: dict | None, user_id: int | None = None) -> str:
+    return json.dumps(build_design_config(settings, user_id=user_id), ensure_ascii=False)

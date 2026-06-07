@@ -1,0 +1,20 @@
+<script>
+window.WEBAPP_PANEL = {
+    csrfToken: {{ csrf_token() | tojson }},
+    previewUrlTemplate: {{ url_for('settings_tools.webapp_preview', design_id='__ID__') | tojson }},
+    tgDeeplink: {{ (webapp_meta.tg_deeplink if webapp_meta else '') | tojson }},
+    publicUrl: {{ (webapp_meta.public_url if webapp_meta else '') | tojson }},
+};
+</script>
+<script src="{{ url_for('static', filename='js/webapp-panel.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
+<script>
+(function () {
+    const orig = window.initInteractiveElements;
+    if (typeof orig === 'function') {
+        window.initInteractiveElements = function () {
+            orig.apply(this, arguments);
+            if (typeof window.reinitWebappPanel === 'function') window.reinitWebappPanel();
+        };
+    }
+})();
+</script>

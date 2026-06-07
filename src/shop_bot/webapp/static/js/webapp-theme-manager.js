@@ -77,6 +77,13 @@
         const allowed = allowedDesigns();
         const finalDesign = allowed.includes(value) ? value : 'classic';
         if (persist !== false) localStorage.setItem(STORAGE_KEY, finalDesign);
+        if (persist !== false) {
+            fetch('/api/cabinet/design-pick', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ design_id: finalDesign }),
+            }).catch(function () {});
+        }
         document.documentElement.dataset.webappDesign = finalDesign;
         document.body.classList.toggle('webapp-design-ios', finalDesign === 'ios');
         document.body.classList.toggle('webapp-design-desktop', finalDesign === 'desktop');

@@ -610,7 +610,7 @@ def _ensure_webapp_settings_table(cursor: sqlite3.Cursor):
             cursor.execute("ALTER TABLE webapp_settings ADD COLUMN webapp_theme_picker INTEGER DEFAULT 1")
 
         cursor.execute("INSERT OR IGNORE INTO webapp_settings (id, webapp_title, webapp_domen, webapp_enable, webapp_logo, webapp_icon) VALUES (1, 'VPN', '', 0, '', '')")
-            
+        _ensure_webapp_studio_columns(cursor)
     except Exception as e:
         logging.error(f"Ошибка миграции webapp_settings: {e}")
 
@@ -627,6 +627,19 @@ def _ensure_webapp_design_columns(cursor) -> None:
         "TEXT DEFAULT 'classic,ios,desktop,stealth,stealth-glass,glass-hub'",
     )
     _ensure_table_column(cursor, "webapp_settings", "webapp_theme_picker", "INTEGER DEFAULT 1")
+
+
+def _ensure_webapp_studio_columns(cursor) -> None:
+    _ensure_table_column(cursor, "webapp_settings", "webapp_maintenance_text", "TEXT DEFAULT ''")
+    _ensure_table_column(cursor, "webapp_settings", "webapp_welcome_text", "TEXT DEFAULT ''")
+    _ensure_table_column(cursor, "webapp_settings", "webapp_accent_color", "TEXT DEFAULT ''")
+    _ensure_table_column(cursor, "webapp_settings", "webapp_show_trial", "INTEGER DEFAULT 1")
+    _ensure_table_column(cursor, "webapp_settings", "webapp_show_referrals", "INTEGER DEFAULT 1")
+    _ensure_table_column(cursor, "webapp_settings", "webapp_show_howto", "INTEGER DEFAULT 1")
+    _ensure_table_column(cursor, "webapp_settings", "webapp_show_topup", "INTEGER DEFAULT 1")
+    _ensure_table_column(cursor, "webapp_settings", "webapp_design_stats", "TEXT DEFAULT '{}'")
+    _ensure_table_column(cursor, "webapp_settings", "webapp_ab_design_b", "TEXT DEFAULT ''")
+    _ensure_table_column(cursor, "webapp_settings", "webapp_ab_percent", "INTEGER DEFAULT 0")
 
 
 # ===== RUN_MIGRATION =====

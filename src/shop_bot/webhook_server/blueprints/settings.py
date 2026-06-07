@@ -600,15 +600,22 @@ def _load_settings_page_context(tab: str) -> dict:
         try:
             from shop_bot.data_manager import remnawave_repository as rw_repo
             from shop_bot.webapp.designs import WEBAPP_DESIGNS, parse_enabled_designs
+            from shop_bot.webhook_server.modules import webapp_panel
 
             webapp = rw_repo.get_webapp_settings()
             ctx['webapp'] = webapp
             ctx['webapp_designs'] = WEBAPP_DESIGNS
             ctx['webapp_enabled_design_list'] = parse_enabled_designs(webapp.get('webapp_enabled_designs'))
+            ctx['webapp_meta'] = webapp_panel.build_webapp_meta(
+                webapp,
+                current_settings,
+                bot_username=(current_settings.get('telegram_bot_username') or '').strip().lstrip('@'),
+            )
         except Exception:
             ctx['webapp'] = {}
             ctx['webapp_designs'] = []
             ctx['webapp_enabled_design_list'] = ['classic']
+            ctx['webapp_meta'] = {}
 
     return ctx
 

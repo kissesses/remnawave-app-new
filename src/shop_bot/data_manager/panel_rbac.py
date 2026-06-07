@@ -351,6 +351,10 @@ ENDPOINT_PERMISSIONS: dict[str, str] = {
     # Settings tools (broadcast, promo, logs, webapp)
     "other_legacy_redirect": "other_broadcast",
     "webapp_save": "other_webapp",
+    "webapp_health": "other_webapp",
+    "webapp_meta": "other_webapp",
+    "webapp_preview": "other_webapp",
+    "webapp_logs": "other_webapp",
     "broadcast_stats": "other_broadcast",
     "broadcast_blocked_users": "other_broadcast",
     "broadcast_history_list": "other_broadcast",

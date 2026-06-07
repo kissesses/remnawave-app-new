@@ -1,4 +1,5 @@
 from typing import Annotated, Any
+import html
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -320,7 +321,7 @@ def _process_template_placeholders(html: str, user_id: int, webapp_settings: dic
         "{{ logo_hidden }}": "hidden" if not context_data.get("webapp_logo") else "",
         "{{ user_id }}": str(user_id),
         "{{ webapp_design_config_script }}": (
-            f'<script>window.WEBAPP_DESIGN_CONFIG={build_design_config_json(webapp_settings)};</script>'
+            f'<script>window.WEBAPP_DESIGN_CONFIG={build_design_config_json(webapp_settings, user_id)};</script>'
         ),
         "{{ tg_fullscreen_css }}": """
     <style>
@@ -1107,7 +1108,14 @@ async def _render_main_page(user_id: int):
     
     # 1. Check if Webapp is enabled
     if not webapp_settings.get("webapp_enable"):
-         return HTMLResponse(content="<h1>Webapp is disabled</h1>", status_code=403)
+        maintenance = (webapp_settings.get("webapp_maintenance_text") or "").strip()
+        if maintenance:
+            body = f"""<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WebApp</title>
+<style>body{{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0a0a0a;color:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,sans-serif;padding:24px}}
+.card{{max-width:420px;text-align:center;padding:28px;border-radius:16px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04)}}</style></head>
+<body><div class="card"><h1 style="font-size:1.1rem;margin:0 0 12px">WebApp недоступен</h1><p style="opacity:.75;line-height:1.5;margin:0">{html.escape(maintenance)}</p></div></body></html>"""
+            return HTMLResponse(content=body, status_code=503)
+        return HTMLResponse(content="<h1>Webapp is disabled</h1>", status_code=403)
          
     # 2. Check if user is banned
     user = get_user(user_id)
@@ -1405,6 +1413,9 @@ class CreatePaymentRequest(BaseModel):
 class TrialActivateRequest(BaseModel):
     user_id: int
     host_name: str | None = None
+
+class DesignPickRequest(BaseModel):
+    design_id: str
 
 class ApplyPromoRequest(BaseModel):
     user_id: int
@@ -2750,34 +2761,65 @@ async def api_cabinet_config(user_id: int, auth_user: AuthUser):
         bot_username_raw = (get_setting("telegram_bot_username") or "bot").strip().lstrip("@")
         bot_username = re.sub(r"[^A-Za-z0-9_]", "", bot_username_raw) or "bot"
         referrals_enabled = _setting_bool("enable_referrals", default=False)
+        webapp_settings = get_webapp_settings() or {}
+        show_trial = _setting_bool(webapp_settings.get("webapp_show_trial"), default=True)
+        show_referrals = _setting_bool(webapp_settings.get("webapp_show_referrals"), default=True)
+        show_howto = _setting_bool(webapp_settings.get("webapp_show_howto"), default=True)
+        show_topup = _setting_bool(webapp_settings.get("webapp_show_topup"), default=True)
+        welcome_text = (webapp_settings.get("webapp_welcome_text") or "").strip()
+        accent_color = (webapp_settings.get("webapp_accent_color") or "").strip()
 
         return {
             "ok": True,
+            "modules": {
+                "trial": show_trial,
+                "referrals": show_referrals,
+                "howto": show_howto,
+                "topup": show_topup,
+            },
+            "branding": {
+                "welcome_text": welcome_text,
+                "accent_color": accent_color,
+            },
             "trial": {
-                "enabled": trial_enabled,
-                "available": trial_enabled and not trial_used and len(trial_hosts) > 0,
+                "enabled": trial_enabled and show_trial,
+                "available": trial_enabled and show_trial and not trial_used and len(trial_hosts) > 0,
                 "used": trial_used,
                 "duration_days": int(get_setting("trial_duration_days") or 3),
                 "hosts": trial_hosts,
             },
             "howto": {
-                "intro": _strip_html(get_setting("howto_intro_text")),
-                "android": _strip_html(get_setting("howto_android_text")),
-                "ios": _strip_html(get_setting("howto_ios_text")),
-                "windows": _strip_html(get_setting("howto_windows_text")),
-                "linux": _strip_html(get_setting("howto_linux_text")),
+                "intro": _strip_html(get_setting("howto_intro_text")) if show_howto else "",
+                "android": _strip_html(get_setting("howto_android_text")) if show_howto else "",
+                "ios": _strip_html(get_setting("howto_ios_text")) if show_howto else "",
+                "windows": _strip_html(get_setting("howto_windows_text")) if show_howto else "",
+                "linux": _strip_html(get_setting("howto_linux_text")) if show_howto else "",
             },
             "referrals": {
-                "enabled": referrals_enabled,
+                "enabled": referrals_enabled and show_referrals,
                 "link": f"https://t.me/{bot_username}?start=ref_{user_id}",
                 "count": get_referral_count(user_id),
                 "earned": float(get_referral_balance_all(user_id) or 0),
             },
-            "topup": {"min": 10, "max": 100000},
+            "topup": {"min": 10, "max": 100000, "enabled": show_topup},
             "balance": float(user.get("balance") or 0),
         }
     except Exception as e:
         logger.error(f"[WEBAPP] - Ошибка cabinet/config для {user_id}: {e}")
+        return {"ok": False, "error": str(e)}
+
+@app.post("/api/cabinet/design-pick")
+async def api_cabinet_design_pick(req: DesignPickRequest, auth_user: AuthUser):
+    try:
+        from shop_bot.webapp.designs import WEBAPP_DESIGN_IDS
+
+        design_id = (req.design_id or "").strip()
+        if design_id not in WEBAPP_DESIGN_IDS:
+            return {"ok": False, "error": "invalid design"}
+        rw_repo.increment_webapp_design_stat(design_id)
+        return {"ok": True}
+    except Exception as e:
+        logger.error(f"[WEBAPP] design-pick error: {e}")
         return {"ok": False, "error": str(e)}
 
 @app.post("/api/trial/activate")

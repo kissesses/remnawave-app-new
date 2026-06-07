@@ -20,6 +20,7 @@
             selected: new Set(),
         },
     };
+    let modalEscapeBound = false;
 
     const SQL_TEMPLATES = {
         users: 'SELECT * FROM users ORDER BY user_id DESC LIMIT 20',
@@ -524,8 +525,21 @@
         btn.disabled = !can;
     }
 
+    function mountTableModal() {
+        const modal = document.getElementById('db-table-modal');
+        if (modal && modal.parentElement !== document.body) {
+            document.body.appendChild(modal);
+        }
+    }
+
+    function setModalOpen(open) {
+        document.documentElement.classList.toggle('db-modal-open', open);
+        document.body.classList.toggle('db-modal-open', open);
+    }
+
     function closeTableModal() {
         document.getElementById('db-table-modal')?.classList.add('hidden');
+        setModalOpen(false);
         state.modal = {
             table: null, detail: null, browse: null, page: 1, tab: 'data', selected: new Set(),
         };
@@ -611,11 +625,17 @@
     }
 
     function openTableModal(tableName) {
+        mountTableModal();
         state.modal.table = tableName;
         state.modal.page = 1;
         state.modal.selected.clear();
         switchModalTab('data');
-        document.getElementById('db-table-modal')?.classList.remove('hidden');
+        const modal = document.getElementById('db-table-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.scrollTop = 0;
+            setModalOpen(true);
+        }
         loadTablePage(1);
     }
 
@@ -848,6 +868,8 @@
     }
 
     function initUnlocked() {
+        mountTableModal();
+
         const remainingEl = document.getElementById('db-stepup-remaining');
         let remaining = Number(cfg.remainingSec || 0);
         state.source = cfg.currentSource || 'shopbot';
@@ -915,6 +937,14 @@
         document.querySelectorAll('[data-close-modal]').forEach((el) => {
             el.addEventListener('click', closeTableModal);
         });
+        if (!modalEscapeBound) {
+            modalEscapeBound = true;
+            document.addEventListener('keydown', (e) => {
+                if (e.key !== 'Escape') return;
+                const modal = document.getElementById('db-table-modal');
+                if (modal && !modal.classList.contains('hidden')) closeTableModal();
+            });
+        }
         document.querySelectorAll('.db-modal-tab').forEach((btn) => {
             btn.addEventListener('click', () => switchModalTab(btn.dataset.modalTab || 'data'));
         });

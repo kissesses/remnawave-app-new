@@ -52,6 +52,9 @@
 {% if active_tab == 'hosts' %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/hosts-panel.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
 {% endif %}
+{% if active_tab == 'webapp' %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/webapp-panel.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
+{% endif %}
 <style>
     .swatch-default { background: #55555520; color: #555; }
     .swatch-danger  { background: #ef535020; color: #ef5350; }
@@ -79,7 +82,7 @@
     {'id': 'broadcast', 'label': 'Рассылка', 'desc': 'Broadcast Studio — шаблоны, сегменты и массовая отправка', 'icon': 'campaign', 'perm': 'other_broadcast', 'group': 'tools'},
     {'id': 'promo', 'label': 'Промо коды', 'desc': 'Скидки и специальные предложения', 'icon': 'confirmation_number', 'perm': 'other_promo', 'group': 'tools'},
     {'id': 'logs', 'label': 'Логи бота', 'desc': 'Системные события и ошибки в реальном времени', 'icon': 'article', 'perm': 'other_logs', 'group': 'tools'},
-    {'id': 'webapp', 'label': 'WebApp', 'desc': 'Персонализация и управление веб-приложением', 'icon': 'language', 'perm': 'other_webapp', 'needs_webapp': true, 'group': 'tools'},
+    {'id': 'webapp', 'label': 'WebApp', 'desc': 'WebApp Studio — дизайн, деплой и модули кабинета', 'icon': 'language', 'perm': 'other_webapp', 'needs_webapp': true, 'group': 'tools'},
     {'id': 'remnawave', 'label': 'Remnawave', 'desc': 'Интеграция с панелью управления', 'icon': 'graphic_eq', 'perm': 'other_remnawave', 'group': 'tools'}
 ] %}
 {% set active_nav = settings_nav_items | selectattr('id', 'equalto', active_tab) | first %}
@@ -220,7 +223,9 @@
 {% include 'partials/settings_access_rbac.html' %}
 {% elif active_tab == 'audit' and (can('settings_audit') or can('settings_access')) %}
 {% include 'partials/settings/tabs/audit.html' %}
-{% elif active_tab in ['broadcast', 'promo', 'logs', 'webapp', 'remnawave'] %}
+{% elif active_tab == 'webapp' and webapp_exists %}
+{% include 'partials/settings/tabs/webapp.html' %}
+{% elif active_tab in ['broadcast', 'promo', 'logs', 'remnawave'] %}
 {% include 'partials/settings_other_tabs.html' %}
 {% include 'partials/settings_other_modals.html' %}
 {% endif %}
@@ -385,5 +390,8 @@ window.BOT_PANEL_BOOT = {
 };
 </script>
 <script src="{{ url_for('static', filename='js/bot-panel.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
+{% endif %}
+{% if active_tab == 'webapp' %}
+{% include 'partials/settings/webapp_scripts.html' %}
 {% endif %}
 {% endblock %}
