@@ -31,3 +31,21 @@ jobs:
           generate_release_notes: false
           draft: false
           prerelease: false
+
+      - name: Notify Telegram
+        if: success()
+        env:
+          TELEGRAM_RELEASE_BOT_TOKEN: ${{ secrets.TELEGRAM_RELEASE_BOT_TOKEN }}
+          TELEGRAM_RELEASE_CHAT_ID: ${{ secrets.TELEGRAM_RELEASE_CHAT_ID }}
+          TELEGRAM_RELEASE_TOPIC_ID: ${{ secrets.TELEGRAM_RELEASE_TOPIC_ID }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          BODY_FILE=$(mktemp)
+          cat > "$BODY_FILE" <<EOF
+          ${{ steps.notes.outputs.body }}
+          EOF
+          python3 .github/scripts/telegram-release-notify.py \
+            "${{ github.ref_name }}" \
+            "https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}" \
+            "$BODY_FILE"
+          rm -f "$BODY_FILE"
