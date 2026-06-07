@@ -282,12 +282,10 @@ def _save_tab_settings(tab: str) -> None:
         from shop_bot.data_manager import telegram_notify as tg_notify
 
         chat_raw = (request.form.get('notifications_chat_id') or '').strip()
-        if chat_raw:
-            parsed = tg_notify.parse_chat_id(chat_raw)
-            if parsed is None:
-                link = tg_notify.parse_telegram_private_link(chat_raw)
-                if link and link.get('chat_id') is not None:
-                    parsed = int(link['chat_id'])
+        if not chat_raw:
+            update_setting('notifications_chat_id', '')
+        else:
+            parsed = tg_notify.resolve_notifications_chat_id(chat_raw)
             if parsed is not None:
                 update_setting('notifications_chat_id', str(parsed))
         for topic_key in tg_notify.CATEGORY_TOPIC_KEYS.values():
@@ -434,17 +432,12 @@ def _load_settings_page_context(tab: str) -> dict:
     if tab == 'panel':
         backups = []
         try:
-            bdir = backup_manager.BACKUPS_DIR
-            for p in sorted(bdir.glob('db-backup-*.zip'), key=lambda x: x.stat().st_mtime, reverse=True):
-                try:
-                    st = p.stat()
-                    backups.append({
-                        'name': p.name,
-                        'mtime': datetime.fromtimestamp(st.st_mtime, tz=timezone(timedelta(hours=3))).strftime('%Y-%m-%d %H:%M'),
-                        'size': st.st_size,
-                    })
-                except Exception:
-                    pass
+            for row in backup_manager.list_backup_files():
+                backups.append({
+                    'name': row.get('name') or '',
+                    'mtime': row.get('modified') or '',
+                    'size': row.get('size') or 0,
+                })
         except Exception:
             pass
         ctx['backups'] = backups
@@ -1789,18 +1782,20 @@ def update_pay_info_api():
 @bp.route('/admin/db/backup', methods=['POST'])
 @panel_ctx.login_required
 def backup_db_route():
+    """Legacy POST: создать БД-бэкап и скачать (новый UI — /backups)."""
     try:
-        created = backup_manager.create_backup_file()
+        created = backup_manager.create_backup_file(source='manual')
         zip_path = created.path
         if not zip_path or not os.path.isfile(zip_path):
             flash('Не удалось создать бэкап БД.', 'danger')
-            return redirect(request.referrer or url_for('backups_page'))
-
-        return send_file(str(zip_path), as_attachment=True, download_name=os.path.basename(zip_path))
+            return redirect(url_for('backups_page'))
+        backup_manager.cleanup_old_backups()
+        panel_ctx.audit('db.backup.create', {'file': zip_path.name, 'legacy_route': True})
+        return send_file(str(zip_path), as_attachment=True, download_name=zip_path.name)
     except Exception as e:
         logger.error(f"Ошибка резервного копирования БД: {e}")
         flash('Ошибка при создании бэкапа.', 'danger')
-        return redirect(request.referrer or url_for('backups_page'))
+        return redirect(url_for('backups_page'))
 
 def _form_checkbox_on(name: str, *, default: bool = False) -> bool:
     """Последнее значение из getlist (hidden 0 + checkbox 1 → true)."""
@@ -2650,7 +2645,7 @@ def create_notification_topics_route():
 
     payload = request.get_json(silent=True) or {}
     chat_raw = (payload.get('chat_id') or get_setting('notifications_chat_id') or '').strip()
-    chat_id = tg_notify.parse_chat_id(chat_raw)
+    chat_id = tg_notify.resolve_notifications_chat_id(chat_raw)
     if chat_id is None:
         return jsonify({
             'ok': False,

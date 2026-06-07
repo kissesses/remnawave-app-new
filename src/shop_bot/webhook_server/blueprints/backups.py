@@ -16,14 +16,6 @@ logger = logging.getLogger(__name__)
 
 bp = Blueprint('backups', __name__)
 
-BACKUP_SETTING_KEYS = (
-    'backup_interval_days',
-    'backup_keep_count',
-    'backup_autobackup_telegram',
-    'backup_compress_level',
-)
-
-
 def _truthy(val) -> bool:
     return str(val or '').strip().lower() in ('1', 'true', 'yes', 'on')
 
@@ -204,7 +196,7 @@ def backup_create_server_route():
             return redirect(url_for('backups_page'))
         cleanup = backup_manager.cleanup_old_backups()
         panel_ctx.audit('db.backup.create', {'file': zip_path.name, 'note': note[:80]})
-        if want_download and not request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        if want_download and request.headers.get('X-Requested-With') != 'XMLHttpRequest':
             return send_file(str(zip_path), as_attachment=True, download_name=zip_path.name)
         delivery = None
         if deliver_telegram:

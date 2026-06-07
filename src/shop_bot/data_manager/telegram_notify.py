@@ -114,8 +114,6 @@ def parse_telegram_private_link(raw: str | None) -> dict[str, int] | None:
     if m:
         chat_id = int(f"-100{m.group(1)}")
         topic_id = int(m.group(2)) if m.group(2) else None
-        if m.group(3):
-            topic_id = int(m.group(2)) if m.group(2) else None
         out: dict[str, int] = {"chat_id": chat_id}
         if topic_id is not None:
             out["topic_id"] = topic_id
@@ -130,17 +128,22 @@ def parse_telegram_private_link(raw: str | None) -> dict[str, int] | None:
     return None
 
 
-def global_chat_id() -> int | None:
-    raw = (get_setting("notifications_chat_id") or "").strip()
-    if not raw:
+def resolve_notifications_chat_id(raw: str | None) -> int | None:
+    """Числовой chat_id из поля настроек: int, -100… или ссылка t.me/c/…"""
+    s = (raw or "").strip()
+    if not s:
         return None
-    parsed = parse_chat_id(raw)
+    parsed = parse_chat_id(s)
     if parsed is not None:
         return parsed
-    link = parse_telegram_private_link(raw)
+    link = parse_telegram_private_link(s)
     if link and link.get("chat_id") is not None:
         return int(link["chat_id"])
     return None
+
+
+def global_chat_id() -> int | None:
+    return resolve_notifications_chat_id(get_setting("notifications_chat_id"))
 
 
 def resolve_destination(category: str) -> NotifyDestination:
@@ -200,16 +203,6 @@ def assess_backup_delivery(cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         "delivery_alerts": alerts,
         "notifications_chat_configured": global_chat_id() is not None,
     }
-
-
-def _message_kwargs(dest: NotifyDestination, *, reply_markup=None) -> dict[str, Any]:
-    if dest.via_dm:
-        return {"reply_markup": reply_markup}
-    kwargs: dict[str, Any] = {"chat_id": dest.chat_id, "reply_markup": reply_markup}
-    thread_id = effective_thread_id(dest.thread_id)
-    if thread_id is not None:
-        kwargs["message_thread_id"] = thread_id
-    return kwargs
 
 
 def _is_thread_not_found(exc: Exception) -> bool:

@@ -162,23 +162,6 @@ def get_backup_config() -> dict[str, Any]:
     return cfg
 
 
-def _parse_telegram_chat_id(raw: str) -> int | None:
-    s = (raw or "").strip()
-    if not s:
-        return None
-    try:
-        return int(s)
-    except (TypeError, ValueError):
-        return None
-
-
-def _parse_telegram_topic_id(raw: str) -> int | None:
-    s = (raw or "").strip()
-    if s.isdigit():
-        return int(s)
-    return None
-
-
 def assess_backup_delivery(cfg: dict[str, Any]) -> dict[str, Any]:
     """Проверка каналов Telegram для доставки бэкапов (передавать cfg до merge assess)."""
     from shop_bot.data_manager import telegram_notify
