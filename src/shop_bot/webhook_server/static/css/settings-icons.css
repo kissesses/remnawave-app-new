@@ -1,0 +1,322 @@
+/* Settings — unified category / subcategory icons (all panel designs) */
+
+.settings-ui-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.settings-ui-icon .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+}
+
+/* ── Default / Classic / iOS ── */
+.settings-ui-icon--nav {
+    width: 1.35rem;
+    height: 1.35rem;
+    border-radius: 7px;
+    background: var(--sp-accent-soft, rgba(10, 132, 255, 0.14));
+    color: var(--sp-accent, #0a84ff);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.settings-ui-icon--nav .material-symbols-outlined {
+    font-size: 0.9375rem;
+}
+
+.settings-ui-icon--nav-group {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 4px;
+    margin-right: 0.35rem;
+    vertical-align: -0.15em;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--sp-text-tertiary);
+}
+
+html:not(.dark) .settings-ui-icon--nav-group {
+    background: rgba(0, 0, 0, 0.06);
+}
+
+.settings-ui-icon--nav-group .material-symbols-outlined {
+    font-size: 0.75rem;
+}
+
+.settings-macos-nav-group__title {
+    display: flex;
+    align-items: center;
+    gap: 0.15rem;
+}
+
+.settings-ui-icon--section-nav {
+    width: 1.05rem;
+    height: 1.05rem;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--sp-text-secondary);
+}
+
+html:not(.dark) .settings-ui-icon--section-nav {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.settings-ui-icon--section-nav .material-symbols-outlined {
+    font-size: 0.8125rem;
+}
+
+.settings-section-nav__link.is-active .settings-ui-icon--section-nav {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.settings-ui-icon--section-header {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.5rem;
+    background: var(--sp-accent-soft, rgba(10, 132, 255, 0.12));
+    color: var(--sp-accent, #0a84ff);
+}
+
+.settings-ui-icon--section-header .material-symbols-outlined {
+    font-size: 1.125rem;
+}
+
+.settings-ui-icon--subgroup {
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 8px;
+    background: var(--sp-accent-soft, rgba(10, 132, 255, 0.12));
+    color: var(--sp-accent, #0a84ff);
+}
+
+.settings-ui-icon--subgroup .material-symbols-outlined {
+    font-size: 1.05rem;
+}
+
+.settings-subgroup-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.settings-subgroup-head__title {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--sp-text);
+}
+
+/* Color swatches (hosts — no unicode emoji) */
+.settings-color-swatch {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 8px;
+    border: 2px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+html:not(.dark) .settings-color-swatch {
+    border-color: rgba(0, 0, 0, 0.1);
+    background: rgba(0, 0, 0, 0.03);
+}
+
+.settings-color-swatch__dot {
+    width: 0.65rem;
+    height: 0.65rem;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15);
+}
+
+.settings-color-swatch__dot--danger { background: #ef5350; }
+.settings-color-swatch__dot--success { background: #66bb6a; }
+.settings-color-swatch__dot--primary { background: #42a5f5; }
+
+.settings-color-swatch--sm {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 6px;
+}
+
+.settings-color-swatch--sm .settings-color-swatch__dot {
+    width: 0.55rem;
+    height: 0.55rem;
+}
+
+.settings-color-swatch--sm .material-symbols-outlined {
+    font-size: 0.75rem;
+}
+
+label:has(.settings-color-swatch input:checked) .settings-color-swatch {
+    border-color: var(--sp-accent, #0a84ff);
+    box-shadow: 0 0 0 2px rgba(var(--primary-rgb, 10, 132, 255), 0.25);
+}
+
+.settings-color-swatch--empty .material-symbols-outlined {
+    font-size: 0.875rem;
+    color: var(--sp-text-tertiary);
+}
+
+/* Rank badges (speedtest) */
+.settings-rank-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-size: 8px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.settings-rank-badge .material-symbols-outlined {
+    font-size: 11px;
+}
+
+/* ── Glass / Stealth ── */
+html[data-design="glass"] .settings-ui-icon--nav,
+html[data-design="stealth-admin"] .settings-ui-icon--nav,
+html[data-design="glass"] .settings-ui-icon--section-header,
+html[data-design="stealth-admin"] .settings-ui-icon--section-header,
+html[data-design="glass"] .settings-ui-icon--subgroup,
+html[data-design="stealth-admin"] .settings-ui-icon--subgroup {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+html[data-design="stealth-admin"] .settings-ui-icon--nav,
+html[data-design="stealth-admin"] .settings-ui-icon--section-header,
+html[data-design="stealth-admin"] .settings-ui-icon--subgroup {
+    border-color: rgba(255, 35, 87, 0.18);
+}
+
+html[data-design="glass"] .settings-section-nav__link.is-active .settings-ui-icon--section-nav,
+html[data-design="stealth-admin"] .settings-section-nav__link.is-active .settings-ui-icon--section-nav {
+    background: rgba(255, 255, 255, 0.22);
+}
+
+/* ── macOS v2 — sidebar nav tiles (extends existing settings-nav-icon rules) ── */
+html[data-design="macos-v2"] .settings-ui-icon--nav-group {
+    width: 0.95rem;
+    height: 0.95rem;
+    border-radius: 4px;
+    background: rgba(142, 142, 147, 0.35);
+    color: rgba(255, 255, 255, 0.85);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+html:not(.dark)[data-design="macos-v2"] .settings-ui-icon--nav-group {
+    background: rgba(0, 0, 0, 0.08);
+    color: var(--sp-text-secondary);
+}
+
+html[data-design="macos-v2"] .settings-ui-icon--section-nav {
+    width: 1.15rem;
+    height: 1.15rem;
+    border-radius: 5px;
+    background: rgba(142, 142, 147, 0.28);
+    color: rgba(255, 255, 255, 0.88);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+html[data-design="macos-v2"] .settings-section-nav__link.is-active .settings-ui-icon--section-nav {
+    background: rgba(255, 255, 255, 0.22);
+    color: #fff;
+}
+
+html[data-design="macos-v2"] .settings-ui-icon--section-header {
+    width: 2.15rem;
+    height: 2.15rem;
+    border-radius: 10px;
+    background: linear-gradient(180deg, rgba(142, 142, 147, 0.55) 0%, rgba(99, 99, 102, 0.85) 100%);
+    color: #fff;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+
+html[data-design="macos-v2"] .settings-ui-icon--subgroup {
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 6px;
+    background: rgba(142, 142, 147, 0.45);
+    color: #fff;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+html[data-design="macos-v2"] .settings-page .settings-sidebar .tab-link .settings-ui-icon--nav .material-symbols-outlined {
+    display: block !important;
+}
+
+html[data-design="macos-v2"] .settings-nav-icon--database {
+    background: linear-gradient(180deg, #64d2ff 0%, #007aff 100%);
+}
+
+html[data-design="macos-v2"] .settings-nav-icon--audit {
+    background: linear-gradient(180deg, #ff9f0a 0%, #ff6721 100%);
+}
+
+/* macOS section header tints by section id */
+html[data-design="macos-v2"] .settings-ui-icon--panel-system { background: linear-gradient(180deg, #98989d 0%, #636366 100%); }
+html[data-design="macos-v2"] .settings-ui-icon--panel-trial { background: linear-gradient(180deg, #64d2ff 0%, #32ade6 100%); }
+html[data-design="macos-v2"] .settings-ui-icon--panel-monitoring { background: linear-gradient(180deg, #5bd66a 0%, #28a745 100%); }
+html[data-design="macos-v2"] .settings-ui-icon--panel-smtp { background: linear-gradient(180deg, #5ac8fa 0%, #007aff 100%); }
+html[data-design="macos-v2"] .settings-ui-icon--panel-backup { background: linear-gradient(180deg, #7d7aff 0%, #5856d6 100%); }
+html[data-design="macos-v2"] .settings-ui-icon--payments-general { background: linear-gradient(180deg, #aeaeb2 0%, #8e8e93 100%); }
+html[data-design="macos-v2"] .settings-ui-icon--payments-fiat { background: linear-gradient(180deg, #ffb340 0%, #ff9500 100%); }
+html[data-design="macos-v2"] .settings-ui-icon--payments-crypto { background: linear-gradient(180deg, #ffe066 0%, #ffcc00 100%); color: #3a3000; }
+html[data-design="macos-v2"] .settings-ui-icon--payments-crypto .material-symbols-outlined { color: #3a3000; }
+html[data-design="macos-v2"] .settings-ui-icon--payments-telegram { background: linear-gradient(180deg, #64d2ff 0%, #32ade6 100%); }
+html[data-design="macos-v2"] .settings-ui-icon--bot-telegram { background: linear-gradient(180deg, #5bd66a 0%, #28a745 100%); }
+html[data-design="macos-v2"] .settings-ui-icon--bot-channels { background: linear-gradient(180deg, #409cff 0%, #007aff 100%); }
+
+.settings-section-nav__link .settings-section-nav__icon {
+    opacity: 0.72;
+}
+
+.settings-section-nav__link.is-active .settings-section-nav__icon {
+    opacity: 1;
+}
+
+html[data-design="macos-v2"] .settings-macos-hero__icon.settings-ui-icon--nav {
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: 14px;
+}
+
+html[data-design="macos-v2"] .settings-macos-hero__icon.settings-ui-icon--nav .material-symbols-outlined {
+    font-size: 1.65rem !important;
+}
+
+.bot-notify-topic-row__label .settings-ui-icon--subgroup {
+    width: 1.45rem;
+    height: 1.45rem;
+    flex-shrink: 0;
+}
+
+.bot-notify-topic-row__label .settings-ui-icon--subgroup .material-symbols-outlined {
+    font-size: 0.9rem;
+}
+
+html[data-design="macos-v2"] .settings-tab-sectioned .bg-white\\/5 .settings-subgroup-head {
+    margin-bottom: 0.45rem;
+    padding: 0 0.15rem;
+}
+
+html[data-design="macos-v2"] .settings-tab-sectioned .bg-white\\/5 .settings-subgroup-head__title {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--sp-text-secondary);
+}
+
+html[data-design="macos-v2"] .settings-tab-sectioned .bg-white\\/5 .settings-ui-icon--subgroup {
+    width: 1.35rem;
+    height: 1.35rem;
+}

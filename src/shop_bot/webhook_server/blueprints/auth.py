@@ -210,16 +210,33 @@ def login_page():
         totp_code = (request.form.get('totp_code') or '').strip()
         pending_admin_id = session.get('pending_totp_admin_id')
         if pending_admin_id and totp_code:
-            if panel_totp.verify_admin_totp(int(pending_admin_id), totp_code):
-                admin = panel_access.get_admin(int(pending_admin_id))
+            pending_id = int(pending_admin_id)
+            if security.is_totp_login_locked(ip, pending_id):
+                session.pop('pending_totp_admin_id', None)
+                session.pop('pending_totp_remember', None)
+                flash('Слишком много неверных кодов TOTP. Войдите с паролем снова.', 'danger')
+                return render_template('login.html', **_login_page_context())
+            if panel_totp.verify_admin_totp(pending_id, totp_code):
+                admin = panel_access.get_admin(pending_id)
                 if admin:
+                    security.clear_totp_login_failures(ip, pending_id)
                     remember = bool(session.get('pending_totp_remember'))
                     panel_ctx.complete_panel_login(admin, remember=remember)
                     info = {'ip': ip, 'ua': ua, 'method': request.method, 'user': admin.get('login'), 'real_ip': real_ip}
                     panel_ctx.finalize_login(admin, info, remember=remember, ip=ip)
                     return redirect(resolve_post_login_target(admin=admin))
+            security.record_failed_totp_login(ip, pending_id)
+            if security.is_totp_login_locked(ip, pending_id):
+                session.pop('pending_totp_admin_id', None)
+                session.pop('pending_totp_remember', None)
+                flash('Слишком много неверных кодов TOTP. Войдите с паролем снова.', 'danger')
+                return render_template('login.html', **_login_page_context())
             flash('Неверный код аутентификатора', 'danger')
-            return render_template('login.html', **_login_page_context(totp_step=True))
+            admin = panel_access.get_admin(int(pending_admin_id))
+            return render_template(
+                'login.html',
+                **_login_page_context(totp_step=True, pending_login=admin.get('login') if admin else None),
+            )
 
         account_ref = (request.form.get('account_ref') or '').strip() or None
         if account_ref and not login_accounts.account_auth_rate_ok(ip, account_ref):
@@ -277,8 +294,19 @@ def login_page():
         flash('Неверный логин или пароль', 'danger')
 
     if totp_step and session.get('pending_totp_admin_id'):
-        return render_template('login.html', **_login_page_context(totp_step=True))
+        admin = panel_access.get_admin(int(session['pending_totp_admin_id']))
+        return render_template(
+            'login.html',
+            **_login_page_context(totp_step=True, pending_login=admin.get('login') if admin else None),
+        )
     return render_template('login.html', **_login_page_context())
+
+
+@bp.route('/login/totp/cancel', methods=['GET'])
+def login_totp_cancel():
+    session.pop('pending_totp_admin_id', None)
+    session.pop('pending_totp_remember', None)
+    return redirect(url_for('login_page'))
 
 
 @bp.route('/login/accounts', methods=['GET'])
@@ -515,6 +543,8 @@ def totp_setup_page():
         totp_secret_display=totp_secret_display,
         security_info=security_info,
         security_method=method,
+        security_methods=panel_security.SECURITY_METHOD_LABELS,
+        security_method_descriptions=panel_security.SECURITY_METHOD_DESCRIPTIONS,
         passkeys=panel_webauthn.list_credentials(int(admin_id)) if admin_id else [],
         passkey_available=panel_webauthn.is_available(),
         telegram_bot_username=bot_username,

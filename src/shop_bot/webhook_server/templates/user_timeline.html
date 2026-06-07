@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}Лента клиента #{{ user_id }}{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/user-timeline.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
+{% endblock %}
+
+{% block content %}
+<div class="ut-page" id="user-timeline-app" data-user-id="{{ user_id }}">
+    <header class="ut-hero">
+        <div class="ut-hero__bg"></div>
+        <div class="ut-hero__inner">
+            <nav class="ut-hero__nav">
+                <a href="{{ url_for('users_page') }}" class="ut-back">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                    Пользователи
+                </a>
+                <div class="ut-hero__actions">
+                    <button type="button" class="ut-btn ut-btn--ghost" id="ut-copy-link" title="Скопировать ссылку">
+                        <span class="material-symbols-outlined">link</span>
+                    </button>
+                    <button type="button" class="ut-btn ut-btn--ghost" id="ut-export-csv" title="Экспорт CSV">
+                        <span class="material-symbols-outlined">table</span>
+                        CSV
+                    </button>
+                    <button type="button" class="ut-btn ut-btn--ghost" id="ut-export" title="Экспорт JSON">
+                        <span class="material-symbols-outlined">download</span>
+                        JSON
+                    </button>
+                    <button type="button" class="ut-btn ut-btn--primary" id="ut-open-modal" data-uid="{{ user_id }}">
+                        <span class="material-symbols-outlined">person</span>
+                        Карточка
+                    </button>
+                </div>
+            </nav>
+
+            <div class="ut-profile">
+                <div class="ut-profile__avatar{% if avatar_url %} has-photo{% endif %}" id="ut-avatar-wrap">
+                    <span class="ut-profile__avatar-fallback material-symbols-outlined">person</span>
+                    {% if avatar_url %}
+                    <img src="{{ avatar_url }}" alt="" class="ut-profile__avatar-img" id="ut-avatar" />
+                    {% endif %}
+                </div>
+                <div class="ut-profile__main">
+                    <p class="ut-profile__eyebrow">Bot Conversation Viewer</p>
+                    <h1 class="ut-profile__title">
+                        {% if user.username %}@{{ user.username }}{% else %}Клиент{% endif %}
+                        <span class="ut-profile__id">#{{ user_id }}</span>
+                    </h1>
+                    <p class="ut-profile__meta" id="ut-profile-meta">
+                        Регистрация: {{ user.registration_date or '—' }}
+                    </p>
+                    <div class="ut-profile__chips" id="ut-status-chips"></div>
+                </div>
+            </div>
+
+            <div class="ut-stats" id="ut-stats">
+                <div class="ut-stat ut-stat--skeleton"></div>
+                <div class="ut-stat ut-stat--skeleton"></div>
+                <div class="ut-stat ut-stat--skeleton"></div>
+                <div class="ut-stat ut-stat--skeleton"></div>
+            </div>
+        </div>
+    </header>
+
+    <div class="ut-layout">
+        <aside class="ut-sidebar">
+            <div class="ut-panel">
+                <h2 class="ut-panel__title">Insights</h2>
+                <ul class="ut-insights" id="ut-insights">
+                    <li class="ut-insights__item ut-insights__item--skeleton"></li>
+                    <li class="ut-insights__item ut-insights__item--skeleton"></li>
+                    <li class="ut-insights__item ut-insights__item--skeleton"></li>
+                </ul>
+            </div>
+
+            <div class="ut-panel">
+                <h2 class="ut-panel__title">Активность · 30 дней</h2>
+                <div class="ut-sparkline" id="ut-sparkline" aria-hidden="true"></div>
+            </div>
+
+            <div class="ut-panel">
+                <h2 class="ut-panel__title">Фильтры</h2>
+                <div class="ut-presets" id="ut-presets">
+                    <button type="button" class="ut-preset" data-preset="7">7д</button>
+                    <button type="button" class="ut-preset" data-preset="30">30д</button>
+                    <button type="button" class="ut-preset" data-preset="90">90д</button>
+                    <button type="button" class="ut-preset is-active" data-preset="all">Всё</button>
+                </div>
+                <div class="ut-search">
+                    <span class="material-symbols-outlined">search</span>
+                    <input type="search" id="ut-search" placeholder="Поиск по событиям..." autocomplete="off" />
+                </div>
+                <div class="ut-date-range">
+                    <label class="ut-field">
+                        <span>С</span>
+                        <input type="date" id="ut-date-from" />
+                    </label>
+                    <label class="ut-field">
+                        <span>По</span>
+                        <input type="date" id="ut-date-to" />
+                    </label>
+                </div>
+                <button type="button" class="ut-btn ut-btn--ghost ut-btn--block" id="ut-reset-filters">
+                    Сбросить фильтры
+                </button>
+            </div>
+
+            <div class="ut-panel">
+                <h2 class="ut-panel__title">Категории</h2>
+                <ul class="ut-categories" id="ut-categories"></ul>
+            </div>
+
+            <div class="ut-panel ut-panel--hint">
+                <span class="material-symbols-outlined">info</span>
+                <p>Единая хронология: регистрация, платежи, ключи, рассылки, тикеты и действия админов — как в CRM.</p>
+            </div>
+        </aside>
+
+        <main class="ut-main">
+            <div class="ut-main__head">
+                <div>
+                    <h2 class="ut-main__title">Timeline активности</h2>
+                    <p class="ut-main__sub" id="ut-result-count">Загрузка...</p>
+                </div>
+                <label class="ut-toggle">
+                    <input type="checkbox" id="ut-group-days" checked />
+                    <span>Группировать по дням</span>
+                </label>
+            </div>
+
+            <div id="ut-loading" class="ut-loading">
+                <span class="material-symbols-outlined ut-spin">progress_activity</span>
+                <span>Сбор событий...</span>
+            </div>
+
+            <div id="ut-empty" class="ut-empty hidden">
+                <span class="material-symbols-outlined">event_busy</span>
+                <p>События не найдены</p>
+                <button type="button" class="ut-btn ut-btn--ghost" id="ut-empty-reset">Сбросить фильтры</button>
+            </div>
+
+            <div id="ut-timeline" class="ut-timeline hidden"></div>
+
+            <div class="ut-load-more hidden" id="ut-load-more-wrap">
+                <button type="button" class="ut-btn ut-btn--ghost" id="ut-load-more">
+                    <span class="material-symbols-outlined">expand_more</span>
+                    Загрузить ещё
+                </button>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/user-timeline.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
+{% endblock %}

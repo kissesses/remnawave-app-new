@@ -1,4 +1,4 @@
-/* Remnawave ShopBot — macOS layout (floating dock + compact header) */
+/* Remnawave App — macOS layout (floating dock + compact header) */
 
 html[data-design|="macos"] {
     --macos-dock-height: 4.25rem;

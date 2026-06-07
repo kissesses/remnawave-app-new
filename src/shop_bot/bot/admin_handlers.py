@@ -921,18 +921,12 @@ def get_admin_router() -> Router:
 
 
         try:
-            from shop_bot.data_manager.remnawave_repository import get_admin_ids
-            admin_ids = list({*(get_admin_ids() or []), int(callback.from_user.id)})
+            from shop_bot.data_manager import telegram_notify as tg_notify
+            initiator = _format_user_mention(callback.from_user)
+            start_text = f"🚀 Запущен тест скорости для хоста: <b>{host_name}</b>\n(инициатор: {initiator})"
+            await tg_notify.send_notification(callback.bot, tg_notify.CATEGORY_NODES, start_text)
         except Exception:
-            admin_ids = [int(callback.from_user.id)]
-        initiator = _format_user_mention(callback.from_user)
-        start_text = f"🚀 Запущен тест скорости для хоста: <b>{host_name}</b>\n(инициатор: {initiator})"
-        for aid in admin_ids:
-            try:
-                await callback.bot.send_message(aid, start_text)
-            except Exception:
-                log_suppressed()
-
+            log_suppressed()
 
         try:
             wait_msg = await callback.message.answer(f"⏳ Выполняю тест скорости для <b>{host_name}</b>…")
@@ -989,14 +983,11 @@ def get_admin_router() -> Router:
         else:
             await callback.message.answer(text_res)
 
-
-        for aid in admin_ids:
-            if wait_msg and aid == callback.from_user.id:
-                continue
-            try:
-                await callback.bot.send_message(aid, text_res)
-            except Exception:
-                log_suppressed()
+        try:
+            from shop_bot.data_manager import telegram_notify as tg_notify
+            await tg_notify.send_notification(callback.bot, tg_notify.CATEGORY_NODES, text_res)
+        except Exception:
+            log_suppressed()
 
 
     @admin_router.callback_query(F.data.startswith("stt:"))
@@ -1013,18 +1004,12 @@ def get_admin_router() -> Router:
 
         logger.info(f"Bot/Admin: запуск спидтеста для SSH-цели '{target_name}' (инициатор id={callback.from_user.id})")
         try:
-            from shop_bot.data_manager.remnawave_repository import get_admin_ids
-            admin_ids = list({*(get_admin_ids() or []), int(callback.from_user.id)})
+            from shop_bot.data_manager import telegram_notify as tg_notify
+            initiator = _format_user_mention(callback.from_user)
+            start_text = f"🚀 Запущен тест скорости (SSH-цель): <b>{target_name}</b>\n(инициатор: {initiator})"
+            await tg_notify.send_notification(callback.bot, tg_notify.CATEGORY_NODES, start_text)
         except Exception:
-            admin_ids = [int(callback.from_user.id)]
-        initiator = _format_user_mention(callback.from_user)
-        start_text = f"🚀 Запущен тест скорости (SSH-цель): <b>{target_name}</b>\n(инициатор: {initiator})"
-        for aid in admin_ids:
-            try:
-                await callback.bot.send_message(aid, start_text)
-            except Exception:
-                log_suppressed()
-
+            log_suppressed()
 
         try:
             wait_msg = await callback.message.answer(f"⏳ Выполняю тест скорости для SSH-цели <b>{target_name}</b>…")
@@ -1061,13 +1046,11 @@ def get_admin_router() -> Router:
         else:
             await callback.message.answer(text_res)
 
-        for aid in admin_ids:
-            if wait_msg and aid == callback.from_user.id:
-                continue
-            try:
-                await callback.bot.send_message(aid, text_res)
-            except Exception:
-                log_suppressed()
+        try:
+            from shop_bot.data_manager import telegram_notify as tg_notify
+            await tg_notify.send_notification(callback.bot, tg_notify.CATEGORY_NODES, text_res)
+        except Exception:
+            log_suppressed()
 
 
     @admin_router.callback_query(F.data.startswith("admin_speedtest_pick_target_"))
@@ -1081,18 +1064,12 @@ def get_admin_router() -> Router:
 
         logger.info(f"Bot/Admin: запуск спидтеста (legacy) для SSH-цели '{target_name}' (инициатор id={callback.from_user.id})")
         try:
-            from shop_bot.data_manager.remnawave_repository import get_admin_ids
-            admin_ids = list({*(get_admin_ids() or []), int(callback.from_user.id)})
+            from shop_bot.data_manager import telegram_notify as tg_notify
+            initiator = _format_user_mention(callback.from_user)
+            start_text = f"🚀 Запущен тест скорости (SSH-цель): <b>{target_name}</b>\n(инициатор: {initiator})"
+            await tg_notify.send_notification(callback.bot, tg_notify.CATEGORY_NODES, start_text)
         except Exception:
-            admin_ids = [int(callback.from_user.id)]
-        initiator = _format_user_mention(callback.from_user)
-        start_text = f"🚀 Запущен тест скорости (SSH-цель): <b>{target_name}</b>\n(инициатор: {initiator})"
-        for aid in admin_ids:
-            try:
-                await callback.bot.send_message(aid, start_text)
-            except Exception:
-                log_suppressed()
-
+            log_suppressed()
 
         try:
             wait_msg = await callback.message.answer(f"⏳ Выполняю тест скорости для SSH-цели <b>{target_name}</b>…")
@@ -1131,14 +1108,11 @@ def get_admin_router() -> Router:
         else:
             await callback.message.answer(text_res)
 
-
-        for aid in admin_ids:
-            if wait_msg and aid == callback.from_user.id:
-                continue
-            try:
-                await callback.bot.send_message(aid, text_res)
-            except Exception:
-                log_suppressed()
+        try:
+            from shop_bot.data_manager import telegram_notify as tg_notify
+            await tg_notify.send_notification(callback.bot, tg_notify.CATEGORY_NODES, text_res)
+        except Exception:
+            log_suppressed()
 
 
     @admin_router.callback_query(F.data == "admin_speedtest_back_to_users")

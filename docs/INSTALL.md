@@ -191,6 +191,9 @@ ls -l .env   # ожидается -rw-------
 | **`env_file` только у Remnawave App** | Секреты панели не попадают в env Postgres/Redis |
 | **`REDIS_PASSWORD`** | Redis с `--requirepass` |
 | **`SHOPBOT_REQUIRE_TOTP=1`** | 2FA обязательна для админов (TOTP / Passkey / Telegram) |
+| **`SHOPBOT_REDIS_URL`** | Rate limit входа, TOTP, SQL step-up (in-memory fallback без Redis) |
+| **RBAC view/edit** | Права по разделам; Superadmin нельзя назначить non-superadmin |
+| **`SHOPBOT_SESSION_COOKIE_DOMAIN`** | Опционально: общая сессия на поддоменах (panel + support) |
 | **`security_opt` + `cap_drop`** | Меньше привилегий контейнеров |
 | **`healthcheck`** | Remnawave App, Postgres, Redis |
 | **Лимиты RAM/CPU** | Контейнер не съедает весь VPS |
@@ -323,11 +326,11 @@ Remnawave App — **только в Docker**. Публичный доступ ч
 **Upstream:**
 
 ```nginx
-upstream shopbot {
+upstream remnawave_app {
     server remnawave-app:1337;
 }
 
-upstream shopbot_webapp {
+upstream remnawave_app_webapp {
     server remnawave-app:8000;
 }
 ```
@@ -343,7 +346,7 @@ server {
 
     location / {
         proxy_http_version 1.1;
-        proxy_pass http://shopbot;
+        proxy_pass http://remnawave_app;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

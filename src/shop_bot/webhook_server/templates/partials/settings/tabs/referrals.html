@@ -2,7 +2,7 @@
 {% set ref_meta = referral_meta or {} %}
 {% set ref_enabled = settings.enable_referrals == 'true' %}
 
-<section id="tab-referrals" class="tab-content ref-panel" data-ref-default-tab="overview">
+<section id="tab-referrals" class="tab-content ref-panel settings-tab-sectioned" data-ref-default-tab="overview">
     <header class="ref-hub">
         <div class="ref-hub__intro">
             <div class="ref-hub__icon" aria-hidden="true">
@@ -41,29 +41,10 @@
         </div>
     </header>
 
-    <nav class="ref-tabs" role="tablist" aria-label="Разделы рефералов">
-        <button type="button" class="ref-tab is-active" data-ref-tab="overview" role="tab">
-            <span class="material-symbols-outlined">dashboard</span> Обзор
-        </button>
-        <button type="button" class="ref-tab" data-ref-tab="rewards" role="tab">
-            <span class="material-symbols-outlined">payments</span> Начисления
-        </button>
-        <button type="button" class="ref-tab" data-ref-tab="invitee" role="tab">
-            <span class="material-symbols-outlined">redeem</span> Бонус другу
-        </button>
-        <button type="button" class="ref-tab" data-ref-tab="messages" role="tab">
-            <span class="material-symbols-outlined">chat</span> Сообщения
-        </button>
-        <button type="button" class="ref-tab" data-ref-tab="analytics" role="tab">
-            <span class="material-symbols-outlined">analytics</span> Аналитика
-        </button>
-        <button type="button" class="ref-tab" data-ref-tab="advanced" role="tab">
-            <span class="material-symbols-outlined">tune</span> Дополнительно
-        </button>
-    </nav>
+    {% include 'partials/settings/section_nav.html' %}
 
     <!-- Overview -->
-    <div class="ref-pane" data-ref-pane="overview">
+    <div class="ref-pane settings-form-section is-section-visible" id="overview" data-ref-pane="overview">
         <div class="ref-kpi-row">
             <div class="ref-kpi">
                 <div class="ref-kpi__val">{{ ref_meta.conversion_pct or 0 }}%</div>
@@ -134,7 +115,7 @@
     </div>
 
     <!-- Rewards -->
-    <div class="ref-pane" data-ref-pane="rewards" hidden>
+    <div class="ref-pane settings-form-section" id="rewards" data-ref-pane="rewards">
         <div class="ref-card">
             <h3 class="ref-card__title">Модель вознаграждения реферера</h3>
             <p class="ref-card__desc">Выберите, когда и сколько получает пригласивший пользователь</p>
@@ -184,7 +165,7 @@
     </div>
 
     <!-- Invitee -->
-    <div class="ref-pane" data-ref-pane="invitee" hidden>
+    <div class="ref-pane settings-form-section" id="invitee" data-ref-pane="invitee">
         <div class="ref-card">
             <h3 class="ref-card__title">Скидка приглашённому</h3>
             <p class="ref-card__desc">Применяется на первую реальную покупку (нет трат, нет платных ключей). Работает в боте и WebApp.</p>
@@ -197,7 +178,7 @@
     </div>
 
     <!-- Messages -->
-    <div class="ref-pane" data-ref-pane="messages" hidden>
+    <div class="ref-pane settings-form-section" id="messages" data-ref-pane="messages">
         <div class="ref-grid-2">
             <div class="ref-card">
                 <h3 class="ref-card__title">Текст «Поделиться»</h3>
@@ -223,7 +204,7 @@
     </div>
 
     <!-- Analytics -->
-    <div class="ref-pane" data-ref-pane="analytics" hidden>
+    <div class="ref-pane settings-form-section" id="analytics" data-ref-pane="analytics">
         <div class="ref-card">
             <h3 class="ref-card__title">Топ рефереров</h3>
             <div class="ref-table-wrap">
@@ -260,7 +241,7 @@
     </div>
 
     <!-- Advanced -->
-    <div class="ref-pane" data-ref-pane="advanced" hidden>
+    <div class="ref-pane settings-form-section" id="advanced" data-ref-pane="advanced">
         <div class="ref-card">
             <div class="ref-toggle-row">
                 <div>

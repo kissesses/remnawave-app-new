@@ -1,0 +1,235 @@
+{# Shared 2FA configure block — auth setup page + Access Studio security tab #}
+{% set ui = security_ui|default('auth') %}
+{% set active_method = security_method or security_info.effective_method %}
+{% set tg_linked = telegram_linked if telegram_linked is defined else (current_admin and current_admin.telegram_user_id) %}
+
+{% if active_method == 'none' %}
+    {% if ui == 'auth' %}
+    <div class="auth-alert auth-alert--info">
+        <span class="material-symbols-outlined">info</span>
+        <span>Выберите способ защиты выше и нажмите «Применить выбор».</span>
+    </div>
+    {% else %}
+    <div class="acc-info">Рекомендуем TOTP, Passkey или Telegram.</div>
+    {% if totp_info.enabled %}
+    <form action="{{ url_for('settings_totp_disable') }}" method="post" data-submit-mode="native" novalidate class="acc-inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <input type="text" name="totp_code" required inputmode="numeric" maxlength="6" autocomplete="one-time-code" class="acc-input" placeholder="Код TOTP" />
+        <button type="submit" class="acc-btn acc-btn--danger" data-confirm="Отключить TOTP?">Отключить TOTP</button>
+    </form>
+    {% endif %}
+    {% endif %}
+
+{% elif active_method == 'totp' %}
+    {% if ui == 'panel' %}<h4 class="acc-setup-title">Настройка TOTP</h4>{% endif %}
+    {% if ui == 'auth' %}
+    <div class="auth-totp-status">
+        {% if totp_info.enabled %}
+        <span class="auth-status-pill auth-status-pill--ok">TOTP настроен</span>
+        {% elif totp_info.pending_setup %}
+        <span class="auth-status-pill auth-status-pill--pending">Ожидает подтверждения</span>
+        {% else %}
+        <span class="auth-status-pill">Не настроен</span>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if totp_info.pending_setup and totp_qr_data_uri %}
+        {% if ui == 'auth' %}
+        <div class="auth-totp-qr">
+            <img src="{{ totp_qr_data_uri }}" alt="QR для TOTP" width="156" height="156" />
+        </div>
+        {% else %}
+        <p class="acc-card__desc">Отсканируйте QR и введите код.</p>
+        <div class="acc-qr-wrap"><img src="{{ totp_qr_data_uri }}" alt="QR 2FA" width="156" height="156" /></div>
+        {% endif %}
+        {% if totp_secret_key and totp_secret_display %}
+        <div class="security-totp-secret" data-totp-secret-wrap>
+            <p class="security-totp-secret__label">Секретный ключ (если QR не сканируется)</p>
+            <div class="security-totp-secret__row">
+                <code class="security-totp-secret__value" id="totp-secret-text">{{ totp_secret_display }}</code>
+                <button type="button" class="security-totp-secret__copy" id="totp-secret-copy"
+                    data-secret="{{ totp_secret_key }}" title="Копировать ключ">
+                    <span class="material-symbols-outlined" aria-hidden="true">content_copy</span>
+                    <span class="security-totp-secret__copy-label">Копировать</span>
+                </button>
+            </div>
+        </div>
+        {% endif %}
+        {% if ui == 'auth' %}
+        <p class="auth-totp-hint">Отсканируйте QR в Google Authenticator или аналоге, затем введите 6-значный код.</p>
+        <form method="post" action="{{ url_for('settings_totp_enable') }}" autocomplete="off" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <div class="auth-field">
+                <label class="auth-label" for="totp_code">Код из приложения</label>
+                <div class="auth-input-wrap">
+                    <span class="auth-input-icon">
+                        <span class="material-symbols-outlined">pin</span>
+                    </span>
+                    <input type="text" name="totp_code" id="totp_code" required inputmode="numeric"
+                        maxlength="6" autocomplete="one-time-code" class="auth-input" placeholder="000000" />
+                </div>
+            </div>
+            <button type="submit" class="auth-submit">
+                Подтвердить
+                <span class="material-symbols-outlined">verified_user</span>
+            </button>
+        </form>
+        <form method="post" action="{{ url_for('settings_totp_cancel') }}" class="auth-inline-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button type="submit" class="auth-secondary-btn">Отменить</button>
+        </form>
+        {% else %}
+        <form action="{{ url_for('settings_totp_enable') }}" method="post" data-submit-mode="native" novalidate class="acc-inline-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <input type="text" name="totp_code" required inputmode="numeric" maxlength="6" autocomplete="one-time-code" class="acc-input" placeholder="000000" />
+            <button type="submit" class="acc-btn acc-btn--primary">Подтвердить</button>
+            <button type="submit" formaction="{{ url_for('settings_totp_cancel') }}" formmethod="post" class="acc-btn acc-btn--ghost">Отмена</button>
+        </form>
+        {% endif %}
+    {% elif totp_info.enabled %}
+        {% if ui == 'auth' %}
+        <div class="auth-alert auth-alert--success">
+            <span class="material-symbols-outlined">check_circle</span>
+            <span>TOTP настроен. Можно перейти в панель.</span>
+        </div>
+        <a href="{{ url_for('dashboard_page') }}" class="auth-submit auth-submit--link">
+            Перейти в панель
+            <span class="material-symbols-outlined">arrow_forward</span>
+        </a>
+        {% else %}
+        <div class="acc-info acc-info--ok">TOTP активен — запрашивается при входе.</div>
+        {% endif %}
+    {% else %}
+        {% if ui == 'auth' %}
+        <p class="auth-totp-hint">Сгенерируйте QR-код для приложения-аутентификатора.</p>
+        <form method="post" action="{{ url_for('settings_totp_begin') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button type="submit" class="auth-submit">
+                Настроить TOTP
+                <span class="material-symbols-outlined">qr_code_2</span>
+            </button>
+        </form>
+        {% else %}
+        <form action="{{ url_for('settings_totp_begin') }}" method="post" data-submit-mode="native">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button type="submit" class="acc-btn acc-btn--primary">Настроить TOTP</button>
+        </form>
+        {% endif %}
+    {% endif %}
+
+{% elif active_method == 'passkey' %}
+    {% if ui == 'panel' %}<h4 class="acc-setup-title">Passkey</h4>{% endif %}
+    {% if not passkey_available %}
+        {% if ui == 'auth' %}
+        <div class="auth-alert auth-alert--danger">
+            <span class="material-symbols-outlined">error</span>
+            <span>Passkey недоступен на сервере. Выберите TOTP или Telegram, либо обратитесь к администратору.</span>
+        </div>
+        {% else %}
+        <div class="acc-info">Установите пакет <code>webauthn</code>.</div>
+        {% endif %}
+    {% elif passkeys %}
+        {% if ui == 'auth' %}
+        <div class="auth-alert auth-alert--success">
+            <span class="material-symbols-outlined">check_circle</span>
+            <span>Passkey зарегистрирован ({{ passkeys|length }}). Можно перейти в панель.</span>
+        </div>
+        <a href="{{ url_for('dashboard_page') }}" class="auth-submit auth-submit--link">
+            Перейти в панель
+            <span class="material-symbols-outlined">arrow_forward</span>
+        </a>
+        {% else %}
+        <ul class="acc-passkey-list">
+            {% for pk in passkeys %}
+            <li class="acc-passkey-item">
+                <div>
+                    <div class="acc-passkey-item__name">{{ pk.label }}</div>
+                    <div class="acc-passkey-item__meta">{{ pk.created_at or '—' }}{% if pk.last_used_at %} · {{ pk.last_used_at }}{% endif %}</div>
+                </div>
+                <form action="{{ url_for('settings_passkey_delete', credential_id=pk.id) }}" method="post" data-submit-mode="native">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <button type="submit" class="acc-btn acc-btn--danger acc-btn--sm" data-confirm="Удалить «{{ pk.label }}»?">Удалить</button>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        {% if ui == 'panel' %}
+        <div class="acc-inline-form">
+            <input type="text" id="passkey-label-input" maxlength="64" placeholder="MacBook, YubiKey…" class="acc-input" />
+            <button type="button" id="passkey-register-btn" class="acc-btn acc-btn--primary">Добавить Passkey</button>
+        </div>
+        {% endif %}
+    {% else %}
+        {% if ui == 'auth' %}
+        <div class="auth-alert auth-alert--info">
+            <span class="material-symbols-outlined">passkey</span>
+            <span>Добавьте Passkey (Face ID, Touch ID или USB-ключ).</span>
+        </div>
+        <div class="auth-field">
+            <label class="auth-label" for="passkey-label-input">Название ключа</label>
+            <div class="auth-input-wrap">
+                <span class="auth-input-icon">
+                    <span class="material-symbols-outlined">label</span>
+                </span>
+                <input type="text" id="passkey-label-input" maxlength="64" class="auth-input"
+                    placeholder="MacBook, YubiKey…" autocomplete="off" />
+            </div>
+        </div>
+        <button type="button" id="passkey-register-btn" class="auth-submit">
+            Добавить Passkey
+            <span class="material-symbols-outlined">passkey</span>
+        </button>
+        {% else %}
+        <p class="acc-card__desc">Зарегистрируйте Passkey для завершения настройки.</p>
+        <div class="acc-inline-form">
+            <input type="text" id="passkey-label-input" maxlength="64" placeholder="MacBook, YubiKey…" class="acc-input" />
+            <button type="button" id="passkey-register-btn" class="acc-btn acc-btn--primary">Добавить Passkey</button>
+        </div>
+        {% endif %}
+    {% endif %}
+
+{% elif active_method == 'telegram' %}
+    {% if ui == 'panel' %}<h4 class="acc-setup-title">Telegram</h4>{% endif %}
+    {% if tg_linked %}
+        {% if ui == 'auth' %}
+        <div class="auth-alert auth-alert--success">
+            <span class="material-symbols-outlined">check_circle</span>
+            <span>Telegram привязан. Можно перейти в панель.</span>
+        </div>
+        <a href="{{ url_for('dashboard_page') }}" class="auth-submit auth-submit--link">
+            Перейти в панель
+            <span class="material-symbols-outlined">arrow_forward</span>
+        </a>
+        {% else %}
+        <div class="acc-info acc-info--ok flex-wrap">
+            <span>Привязан: {% if current_admin and current_admin.telegram_username %}@{{ current_admin.telegram_username }}{% elif current_admin %}ID {{ current_admin.telegram_user_id }}{% endif %}</span>
+            <form action="{{ url_for('settings_telegram_unlink') }}" method="post" data-submit-mode="native">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <button type="submit" class="acc-btn acc-btn--danger acc-btn--sm" data-confirm="Отвязать?">Отвязать</button>
+            </form>
+        </div>
+        {% endif %}
+    {% elif telegram_bot_username %}
+        {% if ui == 'auth' %}
+        <div class="auth-alert auth-alert--info">
+            <span class="material-symbols-outlined">send</span>
+            <span>Нажмите кнопку Telegram для привязки аккаунта.</span>
+        </div>
+        <div id="telegram-link-wrap" class="auth-alt-login__telegram"></div>
+        {% else %}
+        <p class="acc-card__desc">Привяжите Telegram для завершения настройки.</p>
+        <div id="telegram-link-wrap"></div>
+        {% endif %}
+    {% else %}
+        {% if ui == 'auth' %}
+        <div class="auth-alert auth-alert--danger">
+            <span class="material-symbols-outlined">error</span>
+            <span>Telegram-бот не настроен. Выберите другой способ или обратитесь к администратору.</span>
+        </div>
+        {% else %}
+        <div class="acc-info">Укажите @username бота в «Боты» и включите Telegram Login.</div>
+        {% endif %}
+    {% endif %}
+{% endif %}

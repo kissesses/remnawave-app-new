@@ -308,32 +308,25 @@ def backup_send_telegram_route():
 @panel_ctx.login_required
 def backup_test_channel_route():
     payload = request.get_json(silent=True) or {}
-    target = (payload.get('target') or 'archive').strip().lower()
-    if target not in ('archive', 'secrets'):
-        return jsonify({'ok': False, 'error': 'target: archive или secrets'}), 400
-    cfg = backup_manager.get_backup_config()
-    chat_key = 'secrets_chat_id' if target == 'secrets' else 'telegram_chat_id'
-    topic_key = 'secrets_topic_id' if target == 'secrets' else 'telegram_topic_id'
-    chat_id = backup_manager._parse_telegram_chat_id(cfg.get(chat_key) or '')
-    if chat_id is None:
-        return jsonify({'ok': False, 'error': 'Укажите Chat ID в настройках и сохраните форму'}), 400
+    target = (payload.get('category') or payload.get('target') or 'backup').strip().lower()
+    legacy_map = {'archive': 'backup', 'secrets': 'secrets'}
+    category = legacy_map.get(target, target)
+    from shop_bot.data_manager import telegram_notify as tg_notify
+    if category not in tg_notify.ALL_CATEGORIES:
+        return jsonify({'ok': False, 'error': f'Неизвестная категория: {target}'}), 400
     bot = panel_ctx.bot_controller.get_bot_instance()
     if not bot:
         return jsonify({'ok': False, 'error': 'Бот недоступен'}), 503
-    thread_id = backup_manager._parse_telegram_topic_id(cfg.get(topic_key) or '')
-    label = 'секретный топик (пароли)' if target == 'secrets' else 'канал архивов'
-    text = f"✅ Тест Remnawave App: {label}\nНастройки бэкапа работают."
+    loop = current_app.config.get('EVENT_LOOP')
     try:
-        kwargs = {'chat_id': chat_id, 'text': text}
-        if thread_id is not None:
-            kwargs['message_thread_id'] = thread_id
-        loop = current_app.config.get('EVENT_LOOP')
         if loop and loop.is_running():
-            future = asyncio.run_coroutine_threadsafe(bot.send_message(**kwargs), loop)
-            future.result(timeout=30)
+            future = asyncio.run_coroutine_threadsafe(tg_notify.send_test(category, bot), loop)
+            ok, message = future.result(timeout=30)
         else:
-            asyncio.run(bot.send_message(**kwargs))
-        return jsonify({'ok': True, 'message': f'Тест отправлен: {label}'})
+            ok, message = asyncio.run(tg_notify.send_test(category, bot))
+        if ok:
+            return jsonify({'ok': True, 'message': message})
+        return jsonify({'ok': False, 'error': message}), 400
     except Exception as e:
-        logger.error('backup test channel: %s', e)
+        logger.error('notification test channel: %s', e)
         return jsonify({'ok': False, 'error': str(e)}), 500

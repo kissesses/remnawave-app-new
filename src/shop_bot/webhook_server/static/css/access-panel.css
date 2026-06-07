@@ -969,6 +969,26 @@ html:not(.dark) #tab-access.acc-panel {
     background: #fff;
 }
 
+.acc-card--setup .security-totp-secret {
+    margin-bottom: 0.75rem;
+}
+
+.acc-card--setup .security-totp-secret__label {
+    color: var(--panel-text-tertiary);
+}
+
+.acc-card--setup .security-totp-secret__value {
+    border-color: var(--panel-separator);
+    background: var(--panel-grouped, rgba(255, 255, 255, 0.04));
+    color: var(--panel-text);
+}
+
+.acc-card--setup .security-totp-secret__copy {
+    border-color: var(--panel-separator);
+    background: var(--panel-grouped, rgba(255, 255, 255, 0.04));
+    color: var(--panel-text-secondary);
+}
+
 .acc-passkey-list {
     list-style: none;
     margin: 0 0 0.65rem;

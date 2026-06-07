@@ -431,22 +431,44 @@ def create_webhook_app(bot_controller_instance):
     def upgrade_legacy_panel_session():
         if 'logged_in' not in session:
             return None
+        panel_access.ensure_panel_access_migrated()
+        admin = None
+        admin_id = session.get('panel_admin_id')
+        if admin_id is not None:
+            try:
+                admin = panel_access.get_admin(int(admin_id))
+            except (TypeError, ValueError):
+                admin = None
+        if admin is None:
+            login = session.get('panel_login') or get_setting('panel_login') or ''
+            if login:
+                admin = panel_access.get_admin_by_login(login)
+        if admin:
+            if not admin.get('is_active', True):
+                for key in list(session.keys()):
+                    session.pop(key, None)
+                flash('Учётная запись деактивирована', 'warning')
+                return redirect(url_for('login_page'))
+            payload = panel_access.session_payload(admin)
+            for key in (
+                'panel_admin_id',
+                'panel_login',
+                'panel_role_name',
+                'panel_is_superadmin',
+                'panel_permissions',
+                'panel_permission_levels',
+            ):
+                session[key] = payload[key]
+            return None
         if session.get('panel_permissions') is not None:
             if session.get('panel_permission_levels') is None:
                 session['panel_permission_levels'] = normalize_permission_levels(
                     session.get('panel_permissions') or []
                 )
             return None
-        panel_access.ensure_panel_access_migrated()
-        login = session.get('panel_login') or get_setting('panel_login') or ''
-        admin = panel_access.get_admin_by_login(login)
-        if admin:
-            session.update(panel_access.session_payload(admin))
-        else:
-            for key in list(session.keys()):
-                session.pop(key, None)
-            return redirect(url_for('login_page'))
-        return None
+        for key in list(session.keys()):
+            session.pop(key, None)
+        return redirect(url_for('login_page'))
 
     @flask_app.before_request
     def enforce_panel_permissions():

@@ -1,0 +1,47 @@
+{# Shared 2FA method picker — auth setup + Access Studio #}
+{% set ui = security_ui|default('auth') %}
+{% set selected_method = security_info.effective_method %}
+
+<form action="{{ url_for('settings_security_method_save') }}" method="post"
+    {% if ui == 'panel' %}data-submit-mode="native"{% endif %}
+    autocomplete="off"
+    class="{% if ui == 'auth' %}auth-setup-method-form{% else %}acc-form{% endif %} security-method-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    {% if ui == 'auth' %}
+    <div class="auth-setup-methods">
+        {% for method_id, method_label in security_methods.items() %}
+        {% set desc = security_method_descriptions.get(method_id, '') %}
+        <label class="auth-setup-method{% if selected_method == method_id %} is-selected{% endif %}
+            {% if method_id == 'passkey' and not passkey_available %} is-disabled{% endif %}
+            {% if security_info.forced_totp and method_id == 'none' %} is-disabled{% endif %}">
+            <input type="radio" name="auth_security_method" value="{{ method_id }}"
+                {% if selected_method == method_id %}checked{% endif %}
+                {% if security_info.forced_totp and method_id == 'none' %}disabled{% endif %}
+                {% if method_id == 'passkey' and not passkey_available %}disabled{% endif %} />
+            <span class="auth-setup-method__body">
+                <span class="auth-setup-method__title">{{ method_label }}</span>
+                <span class="auth-setup-method__desc">{{ desc }}</span>
+            </span>
+        </label>
+        {% endfor %}
+    </div>
+    <button type="submit" class="auth-secondary-btn auth-setup-method-submit">Применить выбор</button>
+    {% else %}
+    {% for method_id, method_label in security_methods.items() %}
+    {% set desc = security_method_descriptions.get(method_id, '') %}
+    <label class="acc-method-card acc-method-card--radio{% if selected_method == method_id %} is-selected{% endif %}
+        {% if method_id == 'passkey' and not passkey_available %} is-disabled{% endif %}
+        {% if security_info.forced_totp and method_id == 'none' %} is-disabled{% endif %}">
+        <input type="radio" name="auth_security_method" value="{{ method_id }}"
+            {% if selected_method == method_id %}checked{% endif %}
+            {% if security_info.forced_totp and method_id == 'none' %}disabled{% endif %}
+            {% if method_id == 'passkey' and not passkey_available %}disabled{% endif %} />
+        <span class="acc-method-card__body">
+            <span class="acc-method-card__title">{{ method_label }}</span>
+            <span class="acc-method-card__desc">{{ desc }}</span>
+        </span>
+    </label>
+    {% endfor %}
+    <button type="submit" class="acc-btn acc-btn--primary">Применить выбор</button>
+    {% endif %}
+</form>

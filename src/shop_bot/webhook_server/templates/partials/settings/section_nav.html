@@ -1,10 +1,14 @@
-{# tab_sections: list of {id, label, icon} #}
+{# tab_sections: list of {id, label, icon}; section_nav_mode: sections (default) | filter #}
 {% if tab_sections and tab_sections | length > 1 %}
-<nav class="settings-section-nav no-scrollbar" aria-label="Разделы настроек">
+<nav class="settings-section-nav no-scrollbar" aria-label="Разделы настроек"{% if section_nav_mode %} data-nav-mode="{{ section_nav_mode }}"{% endif %}>
     {% for sec in tab_sections %}
     <a href="#{{ sec.id }}" class="settings-section-nav__link{% if loop.first %} is-active{% endif %}" data-section-nav="{{ sec.id }}">
         {% if sec.icon %}
-        <span class="material-symbols-outlined settings-section-nav__icon" aria-hidden="true">{{ sec.icon }}</span>
+        {% set settings_icon = sec.icon %}
+        {% set settings_icon_variant = 'section-nav' %}
+        {% set settings_icon_id = sec.id %}
+        {% set settings_icon_class = 'settings-section-nav__icon' %}
+        {% include 'partials/settings/icon.html' %}
         {% endif %}
         <span>{{ sec.label }}</span>
     </a>

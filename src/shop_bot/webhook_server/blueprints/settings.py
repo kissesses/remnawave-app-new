@@ -136,35 +136,66 @@ from shop_bot.webhook_server.blueprints.base import Blueprint
 bp = Blueprint('settings', __name__)
 
 
+def _session_permission_levels() -> dict[str, str]:
+    return session.get('panel_permission_levels') or normalize_permission_levels(
+        session.get('panel_permissions') or []
+    )
+
+
 def _user_can_settings_tab(tab: str) -> bool:
     if session.get('panel_is_superadmin'):
         return True
+    levels = _session_permission_levels()
     if tab == 'content':
-        perms = session.get('panel_permissions') or []
-        return 'settings_content' in perms or 'settings_mail_templates' in perms
+        return (
+            allows_permission(levels, 'settings_content', require_edit=False)
+            or allows_permission(levels, 'settings_mail_templates', require_edit=False)
+        )
     if tab == 'audit':
-        perms = session.get('panel_permissions') or []
-        return 'settings_audit' in perms or 'settings_access' in perms
+        return (
+            allows_permission(levels, 'settings_audit', require_edit=False)
+            or allows_permission(levels, 'settings_access', require_edit=False)
+        )
     perm = SETTINGS_TAB_PERMISSIONS.get(tab)
     if not perm:
         return False
-    return perm in (session.get('panel_permissions') or [])
+    return allows_permission(levels, perm, require_edit=False)
+
+
+def _user_can_settings_tab_edit(tab: str) -> bool:
+    if session.get('panel_is_superadmin'):
+        return True
+    levels = _session_permission_levels()
+    if tab == 'content':
+        return (
+            allows_permission(levels, 'settings_content', require_edit=True)
+            or allows_permission(levels, 'settings_mail_templates', require_edit=True)
+        )
+    if tab == 'audit':
+        return (
+            allows_permission(levels, 'settings_audit', require_edit=True)
+            or allows_permission(levels, 'settings_access', require_edit=True)
+        )
+    perm = SETTINGS_TAB_PERMISSIONS.get(tab)
+    if not perm:
+        return False
+    return allows_permission(levels, perm, require_edit=True)
 
 
 def _user_can_settings_access_edit() -> bool:
     if session.get('panel_is_superadmin'):
         return True
-    levels = session.get('panel_permission_levels') or normalize_permission_levels(
-        session.get('panel_permissions') or []
-    )
-    return allows_permission(levels, 'settings_access', require_edit=True)
+    return allows_permission(_session_permission_levels(), 'settings_access', require_edit=True)
 
 
 def _user_can_audit() -> bool:
     if session.get('panel_is_superadmin'):
         return True
-    perms = session.get('panel_permissions') or []
-    return 'settings_audit' in perms or 'settings_access' in perms
+    levels = _session_permission_levels()
+    return (
+        allows_permission(levels, 'settings_audit', require_edit=False)
+        or allows_permission(levels, 'settings_access', require_edit=False)
+    )
 
 
 def _audit_filter_args() -> dict:
@@ -337,6 +368,28 @@ def _load_settings_page_context(tab: str) -> dict:
         except Exception:
             ctx['backup_delivery'] = {}
 
+    if tab == 'bot':
+        from shop_bot.data_manager import telegram_notify as tg_notify
+        ctx['notification_categories'] = [
+            {
+                'id': cat,
+                'label': tg_notify.CATEGORY_LABELS.get(cat, cat),
+                'field': tg_notify.CATEGORY_TOPIC_KEYS.get(cat, ''),
+                'icon': {
+                    tg_notify.CATEGORY_CRM: 'groups',
+                    tg_notify.CATEGORY_BACKUP: 'folder_zip',
+                    tg_notify.CATEGORY_SECRETS: 'key',
+                    tg_notify.CATEGORY_AUTH: 'shield',
+                    tg_notify.CATEGORY_NODES: 'dns',
+                    tg_notify.CATEGORY_PAYMENTS: 'payments',
+                    tg_notify.CATEGORY_SQL: 'database',
+                    tg_notify.CATEGORY_TRIAL: 'timer',
+                    tg_notify.CATEGORY_TICKETS: 'confirmation_number',
+                }.get(cat, 'chat'),
+            }
+            for cat in tg_notify.ALL_CATEGORIES
+        ]
+
     if tab == 'hosts':
         hosts = get_all_hosts()
         for host in hosts:
@@ -386,11 +439,16 @@ def _load_settings_page_context(tab: str) -> dict:
         edit_admin_id = request.args.get('admin_id', type=int)
         common_data = panel_ctx.get_common_template_data()
         totp_qr_data_uri = None
+        totp_secret_key = None
+        totp_secret_display = None
         if current_admin_id and totp_info.get('pending_setup'):
+            totp_secret_key = panel_totp.get_setup_secret(current_admin_id)
+            if totp_secret_key:
+                totp_secret_display = panel_totp.format_secret_for_display(totp_secret_key)
             setup_uri = panel_totp.get_setup_uri(
                 current_admin_id,
                 session.get('panel_login') or '',
-                common_data.get('brand_title') or 'Remnawave App',
+                common_data.get('brand_title') or 'Remnawave ShopBot',
             )
             if setup_uri:
                 totp_qr_data_uri = panel_ctx.qr_data_uri(setup_uri)
@@ -405,6 +463,8 @@ def _load_settings_page_context(tab: str) -> dict:
             'edit_admin': panel_access.get_admin(edit_admin_id) if edit_admin_id else None,
             'panel_audit_entries': _humanized_audit_entries(60),
             'totp_qr_data_uri': totp_qr_data_uri,
+            'totp_secret_key': totp_secret_key,
+            'totp_secret_display': totp_secret_display,
             'passkeys': panel_webauthn.list_credentials(current_admin_id) if current_admin_id else [],
             'current_admin': panel_access.get_admin(current_admin_id) if current_admin_id else None,
             'telegram_login_setting': panel_telegram_auth.is_login_enabled(),
@@ -600,6 +660,16 @@ def settings_database_table_delete(table_name: str):
     return jsonify({'ok': bool(deleted), 'deleted': deleted, 'message': message}), status
 
 
+def _notify_sql_category(text: str) -> None:
+    try:
+        bot = panel_ctx.bot_controller.get_bot_instance()
+        loop = current_app.config.get('EVENT_LOOP')
+        from shop_bot.data_manager import telegram_notify as tg_notify
+        tg_notify.send_notification_sync(bot, loop, tg_notify.CATEGORY_SQL, text)
+    except Exception:
+        pass
+
+
 @bp.route('/settings/database/tables/<table_name>/truncate', methods=['POST'])
 @panel_ctx.login_required
 def settings_database_table_truncate(table_name: str):
@@ -617,6 +687,13 @@ def settings_database_table_truncate(table_name: str):
         return jsonify({'ok': False, 'error': str(exc)}), 500
     if ok:
         panel_ctx.audit('db.truncate', {'source': source, 'table': table, 'admin_id': admin_id})
+        admin_login = session.get('panel_login') or 'panel'
+        _notify_sql_category(
+            f"⚠️ <b>TRUNCATE таблицы</b>\n"
+            f"Таблица: <code>{table}</code>\n"
+            f"Источник: {source}\n"
+            f"Админ: <code>{admin_login}</code>"
+        )
     status = 200 if ok else 400
     return jsonify({'ok': ok, 'message': message}), status
 
@@ -699,12 +776,28 @@ def settings_database_stepup_totp():
     admin_id = _current_panel_admin_id()
     if not admin_id:
         return jsonify({'ok': False, 'error': 'auth_required'}), 401
+    ip = panel_ctx.client_ip()
+    from shop_bot.webhook_server.modules import security as panel_security_mod
+    if panel_security_mod.is_stepup_totp_locked(admin_id, ip):
+        return jsonify({
+            'ok': False,
+            'error': 'rate_limited',
+            'message': 'Слишком много неверных кодов. Подождите 15 минут.',
+        }), 429
     body = request.get_json(silent=True) or {}
     code = (body.get('code') or '').strip()
     ok, message = panel_stepup.verify_totp_stepup(admin_id, code)
     if ok:
+        panel_security_mod.clear_stepup_totp_failures(admin_id, ip)
         panel_ctx.audit('db.stepup', {'method': 'totp'})
+        admin_login = session.get('panel_login') or 'panel'
+        _notify_sql_category(
+            f"🔐 <b>SQL step-up подтверждён</b>\n"
+            f"Админ: <code>{admin_login}</code>\n"
+            f"Метод: TOTP"
+        )
         return jsonify({'ok': True, 'remaining_sec': panel_stepup.stepup_remaining_seconds()})
+    panel_security_mod.record_failed_stepup_totp(admin_id, ip)
     return jsonify({'ok': False, 'error': message or 'Неверный код'}), 401
 
 
@@ -748,6 +841,12 @@ def settings_database_stepup_passkey_verify():
     )
     if ok:
         panel_ctx.audit('db.stepup', {'method': 'passkey'})
+        admin_login = session.get('panel_login') or 'panel'
+        _notify_sql_category(
+            f"🔐 <b>SQL step-up подтверждён</b>\n"
+            f"Админ: <code>{admin_login}</code>\n"
+            f"Метод: Passkey"
+        )
         return jsonify({'ok': True, 'remaining_sec': panel_stepup.stepup_remaining_seconds()})
     return jsonify({'ok': False, 'error': message or 'Passkey не принят'}), 401
 
@@ -764,6 +863,12 @@ def settings_database_stepup_telegram():
     ok, message = panel_stepup.verify_telegram_stepup(admin_id, payload)
     if ok:
         panel_ctx.audit('db.stepup', {'method': 'telegram'})
+        admin_login = session.get('panel_login') or 'panel'
+        _notify_sql_category(
+            f"🔐 <b>SQL step-up подтверждён</b>\n"
+            f"Админ: <code>{admin_login}</code>\n"
+            f"Метод: Telegram"
+        )
         return jsonify({'ok': True, 'remaining_sec': panel_stepup.stepup_remaining_seconds()})
     return jsonify({'ok': False, 'error': message or 'Telegram не принят'}), 401
 
@@ -839,7 +944,7 @@ def settings_mail_templates_data():
         'meta': meta,
         'accent': smtp_templates.get_accent(),
         'footer': smtp_templates.get_footer(),
-        'brand': (get_setting('panel_brand_title') or 'Remnawave App').strip(),
+        'brand': (get_setting('panel_brand_title') or 'Remnawave ShopBot').strip(),
     })
 
 
@@ -1037,7 +1142,7 @@ def settings_bot_messages_data():
         'ok': True,
         'templates': bot_messages.get_all_templates(),
         'meta': meta,
-        'brand': (get_setting('panel_brand_title') or 'Remnawave App').strip(),
+        'brand': (get_setting('panel_brand_title') or 'Remnawave ShopBot').strip(),
     })
 
 
@@ -1046,6 +1151,8 @@ def settings_bot_messages_data():
 def settings_bot_messages_save():
     if not _user_can_settings_tab('content'):
         return jsonify({'ok': False, 'error': 'Недостаточно прав'}), 403
+    if not allows_permission(_session_permission_levels(), 'settings_content', require_edit=True):
+        return jsonify({'ok': False, 'error': 'Недостаточно прав для редактирования'}), 403
     from shop_bot.data_manager import bot_messages
 
     payload = request.get_json(silent=True) or {}
@@ -1070,6 +1177,8 @@ def settings_bot_messages_save():
 def settings_bot_messages_preview():
     if not _user_can_settings_tab('content'):
         return jsonify({'ok': False, 'error': 'Недостаточно прав'}), 403
+    if not allows_permission(_session_permission_levels(), 'settings_content', require_edit=True):
+        return jsonify({'ok': False, 'error': 'Недостаточно прав для редактирования'}), 403
     from shop_bot.data_manager import bot_messages
 
     payload = request.get_json(silent=True) or {}
@@ -1089,6 +1198,8 @@ def settings_bot_messages_preview():
 def settings_bot_messages_reset():
     if not _user_can_settings_tab('content'):
         return jsonify({'ok': False, 'error': 'Недостаточно прав'}), 403
+    if not allows_permission(_session_permission_levels(), 'settings_content', require_edit=True):
+        return jsonify({'ok': False, 'error': 'Недостаточно прав для редактирования'}), 403
     from shop_bot.data_manager import bot_messages
 
     payload = request.get_json(silent=True) or {}
@@ -1140,6 +1251,9 @@ def settings_access_role_delete(role_id: int):
 @bp.route('/settings/access/admins', methods=['POST'])
 @panel_ctx.login_required
 def settings_access_admin_save():
+    if not _user_can_settings_access_edit():
+        flash('Недостаточно прав', 'danger')
+        return redirect(url_for('settings_tab_page', tab='access'))
     admin_id = request.form.get('admin_id', type=int)
     login = (request.form.get('admin_login') or '').strip()
     password = request.form.get('admin_password') or None
@@ -1147,12 +1261,18 @@ def settings_access_admin_save():
         password = None
     role_id = request.form.get('admin_role_id', type=int)
     is_active = '1' in request.form.getlist('admin_is_active')
+    if admin_id and not session.get('panel_is_superadmin'):
+        existing = panel_access.get_admin(admin_id)
+        if existing and existing.get('is_superadmin'):
+            flash('Редактирование Superadmin доступно только superadmin', 'danger')
+            return redirect(url_for('settings_tab_page', tab='access'))
     ok, message = panel_access.save_admin(
         admin_id=admin_id,
         login=login,
         password=password,
         role_id=role_id or 0,
         is_active=is_active,
+        forbid_superadmin_role=not session.get('panel_is_superadmin'),
     )
     if ok:
         panel_ctx.audit('admin.save', {'admin_id': admin_id, 'login': login, 'role_id': role_id})
@@ -1386,7 +1506,7 @@ def settings_security_method_save():
 @bp.route('/settings/access/auth-methods', methods=['POST'])
 @panel_ctx.login_required
 def settings_access_auth_methods():
-    if not session.get('panel_is_superadmin') and 'settings_access' not in (session.get('panel_permissions') or []):
+    if not _user_can_settings_access_edit():
         flash('Недостаточно прав', 'danger')
         return redirect(url_for('settings_tab_page', tab='access'))
 
@@ -2231,28 +2351,57 @@ def _ym_redirect_after_oauth(*, ok: bool = False):
 @bp.route('/yoomoney/connect')
 @panel_ctx.login_required
 def yoomoney_connect_route():
+    if not _user_can_settings_tab_edit('payments'):
+        flash('Недостаточно прав для подключения YooMoney', 'danger')
+        return redirect(url_for('settings_tab_page', tab='payments'))
     client_id = (get_setting('yoomoney_client_id') or '').strip()
     if not client_id:
         flash('Укажите YooMoney client_id в настройках.', 'warning')
         return redirect(url_for('settings_tab_page', tab='payments'))
     redirect_uri = _ym_get_redirect_uri()
     scope = 'operation-history operation-details account-info'
+    oauth_state = secrets.token_urlsafe(32)
+    session['yoomoney_oauth_state'] = oauth_state
+    session['yoomoney_oauth_admin_id'] = session.get('panel_admin_id')
     qs = urllib.parse.urlencode({
         'client_id': client_id,
         'response_type': 'code',
         'scope': scope,
         'redirect_uri': redirect_uri,
+        'state': oauth_state,
     })
     return redirect(f'https://yoomoney.ru/oauth/authorize?{qs}')
 
 
 @bp.route('/yoomoney/callback')
+@panel_ctx.login_required
 @panel_ctx.csrf.exempt
 def yoomoney_callback_route():
     oauth_error = (request.args.get('error') or '').strip()
     if oauth_error:
         desc = (request.args.get('error_description') or oauth_error).strip()
         flash(f'YooMoney OAuth отклонён: {desc}', 'danger')
+        session.pop('yoomoney_oauth_state', None)
+        session.pop('yoomoney_oauth_admin_id', None)
+        return _ym_redirect_after_oauth()
+
+    state = (request.args.get('state') or '').strip()
+    expected_state = session.pop('yoomoney_oauth_state', None)
+    oauth_admin_id = session.pop('yoomoney_oauth_admin_id', None)
+    if not expected_state or not state or not compare_digest(expected_state, state):
+        flash('YooMoney OAuth: недействительный state. Повторите подключение из настроек.', 'danger')
+        return _ym_redirect_after_oauth()
+    current_admin_id = session.get('panel_admin_id')
+    if oauth_admin_id is not None and current_admin_id is not None:
+        try:
+            if int(oauth_admin_id) != int(current_admin_id):
+                flash('YooMoney OAuth: сессия администратора не совпадает.', 'danger')
+                return _ym_redirect_after_oauth()
+        except (TypeError, ValueError):
+            flash('YooMoney OAuth: ошибка проверки сессии.', 'danger')
+            return _ym_redirect_after_oauth()
+    if not _user_can_settings_tab_edit('payments'):
+        flash('Недостаточно прав для сохранения токена YooMoney', 'danger')
         return _ym_redirect_after_oauth()
 
     code = (request.args.get('code') or '').strip()

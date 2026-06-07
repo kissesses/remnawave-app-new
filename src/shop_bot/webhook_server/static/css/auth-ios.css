@@ -1,4 +1,4 @@
-/* Remnawave ShopBot — Auth pages (macOS / iOS dark minimal) */
+/* Remnawave App — Auth pages (macOS / iOS dark minimal) */
 
 body.auth-ios {
     --auth-bg: #000000;
@@ -471,6 +471,89 @@ body.auth-ios {
     display: block;
     width: 200px;
     height: 200px;
+}
+
+.security-totp-secret {
+    margin: 0 0 0.85rem;
+    text-align: left;
+}
+
+.security-totp-secret__label {
+    margin: 0 0 0.35rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--auth-text-tertiary);
+}
+
+.security-totp-secret__row {
+    display: flex;
+    align-items: stretch;
+    gap: 0.4rem;
+}
+
+.security-totp-secret__value {
+    flex: 1;
+    min-width: 0;
+    padding: 0.5rem 0.65rem;
+    border-radius: 10px;
+    border: 1px solid var(--auth-separator);
+    background: var(--auth-grouped);
+    color: var(--auth-text);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.75rem;
+    line-height: 1.35;
+    letter-spacing: 0.06em;
+    word-break: break-all;
+    user-select: all;
+}
+
+.security-totp-secret__copy {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.1rem;
+    flex-shrink: 0;
+    min-width: 3.25rem;
+    padding: 0.35rem 0.45rem;
+    border-radius: 10px;
+    border: 1px solid var(--auth-separator);
+    background: var(--auth-grouped);
+    color: var(--auth-text-secondary);
+    cursor: pointer;
+}
+
+.security-totp-secret__copy--done {
+    border-color: rgba(48, 209, 88, 0.45);
+    background: rgba(48, 209, 88, 0.14);
+    color: var(--auth-success);
+}
+
+.security-totp-secret__copy .material-symbols-outlined {
+    font-size: 1.1rem;
+}
+
+.security-totp-secret__copy-label {
+    font-size: 0.625rem;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.auth-alert--spaced {
+    margin-bottom: 1rem;
+}
+
+.auth-totp-back {
+    margin: 0.85rem 0 0;
+    text-align: center;
+}
+
+.auth-secondary-btn--link {
+    display: inline-flex;
+    text-decoration: none;
+    width: auto;
 }
 
 .auth-inline-form {

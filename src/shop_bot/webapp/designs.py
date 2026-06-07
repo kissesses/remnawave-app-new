@@ -16,7 +16,7 @@ WEBAPP_DESIGNS: list[dict[str, str]] = [
     },
     {
         "id": "ios",
-        "label": "LMH design",
+        "label": "Mobile",
         "desc": "Мобильный стиль с нижней панелью",
         "icon": "auto_awesome",
         "accent": "#10b981",

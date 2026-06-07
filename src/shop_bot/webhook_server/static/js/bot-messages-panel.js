@@ -120,21 +120,6 @@
         });
     }
 
-    function renderCatFilters() {
-        const wrap = $('bmsg-cat-filters');
-        if (!wrap) return;
-        wrap.innerHTML = CATEGORIES.map((c) => (
-            `<button type="button" class="bmsg-cat-filter${state.categoryFilter === c.id ? ' is-active' : ''}" data-cat="${c.id}">${c.label}</button>`
-        )).join('');
-        wrap.querySelectorAll('.bmsg-cat-filter').forEach((btn) => {
-            btn.addEventListener('click', () => {
-                state.categoryFilter = state.categoryFilter === btn.dataset.cat ? 'all' : btn.dataset.cat;
-                renderCatFilters();
-                renderCards();
-            });
-        });
-    }
-
     function escapeHtml(s) {
         return String(s ?? '')
             .replace(/&/g, '&amp;')
@@ -335,8 +320,26 @@
         if (statEl) {
             statEl.querySelector('span:last-child').textContent = `${state.meta.length} шаблонов`;
         }
-        renderCatFilters();
         renderCards();
+    }
+
+    function initCategoryNav() {
+        const nav = document.querySelector('#tab-content .settings-section-nav[data-nav-mode="filter"]');
+        if (!nav) return;
+
+        const syncFilter = (id) => {
+            state.categoryFilter = id || 'all';
+            renderCards();
+        };
+
+        nav.addEventListener('settings-section-filter', (e) => {
+            syncFilter(e.detail?.id);
+        });
+
+        const active = nav.querySelector('[data-section-nav].is-active');
+        if (active) {
+            syncFilter(active.dataset.sectionNav);
+        }
     }
 
     function bindEvents() {
@@ -376,6 +379,7 @@
         if (!$('tab-content')?.classList.contains('bmsg-page')) return;
         if (!$('bmsg-cards')) return;
         bindEvents();
+        initCategoryNav();
         loadData();
     }
 

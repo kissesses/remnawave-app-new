@@ -4,7 +4,7 @@
     const STORAGE_KEY = 'webapp-design-theme';
     const DESIGNS = {
         classic: { id: 'classic', label: 'Классический', desc: 'Текущий дизайн без изменений', icon: 'palette' },
-        ios: { id: 'ios', label: 'LMH design', desc: 'Мобильный стиль с нижней панелью', icon: 'auto_awesome' },
+        ios: { id: 'ios', label: 'Mobile', desc: 'Мобильный стиль с нижней панелью', icon: 'auto_awesome' },
         desktop: { id: 'desktop', label: 'Desktop', desc: 'Широкий макет для компьютера', icon: 'desktop_windows' },
         stealth: { id: 'stealth', label: 'Stealth', desc: 'Неоновая мини-аппа с сеткой и 3 вкладками', icon: 'shield' },
         'stealth-glass': { id: 'stealth-glass', label: 'Glass', desc: 'Стеклянная классика с верхним меню', icon: 'blur_on' },

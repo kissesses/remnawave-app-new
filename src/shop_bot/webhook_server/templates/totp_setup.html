@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8" />
-    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Настройка защиты аккаунта</title>
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='img/favicon-32x32.png') }}" />
     <meta name="theme-color" content="#0a0a0c" />
@@ -37,8 +37,8 @@
         <div class="auth-glass-chrome__grid"></div>
     </div>
 
-    <main class="auth-page">
-        <div class="auth-card auth-card--single">
+    <main class="auth-page auth-page--setup">
+        <div class="auth-card auth-card--single auth-card--setup">
             <section class="auth-form-panel">
                 <div class="auth-form-wrap auth-form-wrap--compact">
                     {% include 'partials/auth_security_hero.html' %}
@@ -46,20 +46,6 @@
                     <p class="auth-account-note">
                         Аккаунт: <strong>{{ panel_login or session.panel_login or 'administrator' }}</strong>
                     </p>
-
-                    {% if totp_secret_key and totp_secret_display %}
-                    <div class="auth-totp-secret">
-                        <p class="auth-totp-secret__label">Секретный ключ (если QR не сканируется)</p>
-                        <div class="auth-totp-secret__row">
-                            <code class="auth-totp-secret__value" id="totp-secret-text">{{ totp_secret_display }}</code>
-                            <button type="button" class="auth-totp-secret__copy" id="totp-secret-copy"
-                                data-secret="{{ totp_secret_key }}" title="Копировать ключ">
-                                <span class="material-symbols-outlined" aria-hidden="true">content_copy</span>
-                                <span class="auth-totp-secret__copy-label">Копировать</span>
-                            </button>
-                        </div>
-                    </div>
-                    {% endif %}
 
                     {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
@@ -75,124 +61,9 @@
                     {% endif %}
                     {% endwith %}
 
-                    {% if security_method == 'totp' %}
-                    <div class="auth-totp-status">
-                        {% if totp_info.enabled %}
-                        <span class="auth-status-pill auth-status-pill--ok">TOTP настроен</span>
-                        {% elif totp_info.pending_setup %}
-                        <span class="auth-status-pill auth-status-pill--pending">Ожидает подтверждения</span>
-                        {% else %}
-                        <span class="auth-status-pill">Не настроен</span>
-                        {% endif %}
-                    </div>
+                    {% include 'partials/auth_security_setup_body.html' %}
 
-                    {% if totp_info.pending_setup and totp_qr_data_uri %}
-                    <div class="auth-totp-qr">
-                        <img src="{{ totp_qr_data_uri }}" alt="QR для TOTP" width="156" height="156" />
-                    </div>
-                    <p class="auth-totp-hint">Введите 6-значный код из приложения</p>
-                    <form method="post" action="{{ url_for('settings_totp_enable') }}" autocomplete="off" novalidate>
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                        <div class="auth-field">
-                            <label class="auth-label" for="totp_code">Код из приложения</label>
-                            <div class="auth-input-wrap">
-                                <span class="auth-input-icon">
-                                    <span class="material-symbols-outlined">pin</span>
-                                </span>
-                                <input type="text" name="totp_code" id="totp_code" required inputmode="numeric"
-                                    maxlength="6" autocomplete="one-time-code" class="auth-input"
-                                    placeholder="000000" />
-                            </div>
-                        </div>
-                        <button type="submit" class="auth-submit">
-                            Подтвердить
-                            <span class="material-symbols-outlined">verified_user</span>
-                        </button>
-                    </form>
-                    <form method="post" action="{{ url_for('settings_totp_cancel') }}" class="auth-inline-form">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                        <button type="submit" class="auth-secondary-btn">Отменить</button>
-                    </form>
-                    {% elif totp_info.enabled %}
-                    <div class="auth-alert auth-alert--success">
-                        <span class="material-symbols-outlined">check_circle</span>
-                        <span>TOTP настроен. Можно перейти в панель.</span>
-                    </div>
-                    <a href="{{ url_for('dashboard_page') }}" class="auth-submit auth-submit--link">
-                        Перейти в панель
-                        <span class="material-symbols-outlined">arrow_forward</span>
-                    </a>
-                    {% else %}
-                    <form method="post" action="{{ url_for('settings_totp_begin') }}">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                        <button type="submit" class="auth-submit">
-                            Настроить TOTP
-                            <span class="material-symbols-outlined">qr_code_2</span>
-                        </button>
-                    </form>
-                    {% endif %}
-
-                    {% elif security_method == 'passkey' %}
-                    {% if passkeys %}
-                    <div class="auth-alert auth-alert--success">
-                        <span class="material-symbols-outlined">check_circle</span>
-                        <span>Passkey зарегистрирован ({{ passkeys|length }}). Можно перейти в панель.</span>
-                    </div>
-                    <a href="{{ url_for('dashboard_page') }}" class="auth-submit auth-submit--link">
-                        Перейти в панель
-                        <span class="material-symbols-outlined">arrow_forward</span>
-                    </a>
-                    {% elif passkey_available %}
-                    <div class="auth-alert auth-alert--info">
-                        <span class="material-symbols-outlined">passkey</span>
-                        <span>Добавьте Passkey (Face ID, Touch ID или USB-ключ).</span>
-                    </div>
-                    <button type="button" id="passkey-register-btn" class="auth-submit">
-                        Добавить Passkey
-                        <span class="material-symbols-outlined">passkey</span>
-                    </button>
-                    {% else %}
-                    <div class="auth-alert auth-alert--danger">
-                        <span class="material-symbols-outlined">error</span>
-                        <span>Passkey недоступен на сервере. Обратитесь к администратору.</span>
-                    </div>
-                    {% endif %}
-
-                    {% elif security_method == 'telegram' %}
-                    {% if telegram_linked %}
-                    <div class="auth-alert auth-alert--success">
-                        <span class="material-symbols-outlined">check_circle</span>
-                        <span>Telegram привязан. Можно перейти в панель.</span>
-                    </div>
-                    <a href="{{ url_for('dashboard_page') }}" class="auth-submit auth-submit--link">
-                        Перейти в панель
-                        <span class="material-symbols-outlined">arrow_forward</span>
-                    </a>
-                    {% elif telegram_bot_username %}
-                    <div class="auth-alert auth-alert--info">
-                        <span class="material-symbols-outlined">send</span>
-                        <span>Нажмите кнопку Telegram для привязки аккаунта.</span>
-                    </div>
-                    <div id="telegram-link-wrap" class="auth-alt-login__telegram"></div>
-                    {% else %}
-                    <div class="auth-alert auth-alert--danger">
-                        <span class="material-symbols-outlined">error</span>
-                        <span>Telegram-бот не настроен. Обратитесь к администратору.</span>
-                    </div>
-                    {% endif %}
-
-                    {% else %}
-                    <div class="auth-alert auth-alert--info">
-                        <span class="material-symbols-outlined">info</span>
-                        <span>Выберите способ защиты в настройках доступа.</span>
-                    </div>
-                    <a href="{{ url_for('settings_tab_page', tab='access') }}" class="auth-submit auth-submit--link">
-                        Открыть настройки
-                        <span class="material-symbols-outlined">settings</span>
-                    </a>
-                    {% endif %}
-
-                    <form method="post" action="{{ url_for('logout_page') }}" class="auth-inline-form">
+                    <form method="post" action="{{ url_for('logout_page') }}" class="auth-inline-form auth-setup-logout">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                         <button type="submit" class="auth-secondary-btn">Выйти</button>
                     </form>
@@ -203,38 +74,33 @@
         </div>
     </main>
 
+    {% include 'partials/theme_menu_auth.html' %}
+    <div id="toast-container" class="auth-toast-container"></div>
+
     {% set av = (project_info.version if project_info else '') or '' %}
     <script src="{{ url_for('static', filename='js/auth-macos.js') }}{% if av %}?v={{ av }}{% endif %}"></script>
     <script src="{{ url_for('static', filename='js/auth-glass.js') }}{% if av %}?v={{ av }}{% endif %}"></script>
+    <script src="{{ url_for('static', filename='js/auth-classic.js') }}{% if av %}?v={{ av }}{% endif %}"></script>
+    <script src="{{ url_for('static', filename='js/theme-manager.js') }}{% if av %}?v={{ av }}{% endif %}"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            var copyBtn = document.getElementById('totp-secret-copy');
-            if (copyBtn) {
-                copyBtn.addEventListener('click', function () {
-                    var raw = (copyBtn.getAttribute('data-secret') || '').replace(/\s+/g, '');
-                    if (!raw) return;
-                    var done = function () {
-                        copyBtn.classList.add('auth-totp-secret__copy--done');
-                        var label = copyBtn.querySelector('.auth-totp-secret__copy-label');
-                        if (label) label.textContent = 'Скопировано';
-                        setTimeout(function () {
-                            copyBtn.classList.remove('auth-totp-secret__copy--done');
-                            if (label) label.textContent = 'Копировать';
-                        }, 2000);
-                    };
-                    if (navigator.clipboard && navigator.clipboard.writeText) {
-                        navigator.clipboard.writeText(raw).then(done).catch(function () {
-                            window.prompt('Скопируйте ключ:', raw);
-                        });
-                    } else {
-                        window.prompt('Скопируйте ключ:', raw);
-                    }
-                });
-            }
-        });
+        window.showToast = function (type, message, duration) {
+            duration = duration || 4000;
+            var mapped = type === 'error' ? 'danger' : type;
+            var container = document.getElementById('toast-container');
+            if (!container) return;
+            var toast = document.createElement('div');
+            toast.className = 'auth-toast auth-toast--' + mapped;
+            toast.innerHTML = '<span>' + message + '</span><button type="button" aria-label="Закрыть">×</button>';
+            toast.querySelector('button').addEventListener('click', function () { toast.remove(); });
+            container.appendChild(toast);
+            setTimeout(function () {
+                toast.classList.add('auth-toast--hide');
+                setTimeout(function () { toast.remove(); }, 300);
+            }, duration);
+        };
     </script>
 
-    {% if security_method in ['passkey', 'telegram'] %}
+    {% set active_method = security_method or security_info.effective_method %}
     <script>
         window.ACCESS_AUTH = {
             csrfToken: {{ csrf_token() | tojson }},
@@ -244,11 +110,7 @@
             passkeyRegisterCompleteUrl: {{ url_for('settings_passkey_register_complete') | tojson }}
         };
     </script>
-    <script src="{{ url_for('static', filename='js/access-auth.js') }}"></script>
-    {% if security_method == 'telegram' and telegram_bot_username and not telegram_linked %}
-    <script async src="https://telegram.org/js/telegram-widget.js?22"></script>
-    {% endif %}
-    {% endif %}
+    <script src="{{ url_for('static', filename='js/access-auth.js') }}{% if av %}?v={{ av }}{% endif %}"></script>
 </body>
 
 </html>

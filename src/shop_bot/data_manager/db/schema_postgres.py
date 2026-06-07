@@ -389,6 +389,71 @@ CREATE TABLE IF NOT EXISTS panel_admin_invites (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(role_id) REFERENCES panel_roles(id)
 );
+
+CREATE TABLE IF NOT EXISTS dev_support_pairing_sessions (
+    id SERIAL PRIMARY KEY,
+    device_code TEXT NOT NULL UNIQUE,
+    user_code TEXT NOT NULL UNIQUE,
+    status TEXT NOT NULL DEFAULT 'pending',
+    panel_fp TEXT,
+    panel_domain TEXT,
+    version TEXT,
+    confirmed_at TIMESTAMP,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS dev_support_installations (
+    id TEXT PRIMARY KEY,
+    panel_fp TEXT NOT NULL,
+    public_key_b64 TEXT NOT NULL,
+    panel_domain TEXT,
+    version TEXT,
+    status TEXT NOT NULL DEFAULT 'active',
+    paired_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_seen_at TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS dev_support_tickets (
+    id SERIAL PRIMARY KEY,
+    installation_id TEXT NOT NULL REFERENCES dev_support_installations(id),
+    subject TEXT NOT NULL,
+    description TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'open',
+    shopbot_version TEXT,
+    panel_domain TEXT,
+    public_ip TEXT,
+    admin_id INTEGER,
+    admin_login TEXT,
+    admin_role TEXT,
+    diagnostics_json TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS dev_support_ticket_messages (
+    id SERIAL PRIMARY KEY,
+    ticket_id INTEGER NOT NULL REFERENCES dev_support_tickets(id) ON DELETE CASCADE,
+    sender TEXT NOT NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS dev_support_ticket_attachments (
+    id SERIAL PRIMARY KEY,
+    ticket_id INTEGER NOT NULL REFERENCES dev_support_tickets(id) ON DELETE CASCADE,
+    filename TEXT NOT NULL,
+    stored_path TEXT NOT NULL,
+    mime TEXT,
+    size_bytes INTEGER,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS dev_support_nonces (
+    nonce TEXT PRIMARY KEY,
+    installation_id TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 """
 
 _PG_INDEXES = """
@@ -420,6 +485,10 @@ CREATE INDEX IF NOT EXISTS idx_panel_webauthn_admin ON panel_webauthn_credential
 CREATE INDEX IF NOT EXISTS idx_panel_audit_created ON panel_audit_log(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_panel_admin_invites_token ON panel_admin_invites(token);
 CREATE INDEX IF NOT EXISTS idx_panel_admin_invites_expires ON panel_admin_invites(expires_at);
+CREATE INDEX IF NOT EXISTS idx_dev_support_tickets_status ON dev_support_tickets(status);
+CREATE INDEX IF NOT EXISTS idx_dev_support_tickets_installation ON dev_support_tickets(installation_id);
+CREATE INDEX IF NOT EXISTS idx_dev_support_messages_ticket ON dev_support_ticket_messages(ticket_id);
+CREATE INDEX IF NOT EXISTS idx_dev_support_nonces_created ON dev_support_nonces(created_at);
 """
 
 

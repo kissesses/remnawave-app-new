@@ -1,4 +1,4 @@
-/* Remnawave ShopBot — Settings page layout (extends panel-ios theme) */
+/* Remnawave App — Settings page layout (extends panel-ios theme) */
 
 .settings-page .hidden {
     display: none !important;
@@ -938,22 +938,6 @@ html:not(.dark) .settings-section-nav__link {
     display: flex;
     align-items: flex-start;
     gap: 0.65rem;
-}
-
-.settings-form-section__icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2rem;
-    height: 2rem;
-    border-radius: 0.5rem;
-    background: rgba(10, 132, 255, 0.12);
-    color: var(--sp-accent, #0a84ff);
-    flex-shrink: 0;
-}
-
-.settings-form-section__icon .material-symbols-outlined {
-    font-size: 1.125rem;
 }
 
 .settings-form-section__title {

@@ -449,6 +449,9 @@
                                 <h3 class="udm-card__title">Активность клиента</h3>
                                 <p class="udm-card__desc">Платежи, баланс, поддержка и действия администраторов</p>
                             </div>
+                            <a href="#" id="udm-open-timeline" class="udm-btn udm-btn--sm udm-btn--ghost" target="_blank" rel="noopener">
+                                <span class="material-symbols-outlined">open_in_new</span> Полная лента
+                            </a>
                         </header>
                         <div class="udm-card__body udm-card__body--flush">
                             <ul id="udm-activity-list" class="udm-activity-list"></ul>
@@ -749,6 +752,15 @@
                 return;
             }
 
+            const tlBtn = e.target.closest('.btn-user-timeline');
+            if (tlBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                const uid = tlBtn.getAttribute('data-uid');
+                if (uid) window.open(`/users/${encodeURIComponent(uid)}/timeline`, '_blank');
+                return;
+            }
+
             const detBtn = e.target.closest('.btn-user-details');
             if (detBtn) {
                 e.preventDefault();
@@ -881,6 +893,10 @@
                 if (typeof data === 'string' && isLoginPage(data)) { window.location.reload(); return; }
 
                 if (data && data.ok) {
+                    const timelineLink = document.getElementById('udm-open-timeline');
+                    if (timelineLink) {
+                        timelineLink.href = `/users/${encodeURIComponent(uid)}/timeline`;
+                    }
                     const sellerInfo = data.seller_info || { active: false, settings: {} };
                     const sellerActive = sellerInfo.active;
                     const sellerSettings = sellerInfo.settings || { seller_sale: 0, seller_ref: 0, seller_uuid: "0" };
@@ -1236,6 +1252,7 @@
                         };
                         const items = data.activity || [];
                         activityList.innerHTML = items.length ? items.map(item => {
+                            const kind = kindClass[item.kind] ? item.kind : 'system';
                             const amount = item.amount != null && item.kind !== 'support'
                                 ? `<span class="udm-activity-item__amount">${formatMoney(Number(item.amount), item.kind === 'balance')}</span>`
                                 : '';
@@ -1243,8 +1260,8 @@
                                 ? `<a href="/support/${item.ticket_id}" class="udm-activity-item__link">Открыть →</a>`
                                 : '';
                             return `
-                            <li class="udm-activity-item ${kindClass[item.kind] || ''}">
-                                <span class="udm-activity-item__icon material-symbols-outlined">${kindIcon[item.kind] || 'info'}</span>
+                            <li class="udm-activity-item ${kindClass[kind] || ''}">
+                                <span class="udm-activity-item__icon material-symbols-outlined">${kindIcon[kind] || 'info'}</span>
                                 <div class="udm-activity-item__body">
                                     <div class="udm-activity-item__title">${escapeHtml(item.title || 'Событие')}</div>
                                     <div class="udm-activity-item__sub">${escapeHtml(item.subtitle || '')}</div>

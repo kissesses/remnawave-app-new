@@ -131,7 +131,9 @@
                         <span class="material-symbols-outlined">search</span>
                         <input type="search" id="acc-role-search" class="acc-search__input" placeholder="Поиск роли…" autocomplete="off" />
                     </div>
+                    {% if can_edit('settings_access') %}
                     <a href="{{ url_for('settings_tab_page', tab='access') }}#roles" class="acc-btn acc-btn--ghost acc-btn--sm">+ Новая</a>
+                    {% endif %}
                 </div>
                 <div class="acc-tile-grid" id="acc-role-grid">
                     {% for role in panel_roles %}
@@ -152,6 +154,7 @@
             </div>
 
             <div class="acc-editor acc-card">
+                {% if can_edit('settings_access') %}
                 <form action="{{ url_for('settings_access_role_save') }}" method="post" data-submit-mode="native" class="acc-form" id="acc-role-form">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                     <input type="hidden" name="role_id" value="{{ edit_role.id if edit_role else '' }}" />
@@ -273,6 +276,20 @@
                         {% endif %}
                     </div>
                 </form>
+                {% else %}
+                <div class="acc-form acc-form--readonly">
+                    <div class="acc-editor__head">
+                        <p class="acc-editor__eyebrow">Просмотр</p>
+                        <h3 class="acc-editor__title">{{ edit_role.name if edit_role else 'Роль доступа' }}</h3>
+                    </div>
+                    {% if edit_role %}
+                    {% if edit_role.description %}<p class="acc-card__desc">{{ edit_role.description }}</p>{% endif %}
+                    <p class="acc-info">Режим просмотра. Для изменений нужно право «Администраторы и роли» с уровнем «Редактирование».</p>
+                    {% else %}
+                    <p class="acc-empty">Выберите роль слева для просмотра</p>
+                    {% endif %}
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -286,7 +303,9 @@
                         <span class="material-symbols-outlined">search</span>
                         <input type="search" id="acc-admin-search" class="acc-search__input" placeholder="Поиск админа…" autocomplete="off" />
                     </div>
+                    {% if can_edit('settings_access') %}
                     <a href="{{ url_for('settings_tab_page', tab='access') }}#admins" class="acc-btn acc-btn--ghost acc-btn--sm">+ Новый</a>
+                    {% endif %}
                 </div>
                 <div class="acc-tile-grid" id="acc-admin-grid">
                     {% for admin in panel_admins %}
@@ -306,6 +325,7 @@
             </div>
 
             <div class="acc-editor acc-card">
+                {% if can_edit('settings_access') %}
                 <form action="{{ url_for('settings_access_admin_save') }}" method="post" data-submit-mode="native" class="acc-form" autocomplete="off">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                     <input type="hidden" name="admin_id" value="{{ edit_admin.id if edit_admin else '' }}" />
@@ -333,7 +353,7 @@
                         <div class="acc-field">
                             <label class="acc-label" for="acc-admin-role">Роль</label>
                             <select id="acc-admin-role" name="admin_role_id" required class="acc-input">
-                                {% for role in panel_roles %}
+                                {% for role in panel_roles if panel_is_superadmin or not role.is_superadmin %}
                                 <option value="{{ role.id }}" {% if edit_admin and edit_admin.role_id == role.id %}selected{% endif %}>{{ role.name }}</option>
                                 {% endfor %}
                             </select>
@@ -369,6 +389,20 @@
                         {% endif %}
                     </div>
                 </form>
+                {% else %}
+                <div class="acc-form acc-form--readonly">
+                    <div class="acc-editor__head">
+                        <p class="acc-editor__eyebrow">Просмотр</p>
+                        <h3 class="acc-editor__title">{{ edit_admin.login if edit_admin else 'Учётная запись' }}</h3>
+                    </div>
+                    {% if edit_admin %}
+                    <p class="acc-card__desc">Роль: {{ edit_admin.role_name }} · {% if edit_admin.is_active %}активен{% else %}выключен{% endif %}</p>
+                    <p class="acc-info">Режим просмотра. Для изменений нужно право «Администраторы и роли» с уровнем «Редактирование».</p>
+                    {% else %}
+                    <p class="acc-empty">Выберите администратора слева для просмотра</p>
+                    {% endif %}
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -456,20 +490,24 @@
             <form action="{{ url_for('settings_access_auth_methods') }}" method="post" data-submit-mode="native" class="acc-form">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                 <label class="acc-method-card">
-                    <input type="checkbox" name="telegram_login_enabled" {% if settings.telegram_login_enabled == '1' %}checked{% endif %} />
+                    <input type="checkbox" name="telegram_login_enabled" {% if settings.telegram_login_enabled == '1' %}checked{% endif %} {% if not can_edit('settings_access') %}disabled{% endif %} />
                     <span class="acc-method-card__body">
                         <span class="acc-method-card__title">Telegram Login</span>
                         <span class="acc-method-card__desc">Widget — нужен @username основного бота</span>
                     </span>
                 </label>
                 <label class="acc-method-card {% if not passkey_available %}is-disabled{% endif %}">
-                    <input type="checkbox" name="passkey_login_enabled" {% if settings.passkey_login_enabled == '1' %}checked{% endif %} {% if not passkey_available %}disabled{% endif %} />
+                    <input type="checkbox" name="passkey_login_enabled" {% if settings.passkey_login_enabled == '1' %}checked{% endif %} {% if not passkey_available or not can_edit('settings_access') %}disabled{% endif %} />
                     <span class="acc-method-card__body">
                         <span class="acc-method-card__title">Passkey (WebAuthn)</span>
                         <span class="acc-method-card__desc">Face ID, Touch ID, YubiKey{% if not passkey_available %} — установите webauthn{% endif %}</span>
                     </span>
                 </label>
+                {% if can_edit('settings_access') %}
                 <button type="submit" class="acc-btn acc-btn--primary">Сохранить</button>
+                {% else %}
+                <p class="acc-info">Изменение методов входа доступно только с правом редактирования раздела «Доступ».</p>
+                {% endif %}
             </form>
         </div>
     </div>
@@ -520,112 +558,20 @@
                 </div>
 
                 {% if security_info.forced_totp %}
-                <div class="acc-info">Обязательна 2FA (<code>SHOPBOT_REQUIRE_TOTP=1</code>). «Только пароль» недоступен.</div>
+                <div class="acc-info">Обязательна двухфакторная защита (настройка сервера). «Только пароль» недоступен.</div>
                 {% else %}
                 <p class="acc-card__desc">Индивидуальная настройка — каждый администратор выбирает способ сам.</p>
                 {% endif %}
 
-                <form action="{{ url_for('settings_security_method_save') }}" method="post" data-submit-mode="native" class="acc-form">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                    {% set selected_method = security_info.effective_method %}
-                    {% for method_id, method_label in security_methods.items() %}
-                    {% set desc = security_method_descriptions.get(method_id, '') %}
-                    <label class="acc-method-card acc-method-card--radio {% if selected_method == method_id %}is-selected{% endif %}
-                        {% if method_id == 'passkey' and not passkey_available %}is-disabled{% endif %}
-                        {% if security_info.forced_totp and method_id == 'none' %}is-disabled{% endif %}">
-                        <input type="radio" name="auth_security_method" value="{{ method_id }}"
-                            {% if selected_method == method_id %}checked{% endif %}
-                            {% if security_info.forced_totp and method_id == 'none' %}disabled{% endif %}
-                            {% if method_id == 'passkey' and not passkey_available %}disabled{% endif %} />
-                        <span class="acc-method-card__body">
-                            <span class="acc-method-card__title">{{ method_label }}</span>
-                            <span class="acc-method-card__desc">{{ desc }}</span>
-                        </span>
-                    </label>
-                    {% endfor %}
-                    <button type="submit" class="acc-btn acc-btn--primary">Сохранить выбор</button>
-                </form>
+                {% with security_ui='panel' %}
+                {% include 'partials/security_method_form.html' %}
+                {% endwith %}
             </div>
 
             <div class="acc-card acc-card--setup">
-                {% set active_method = security_info.effective_method %}
-
-                {% if active_method == 'none' %}
-                <div class="acc-info">Рекомендуем TOTP, Passkey или Telegram.</div>
-                {% if totp_info.enabled %}
-                <form action="{{ url_for('settings_totp_disable') }}" method="post" data-submit-mode="native" novalidate class="acc-inline-form">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                    <input type="text" name="totp_code" required inputmode="numeric" maxlength="6" autocomplete="one-time-code" class="acc-input" placeholder="Код TOTP" />
-                    <button type="submit" class="acc-btn acc-btn--danger" data-confirm="Отключить TOTP?">Отключить TOTP</button>
-                </form>
-                {% endif %}
-
-                {% elif active_method == 'totp' %}
-                <h4 class="acc-setup-title">Настройка TOTP</h4>
-                {% if totp_info.pending_setup and totp_qr_data_uri %}
-                <p class="acc-card__desc">Отсканируйте QR и введите код.</p>
-                <div class="acc-qr-wrap"><img src="{{ totp_qr_data_uri }}" alt="QR 2FA" width="200" height="200" /></div>
-                <form action="{{ url_for('settings_totp_enable') }}" method="post" data-submit-mode="native" novalidate class="acc-inline-form">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                    <input type="text" name="totp_code" required inputmode="numeric" maxlength="6" autocomplete="one-time-code" class="acc-input" placeholder="000000" />
-                    <button type="submit" class="acc-btn acc-btn--primary">Подтвердить</button>
-                    <button type="submit" formaction="{{ url_for('settings_totp_cancel') }}" formmethod="post" class="acc-btn acc-btn--ghost">Отмена</button>
-                </form>
-                {% elif totp_info.enabled %}
-                <div class="acc-info acc-info--ok">TOTP активен — запрашивается при входе.</div>
-                {% else %}
-                <form action="{{ url_for('settings_totp_begin') }}" method="post" data-submit-mode="native">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                    <button type="submit" class="acc-btn acc-btn--primary">Настроить TOTP</button>
-                </form>
-                {% endif %}
-
-                {% elif active_method == 'passkey' %}
-                <h4 class="acc-setup-title">Passkey</h4>
-                {% if not passkey_available %}
-                <div class="acc-info">Установите пакет <code>webauthn</code>.</div>
-                {% else %}
-                {% if passkeys %}
-                <ul class="acc-passkey-list">
-                    {% for pk in passkeys %}
-                    <li class="acc-passkey-item">
-                        <div>
-                            <div class="acc-passkey-item__name">{{ pk.label }}</div>
-                            <div class="acc-passkey-item__meta">{{ pk.created_at or '—' }}{% if pk.last_used_at %} · {{ pk.last_used_at }}{% endif %}</div>
-                        </div>
-                        <form action="{{ url_for('settings_passkey_delete', credential_id=pk.id) }}" method="post" data-submit-mode="native">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                            <button type="submit" class="acc-btn acc-btn--danger acc-btn--sm" data-confirm="Удалить «{{ pk.label }}»?">Удалить</button>
-                        </form>
-                    </li>
-                    {% endfor %}
-                </ul>
-                {% else %}
-                <p class="acc-card__desc">Зарегистрируйте Passkey для завершения настройки.</p>
-                {% endif %}
-                <div class="acc-inline-form">
-                    <input type="text" id="passkey-label-input" maxlength="64" placeholder="MacBook, YubiKey…" class="acc-input" />
-                    <button type="button" id="passkey-register-btn" class="acc-btn acc-btn--primary">Добавить Passkey</button>
-                </div>
-                {% endif %}
-
-                {% elif active_method == 'telegram' %}
-                <h4 class="acc-setup-title">Telegram</h4>
-                {% if current_admin and current_admin.telegram_user_id %}
-                <div class="acc-info acc-info--ok flex-wrap">
-                    <span>Привязан: {% if current_admin.telegram_username %}@{{ current_admin.telegram_username }}{% else %}ID {{ current_admin.telegram_user_id }}{% endif %}</span>
-                    <form action="{{ url_for('settings_telegram_unlink') }}" method="post" data-submit-mode="native">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                        <button type="submit" class="acc-btn acc-btn--danger acc-btn--sm" data-confirm="Отвязать?">Отвязать</button>
-                    </form>
-                </div>
-                {% elif telegram_bot_username %}
-                <p class="acc-card__desc">Привяжите Telegram для завершения настройки.</p>
-                <div id="telegram-link-wrap"></div>
-                {% else %}
-                <div class="acc-info">Укажите @username бота в «Боты» и включите Telegram Login.</div>
-                {% endif %}
-                {% endif %}
+                {% with security_ui='panel' %}
+                {% include 'partials/security_configure.html' %}
+                {% endwith %}
             </div>
         </div>
     </div>

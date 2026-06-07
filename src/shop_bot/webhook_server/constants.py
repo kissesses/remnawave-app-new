@@ -41,6 +41,10 @@ ALL_SETTINGS_KEYS = [
     "backup_encrypt_enabled", "backup_password_mode",
     "backup_telegram_chat_id", "backup_telegram_topic_id",
     "backup_secrets_chat_id", "backup_secrets_topic_id",
+    "notifications_chat_id",
+    "notifications_topic_crm", "notifications_topic_backup", "notifications_topic_secrets",
+    "notifications_topic_auth", "notifications_topic_nodes", "notifications_topic_payments",
+    "notifications_topic_sql", "notifications_topic_trial", "notifications_topic_tickets",
     "backup_remnawave_mode", "backup_remnawave_compose_dir", "backup_remnawave_ssh_target",
     "backup_remnawave_pg_service", "backup_remnawave_database_url", "backup_remnawave_compose_cmd",
 
@@ -79,14 +83,17 @@ SETTINGS_NAV_GROUPS: dict[str, dict[str, str]] = {
     "system": {
         "label": "Система",
         "desc": "Панель, боты и доступ",
+        "icon": "settings",
     },
     "services": {
         "label": "Сервисы",
         "desc": "Платежи, хосты и контент",
+        "icon": "hub",
     },
     "tools": {
         "label": "Инструменты",
         "desc": "Рассылка, логи и интеграции",
+        "icon": "handyman",
     },
 }
 
@@ -106,7 +113,7 @@ SETTINGS_TAB_SECTIONS: dict[str, list[dict[str, str]]] = {
     ],
     "bot": [
         {"id": "bot-telegram", "label": "Telegram боты", "icon": "smart_toy"},
-        {"id": "bot-channels", "label": "Каналы и топики", "icon": "chat"},
+        {"id": "bot-channels", "label": "Уведомления", "icon": "chat"},
     ],
     "content": [
         {"id": "all", "label": "Все", "icon": "forum"},
@@ -200,6 +207,10 @@ SETTINGS_TAB_TEXT_KEYS: dict[str, list[str]] = {
     "bot": [
         "telegram_bot_token", "telegram_bot_username", "admin_telegram_id",
         "support_bot_token", "support_bot_username", "support_forum_chat_id",
+        "notifications_chat_id",
+        "notifications_topic_crm", "notifications_topic_backup", "notifications_topic_secrets",
+        "notifications_topic_auth", "notifications_topic_nodes", "notifications_topic_payments",
+        "notifications_topic_sql", "notifications_topic_trial", "notifications_topic_tickets",
         "backup_telegram_chat_id", "backup_telegram_topic_id",
         "backup_secrets_chat_id", "backup_secrets_topic_id",
     ],

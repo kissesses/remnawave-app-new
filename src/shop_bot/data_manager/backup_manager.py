@@ -181,34 +181,8 @@ def _parse_telegram_topic_id(raw: str) -> int | None:
 
 def assess_backup_delivery(cfg: dict[str, Any]) -> dict[str, Any]:
     """Проверка каналов Telegram для доставки бэкапов (передавать cfg до merge assess)."""
-    alerts: list[str] = []
-    archive_chat = (cfg.get("telegram_chat_id") or "").strip()
-    secrets_chat = (cfg.get("secrets_chat_id") or "").strip()
-    encrypt = bool(cfg.get("encrypt_enabled", True))
-    autobackup_tg = bool(cfg.get("autobackup_telegram", True))
-    autobackup_on = int(cfg.get("interval_days") or 0) > 0
-
-    archive_ok = bool(_parse_telegram_chat_id(archive_chat))
-    secrets_ok = bool(_parse_telegram_chat_id(secrets_chat))
-    delivery_ready = archive_ok and (not encrypt or secrets_ok)
-
-    if autobackup_tg and autobackup_on:
-        if not archive_ok:
-            alerts.append(
-                "Автобэкап в Telegram: укажите Chat ID канала архивов в Настройки → Боты → Каналы и топики."
-            )
-        if encrypt and not secrets_ok:
-            alerts.append(
-                "Автобэкап: включено шифрование — нужен Chat ID для паролей (секретный топик)."
-            )
-
-    return {
-        "archive_channel_configured": archive_ok,
-        "secrets_channel_configured": secrets_ok,
-        "delivery_ready": delivery_ready,
-        "autobackup_delivery_blocked": bool(alerts),
-        "delivery_alerts": alerts,
-    }
+    from shop_bot.data_manager import telegram_notify
+    return telegram_notify.assess_backup_delivery(cfg)
 
 
 def format_size(size: int) -> str:
@@ -844,7 +818,7 @@ def restore_from_file(
                 return result
 
         if not validate_backup_file(work_path):
-            result["errors"].append("Файл не прошёл проверку (повреждён или не архив приложения)")
+            result["errors"].append("Файл не прошёл проверку (повреждён или не архив shopbot)")
             return result
 
         caps = archive_capabilities(work_path)
@@ -853,7 +827,7 @@ def restore_from_file(
         do_rw = caps["remnawave"] if restore_remnawave is None else restore_remnawave
 
         if do_db and not caps["database"]:
-            result["errors"].append("В архиве нет дампа базы данных")
+            result["errors"].append("В архиве нет дампа базы данных shopbot")
             return result
         if do_files and not caps["files"]:
             result["errors"].append("В архиве нет файлов проекта")
@@ -989,53 +963,50 @@ async def deliver_backup_notifications(
 
     sent_archive = 0
     archive_error: str | None = None
-    chat_id = _parse_telegram_chat_id(cfg.get("telegram_chat_id") or "")
-    thread_id = _parse_telegram_topic_id(cfg.get("telegram_topic_id") or "")
+    from shop_bot.data_manager import telegram_notify as tg_notify
 
-    if chat_id is not None:
+    archive_dest = tg_notify.resolve_destination(tg_notify.CATEGORY_BACKUP)
+    if not archive_dest.via_dm:
         try:
-            kwargs: dict[str, Any] = {
-                "chat_id": chat_id,
-                "document": FSInputFile(str(zip_path)),
-                "caption": caption,
-            }
-            if thread_id is not None:
-                kwargs["message_thread_id"] = thread_id
-            await bot.send_document(**kwargs)
-            sent_archive = 1
+            sent_archive = await tg_notify.send_document(
+                bot,
+                tg_notify.CATEGORY_BACKUP,
+                FSInputFile(str(zip_path)),
+                caption=caption,
+                parse_mode="HTML",
+            )
+            if sent_archive <= 0:
+                archive_error = "send failed"
         except Exception as e:
             archive_error = str(e)
-            logger.error(
-                "Бэкап: не удалось отправить архив в канал %s (topic=%s): %s",
-                chat_id, thread_id, e,
-            )
+            logger.error("Бэкап: не удалось отправить архив: %s", e)
     elif fallback_to_admins:
         sent_archive = await _send_backup_to_admin_dms(bot, zip_path, caption)
     else:
-        logger.warning("Бэкап: backup_telegram_chat_id не задан — архив в Telegram не отправлен")
+        logger.warning("Бэкап: канал архивов не задан — архив в Telegram не отправлен")
 
     sent_secret = 0
     secret_error: str | None = None
-    sec_chat = _parse_telegram_chat_id(cfg.get("secrets_chat_id") or "")
-    if password and sec_chat is not None:
-        try:
-            sec_thread = _parse_telegram_topic_id(cfg.get("secrets_topic_id") or "")
-            text = (
-                f"🔐 <b>Пароль архива</b>\n"
-                f"<code>{zip_path.name}</code>\n\n"
-                f"<tg-spoiler>{password}</tg-spoiler>\n\n"
-                f"⚠️ Не пересылайте вместе с файлом архива."
-            )
-            kwargs = {"chat_id": sec_chat, "text": text, "parse_mode": "HTML"}
-            if sec_thread is not None:
-                kwargs["message_thread_id"] = sec_thread
-            await bot.send_message(**kwargs)
-            sent_secret = 1
-        except Exception as e:
-            secret_error = str(e)
-            logger.error("Бэкап: не удалось отправить пароль в секретный чат %s: %s", sec_chat, e)
-    elif password and encrypted:
-        logger.warning("Бэкап: пароль не отправлен — не настроен backup_secrets_chat_id")
+    if password and encrypted:
+        sec_dest = tg_notify.resolve_destination(tg_notify.CATEGORY_SECRETS)
+        if not sec_dest.via_dm:
+            try:
+                text = (
+                    f"🔐 <b>Пароль архива</b>\n"
+                    f"<code>{zip_path.name}</code>\n\n"
+                    f"<tg-spoiler>{password}</tg-spoiler>\n\n"
+                    f"⚠️ Не пересылайте вместе с файлом архива."
+                )
+                sent_secret = await tg_notify.send_notification(
+                    bot, tg_notify.CATEGORY_SECRETS, text,
+                )
+                if sent_secret <= 0:
+                    secret_error = "send failed"
+            except Exception as e:
+                secret_error = str(e)
+                logger.error("Бэкап: не удалось отправить пароль: %s", e)
+        else:
+            logger.warning("Бэкап: пароль не отправлен — не настроен канал секретов")
 
     return {
         "archive": sent_archive,

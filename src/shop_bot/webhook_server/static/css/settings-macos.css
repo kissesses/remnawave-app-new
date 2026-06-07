@@ -9,7 +9,7 @@
     display: block !important;
 }
 
-.settings-tab-sectioned .settings-form-section__header {
+html[data-design="macos-v2"] .settings-tab-sectioned .settings-form-section__header {
     display: none !important;
 }
 

@@ -194,10 +194,16 @@
                             <span class="hst-tile-form__label"><span class="material-symbols-outlined">palette</span> Стиль кнопки</span>
                             <div class="hst-swatch-row">
                                 {% set cur_style = host.button_style or '' %}
-                                {% for val, lbl, cls in [('', '—', 'swatch-default'), ('danger', '🔴', 'swatch-danger'), ('success', '🟢', 'swatch-success'), ('primary', '🔵', 'swatch-primary')] %}
+                                {% for val, lbl, dot in [('', '—', ''), ('danger', 'Красный', 'danger'), ('success', 'Зелёный', 'success'), ('primary', 'Синий', 'primary')] %}
                                 <label>
                                     <input type="radio" name="button_style" value="{{ val }}" class="sr-only peer" {% if cur_style == val %}checked{% endif %} />
-                                    <span class="inline-flex items-center justify-center w-7 h-7 rounded-lg border-2 text-xs font-bold border-white/10 {{ cls }}">{{ lbl }}</span>
+                                    <span class="settings-color-swatch{% if not val %} settings-color-swatch--empty{% endif %}" title="{{ lbl }}">
+                                        {% if dot %}
+                                        <span class="settings-color-swatch__dot settings-color-swatch__dot--{{ dot }}"></span>
+                                        {% else %}
+                                        <span class="material-symbols-outlined">remove</span>
+                                        {% endif %}
+                                    </span>
                                 </label>
                                 {% endfor %}
                             </div>
@@ -398,10 +404,16 @@
                                     </div>
                                     <div class="hst-swatch-row" style="margin:0.35rem 0">
                                         {% set p_style = plan.button_style or '' %}
-                                        {% for val, lbl, cls in [('', '—', 'swatch-default'), ('danger', '🔴', 'swatch-danger'), ('success', '🟢', 'swatch-success'), ('primary', '🔵', 'swatch-primary')] %}
+                                        {% for val, lbl, dot in [('', '—', ''), ('danger', 'Красный', 'danger'), ('success', 'Зелёный', 'success'), ('primary', 'Синий', 'primary')] %}
                                         <label>
                                             <input type="radio" name="button_style" value="{{ val }}" class="sr-only peer" {% if p_style == val %}checked{% endif %} />
-                                            <span class="inline-flex items-center justify-center w-6 h-6 rounded text-[10px] font-bold border border-white/10 {{ cls }}">{{ lbl }}</span>
+                                            <span class="settings-color-swatch settings-color-swatch--sm{% if not val %} settings-color-swatch--empty{% endif %}" title="{{ lbl }}">
+                                                {% if dot %}
+                                                <span class="settings-color-swatch__dot settings-color-swatch__dot--{{ dot }}"></span>
+                                                {% else %}
+                                                <span class="material-symbols-outlined">remove</span>
+                                                {% endif %}
+                                            </span>
                                         </label>
                                         {% endfor %}
                                     </div>
@@ -435,10 +447,16 @@
                             </div>
                             <div class="hst-form-row">
                                 <div class="hst-swatch-row">
-                                    {% for val, lbl, cls in [('', '—', 'swatch-default'), ('danger', '🔴', 'swatch-danger'), ('success', '🟢', 'swatch-success'), ('primary', '🔵', 'swatch-primary')] %}
+                                    {% for val, lbl, dot in [('', '—', ''), ('danger', 'Красный', 'danger'), ('success', 'Зелёный', 'success'), ('primary', 'Синий', 'primary')] %}
                                     <label>
                                         <input type="radio" name="button_style" value="{{ val }}" class="sr-only peer" {% if val == '' %}checked{% endif %} />
-                                        <span class="inline-flex items-center justify-center w-6 h-6 rounded text-[10px] font-bold border border-white/10 {{ cls }}">{{ lbl }}</span>
+                                        <span class="settings-color-swatch settings-color-swatch--sm{% if not val %} settings-color-swatch--empty{% endif %}" title="{{ lbl }}">
+                                            {% if dot %}
+                                            <span class="settings-color-swatch__dot settings-color-swatch__dot--{{ dot }}"></span>
+                                            {% else %}
+                                            <span class="material-symbols-outlined">remove</span>
+                                            {% endif %}
+                                        </span>
                                     </label>
                                     {% endfor %}
                                 </div>

@@ -2,9 +2,11 @@
 <header class="settings-form-section__header">
     <div class="settings-form-section__header-main">
         {% if section_icon %}
-        <span class="settings-form-section__icon" aria-hidden="true">
-            <span class="material-symbols-outlined">{{ section_icon }}</span>
-        </span>
+        {% set settings_icon = section_icon %}
+        {% set settings_icon_variant = 'section-header' %}
+        {% set settings_icon_id = section_id %}
+        {% set settings_icon_class = '' %}
+        {% include 'partials/settings/icon.html' %}
         {% endif %}
         <div>
             <h2 class="settings-form-section__title">{{ section_title }}</h2>

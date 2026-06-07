@@ -358,16 +358,16 @@
         if (results.length < 2) return;
         results.sort((a, b) => b.download - a.download);
         const badges = [
-            { emoji: '🥇', bg: 'rgba(234,179,8,0.2)', border: 'rgba(234,179,8,0.3)', color: '#fde047', label: '1 место' },
-            { emoji: '🥈', bg: 'rgba(156,163,175,0.2)', border: 'rgba(156,163,175,0.3)', color: '#d1d5db', label: '2 место' },
-            { emoji: '🥉', bg: 'rgba(180,83,9,0.2)', border: 'rgba(217,119,6,0.3)', color: '#fbbf24', label: '3 место' }
+            { icon: 'workspace_premium', bg: 'rgba(234,179,8,0.2)', border: 'rgba(234,179,8,0.3)', color: '#fde047', label: '1 место' },
+            { icon: 'military_tech', bg: 'rgba(156,163,175,0.2)', border: 'rgba(156,163,175,0.3)', color: '#d1d5db', label: '2 место' },
+            { icon: 'emoji_events', bg: 'rgba(180,83,9,0.2)', border: 'rgba(217,119,6,0.3)', color: '#fbbf24', label: '3 место' }
         ];
         const count = Math.min(3, results.length);
         for (let i = 0; i < count; i++) {
             const el = document.getElementById(`st-badge-${results[i].name}`);
             if (el) {
                 const b = badges[i];
-                el.innerHTML = `<span style="display:inline-flex;align-items:center;gap:2px;padding:2px 6px;border-radius:6px;background:${b.bg};border:1px solid ${b.border};color:${b.color};font-size:8px;font-weight:700;">${b.emoji} ${b.label}</span>`;
+                el.innerHTML = `<span class="settings-rank-badge" style="background:${b.bg};border:1px solid ${b.border};color:${b.color};"><span class="material-symbols-outlined">${b.icon}</span>${b.label}</span>`;
             }
         }
     }

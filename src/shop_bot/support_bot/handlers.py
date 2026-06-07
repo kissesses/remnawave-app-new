@@ -368,8 +368,19 @@ def get_support_router() -> Router:
         username_display = _get_username_display(message.from_user, message.from_user.id)
         message_content = message.text or message.caption or ("[Фото]" if message.photo else "[Видео]" if message.video else "")
         notification_text = _build_notification_text(ticket_id, message.from_user.id, username_display, subject, message_content, created_new)
-        
-        
+
+        from shop_bot.data_manager import telegram_notify as tg_notify
+        dest = tg_notify.resolve_destination(tg_notify.CATEGORY_TICKETS)
+        if not dest.via_dm:
+            try:
+                await tg_notify.send_notification(
+                    bot, tg_notify.CATEGORY_TICKETS, notification_text,
+                    reply_markup=_admin_dm_reply_kb(ticket_id),
+                )
+            except Exception as e:
+                logger.warning(f"Не удалось отправить уведомление о тикете {ticket_id} в топик: {e}")
+            return
+
         for aid in get_admin_ids():
             try:
                 if message.text or (message.caption and not created_new):

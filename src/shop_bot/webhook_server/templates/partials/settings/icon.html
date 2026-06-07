@@ -1,0 +1,9 @@
+{# Theme-aware settings icon — set settings_icon, optional settings_icon_variant + settings_icon_id + settings_icon_class #}
+{% set _variant = settings_icon_variant|default('inline') %}
+{% set _id = settings_icon_id|default('') %}
+{% set _id_class = _id if _variant in ['nav', 'section-nav', 'section-header'] else '' %}
+<span class="settings-ui-icon settings-ui-icon--{{ _variant }}{% if _id_class %} settings-ui-icon--{{ _id_class }}{% endif %}{% if _variant == 'nav' and _id %} settings-nav-icon settings-nav-icon--{{ _id }}{% endif %}{% if settings_icon_class %} {{ settings_icon_class }}{% endif %}"
+    {% if settings_icon_title %}title="{{ settings_icon_title }}"{% endif %}
+    aria-hidden="true">
+    <span class="material-symbols-outlined">{{ settings_icon }}</span>
+</span>

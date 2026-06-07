@@ -203,7 +203,7 @@
                     {% elif totp_step %}
                     <form method="post" action="/login" autocomplete="off" novalidate>
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                        <div class="auth-alert auth-alert--info" style="margin-bottom: 1rem;">
+                        <div class="auth-alert auth-alert--info auth-alert--spaced">
                             <span class="material-symbols-outlined">phonelink_lock</span>
                             <span>Введите 6-значный код из приложения аутентификатора{% if pending_login %} для <strong>{{ pending_login }}</strong>{% endif %}.</span>
                         </div>
@@ -215,7 +215,7 @@
                                 </span>
                                 <input type="text" name="totp_code" id="totp_code" required
                                     inputmode="numeric" maxlength="6" autocomplete="one-time-code"
-                                    class="auth-input" placeholder="000000" />
+                                    class="auth-input" placeholder="000000" autofocus />
                             </div>
                         </div>
                         <button type="submit" class="auth-submit">
@@ -223,6 +223,9 @@
                             <span class="material-symbols-outlined">verified_user</span>
                         </button>
                     </form>
+                    <p class="auth-totp-back">
+                        <a href="{{ url_for('login_totp_cancel') }}" class="auth-secondary-btn auth-secondary-btn--link">← Другой аккаунт</a>
+                    </p>
                     {% else %}
                     <form method="post" action="/login" autocomplete="off" id="auth-login-form">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />

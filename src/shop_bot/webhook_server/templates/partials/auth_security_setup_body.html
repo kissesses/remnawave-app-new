@@ -1,0 +1,30 @@
+{# Mandatory 2FA setup — method picker + configuration #}
+{% set active_method = security_method or security_info.effective_method %}
+{% set step2_active = active_method != 'none' %}
+
+<nav class="auth-setup-steps" aria-label="Шаги настройки">
+    <span class="auth-setup-step{% if active_method == 'none' %} is-active{% else %} is-done{% endif %}">1. Способ защиты</span>
+    <span class="auth-setup-step{% if step2_active %} is-active{% endif %}">2. Настройка</span>
+</nav>
+
+{% if security_info.forced_totp %}
+<div class="auth-alert auth-alert--info auth-setup-forced">
+    <span class="material-symbols-outlined">shield</span>
+    <span>Администратор сервера требует двухфакторную защиту. Выберите TOTP, Passkey или Telegram.</span>
+</div>
+{% endif %}
+
+<section class="auth-setup-section{% if step2_active %} auth-setup-section--collapsed{% endif %}" aria-labelledby="auth-setup-method-title" id="auth-setup-method-section">
+    <h2 id="auth-setup-method-title" class="auth-setup-section__title">Способ защиты</h2>
+    {% include 'partials/security_method_form.html' %}
+    {% if step2_active %}
+    <button type="button" class="auth-setup-section__toggle" id="auth-setup-method-toggle" aria-expanded="false">
+        Изменить способ
+    </button>
+    {% endif %}
+</section>
+
+<section class="auth-setup-section auth-setup-section--configure" aria-labelledby="auth-setup-configure-title" id="auth-setup-configure-section">
+    <h2 id="auth-setup-configure-title" class="auth-setup-section__title">Настройка</h2>
+    {% include 'partials/security_configure.html' %}
+</section>

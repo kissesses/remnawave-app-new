@@ -285,7 +285,27 @@
         const nav = document.querySelector('.settings-section-nav');
         if (!nav) return;
 
+        const navMode = nav.dataset.navMode || 'sections';
         const links = nav.querySelectorAll('[data-section-nav]');
+
+        const setActive = (id) => {
+            links.forEach((link) => {
+                link.classList.toggle('is-active', link.dataset.sectionNav === id);
+            });
+        };
+
+        if (navMode === 'filter') {
+            links.forEach((link) => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const id = link.dataset.sectionNav || '';
+                    setActive(id);
+                    nav.dispatchEvent(new CustomEvent('settings-section-filter', { detail: { id } }));
+                });
+            });
+            return;
+        }
+
         const tabContent = nav.closest('.tab-content');
         const sections = tabContent
             ? Array.from(tabContent.querySelectorAll('.settings-form-section'))
@@ -298,12 +318,6 @@
         }
 
         const panelMode = Boolean(tabContent?.classList.contains('settings-tab-sectioned')) && sections.length > 0;
-
-        const setActive = (id) => {
-            links.forEach((link) => {
-                link.classList.toggle('is-active', link.dataset.sectionNav === id);
-            });
-        };
 
         const showSection = (id) => {
             if (!id) return;

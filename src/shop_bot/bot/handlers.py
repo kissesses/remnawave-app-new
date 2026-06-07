@@ -2185,6 +2185,22 @@ def get_user_router() -> Router:
 
             set_trial_used(user_id)
             new_key_id = rw_repo.record_key_from_payload(user_id=user_id, payload=result, host_name=host_name)
+
+            try:
+                from shop_bot.data_manager import telegram_notify as tg_notify
+                user_data = get_user(user_id) or {}
+                uname = user_data.get('username')
+                uname_str = f"@{uname}" if uname else "—"
+                trial_txt = (
+                    f"🆓 <b>Пробный период активирован</b>\n"
+                    f"👤 <code>{user_id}</code> {uname_str}\n"
+                    f"🌍 Сервер: <b>{host_name}</b>\n"
+                    f"📧 Email: <code>{candidate_email}</code>\n"
+                    f"⏳ Срок: {get_setting('trial_duration_days')} дн."
+                )
+                await tg_notify.send_notification(message.bot, tg_notify.CATEGORY_TRIAL, trial_txt)
+            except Exception:
+                _log_suppressed("trial_notify")
             
             try: await message.delete()
             except Exception: _log_suppressed("suppressed")
@@ -3366,23 +3382,20 @@ def get_user_router() -> Router:
 # Отправляет детальный отчет о совершенной транзакции в админ-чат
 async def notify_admin_of_purchase(bot: Bot, metadata: dict):
     try:
-        aid = get_setting("admin_telegram_id")
-        if not aid: return
-        
         user_id, host, months, price, action = metadata.get('user_id'), metadata.get('host_name'), metadata.get('months'), metadata.get('price'), metadata.get('action')
-        
+
         user_data = get_user(user_id)
         username = user_data.get('username') if user_data else None
         username_str = f"@{username}" if username else "N/A"
 
         method = {'Balance': 'Баланс', 'Card': 'Карта', 'Crypto': 'Крипто', 'USDT': 'USDT', 'TON': 'TON'}.get(metadata.get('payment_method'), metadata.get('payment_method') or 'N/A')
         plan = get_plan_by_id(metadata.get('plan_id')); plan_name = plan.get('plan_name', 'N/A') if plan else 'N/A'
-        
+
         from shop_bot.data_manager.database import get_today_income_by_currency
         today = get_today_income_by_currency()
         today_rub = today.get('rub', 0)
         today_crypto = today.get('crypto', 0)
-        
+
         promo_block = ""
         promo = (metadata.get('promo_code') or '').strip()
         if promo:
@@ -3424,7 +3437,8 @@ async def notify_admin_of_purchase(bot: Bot, metadata: dict):
             promo_block=promo_block,
         )
 
-        await bot.send_message(int(aid), txt, parse_mode="HTML")
+        from shop_bot.data_manager import telegram_notify as tg_notify
+        await tg_notify.send_notification(bot, tg_notify.CATEGORY_PAYMENTS, txt)
     except Exception as e: logger.warning(f"Ошибка уведомления админа: {e}")
 # ===== Конец функции notify_admin_of_purchase =====
 

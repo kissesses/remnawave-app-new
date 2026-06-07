@@ -23,42 +23,52 @@
         return `${v.toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ₽`;
     }
 
-    function setTab(tabId) {
-        document.querySelectorAll('.ref-tab').forEach((btn) => {
-            const active = btn.dataset.refTab === tabId;
-            btn.classList.toggle('is-active', active);
-        });
-        document.querySelectorAll('.ref-pane').forEach((pane) => {
-            pane.hidden = pane.dataset.refPane !== tabId;
-        });
-        try {
-            localStorage.setItem(STORAGE_KEY, tabId);
-        } catch (_) { /* ignore */ }
-        if (tabId === 'analytics') {
-            loadAnalytics();
-        }
-    }
-
     function resolveInitialTab() {
         const root = $('tab-referrals');
         if (!root) return 'overview';
+        const hash = (window.location.hash || '').replace(/^#/, '');
+        if (hash && root.querySelector(`[data-section-nav="${hash}"]`)) {
+            return hash;
+        }
         try {
             const stored = localStorage.getItem(STORAGE_KEY);
-            if (stored && document.querySelector(`.ref-pane[data-ref-pane="${stored}"]`)) {
+            if (stored && root.querySelector(`[data-section-nav="${stored}"]`)) {
                 return stored;
             }
         } catch (_) { /* ignore */ }
         return root.dataset.refDefaultTab || 'overview';
     }
 
-    function initTabs() {
-        document.querySelectorAll('.ref-tab').forEach((btn) => {
-            btn.addEventListener('click', () => setTab(btn.dataset.refTab || 'overview'));
+    function initSectionHooks() {
+        const root = $('tab-referrals');
+        if (!root) return;
+
+        root.querySelectorAll('[data-section-nav]').forEach((link) => {
+            link.addEventListener('click', () => {
+                const id = link.dataset.sectionNav || 'overview';
+                try {
+                    localStorage.setItem(STORAGE_KEY, id);
+                } catch (_) { /* ignore */ }
+                if (id === 'analytics') {
+                    loadAnalytics();
+                }
+            });
         });
-        document.querySelectorAll('[data-ref-goto]').forEach((el) => {
-            el.addEventListener('click', () => setTab(el.dataset.refGoto || 'overview'));
+
+        root.querySelectorAll('[data-ref-goto]').forEach((el) => {
+            el.addEventListener('click', () => {
+                const id = el.dataset.refGoto || 'overview';
+                root.querySelector(`[data-section-nav="${id}"]`)?.click();
+            });
         });
-        setTab(resolveInitialTab());
+
+        const initial = resolveInitialTab();
+        const current = root.querySelector('[data-section-nav].is-active')?.dataset.sectionNav;
+        if (initial !== current) {
+            root.querySelector(`[data-section-nav="${initial}"]`)?.click();
+        } else if (initial === 'analytics') {
+            loadAnalytics();
+        }
     }
 
     function readRewardType() {
@@ -232,7 +242,7 @@
 
     function init() {
         if (!$('tab-referrals')?.classList.contains('ref-panel')) return;
-        initTabs();
+        initSectionHooks();
         initRewardTypes();
         initPayoutMode();
         initCalculator();

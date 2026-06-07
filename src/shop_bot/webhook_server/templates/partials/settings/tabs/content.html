@@ -54,7 +54,8 @@
                         <button type="button" class="bmsg-filter" data-filter="user">Пользователь</button>
                         <button type="button" class="bmsg-filter bmsg-filter--admin" data-filter="admin">Админ</button>
                     </div>
-                    <div class="bmsg-cat-filters" id="bmsg-cat-filters"></div>
+                    {% set section_nav_mode = 'filter' %}
+                    {% include 'partials/settings/section_nav.html' %}
                 </div>
             </div>
             <div class="bmsg-cards" id="bmsg-cards" aria-label="Шаблоны Telegram"></div>

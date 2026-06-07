@@ -12,7 +12,6 @@ from shop_bot.bot import keyboards
 from shop_bot.modules import remnawave_api
 
 from shop_bot.data_manager.database import get_db_connection, get_plan_by_id, get_seller_user, get_setting
-from shop_bot.data_manager import panel_audit
 from shop_bot.data_manager.remnawave_repository import (
     adjust_user_balance,
     ban_user,
@@ -254,6 +253,18 @@ def adjust_balance_route(user_id: int):
 
                     logger.warning("Цикл событий (EVENT_LOOP) не запущен; использую резервный asyncio.run для уведомления о балансе")
                     asyncio.run(bot.send_message(chat_id=user_id, text=text))
+                try:
+                    from shop_bot.data_manager import telegram_notify as tg_notify
+                    admin_login = session.get('panel_login') or 'panel'
+                    crm_text = (
+                        f"💼 <b>Изменение баланса</b>\n"
+                        f"👤 Пользователь: <code>{user_id}</code>\n"
+                        f"Δ {sign}{delta:.2f} RUB → {get_balance(user_id):.2f} RUB\n"
+                        f"Админ: <code>{admin_login}</code>"
+                    )
+                    tg_notify.send_notification_sync(bot, loop, tg_notify.CATEGORY_CRM, crm_text)
+                except Exception as crm_exc:
+                    logger.warning(f"CRM notify balance adjust failed: {crm_exc}")
             else:
                 logger.warning("Экземпляр бота отсутствует; не могу отправить уведомление о балансе")
     except Exception as e:
@@ -573,63 +584,13 @@ def user_details_json(user_id: int):
             user_tickets = []
 
         activity: list[dict] = []
-        action_labels = {
-            'user.ban': 'Блокировка пользователя',
-            'user.unban': 'Разблокировка',
-            'user.delete': 'Удаление пользователя',
-            'user.revoke_keys': 'Отзыв ключей',
-        }
-        for tx in payment_history:
-            activity.append({
-                'kind': 'payment',
-                'date': tx.get('date'),
-                'title': tx.get('action_label') or 'Платёж',
-                'subtitle': tx.get('method_label') or '',
-                'amount': tx.get('amount'),
-                'status': tx.get('status'),
-            })
-        for tx in balance_history:
-            activity.append({
-                'kind': 'balance',
-                'date': tx.get('date'),
-                'title': tx.get('type') or tx.get('action_label') or 'Баланс',
-                'subtitle': tx.get('method_label') or '',
-                'amount': tx.get('amount'),
-                'status': tx.get('status'),
-            })
-        for t in user_tickets:
-            activity.append({
-                'kind': 'support',
-                'date': t.get('updated_at') or t.get('created_at'),
-                'title': f"Тикет #{t.get('ticket_id')}",
-                'subtitle': t.get('subject') or 'Без темы',
-                'status': t.get('status'),
-                'ticket_id': t.get('ticket_id'),
-            })
-        if user.get('registration_date'):
-            activity.append({
-                'kind': 'system',
-                'date': user.get('registration_date'),
-                'title': 'Регистрация',
-                'subtitle': 'Пользователь создан в системе',
-                'status': 'info',
-            })
         try:
-            for row in panel_audit.list_for_user(user_id, 30):
-                action = row.get('action') or ''
-                activity.append({
-                    'kind': 'admin',
-                    'date': row.get('created_at'),
-                    'title': action_labels.get(action, action),
-                    'subtitle': row.get('admin_login') or 'Админ',
-                    'status': 'audit',
-                    'details': row.get('details'),
-                })
+            from shop_bot.webhook_server.services.user_timeline import build_user_timeline, compact_activity
+            tl = build_user_timeline(user_id, limit=150)
+            if tl.get('ok'):
+                activity = compact_activity(tl.get('events') or [], limit=120)
         except Exception as e:
-            logger.warning('activity audit for %s: %s', user_id, e)
-
-        activity.sort(key=lambda x: str(x.get('date') or ''), reverse=True)
-        activity = activity[:120]
+            logger.warning('timeline compact for %s: %s', user_id, e)
 
         result = {
             "ok": True,
@@ -684,6 +645,122 @@ def user_details_json(user_id: int):
     except Exception as e:
         logger.error(f"Failed to get user details for {user_id}: {e}")
         return jsonify({"ok": False, "error": str(e)}), 500
+
+
+@bp.route('/users/<int:user_id>/timeline')
+@panel_ctx.login_required
+def user_timeline_page(user_id: int):
+    user = get_user(user_id)
+    if not user:
+        flash('Пользователь не найден', 'danger')
+        return redirect(url_for('users_page'))
+    avatar_url = url_for('user_avatar', user_id=user_id) if get_telegram_avatar_file_url(user_id) else None
+    return render_template(
+        'user_timeline.html',
+        user_id=user_id,
+        user=user,
+        avatar_url=avatar_url,
+    )
+
+
+@bp.route('/users/<int:user_id>/timeline.json')
+@panel_ctx.login_required
+def user_timeline_json(user_id: int):
+    from shop_bot.webhook_server.services.user_timeline import CATEGORIES, build_user_timeline
+
+    category = (request.args.get('category') or 'all').strip().lower()
+    q = (request.args.get('q') or '').strip()
+    date_from = (request.args.get('from') or '').strip()
+    date_to = (request.args.get('to') or '').strip()
+    try:
+        limit = min(max(int(request.args.get('limit') or 60), 1), 200)
+        offset = max(int(request.args.get('offset') or 0), 0)
+    except (TypeError, ValueError):
+        limit, offset = 60, 0
+
+    payload = build_user_timeline(
+        user_id,
+        category=category,
+        q=q,
+        date_from=date_from,
+        date_to=date_to,
+        limit=limit,
+        offset=offset,
+    )
+    if not payload.get('ok'):
+        return jsonify(payload), 404
+    payload['categories'] = CATEGORIES
+    if payload.get('user'):
+        payload['user']['avatar_url'] = (
+            url_for('user_avatar', user_id=user_id)
+            if get_telegram_avatar_file_url(user_id) else None
+        )
+    return jsonify(payload)
+
+
+@bp.route('/users/<int:user_id>/timeline/export.json')
+@panel_ctx.login_required
+def user_timeline_export(user_id: int):
+    from shop_bot.webhook_server.services.user_timeline import collect_all_events, _compute_stats
+
+    user, events = collect_all_events(user_id)
+    if not user:
+        return jsonify({'ok': False, 'error': 'user_not_found'}), 404
+    return jsonify({
+        'ok': True,
+        'user_id': user_id,
+        'exported_at': get_msk_time().strftime('%Y-%m-%d %H:%M:%S'),
+        'events': events,
+        'stats': _compute_stats(events, user),
+    })
+
+
+@bp.route('/users/<int:user_id>/timeline/export.csv')
+@panel_ctx.login_required
+def user_timeline_export_csv(user_id: int):
+    import csv
+    import io
+
+    from flask import Response
+
+    from shop_bot.webhook_server.services.user_timeline import collect_all_events, _compute_stats
+
+    user, events = collect_all_events(user_id)
+    if not user:
+        return jsonify({'ok': False, 'error': 'user_not_found'}), 404
+
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow([
+        'datetime', 'category', 'kind', 'title', 'subtitle', 'description',
+        'amount', 'status', 'status_label',
+    ])
+    for evt in events:
+        writer.writerow([
+            evt.get('ts') or '',
+            evt.get('category') or '',
+            evt.get('kind') or '',
+            evt.get('title') or '',
+            evt.get('subtitle') or '',
+            evt.get('description') or '',
+            evt.get('amount') if evt.get('amount') is not None else '',
+            evt.get('status') or '',
+            evt.get('status_label') or '',
+        ])
+
+    stats = _compute_stats(events, user)
+    filename = f"client-{user_id}-timeline.csv"
+    panel_ctx.audit('user.timeline_export_csv', {
+        'user_id': user_id,
+        'events': len(events),
+        'payments_sum': stats.get('payments_sum'),
+    })
+    return Response(
+        buf.getvalue(),
+        mimetype='text/csv; charset=utf-8',
+        headers={'Content-Disposition': f'attachment; filename="{filename}"'},
+    )
+
 
 @bp.route('/users/<int:user_id>/trial/toggle', methods=['POST'])
 @panel_ctx.login_required

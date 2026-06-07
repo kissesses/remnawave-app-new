@@ -904,13 +904,16 @@ async def _send_alert(bot: Bot, scope: str, name: str, issues: list[dict], level
     ])
     
     text = "\n".join(text_lines)
-    
 
-    for admin_id in admin_ids:
-        try:
-            await bot.send_message(admin_id, text, parse_mode='HTML')
-        except Exception:
-            continue
+    try:
+        from shop_bot.data_manager import telegram_notify as tg_notify
+        await tg_notify.send_notification(bot, tg_notify.CATEGORY_NODES, text)
+    except Exception:
+        for admin_id in admin_ids:
+            try:
+                await bot.send_message(admin_id, text, parse_mode='HTML')
+            except Exception:
+                continue
 
     try:
         from shop_bot.data_manager import smtp_mailer

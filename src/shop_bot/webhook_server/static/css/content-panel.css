@@ -1279,6 +1279,10 @@ html:not(.dark) .cstr-sub-toolbar {
 
 .bmsg-cat-filters { margin-top: 0.35rem; }
 
+.bmsg-filter-scroll .settings-section-nav {
+    margin-top: 0.35rem;
+}
+
 .bmsg-filter,
 .bmsg-cat-filter {
     padding: 0.22rem 0.5rem;

@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.0.3] — 2026-06-07
+
+### Security
+
+- **TOTP при входе:** rate limit (5 попыток / 15 мин на IP+admin), сброс pending-сессии при блокировке.
+- **SQL step-up TOTP:** rate limit на `/settings/database/stepup/totp`.
+- **YooMoney OAuth:** `state` в сессии, `@login_required` на callback, проверка admin + `settings_payments: edit`, RBAC mapping.
+
+### Added
+
+- **RBAC:** синхронизация с rw-shop (view/edit, Superadmin protection, endpoint map, session refresh).
+- **Telegram topic routing:** `telegram_notify`, UI в Настройки → Боты → Уведомления.
+- **User Timeline:** лента активности пользователя (`/users/<id>/timeline`).
+
+### Changed
+
+- **Настройки:** единые иконки по темам (sidebar, sub-nav, section headers); Referrals и Content на общем `section_nav`; заголовки секций на classic/ios.
+- **2FA / Security setup:** общие partials, toast fix, cancel TOTP login, macOS CSS.
+
+### Docs
+
+- `.env.example`: `SHOPBOT_SESSION_COOKIE_DOMAIN` для поддоменов.
+- `docs/INSTALL.md`: заметка про cookie domain.
+
+---
+
 ## [1.0.2] — 2026-06-07
 
 ### Changed

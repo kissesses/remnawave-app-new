@@ -79,7 +79,7 @@ def handle_promo_after_payment(metadata: dict) -> None:
             admin_ids = list(rw_repo.get_admin_ids() or [])
         except Exception:
             admin_ids = []
-        if bot and loop and loop.is_running() and admin_ids:
+        if bot and loop and loop.is_running():
             if should_deactivate:
                 status_msg = "Код отключён." if deact_ok else "Не удалось отключить код — проверьте панель."
             elif user_limit_reached:
@@ -95,10 +95,10 @@ def handle_promo_after_payment(metadata: dict) -> None:
                 f"💰 Скидка: <b>{applied_amount:.2f} RUB</b>\n"
                 f"📃 Статус: {status_msg}"
             )
-            for aid in admin_ids:
-                try:
-                    asyncio.run_coroutine_threadsafe(bot.send_message(int(aid), text, parse_mode='HTML'), loop)
-                except Exception:
-                    continue
+            from shop_bot.data_manager import telegram_notify as tg_notify
+            asyncio.run_coroutine_threadsafe(
+                tg_notify.send_notification(bot, tg_notify.CATEGORY_CRM, text),
+                loop,
+            )
     except Exception:
         pass

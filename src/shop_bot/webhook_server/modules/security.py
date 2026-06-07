@@ -43,6 +43,73 @@ def clear_failed_logins(ip: str | None) -> None:
         clear_failure(f"panel-login:{ip}")
 
 
+MAX_TOTP_LOGIN_FAILURES = 5
+TOTP_LOGIN_LOCK_SECONDS = 900
+
+
+def _totp_login_lock_key(ip: str | None, admin_id: int | None) -> str | None:
+    if not ip or admin_id is None:
+        return None
+    return f"panel-totp-login:{ip}:{int(admin_id)}"
+
+
+def is_totp_login_locked(ip: str | None, admin_id: int | None) -> bool:
+    key = _totp_login_lock_key(ip, admin_id)
+    return bool(key and is_locked(key))
+
+
+def record_failed_totp_login(ip: str | None, admin_id: int | None) -> None:
+    key = _totp_login_lock_key(ip, admin_id)
+    if not key:
+        return
+    record_failure(
+        key,
+        max_failures=MAX_TOTP_LOGIN_FAILURES,
+        lock_seconds=TOTP_LOGIN_LOCK_SECONDS,
+    )
+    record_failed_login(ip)
+    logger.warning("Failed panel TOTP login from IP %s admin_id=%s", ip, admin_id)
+
+
+def clear_totp_login_failures(ip: str | None, admin_id: int | None) -> None:
+    key = _totp_login_lock_key(ip, admin_id)
+    if key:
+        clear_failure(key)
+
+
+MAX_STEPUP_TOTP_FAILURES = 5
+STEPUP_TOTP_LOCK_SECONDS = 900
+
+
+def _stepup_totp_lock_key(admin_id: int | None, ip: str | None) -> str | None:
+    if admin_id is None or not ip:
+        return None
+    return f"stepup-totp:{int(admin_id)}:{ip}"
+
+
+def is_stepup_totp_locked(admin_id: int | None, ip: str | None) -> bool:
+    key = _stepup_totp_lock_key(admin_id, ip)
+    return bool(key and is_locked(key))
+
+
+def record_failed_stepup_totp(admin_id: int | None, ip: str | None) -> None:
+    key = _stepup_totp_lock_key(admin_id, ip)
+    if not key:
+        return
+    record_failure(
+        key,
+        max_failures=MAX_STEPUP_TOTP_FAILURES,
+        lock_seconds=STEPUP_TOTP_LOCK_SECONDS,
+    )
+    logger.warning("Failed DB step-up TOTP admin_id=%s ip=%s", admin_id, ip)
+
+
+def clear_stepup_totp_failures(admin_id: int | None, ip: str | None) -> None:
+    key = _stepup_totp_lock_key(admin_id, ip)
+    if key:
+        clear_failure(key)
+
+
 MAX_INVITE_REDEEM_FAILURES = 5
 INVITE_REDEEM_LOCK_SECONDS = 900
 
@@ -162,7 +229,7 @@ async def send_notification(bot, chat_id, text, reply_markup=None):
 def notify_admin(bot, loop, admin_id, title, info, is_alert=False):
     text = format_security_msg(title, info)
     kb = None
-    
+
     if is_alert:
         kb = InlineKeyboardBuilder()
         kb.button(text="✅ Да", callback_data="sec_it_was_me")
@@ -171,13 +238,21 @@ def notify_admin(bot, loop, admin_id, title, info, is_alert=False):
         kb.adjust(2)
         kb = kb.as_markup()
 
-    if loop and loop.is_running():
-        asyncio.run_coroutine_threadsafe(send_notification(bot, admin_id, text, kb), loop)
-    else:
-        try:
-            asyncio.run(send_notification(bot, admin_id, text, kb))
-        except Exception:
-            pass
+    try:
+        from shop_bot.data_manager import telegram_notify as tg_notify
+        tg_notify.send_notification_sync(
+            bot, loop, tg_notify.CATEGORY_AUTH, text, reply_markup=kb,
+        )
+    except Exception as exc:
+        logger.error("Security notify error: %s", exc)
+        if bot and admin_id:
+            if loop and loop.is_running():
+                asyncio.run_coroutine_threadsafe(send_notification(bot, admin_id, text, kb), loop)
+            else:
+                try:
+                    asyncio.run(send_notification(bot, admin_id, text, kb))
+                except Exception:
+                    pass
 
     try:
         from shop_bot.data_manager import smtp_mailer
