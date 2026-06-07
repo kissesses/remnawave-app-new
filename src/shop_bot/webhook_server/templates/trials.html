@@ -179,7 +179,7 @@ window.__TRIAL_ROUTES__ = {
     extend: {{ url_for('trials_extend_key', key_id=0)|tojson }},
     revoke: {{ url_for('trials_revoke_key', key_id=0)|tojson }},
     users: {{ url_for('users_page')|tojson }},
-    csrf: {{ csrf_token|tojson }},
+    csrf: {{ csrf_token() | tojson }},
     canEditUsers: {{ can_edit('users')|tojson }},
     canEditKeys: {{ can_edit('keys')|tojson }},
     canEditSettings: {{ can_edit('settings_panel')|tojson }},

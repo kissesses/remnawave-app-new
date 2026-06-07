@@ -19,7 +19,11 @@
 
     function csrfHeaders() {
         const h = { 'X-Requested-With': 'XMLHttpRequest' };
-        if (routes.csrf) h['X-CSRFToken'] = routes.csrf;
+        const token = routes.csrf
+            || (typeof window.getCsrfToken === 'function' ? window.getCsrfToken() : '')
+            || document.querySelector('meta[name="csrf-token"]')?.content
+            || '';
+        if (token) h['X-CSRFToken'] = token;
         return h;
     }
 
