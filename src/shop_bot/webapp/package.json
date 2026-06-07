@@ -1,0 +1,14 @@
+{
+  "name": "remnawave-webapp-css",
+  "private": true,
+  "scripts": {
+    "build:css": "tailwindcss -i ./static/css/webapp-tailwind-src.css -o ./static/css/webapp-tailwind.css --minify"
+  },
+  "devDependencies": {
+    "@tailwindcss/forms": "^0.5.10",
+    "@tailwindcss/typography": "^0.5.16",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^3.4.17"
+  }
+}

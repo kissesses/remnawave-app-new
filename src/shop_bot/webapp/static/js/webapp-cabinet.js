@@ -16,6 +16,11 @@
     }
 
     async function loadCabinetConfig() {
+        if (cabinetConfig) return cabinetConfig;
+        if (typeof window.__webappFetchCabinetConfig === 'function') {
+            cabinetConfig = await window.__webappFetchCabinetConfig();
+            return cabinetConfig;
+        }
         const userId = getUserId();
         if (!userId) return null;
         try {
@@ -361,6 +366,9 @@
         }
         const html = `<div class="webapp-qr-wrap"><div id="webapp-qr-target"></div><div class="text-[10px] text-gray-500 break-all text-center px-2">${url}</div></div>`;
         openGenericModal('QR подписки', html, 'qr_code_2');
+        if (typeof window.__webappLoadQrLib === 'function') {
+            await window.__webappLoadQrLib();
+        }
         const target = document.getElementById('webapp-qr-target');
         if (target && window.QRCode) {
             target.innerHTML = '';

@@ -3,6 +3,17 @@
 
 ARG INSTALL_DOCKER_CLI=1
 
+FROM node:22-alpine AS webapp_css
+WORKDIR /css
+COPY src/shop_bot/webapp/package.json src/shop_bot/webapp/tailwind.config.js ./
+COPY src/shop_bot/webapp/static/css/webapp-tailwind-src.css ./static/css/
+COPY src/shop_bot/webapp/app.html src/shop_bot/webapp/login.html ./
+COPY src/shop_bot/webapp/module/load.html ./module/
+COPY src/shop_bot/webapp/static/js ./static/js
+COPY src/shop_bot/webapp/static/css/webapp-cabinet.css ./static/css/
+COPY src/shop_bot/webapp/static/css/webapp-shell.css ./static/css/
+RUN npm install && npm run build:css
+
 FROM python:3.12-slim AS builder
 
 WORKDIR /app
@@ -21,6 +32,7 @@ ENV PATH="/app/.venv/bin:$PATH"
 
 COPY pyproject.toml /app/project/pyproject.toml
 COPY src /app/project/src
+COPY --from=webapp_css /css/static/css/webapp-tailwind.css /app/project/src/shop_bot/webapp/static/css/webapp-tailwind.css
 WORKDIR /app/project
 
 RUN pip install --no-cache-dir -U pip wheel \
@@ -60,6 +72,7 @@ ENV PATH="/app/.venv/bin:$PATH"
 # editable install (-e): код и шаблоны Flask читаются из src, не только из site-packages
 COPY pyproject.toml /app/project/pyproject.toml
 COPY src /app/project/src
+COPY --from=webapp_css /css/static/css/webapp-tailwind.css /app/project/src/shop_bot/webapp/static/css/webapp-tailwind.css
 COPY scripts /app/project/scripts
 WORKDIR /app/project
 

@@ -1,0 +1,51 @@
+/* Login — critical styles before Tailwind CDN (slow regions) */
+
+#loader,
+#auth-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    position: relative;
+    z-index: 10;
+}
+
+#auth-container.hidden {
+    display: none !important;
+}
+
+#loader .relative.flex {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#loader .w-16 {
+    width: 4rem;
+    height: 4rem;
+    border-radius: 9999px;
+    border: 2px solid rgba(16, 185, 129, 0.35);
+    border-top-color: transparent;
+    animation: webapp-login-spin 0.8s linear infinite;
+}
+
+#loader h2 {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+#loader p {
+    margin: 0;
+    font-size: 10px;
+    color: #6b7280;
+}
+
+@keyframes webapp-login-spin {
+    to { transform: rotate(360deg); }
+}

@@ -1,0 +1,78 @@
+@keyframes modal-pulse-glow {
+    0%, 100% {
+        opacity: 0.4;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.05);
+    }
+}
+
+@keyframes success-pop {
+    0% {
+        transform: scale(0.5);
+        opacity: 0;
+    }
+    60% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes waiting-orbit {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes shimmer-line {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(200%); }
+}
+
+.modal-glow {
+    animation: modal-pulse-glow 3s ease-in-out infinite;
+}
+
+.success-pop {
+    animation: success-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.waiting-orbit {
+    animation: waiting-orbit 2s linear infinite;
+}
+
+.shimmer-line::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+    animation: shimmer-line 2s ease-in-out infinite;
+}
+
+.webapp-shop-skeleton {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+    padding: 0.5rem;
+}
+
+.webapp-shop-skeleton__cell {
+    height: 5.5rem;
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    animation: webapp-shop-pulse 1.2s ease-in-out infinite;
+}
+
+.webapp-shop-skeleton__cell:nth-child(2) { animation-delay: 0.15s; }
+.webapp-shop-skeleton__cell:nth-child(3) { animation-delay: 0.3s; }
+.webapp-shop-skeleton__cell:nth-child(4) { animation-delay: 0.45s; }
+
+@keyframes webapp-shop-pulse {
+    0%, 100% { opacity: 0.45; }
+    50% { opacity: 0.9; }
+}

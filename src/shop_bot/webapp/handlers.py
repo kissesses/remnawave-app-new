@@ -3,6 +3,7 @@ import html
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse
+from starlette.middleware.gzip import GZipMiddleware
 import aiohttp
 from shop_bot.data_manager.remnawave_repository import get_setting, get_user_keys, get_msk_time, get_webapp_settings, get_user, get_referral_count, get_all_hosts, list_squads, get_plans_for_host
 import os
@@ -47,7 +48,14 @@ from shop_bot.webapp.rate_limit import (
     allow_action,
     reset_bucket,
 )
-from shop_bot.webapp.designs import build_design_config_json, build_preview_design_config_json, WEBAPP_DESIGN_IDS
+from shop_bot.webapp.designs import (
+    build_design_config_json,
+    build_design_scripts,
+    build_design_stylesheets,
+    build_preview_design_config_json,
+    resolve_default_design,
+    WEBAPP_DESIGN_IDS,
+)
 from shop_bot.webapp.studio_config import parse_content_overrides, parse_module_order
 
 logger = logging.getLogger(__name__)
@@ -55,6 +63,30 @@ logger = logging.getLogger(__name__)
 from shop_bot.support.log_utils import log_suppressed
 
 _WEBAPP_STARTED_AT = time.time()
+
+
+def _build_tailwind_assets() -> str:
+    css_path = os.path.join(os.path.dirname(__file__), "static", "css", "webapp-tailwind.css")
+    if os.path.isfile(css_path) and os.path.getsize(css_path) > 4096:
+        return '<link rel="stylesheet" href="/static/css/webapp-tailwind.css" />'
+    return '<script defer src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>'
+
+
+def _shop_catalog_skeleton(cells: int = 4) -> str:
+    inner = "".join('<div class="webapp-shop-skeleton__cell"></div>' for _ in range(cells))
+    return f'<div class="webapp-shop-skeleton">{inner}</div>'
+
+
+def _shop_servers_loading_html() -> str:
+    return '<div data-lazy-shop="servers" class="p-3 text-center text-xs text-gray-500">Загрузка серверов…</div>'
+
+
+def _shop_purchase_plans_placeholder() -> str:
+    return f'<div id="purchase-plans-root" data-lazy-shop="purchase">{_shop_catalog_skeleton()}</div>'
+
+
+def _shop_renew_plans_placeholder() -> str:
+    return f'<div id="renew-plans-root" data-lazy-shop="renew">{_shop_catalog_skeleton()}</div>'
 
 
 def _build_branding_css(webapp_settings: dict | None) -> str:
@@ -103,6 +135,8 @@ WEBAPP_AUTH_COOKIE = "auth_token"
 WEBAPP_AUTH_MAX_AGE = DEFAULT_TOKEN_DAYS * 86400
 WEBAPP_INIT_DATA_MAX_AGE_SEC = 86400
 WEBAPP_LIVE_STATS_TIMEOUT_SEC = 2.5
+WEBAPP_SSR_LIVE_STATS = os.getenv("WEBAPP_SSR_LIVE_STATS", "0").strip().lower() in ("1", "true", "yes", "on")
+WEBAPP_LAZY_SHOP_CATALOG = os.getenv("WEBAPP_LAZY_SHOP_CATALOG", "1").strip().lower() in ("1", "true", "yes", "on")
 
 
 def _webapp_auth_response(payload: dict, token: str | None = None) -> JSONResponse:
@@ -289,6 +323,31 @@ def _build_yoomoney_link(receiver: str, amount_rub: Decimal, label: str, descrip
     return base + "?" + urlencode(params)
 
 app = FastAPI()
+app.add_middleware(GZipMiddleware, minimum_size=500)
+
+
+class _StaticCacheMiddleware:
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        async def send_wrapper(message):
+            if message["type"] == "http.response.start":
+                path = scope.get("path") or ""
+                if path.startswith("/static/"):
+                    headers = list(message.get("headers") or [])
+                    headers.append((b"cache-control", b"public, max-age=604800, immutable"))
+                    message = {**message, "headers": headers}
+            await send(message)
+
+        await self.app(scope, receive, send_wrapper)
+
+
+app.add_middleware(_StaticCacheMiddleware)
 
 
 @app.exception_handler(HTTPException)
@@ -350,9 +409,17 @@ def _format_bytes(size: Any) -> str:
         n += 1
     return f"{size:.2f} {power_labels[n]}"
 
-def _process_template_placeholders(html: str, user_id: int, webapp_settings: dict, context_data: dict) -> str:
+def _process_template_placeholders(
+    html: str,
+    user_id: int,
+    webapp_settings: dict,
+    context_data: dict,
+    *,
+    design_override: str | None = None,
+) -> str:
     title = webapp_settings.get("webapp_title") or get_setting("panel_brand_title") or "CABINET VPN"
     support_username = get_setting("support_bot_username") or ""
+    default_design = design_override or resolve_default_design(webapp_settings, user_id if user_id else None)
     
     replacements = {
         "{{ panel_brand_title }}": title,
@@ -372,6 +439,9 @@ def _process_template_placeholders(html: str, user_id: int, webapp_settings: dic
             f'<script>window.WEBAPP_DESIGN_CONFIG={build_design_config_json(webapp_settings, user_id)};</script>'
         ),
         "{{ webapp_branding_css }}": _build_branding_css(webapp_settings),
+        "{{ webapp_tailwind_assets }}": _build_tailwind_assets(),
+        "{{ webapp_design_stylesheets }}": build_design_stylesheets(default_design),
+        "{{ webapp_design_scripts }}": build_design_scripts(default_design),
         "{{ tg_fullscreen_css }}": """
     <style>
         .tg-miniapp #main-page,
@@ -394,9 +464,13 @@ def _process_template_placeholders(html: str, user_id: int, webapp_settings: dic
     for placeholder, value in replacements.items():
         html = html.replace(placeholder, value)
     
-    server_options, server_plans = _get_servers_and_plans_html(user_id)
-    html = html.replace("{{ server_dropdown_options }}", server_options)
-    html = html.replace("{{ server_plans_grid }}", server_plans)
+    if WEBAPP_LAZY_SHOP_CATALOG:
+        html = html.replace("{{ server_dropdown_options }}", _shop_servers_loading_html())
+        html = html.replace("{{ server_plans_grid }}", _shop_purchase_plans_placeholder())
+    else:
+        server_options, server_plans = _get_servers_and_plans_html(user_id)
+        html = html.replace("{{ server_dropdown_options }}", server_options)
+        html = html.replace("{{ server_plans_grid }}", server_plans)
     
     return html
 
@@ -902,7 +976,7 @@ def _get_setup_keys_html(keys: list) -> str:
         """
     return html
 
-def _get_renew_keys_html(keys: list, user_id: int | None = None) -> tuple[str, str, str]:
+def _get_renew_keys_html(keys: list, user_id: int | None = None, *, include_plans: bool = True) -> tuple[str, str, str]:
     if not keys:
         return "", "Нет активных ключей", _get_no_key_html()
         
@@ -941,10 +1015,10 @@ def _get_renew_keys_html(keys: list, user_id: int | None = None) -> tuple[str, s
         """
         
         display_style = "grid" if is_selected else "none"
-        desc, grid_html = _build_plans_grid_html(host_name, user_id, f"renew-plans-{index}", display_style)
-        
-        renew_plans_html += f'<div id="renew-desc-content-{index}" style="display: none;">{desc}</div>'
-        renew_plans_html += grid_html
+        if include_plans:
+            desc, grid_html = _build_plans_grid_html(host_name, user_id, f"renew-plans-{index}", display_style)
+            renew_plans_html += f'<div id="renew-desc-content-{index}" style="display: none;">{desc}</div>'
+            renew_plans_html += grid_html
     
     options_html += '</div>'
     
@@ -1302,7 +1376,7 @@ async def _render_main_page(user_id: int):
                     active_keys.append(k)
             except Exception: log_suppressed()
 
-        if active_keys:
+        if active_keys and WEBAPP_SSR_LIVE_STATS:
             await _enrich_active_keys_live_stats(active_keys)
 
         # --- CALCULATE MIN PRICE ---
@@ -1332,7 +1406,11 @@ async def _render_main_page(user_id: int):
             
             # Renew, Profile and Setup sections get the full list of keys
             # (Setup will filter internally, Profile shows all, Renew now shows all)
-            renew_keys_options, renew_selected_key, renew_plans_html_data = _get_renew_keys_html(keys, user_id)
+            renew_keys_options, renew_selected_key, renew_plans_html_data = _get_renew_keys_html(
+                keys, user_id, include_plans=not WEBAPP_LAZY_SHOP_CATALOG
+            )
+            if WEBAPP_LAZY_SHOP_CATALOG and keys:
+                renew_plans_html_data = _shop_renew_plans_placeholder()
             renew_selected_display = renew_selected_key
             
             profile_keys_list = _get_profile_keys_html(keys)
@@ -1400,7 +1478,7 @@ async def _render_studio_preview(
         "webapp_logo": settings.get("webapp_logo") or "",
         "webapp_icon": settings.get("webapp_icon") or "",
     }
-    content = _process_template_placeholders(content, 0, settings, context)
+    content = _process_template_placeholders(content, 0, settings, context, design_override=design_id)
     preview_script = (
         f'<script>window.WEBAPP_DESIGN_CONFIG={build_preview_design_config_json(settings, design_id)};'
         f'window.STUDIO_PREVIEW=true;window.RENDERED_USER_ID=0;'
@@ -3040,6 +3118,29 @@ async def api_payments_history(user_id: int, auth_user: AuthUser, limit: int = 5
     except Exception as e:
         logger.error(f"[WEBAPP] - Ошибка history для {user_id}: {e}")
         return {"ok": False, "error": str(e)}
+
+@app.get("/api/shop/purchase-catalog")
+async def api_shop_purchase_catalog(user_id: int, auth_user: AuthUser):
+    try:
+        user_id = authorized_user_id(auth_user, user_id)
+        options, plans = _get_servers_and_plans_html(user_id)
+        return {"ok": True, "servers_html": options, "plans_html": plans}
+    except Exception as e:
+        logger.error(f"[WEBAPP] purchase-catalog {user_id}: {e}")
+        return {"ok": False, "error": str(e)}
+
+
+@app.get("/api/shop/renew-catalog")
+async def api_shop_renew_catalog(user_id: int, auth_user: AuthUser):
+    try:
+        user_id = authorized_user_id(auth_user, user_id)
+        keys = get_user_keys(user_id)
+        _, _, plans = _get_renew_keys_html(keys, user_id, include_plans=True)
+        return {"ok": True, "plans_html": plans}
+    except Exception as e:
+        logger.error(f"[WEBAPP] renew-catalog {user_id}: {e}")
+        return {"ok": False, "error": str(e)}
+
 
 @app.get("/api/user-status")
 async def api_user_status(user_id: int, auth_user: AuthUser):

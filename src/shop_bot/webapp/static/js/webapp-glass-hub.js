@@ -234,15 +234,17 @@
         const userId = getUserId();
         if (!userId) return { status: null, cfg: null };
         try {
-            const [statusRes, cfgRes] = await Promise.all([
+            const cfgPromise = typeof window.__webappFetchCabinetConfig === 'function'
+                ? window.__webappFetchCabinetConfig()
+                : fetch('/api/cabinet/config?user_id=' + userId).then((r) => r.json()).then((d) => (d.ok ? d : null));
+            const [statusRes, cfg] = await Promise.all([
                 fetch('/api/user-status?user_id=' + userId),
-                fetch('/api/cabinet/config?user_id=' + userId),
+                cfgPromise,
             ]);
             const status = await statusRes.json();
-            const cfg = await cfgRes.json();
             return {
                 status: status.ok ? status : null,
-                cfg: cfg.ok ? cfg : null,
+                cfg: cfg,
             };
         } catch (e) {
             console.error('glass-hub fetch', e);
