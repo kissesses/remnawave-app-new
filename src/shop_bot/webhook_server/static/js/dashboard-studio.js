@@ -7,7 +7,6 @@
     const TAB_WIDGET_MAP = {
         header: 'header_widgets',
         overview: 'overview',
-        resources: 'resources',
         analytics: 'analytics',
         activity: 'activity',
     };
@@ -49,7 +48,6 @@
     const TAB_HINTS = {
         header: 'Чипы статуса в шапке. Ниже — оформление заголовка.',
         overview: 'KPI-карточки на главной (всегда видны).',
-        resources: 'Блоки мониторинга и графиков.',
         analytics: 'Графики доходов и регистраций.',
         activity: 'Speedtest, транзакции и триалы.',
         behavior: 'Вкладки, автообновление и поведение по умолчанию.',
@@ -170,7 +168,7 @@
             tabs.classList.add(`dash-tabs-${o.tab_style || 'glass'}`);
         }
 
-        ['dash-panel-resources', 'dash-panel-analytics', 'dash-panel-activity'].forEach((id) => {
+        ['dash-panel-analytics', 'dash-panel-activity'].forEach((id) => {
             const el = document.getElementById(id);
             if (!el) return;
             el.classList.remove('dash-density-compact', 'dash-density-normal', 'dash-density-relaxed');
@@ -318,7 +316,7 @@
                     </div>
                 `)}
             `;
-        } else if (studioTab === 'resources' || studioTab === 'analytics' || studioTab === 'activity') {
+        } else if (studioTab === 'analytics' || studioTab === 'activity') {
             const extra = studioTab === 'analytics' ? `
                 <label class="dash-design-field">
                     <span>Период доходов по умолчанию</span>
@@ -429,11 +427,10 @@
             applyWidgetVisibility('overview', (cfg.widgets && cfg.widgets.overview) || []);
         }
 
-        ['resources', 'analytics', 'activity'].forEach((tab) => {
+        ['analytics', 'activity'].forEach((tab) => {
             const ids = (cfg.widgets && cfg.widgets[tab]) || [];
             applyWidgetVisibility(tab, ids);
-            const root = tab === 'resources' ? document.getElementById('dash-panel-resources')
-                : tab === 'analytics' ? document.getElementById('dash-panel-analytics')
+            const root = tab === 'analytics' ? document.getElementById('dash-panel-analytics')
                     : document.getElementById('dash-panel-activity');
             if (root) {
                 ids.forEach((id) => {
@@ -479,7 +476,7 @@
             if (btn) window.setIncomePeriod(opts.default_income_period, btn);
         }
 
-        const defaultTab = opts.default_tab === 'overview' ? 'resources' : opts.default_tab;
+        const defaultTab = (opts.default_tab === 'overview' || opts.default_tab === 'resources') ? 'analytics' : opts.default_tab;
         if (defaultTab && !window.location.hash) {
             const tabBtn = document.querySelector(`.dash-tab[data-tab="${defaultTab}"]`);
             if (tabBtn && typeof window.switchDashTab === 'function') {
@@ -581,7 +578,7 @@
         ensureDefaultTabSelect();
         set('dash-opt-title', o.title || '');
         set('dash-opt-subtitle', o.subtitle || '');
-        set('dash-opt-default-tab', o.default_tab || 'resources');
+        set('dash-opt-default-tab', o.default_tab || 'analytics');
         set('dash-opt-stats-cols', String(o.stats_columns || 5));
         set('dash-opt-income-period', o.default_income_period || '30d');
         set('dash-opt-refresh', String(Math.round((o.refresh_interval_ms || 120000) / 1000)));
@@ -613,7 +610,7 @@
         if (subEl) o.subtitle = subEl.value.trim();
 
         const defaultTabEl = document.getElementById('dash-opt-default-tab');
-        if (defaultTabEl) o.default_tab = defaultTabEl.value || 'resources';
+        if (defaultTabEl) o.default_tab = defaultTabEl.value || 'analytics';
 
         const colsEl = document.getElementById('dash-opt-stats-cols');
         if (colsEl) o.stats_columns = parseInt(colsEl.value || '5', 10);
@@ -641,7 +638,7 @@
             tabWrap.querySelectorAll('[data-dash-tab]').forEach((inp) => {
                 if (inp.checked) tabs.push(inp.dataset.dashTab);
             });
-            draft.tabs = tabs.length ? tabs : ['resources', 'analytics', 'activity'];
+            draft.tabs = tabs.length ? tabs : ['analytics', 'activity'];
         }
     }
 

@@ -30,7 +30,7 @@
             </h1>
             <p id="dash-custom-subtitle" class="dh-hero__sub dash-hero__sub">
                 <span class="dh-hero__sub-text dash-hero__sub-text">
-                    {{ dashboard_layout.options.subtitle if dashboard_layout and dashboard_layout.options.subtitle else 'Статистика, мониторинг и аналитика в реальном времени' }}
+                    {{ dashboard_layout.options.subtitle if dashboard_layout and dashboard_layout.options.subtitle else 'Статистика, аналитика и активность магазина' }}
                 </span>
                 <button type="button" onclick="togglePaymentStats()" class="dh-btn dh-btn--ghost" id="btn-toggle-payments" title="Скрыть/показать доход">
                     <span class="material-symbols-outlined" id="icon-toggle-payments">visibility</span>
@@ -73,9 +73,6 @@
         <button type="button" class="dh-tab dash-tab is-active" data-tab="overview" role="tab">
             <span class="material-symbols-outlined">dashboard</span> Обзор
         </button>
-        <button type="button" class="dh-tab dash-tab" data-tab="resources" role="tab">
-            <span class="material-symbols-outlined">monitoring</span> Ресурсы
-        </button>
         <button type="button" class="dh-tab dash-tab" data-tab="analytics" role="tab">
             <span class="material-symbols-outlined">analytics</span> Аналитика
         </button>
@@ -90,10 +87,6 @@
             data-fetch-url="{{ url_for('dashboard_stats_partial') }}" data-fetch-interval="120000">
             {% set _stats_html %}{% include 'partials/dashboard_stats.html' %}{% endset %}{{ _stats_html|strip_bom }}
         </section>
-    </div>
-
-    <div id="dash-panel-resources" class="dash-tab-panel dh-tab-panel hidden" data-tab-panel="resources">
-        {% include 'partials/dashboard_monitor.html' %}
     </div>
 
     <div id="dash-panel-analytics" class="dash-tab-panel dh-tab-panel hidden" data-tab-panel="analytics">
@@ -130,5 +123,4 @@ window.__DASHBOARD_ROUTES__ = {
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 <script src="{{ url_for('static', filename='js/dashboard-panel.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
 <script src="{{ url_for('static', filename='js/dashboard-studio.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
-{% include 'partials/dashboard_monitor_scripts.html' %}
 {% endblock %}

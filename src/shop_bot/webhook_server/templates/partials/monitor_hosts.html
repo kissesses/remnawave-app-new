@@ -1,0 +1,45 @@
+<div class="mn-panel-card">
+    <div class="mn-panel-card__head">
+        <div class="mn-panel-card__title-wrap">
+            <div class="mn-panel-card__icon mn-panel-card__icon--hosts">
+                <span class="material-symbols-outlined">dns</span>
+            </div>
+            <div>
+                <h4 class="mn-panel-card__title">Серверы Remnawave</h4>
+                <p class="mn-panel-card__sub">SSH-мониторинг хостов</p>
+            </div>
+        </div>
+        <span class="mn-badge mn-badge--blue">{{ hosts|length }}</span>
+    </div>
+    {% if hosts %}
+    <div class="mn-host-grid">
+        {% for h in hosts %}
+        <div class="mn-host-card" data-host="{{ h.host_name }}">
+            <div class="mn-host-card__head">
+                <div class="mn-host-card__info">
+                    <div class="mn-host-card__status" id="host-status-{{ loop.index }}"></div>
+                    <div>
+                        <div class="mn-host-card__name">{{ h.host_name }}</div>
+                        <div class="mn-host-card__url">{{ h.host_url or 'Нет URL' }}</div>
+                    </div>
+                </div>
+                <button type="button" class="mn-host-card__refresh host-refresh-btn" data-host="{{ h.host_name }}" data-target="#host-metrics-{{ loop.index }}">
+                    <span class="material-symbols-outlined">sync</span>
+                </button>
+            </div>
+            <div class="mn-metrics-body server-metrics" id="host-metrics-{{ loop.index }}">
+                <div class="mn-metrics-loading mn-metrics-loading--sm">
+                    <span class="material-symbols-outlined mn-spin">progress_activity</span>
+                    <span>Ожидание...</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="mn-empty mn-empty--dashed">
+        <span class="material-symbols-outlined">dns</span>
+        <p>Нет хостов с SSH — <a href="{{ url_for('settings_tab_page', tab='hosts') }}">настроить в Хостах</a></p>
+    </div>
+    {% endif %}
+</div>

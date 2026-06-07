@@ -1129,15 +1129,9 @@ window.dashCharts = {};
         (function initDashTabs() {
             const tabs = document.querySelectorAll('#dash-tabs .dash-tab');
             const panels = document.querySelectorAll('.dash-tab-panel');
-            let monitorStarted = false;
-
             function showTab(name) {
                 tabs.forEach(t => t.classList.toggle('is-active', t.dataset.tab === name));
                 panels.forEach(p => p.classList.toggle('hidden', p.dataset.tabPanel !== name));
-                if (name === 'resources' && !monitorStarted && typeof window.initDashboardMonitor === 'function') {
-                    monitorStarted = true;
-                    window.initDashboardMonitor();
-                }
                 const path = location.pathname;
                 history.replaceState(null, '', name === 'overview' ? path : `${path}#${name}`);
             }

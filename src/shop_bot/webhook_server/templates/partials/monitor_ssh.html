@@ -1,0 +1,45 @@
+<div class="mn-panel-card">
+    <div class="mn-panel-card__head">
+        <div class="mn-panel-card__title-wrap">
+            <div class="mn-panel-card__icon mn-panel-card__icon--ssh">
+                <span class="material-symbols-outlined">terminal</span>
+            </div>
+            <div>
+                <h4 class="mn-panel-card__title">SSH-цели</h4>
+                <p class="mn-panel-card__sub">Прямое подключение</p>
+            </div>
+        </div>
+        <span class="mn-badge mn-badge--amber">{{ ssh_targets|length }}</span>
+    </div>
+    {% if ssh_targets %}
+    <div class="mn-host-grid">
+        {% for t in ssh_targets %}
+        <div class="mn-host-card mn-host-card--ssh" data-target="{{ t.target_name }}">
+            <div class="mn-host-card__head">
+                <div class="mn-host-card__info">
+                    <div class="mn-host-card__status" id="target-status-{{ loop.index }}"></div>
+                    <div>
+                        <div class="mn-host-card__name">{{ t.target_name }}</div>
+                        <div class="mn-host-card__url">{{ t.ssh_host }}:{{ t.ssh_port or 22 }}</div>
+                    </div>
+                </div>
+                <button type="button" class="mn-host-card__refresh target-refresh-btn" data-target-name="{{ t.target_name }}" data-target="#target-metrics-{{ loop.index }}">
+                    <span class="material-symbols-outlined">sync</span>
+                </button>
+            </div>
+            <div class="mn-metrics-body server-metrics" id="target-metrics-{{ loop.index }}">
+                <div class="mn-metrics-loading mn-metrics-loading--sm">
+                    <span class="material-symbols-outlined mn-spin">progress_activity</span>
+                    <span>Ожидание...</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="mn-empty mn-empty--dashed">
+        <span class="material-symbols-outlined">terminal</span>
+        <p>SSH-цели не настроены — <a href="{{ url_for('node_page') }}">добавить в Нодах</a></p>
+    </div>
+    {% endif %}
+</div>

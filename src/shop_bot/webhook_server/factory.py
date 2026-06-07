@@ -278,6 +278,7 @@ def create_webhook_app(bot_controller_instance):
         def _workspace_dock_registry():
             specs = [
                 ('home', 'Главная', 'home', 'dashboard_page', 'dashboard', []),
+                ('monitor', 'Мониторинг', 'monitoring', 'monitor_page', 'dashboard', []),
                 ('users', 'Пользователи', 'group', 'users_page', 'users', []),
                 ('keys', 'Ключи', 'vpn_key', 'admin_keys_page', 'keys', []),
                 ('support', 'Поддержка', 'support_agent', 'support_list_page', 'support', ['support_ticket_page']),
@@ -314,7 +315,7 @@ def create_webhook_app(bot_controller_instance):
 
         workspace_embed = is_workspace_embed_request()
         workspace_host = (
-            request.endpoint == 'dashboard_page'
+            request.endpoint in ('dashboard_page', 'monitor_page')
             and not workspace_embed
         )
 

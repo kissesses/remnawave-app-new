@@ -324,8 +324,14 @@ def dashboard_layout_prefs_reset():
 
 @bp.route('/monitor')
 @panel_ctx.login_required
-def monitor_page_redirect():
-    return redirect(url_for('dashboard_page') + '#resources')
+def monitor_page():
+    common_data = panel_ctx.get_common_template_data()
+    return render_template(
+        'monitor.html',
+        hosts=_monitor_ssh_hosts(),
+        ssh_targets=_monitor_ssh_targets(),
+        **common_data,
+    )
 
 @bp.route('/dashboard/ssh-targets.json')
 @panel_ctx.login_required

@@ -14,8 +14,8 @@ logger = logging.getLogger(__name__)
 GLOBAL_LAYOUT_KEY = "panel_dashboard_layout"
 ADMIN_PREFS_PREFIX = "panel_dashboard_prefs_"
 
-VALID_TABS = ("overview", "resources", "analytics", "activity")
-WORKSPACE_TABS = ("resources", "analytics", "activity")
+VALID_TABS = ("overview", "analytics", "activity")
+WORKSPACE_TABS = ("analytics", "activity")
 PINNED_TAB = "overview"
 VALID_INCOME_PERIODS = ("today", "7d", "30d", "3m", "6m", "12m", "all")
 VALID_STATS_COLUMNS = (2, 3, 4, 5)
@@ -46,13 +46,6 @@ WIDGET_CATALOG: list[dict[str, Any]] = [
     {"id": "stat_trials", "tab": "overview", "label": "На триале", "group": "segments", "icon": "card_giftcard"},
     {"id": "stat_active_buyers", "tab": "overview", "label": "Купили ключ", "group": "segments", "icon": "verified_user"},
     {"id": "stat_active_keys", "tab": "overview", "label": "Активные ключи", "group": "segments", "icon": "vpn_key"},
-    # Resources
-    {"id": "res_summary", "tab": "resources", "label": "Сводка CPU/RAM/Disk/Net", "group": "monitor", "icon": "speed"},
-    {"id": "res_perf_chart", "tab": "resources", "label": "График производительности", "group": "monitor", "icon": "ssid_chart"},
-    {"id": "res_local_panel", "tab": "resources", "label": "Локальный сервер", "group": "monitor", "icon": "dns"},
-    {"id": "res_hosts", "tab": "resources", "label": "Хосты Remnawave", "group": "monitor", "icon": "cloud"},
-    {"id": "res_ssh_targets", "tab": "resources", "label": "SSH-цели", "group": "monitor", "icon": "terminal"},
-    {"id": "res_actions", "tab": "resources", "label": "Кнопки мониторинга", "group": "monitor", "icon": "tune"},
     # Analytics
     {"id": "analytics_income", "tab": "analytics", "label": "Аналитика доходов", "group": "charts", "icon": "payments"},
     {"id": "analytics_users", "tab": "analytics", "label": "Новые пользователи", "group": "charts", "icon": "person_add"},
@@ -70,14 +63,12 @@ WIDGET_GROUPS: dict[str, str] = {
     "core": "Основные метрики",
     "payments": "Платежи",
     "segments": "Сегменты пользователей",
-    "monitor": "Мониторинг",
     "charts": "Графики",
     "activity": "Активность",
 }
 
 TAB_LABELS: dict[str, str] = {
     "overview": "KPI на главной",
-    "resources": "Ресурсы",
     "analytics": "Аналитика",
     "activity": "Активность",
 }
@@ -95,7 +86,7 @@ def default_layout() -> dict[str, Any]:
         "options": {
             "title": "",
             "subtitle": "",
-            "default_tab": "resources",
+            "default_tab": "analytics",
             "stats_columns": 5,
             "hide_payments_default": False,
             "default_income_period": "30d",
@@ -134,7 +125,7 @@ def normalize_layout(raw: dict[str, Any] | None) -> dict[str, Any]:
 
     tabs = _sanitize_widget_list(raw.get("tabs"))
     tabs = [t for t in tabs if t in VALID_TABS] or list(WORKSPACE_TABS)
-    tabs = [t for t in tabs if t in WORKSPACE_TABS] or list(WORKSPACE_TABS)
+    tabs = [t for t in tabs if t in WORKSPACE_TABS and t != 'resources'] or list(WORKSPACE_TABS)
 
     widgets_in: dict[str, Any] = raw.get("widgets") if isinstance(raw.get("widgets"), dict) else {}
     widgets: dict[str, list[str]] = {}
@@ -156,11 +147,11 @@ def normalize_layout(raw: dict[str, Any] | None) -> dict[str, Any]:
     if subtitle:
         options["subtitle"] = subtitle
 
-    default_tab = str(opts_in.get("default_tab") or "resources")
-    if default_tab == "overview":
-        default_tab = "resources"
+    default_tab = str(opts_in.get("default_tab") or "analytics")
+    if default_tab in ("overview", "resources"):
+        default_tab = "analytics"
     if default_tab not in WORKSPACE_TABS:
-        default_tab = "resources"
+        default_tab = "analytics"
     options["default_tab"] = default_tab
 
     try:

@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Мониторинг ресурсов{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tool-surface.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/monitor-panel.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
+{% endblock %}
+
+{% block content %}
+<div class="mn-page" id="mn-page">
+    <div class="mn-ambient" aria-hidden="true"></div>
+
+    <header class="mn-hero">
+        <div class="mn-hero__main">
+            <p class="mn-hero__eyebrow">
+                <span class="mn-hero__badge">System</span>
+                <span>Мониторинг</span>
+            </p>
+            <h1 class="mn-hero__title">Ресурсы панели и серверов</h1>
+            <p class="mn-hero__sub">
+                CPU, RAM, диск, сеть и SSH-хосты в реальном времени
+                <span class="mn-hero__refresh" id="mn-last-refresh">—</span>
+            </p>
+        </div>
+        <div class="mn-hero__actions">
+            <a href="{{ url_for('node_page') }}" class="mn-btn">
+                <span class="material-symbols-outlined">dns</span>
+                <span class="mn-btn__label">Ноды</span>
+            </a>
+            {% if can('settings_hosts') %}
+            <a href="{{ url_for('settings_tab_page', tab='hosts') }}" class="mn-btn">
+                <span class="material-symbols-outlined">settings</span>
+                <span class="mn-btn__label">Хосты</span>
+            </a>
+            {% endif %}
+            <button type="button" id="clear-metrics" class="mn-btn mn-btn--danger-soft">
+                <span class="material-symbols-outlined">delete_sweep</span>
+                <span class="mn-btn__label">Очистить БД</span>
+            </button>
+            <button type="button" id="refresh-all" class="mn-btn mn-btn--accent">
+                <span class="material-symbols-outlined">refresh</span>
+                Обновить
+            </button>
+        </div>
+    </header>
+
+    <nav class="mn-tabs" id="mn-tabs" role="tablist">
+        <button type="button" class="mn-tab is-active" data-mn-tab="overview" role="tab">
+            <span class="material-symbols-outlined">speed</span> Сводка
+        </button>
+        <button type="button" class="mn-tab" data-mn-tab="hosts" role="tab">
+            <span class="material-symbols-outlined">dns</span> Хосты
+            <span class="mn-tab__count">{{ hosts|length }}</span>
+        </button>
+        <button type="button" class="mn-tab" data-mn-tab="ssh" role="tab">
+            <span class="material-symbols-outlined">terminal</span> SSH
+            <span class="mn-tab__count">{{ ssh_targets|length }}</span>
+        </button>
+    </nav>
+
+    <div id="mn-panel-overview" class="mn-tab-panel" data-mn-panel="overview">
+        {% include 'partials/monitor_body.html' %}
+    </div>
+    <div id="mn-panel-hosts" class="mn-tab-panel hidden" data-mn-panel="hosts">
+        {% include 'partials/monitor_hosts.html' %}
+    </div>
+    <div id="mn-panel-ssh" class="mn-tab-panel hidden" data-mn-panel="ssh">
+        {% include 'partials/monitor_ssh.html' %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+window.__MONITOR_ROUTES__ = {
+    local: {{ url_for('monitor_local_json')|tojson }},
+    host: {{ url_for('monitor_host_json', host_name='__H__')|tojson }},
+    target: {{ url_for('monitor_target_json', target_name='__T__')|tojson }},
+    seriesLocal: {{ url_for('monitor_series_json', scope='local', name='panel')|tojson }},
+    seriesHost: {{ url_for('monitor_series_json', scope='host', name='__H__')|tojson }},
+    clearMetrics: {{ url_for('monitor_clear_metrics')|tojson }}
+};
+</script>
+{% include 'partials/monitor_scripts.html' %}
+{% endblock %}

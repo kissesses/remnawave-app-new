@@ -273,7 +273,6 @@ ENDPOINT_PERMISSIONS: dict[str, str] = {
     "edit_device_tier_route": "settings_hosts",
     # Monitor
     "monitor_page": "dashboard",
-    "monitor_page_redirect": "dashboard",
     "monitor_local_json": "dashboard",
     "monitor_host_json": "dashboard",
     "monitor_target_json": "dashboard",

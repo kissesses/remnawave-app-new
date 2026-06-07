@@ -1,0 +1,94 @@
+<div class="mn-monitor">
+    <div class="mn-monitor__summary">
+        <div class="mn-mini-card">
+            <div class="mn-mini-card__head">
+                <span class="mn-mini-card__label">CPU</span>
+                <span class="material-symbols-outlined mn-mini-card__icon mn-mini-card__icon--cpu">memory</span>
+            </div>
+            <div class="mn-mini-card__value" id="cpu-stat">—</div>
+            <div class="mn-mini-card__meta" id="cpu-trend">—</div>
+        </div>
+        <div class="mn-mini-card">
+            <div class="mn-mini-card__head">
+                <span class="mn-mini-card__label">RAM</span>
+                <span class="material-symbols-outlined mn-mini-card__icon mn-mini-card__icon--ram">storage</span>
+            </div>
+            <div class="mn-mini-card__value" id="memory-stat">—</div>
+            <div class="mn-mini-card__meta" id="memory-trend">—</div>
+        </div>
+        <div class="mn-mini-card">
+            <div class="mn-mini-card__head">
+                <span class="mn-mini-card__label">Disk</span>
+                <span class="material-symbols-outlined mn-mini-card__icon mn-mini-card__icon--disk">hard_drive</span>
+            </div>
+            <div class="mn-mini-card__value" id="disk-stat">—</div>
+            <div class="mn-mini-card__meta" id="disk-trend">—</div>
+        </div>
+        <div class="mn-mini-card">
+            <div class="mn-mini-card__head">
+                <span class="mn-mini-card__label">Сеть</span>
+                <span class="material-symbols-outlined mn-mini-card__icon mn-mini-card__icon--net">lan</span>
+            </div>
+            <div class="mn-mini-card__value mn-mini-card__value--sm" id="network-stat">—</div>
+            <div class="mn-mini-card__meta" id="network-trend">—</div>
+        </div>
+    </div>
+
+    <div class="mn-monitor__row">
+        <div class="mn-panel-card mn-panel-card--wide">
+            <div class="mn-panel-card__head">
+                <div class="mn-panel-card__title-wrap">
+                    <div class="mn-panel-card__icon mn-panel-card__icon--chart">
+                        <span class="material-symbols-outlined">ssid_chart</span>
+                    </div>
+                    <h4 class="mn-panel-card__title">Производительность</h4>
+                </div>
+                <div class="mn-pills">
+                    <button type="button" class="mn-pill period-btn is-active" data-period="6">6ч</button>
+                    <button type="button" class="mn-pill period-btn" data-period="24">24ч</button>
+                    <button type="button" class="mn-pill period-btn" data-period="168">Нед</button>
+                    <button type="button" class="mn-pill period-btn" data-period="720">Мес</button>
+                </div>
+            </div>
+            <div class="mn-panel-card__chart"><canvas id="main-chart"></canvas></div>
+        </div>
+
+        <div class="mn-panel-card mn-panel-card--server">
+            <div class="mn-panel-card__head">
+                <div class="mn-panel-card__title-wrap">
+                    <div class="mn-panel-card__icon mn-panel-card__icon--server">
+                        <span class="material-symbols-outlined">dns</span>
+                    </div>
+                    <h4 class="mn-panel-card__title">Сервер</h4>
+                </div>
+                {% if hosts %}
+                <div class="soft-select mn-server-select" data-target="server-selector">
+                    <button type="button" class="soft-select-toggle mn-server-select__toggle">
+                        <span class="truncate">Локальная</span>
+                        <span class="material-symbols-outlined">expand_more</span>
+                    </button>
+                    <div class="soft-select-menu mn-server-select__menu hidden">
+                        <div class="soft-select-item is-active" data-value="local">Локальная</div>
+                        {% for h in hosts %}
+                        <div class="soft-select-item" data-value="remote:{{ h.host_name }}">{{ h.host_name }}</div>
+                        {% endfor %}
+                    </div>
+                    <select id="server-selector" class="hidden">
+                        <option value="local" selected>Локальная</option>
+                        {% for h in hosts %}
+                        <option value="remote:{{ h.host_name }}">{{ h.host_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+            </div>
+            <div id="local-metrics" class="mn-metrics-body">
+                <div class="mn-metrics-loading">
+                    <span class="material-symbols-outlined mn-spin">progress_activity</span>
+                    <span>Сбор данных...</span>
+                </div>
+            </div>
+            <div class="mn-panel-card__mini-chart"><canvas id="local-mini-chart"></canvas></div>
+        </div>
+    </div>
+</div>

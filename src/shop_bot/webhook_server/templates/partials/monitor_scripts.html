@@ -1,5 +1,6 @@
 <script>
     (function () {
+        const routes = window.__MONITOR_ROUTES__ || {};
         let mainChart = null;
         let localMiniChart = null;
         let autoRefreshInterval = null;
@@ -42,27 +43,27 @@
         }
 
         function getStatusColor(value, thresholds = { warning: 70, critical: 90 }) {
-            if (value == null) return 'dh-status--muted';
-            if (value >= thresholds.critical) return 'dh-status--critical';
-            if (value >= thresholds.warning) return 'dh-status--warn';
-            return 'dh-status--ok';
+            if (value == null) return 'mn-status--muted';
+            if (value >= thresholds.critical) return 'mn-status--critical';
+            if (value >= thresholds.warning) return 'mn-status--warn';
+            return 'mn-status--ok';
         }
 
         function progressFillClass(percent) {
-            if (percent >= 90) return 'dh-progress__fill--critical';
-            if (percent >= 70) return 'dh-progress__fill--warn';
-            return 'dh-progress__fill--ok';
+            if (percent >= 90) return 'mn-progress__fill--critical';
+            if (percent >= 70) return 'mn-progress__fill--warn';
+            return 'mn-progress__fill--ok';
         }
 
         function metricRow(label, percent, fillClass, extraHtml) {
             return `
-                <div class="dh-metric-item">
-                    <div class="dh-metric-item__label">
+                <div class="mn-metric-item">
+                    <div class="mn-metric-item__label">
                         <span>${label}</span>
                         <span class="${getStatusColor(percent)}">${fmtPct(percent)}</span>
                     </div>
-                    <div class="dh-progress">
-                        <div class="dh-progress__fill ${fillClass}" style="width:${percent || 0}%"></div>
+                    <div class="mn-progress">
+                        <div class="mn-progress__fill ${fillClass}" style="width:${percent || 0}%"></div>
                     </div>
                     ${extraHtml || ''}
                 </div>`;
@@ -130,13 +131,13 @@
             const speedTotal = fmtBytes(networkSpeed.totalSpeed) + '/с';
             const speedUp = fmtBytes(networkSpeed.upSpeed) + '/с';
             const speedDown = fmtBytes(networkSpeed.downSpeed) + '/с';
-            document.getElementById('network-stat').innerHTML = `<span class="dh-status--net">${speedTotal}</span>`;
+            document.getElementById('network-stat').innerHTML = `<span class="mn-status--net">${speedTotal}</span>`;
             document.getElementById('network-trend').innerHTML = `↓${speedDown}  ↑${speedUp}`;
         }
 
         function renderLocal(el, data) {
             if (!data || !data.ok) {
-                el.innerHTML = `<div class="dh-metrics-error"><span class="material-symbols-outlined">error</span><span>${data?.error || 'Сбой получения данных'}</span></div>`;
+                el.innerHTML = `<div class="mn-metrics-error"><span class="material-symbols-outlined">error</span><span>${data?.error || 'Сбой получения данных'}</span></div>`;
                 return;
             }
             const cpu = data.cpu || {};
@@ -151,20 +152,20 @@
             )).join('');
 
             el.innerHTML = `
-                <div class="dh-metric-meta">
-                    <div class="dh-metric-meta__tile">
-                        <div class="dh-metric-meta__label">Хостнейм</div>
-                        <div class="dh-metric-meta__value" title="${data.hostname || ''}">${data.hostname || '—'}</div>
+                <div class="mn-metric-meta">
+                    <div class="mn-metric-meta__tile">
+                        <div class="mn-metric-meta__label">Хостнейм</div>
+                        <div class="mn-metric-meta__value" title="${data.hostname || ''}">${data.hostname || '—'}</div>
                     </div>
-                    <div class="dh-metric-meta__tile">
-                        <div class="dh-metric-meta__label">Uptime</div>
-                        <div class="dh-metric-meta__value dh-status--ok">${secsToDHMS(data.uptime_sec)}</div>
+                    <div class="mn-metric-meta__tile">
+                        <div class="mn-metric-meta__label">Uptime</div>
+                        <div class="mn-metric-meta__value mn-status--ok">${secsToDHMS(data.uptime_sec)}</div>
                     </div>
                 </div>
-                <div class="dh-metric-stack">
-                    ${metricRow(`CPU (${cpu.count_logical || '—'} cores)`, cpu.percent, 'dh-progress__fill--cpu')}
-                    ${metricRow('RAM', mem.percent, 'dh-progress__fill--ram', `<div class="dh-metric-item__extra">${fmtBytes(mem.used)} / ${fmtBytes(mem.total)}</div>`)}
-                    ${sw.total ? metricRow('SWAP', sw.percent, 'dh-progress__fill--swap') : ''}
+                <div class="mn-metric-stack">
+                    ${metricRow(`CPU (${cpu.count_logical || '—'} cores)`, cpu.percent, 'mn-progress__fill--cpu')}
+                    ${metricRow('RAM', mem.percent, 'mn-progress__fill--ram', `<div class="mn-metric-item__extra">${fmtBytes(mem.used)} / ${fmtBytes(mem.total)}</div>`)}
+                    ${sw.total ? metricRow('SWAP', sw.percent, 'mn-progress__fill--swap') : ''}
                     ${diskHtml}
                 </div>
             `;
@@ -172,7 +173,7 @@
 
         function renderRemote(el, data) {
             if (!data || !data.ok) {
-                el.innerHTML = `<div class="dh-metrics-error"><span class="material-symbols-outlined">error</span><span>${data?.error || 'Сбой данных'}</span></div>`;
+                el.innerHTML = `<div class="mn-metrics-error"><span class="material-symbols-outlined">error</span><span>${data?.error || 'Сбой данных'}</span></div>`;
                 return;
             }
             const cpu = { percent: data.cpu_percent || 0, count: data.cpu_count || '—' };
@@ -180,19 +181,19 @@
             const disk = { percent: data.disk_percent || 0, mountpoint: data.disk_mountpoint || '/' };
 
             el.innerHTML = `
-                <div class="dh-metric-meta dh-metric-meta--compact">
-                    <div class="dh-metric-meta__tile">
-                        <div class="dh-metric-meta__label">Система</div>
-                        <div class="dh-metric-meta__value" title="${data.uname || ''}">${data.uname || '—'}</div>
+                <div class="mn-metric-meta mn-metric-meta--compact">
+                    <div class="mn-metric-meta__tile">
+                        <div class="mn-metric-meta__label">Система</div>
+                        <div class="mn-metric-meta__value" title="${data.uname || ''}">${data.uname || '—'}</div>
                     </div>
-                    <div class="dh-metric-meta__tile">
-                        <div class="dh-metric-meta__label">Uptime</div>
-                        <div class="dh-metric-meta__value dh-status--net">${secsToDHMS(data.uptime_sec)}</div>
+                    <div class="mn-metric-meta__tile">
+                        <div class="mn-metric-meta__label">Uptime</div>
+                        <div class="mn-metric-meta__value mn-status--net">${secsToDHMS(data.uptime_sec)}</div>
                     </div>
                 </div>
-                <div class="dh-metric-stack">
-                    ${metricRow(`CPU (${cpu.count} ядер)`, cpu.percent, 'dh-progress__fill--cpu')}
-                    ${metricRow('RAM', mem.percent, 'dh-progress__fill--ram', `<div class="dh-metric-item__extra">${mem.used_mb} MB / ${mem.total_mb} MB</div>`)}
+                <div class="mn-metric-stack">
+                    ${metricRow(`CPU (${cpu.count} ядер)`, cpu.percent, 'mn-progress__fill--cpu')}
+                    ${metricRow('RAM', mem.percent, 'mn-progress__fill--ram', `<div class="mn-metric-item__extra">${mem.used_mb} MB / ${mem.total_mb} MB</div>`)}
                     ${metricRow(`DISK (${disk.mountpoint})`, disk.percent, progressFillClass(disk.percent))}
                 </div>
             `;
@@ -349,12 +350,12 @@
 
             let url;
             if (selectedValue === 'local') {
-                url = `{{ url_for('monitor_series_json', scope='local', name='panel') }}?hours=${currentPeriod}`;
+                url = `${routes.seriesLocal}?hours=${currentPeriod}`;
             } else if (selectedValue.startsWith('remote:')) {
                 const hostName = selectedValue.replace('remote:', '');
-                url = `{{ url_for('monitor_series_json', scope='host', name='__HOST__') }}?hours=${currentPeriod}`.replace('__HOST__', encodeURIComponent(hostName));
+                url = `${routes.seriesHost.replace('__H__', encodeURIComponent(hostName))}?hours=${currentPeriod}`;
             } else {
-                url = `{{ url_for('monitor_series_json', scope='local', name='panel') }}?hours=${currentPeriod}`;
+                url = `${routes.seriesLocal}?hours=${currentPeriod}`;
             }
 
             const res = await fetchJSON(url);
@@ -391,12 +392,12 @@
             const selectedValue = selector ? selector.value : 'local';
 
             if (selectedValue === 'local') {
-                const data = await fetchJSON("{{ url_for('monitor_local_json') }}");
+                const data = await fetchJSON(routes.local);
                 renderLocal(el, data);
                 updateStatsCards(data);
             } else if (selectedValue.startsWith('remote:')) {
                 const hostName = selectedValue.replace('remote:', '');
-                const data = await fetchJSON(`{{ url_for('monitor_host_json', host_name='__HOST__') }}`.replace('__HOST__', encodeURIComponent(hostName)));
+                const data = await fetchJSON(routes.host.replace('__H__', encodeURIComponent(hostName)));
                 renderRemote(el, data);
                 updateStatsCards(data);
             }
@@ -404,25 +405,25 @@
 
         async function refreshHost(hostName, metricsEl, statusEl) {
             if (metricsEl) {
-                metricsEl.innerHTML = `<div class="flex items-center gap-2 text-white/40"><span class="material-symbols-outlined text-[14px] animate-spin">progress_activity</span> <span class="text-[9px] font-bold uppercase tracking-widest">Загрузка...</span></div>`;
+                metricsEl.innerHTML = `<div class="mn-metrics-loading mn-metrics-loading--sm"><span class="material-symbols-outlined mn-spin">progress_activity</span><span>Загрузка...</span></div>`;
             }
-            if (statusEl) statusEl.className = 'w-2 h-2 rounded-full bg-yellow-400';
-            const data = await fetchJSON(`{{ url_for('monitor_host_json', host_name='__HOST__') }}`.replace('__HOST__', encodeURIComponent(hostName)));
+            if (statusEl) statusEl.className = 'mn-host-card__status mn-host-card__status--warn';
+            const data = await fetchJSON(routes.host.replace('__H__', encodeURIComponent(hostName)));
             if (metricsEl) renderRemote(metricsEl, data);
             if (statusEl) {
-                statusEl.className = `w-2 h-2 rounded-full ${data.ok ? 'bg-green-500' : 'bg-red-500'}`;
+                statusEl.className = `mn-host-card__status ${data.ok ? 'mn-host-card__status--ok' : 'mn-host-card__status--err'}`;
             }
         }
 
         async function refreshTarget(targetName, metricsEl, statusEl) {
             if (metricsEl) {
-                metricsEl.innerHTML = `<div class="flex items-center gap-2 text-white/40"><span class="material-symbols-outlined text-[14px] animate-spin">progress_activity</span> <span class="text-[9px] font-bold uppercase tracking-widest">Загрузка...</span></div>`;
+                metricsEl.innerHTML = `<div class="mn-metrics-loading mn-metrics-loading--sm"><span class="material-symbols-outlined mn-spin">progress_activity</span><span>Загрузка...</span></div>`;
             }
-            if (statusEl) statusEl.className = 'w-2 h-2 rounded-full bg-yellow-400';
-            const data = await fetchJSON(`{{ url_for('monitor_target_json', target_name='__T__') }}`.replace('__T__', encodeURIComponent(targetName)));
+            if (statusEl) statusEl.className = 'mn-host-card__status mn-host-card__status--warn';
+            const data = await fetchJSON(routes.target.replace('__T__', encodeURIComponent(targetName)));
             if (metricsEl) renderRemote(metricsEl, data);
             if (statusEl) {
-                statusEl.className = `w-2 h-2 rounded-full ${data.ok ? 'bg-green-500' : 'bg-red-500'}`;
+                statusEl.className = `mn-host-card__status ${data.ok ? 'mn-host-card__status--ok' : 'mn-host-card__status--err'}`;
             }
         }
 
@@ -448,18 +449,41 @@
             });
         }
 
+        function touchLastRefresh() {
+            const el = document.getElementById('mn-last-refresh');
+            if (!el) return;
+            const now = new Date();
+            el.textContent = `· обновлено ${now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+        }
+
         async function refreshAll() {
             await refreshLocalPanel();
             await refreshCharts();
             refreshAllHosts();
             refreshAllTargets();
+            touchLastRefresh();
         }
 
-        window.initDashboardMonitor = function() {
-            if (window.__dashMonitorReady) return;
-            window.__dashMonitorReady = true;
+        function initMonitorTabs() {
+            const tabs = document.querySelectorAll('#mn-tabs .mn-tab');
+            const panels = document.querySelectorAll('[data-mn-panel]');
+            tabs.forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const name = btn.dataset.mnTab;
+                    tabs.forEach((t) => t.classList.toggle('is-active', t.dataset.mnTab === name));
+                    panels.forEach((p) => p.classList.toggle('hidden', p.dataset.mnPanel !== name));
+                    if (name === 'hosts') refreshAllHosts();
+                    if (name === 'ssh') refreshAllTargets();
+                });
+            });
+        }
+
+        function initMonitor() {
+            if (window.__monitorReady) return;
+            window.__monitorReady = true;
             createMainChart();
             createLocalMiniChart();
+            initMonitorTabs();
             refreshAll();
 
             document.getElementById('refresh-all')?.addEventListener('click', refreshAll);
@@ -524,7 +548,7 @@
                 btn.innerHTML = '<span class="material-symbols-outlined text-[14px] animate-spin">progress_activity</span> Очистка...';
 
                 try {
-                    const resp = await fetch(`{{ url_for('monitor_clear_metrics') }}`, {
+                    const resp = await fetch(routes.clearMetrics, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -582,7 +606,13 @@
             });
 
             autoRefreshInterval = setInterval(refreshAll, 60000);
-        };
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initMonitor);
+        } else {
+            initMonitor();
+        }
     })();
 
 </script>
