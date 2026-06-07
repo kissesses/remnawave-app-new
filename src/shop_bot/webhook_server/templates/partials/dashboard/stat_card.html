@@ -1,6 +1,8 @@
 {% macro dash_stat_card(widget_id, label, value_html, icon, tone='sky', extra_class='', action_html='', onclick='') %}
 <div data-dash-widget="{{ widget_id }}" class="dash-stat-card dash-stat-card--{{ tone }}{% if extra_class %} {{ extra_class }}{% endif %}">
+    <div class="dash-stat-card__border" aria-hidden="true"></div>
     <div class="dash-stat-card__glow" aria-hidden="true"></div>
+    <div class="dash-stat-card__shine" aria-hidden="true"></div>
     <div class="dash-stat-card__body">
         <div class="dash-stat-card__main">
             <p class="dash-stat-card__label">{{ label }}</p>

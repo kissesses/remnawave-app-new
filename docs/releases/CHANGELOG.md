@@ -7,6 +7,46 @@
 
 ---
 
+## [1.0.6] — 2026-06-07 · Glass Meridian
+
+> **Glass Meridian** — главная страница получила premium-оформление и адаптацию под все макеты панели.
+
+### EN
+
+#### 🆕 Added
+
+- **Dashboard themes** — per-design styling for Classic, macOS, macOS v2, Glass, and Stealth Admin (dark + light)
+- **Premium home layer** — hero shell with ambient orbs, gradient title, live clock, KPI section header
+- **KPI stat cards** — gradient borders, shine on hover, stagger entrance animation
+- **Sliding tab indicator** — animated pill for Resources / Analytics / Activity tabs
+- **Status chips** — pulsing online rings, icon capsules, responsive 2×2 grid on mobile
+- **Onboarding progress bar** — visual completion tracker on first-run checklist
+
+#### ✨ Changed
+
+- Dashboard CSS moved to CSS variables (`--dash-*`) for consistent theming across widgets
+- Topbar page title picks up `.dashboard-title` from theme manager
+- Dashboard Studio preserves gradient title span when renaming the page
+
+### RU
+
+#### 🆕 Добавлено
+
+- **Темы главной** — оформление под Classic, macOS, macOS v2, Glass и Stealth Admin (тёмная и светлая тема)
+- **Premium-слой** — hero-блок с ambient-орбами, gradient-заголовок, живые часы, шапка KPI-зоны
+- **KPI-карточки** — gradient-рамки, shine при hover, stagger-анимация появления
+- **Скользящий индикатор вкладок** — анимированная pill для Ресурсы / Аналитика / Активность
+- **Статус-чипы** — пульсирующие кольца «В сети», иконки в capsule, сетка 2×2 на мобиле
+- **Progress-bar онбординга** — полоска прогресса в чеклисте первого запуска
+
+#### ✨ Изменено
+
+- CSS главной переведён на переменные (`--dash-*`) для единого стиля виджетов
+- Заголовок в topbar берётся из `.dashboard-title` через theme manager
+- Dashboard Studio сохраняет gradient-заголовок при переименовании страницы
+
+---
+
 ## [1.0.5] — 2026-06-07 · Velvet Stitch
 
 > **Velvet Stitch** — лента активности снова открывается без ошибки 500.

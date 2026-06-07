@@ -398,7 +398,12 @@
         const titleEl = document.getElementById('dash-custom-title');
         const subEl = document.getElementById('dash-custom-subtitle');
         const subTextEl = subEl?.querySelector('.dashboard-subtitle__text, .dash-hero__sub-text');
-        if (titleEl) titleEl.textContent = opts.title || 'Дашборд';
+        const titleText = opts.title || 'Главная';
+        if (titleEl) {
+            const gradEl = titleEl.querySelector('.dashboard-title__gradient');
+            if (gradEl) gradEl.textContent = titleText;
+            else titleEl.textContent = titleText;
+        }
         const subtitle = opts.subtitle || 'Статистика, мониторинг и аналитика';
         if (subTextEl) subTextEl.textContent = subtitle;
         else if (subEl) subEl.textContent = subtitle;

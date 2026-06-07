@@ -271,7 +271,7 @@
     function updatePageTitle() {
         const el = document.getElementById('panel-page-title');
         if (!el) return;
-        const h1 = document.querySelector('main h1, main h2.text-3xl, main .users-title, main .settings-title, main .support-title');
+        const h1 = document.querySelector('main h1, main h2.text-3xl, main .users-title, main .settings-title, main .support-title, main .dashboard-title');
         el.textContent = h1 ? h1.textContent.trim() : '';
     }
 

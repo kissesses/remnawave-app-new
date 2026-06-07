@@ -3,33 +3,57 @@
 
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard-panel.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard-panel-themes.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard-panel-premium.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard-studio.css') }}" />
 {% endblock %}
 
 {% block content %}
-<div class="dashboard-page" id="dashboard-page">
-    {% include 'partials/dashboard/header.html' %}
+<div class="dashboard-page dashboard-page--premium" id="dashboard-page">
+    <div class="dashboard-ambient" aria-hidden="true">
+        <span class="dashboard-ambient__orb dashboard-ambient__orb--1"></span>
+        <span class="dashboard-ambient__orb dashboard-ambient__orb--2"></span>
+        <span class="dashboard-ambient__orb dashboard-ambient__orb--3"></span>
+    </div>
 
-    {% include 'partials/dashboard_onboarding.html' %}
+    <div class="dashboard-hero">
+        {% include 'partials/dashboard/header.html' %}
+        {% include 'partials/dashboard_onboarding.html' %}
 
-    {% include 'partials/dashboard/kpi.html' %}
+        <div class="dashboard-kpi-shell">
+            <div class="dashboard-kpi-shell__head">
+                <div class="dashboard-kpi-shell__titles">
+                    <span class="dashboard-kpi-shell__eyebrow">Live metrics</span>
+                    <h2 class="dashboard-kpi-shell__title">Ключевые показатели</h2>
+                </div>
+                <div class="dashboard-kpi-shell__meta">
+                    <span class="dashboard-kpi-shell__pulse" aria-hidden="true"></span>
+                    <span class="dashboard-kpi-shell__live">Обновление каждые 2 мин</span>
+                </div>
+            </div>
+            {% include 'partials/dashboard/kpi.html' %}
+        </div>
+    </div>
 
-    <nav class="dashboard-tabs" id="dash-tabs" role="tablist" aria-label="Разделы главной страницы">
-        <button type="button" class="dash-tab is-active" data-tab="resources" role="tab" aria-selected="true">
-            <span class="material-symbols-outlined">monitoring</span> Ресурсы
-        </button>
-        <button type="button" class="dash-tab" data-tab="analytics" role="tab" aria-selected="false">
-            <span class="material-symbols-outlined">analytics</span> Аналитика
-        </button>
-        <button type="button" class="dash-tab" data-tab="activity" role="tab" aria-selected="false">
-            <span class="material-symbols-outlined">bolt</span> Активность
-        </button>
-    </nav>
+    <div class="dashboard-shell">
+        <nav class="dashboard-tabs" id="dash-tabs" role="tablist" aria-label="Разделы главной страницы">
+            <span class="dashboard-tabs__indicator" id="dash-tab-indicator" aria-hidden="true"></span>
+            <button type="button" class="dash-tab is-active" data-tab="resources" role="tab" aria-selected="true">
+                <span class="material-symbols-outlined">monitoring</span> Ресурсы
+            </button>
+            <button type="button" class="dash-tab" data-tab="analytics" role="tab" aria-selected="false">
+                <span class="material-symbols-outlined">analytics</span> Аналитика
+            </button>
+            <button type="button" class="dash-tab" data-tab="activity" role="tab" aria-selected="false">
+                <span class="material-symbols-outlined">bolt</span> Активность
+            </button>
+        </nav>
 
-    <div class="dashboard-workspace" id="dashboard-workspace">
-        {% include 'partials/dashboard/tab_resources.html' %}
-        {% include 'partials/dashboard/tab_analytics.html' %}
-        {% include 'partials/dashboard/tab_activity.html' %}
+        <div class="dashboard-workspace" id="dashboard-workspace">
+            {% include 'partials/dashboard/tab_resources.html' %}
+            {% include 'partials/dashboard/tab_analytics.html' %}
+            {% include 'partials/dashboard/tab_activity.html' %}
+        </div>
     </div>
 
     {% include 'partials/dashboard/modals.html' %}

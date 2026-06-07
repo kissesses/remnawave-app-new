@@ -1107,12 +1107,33 @@ window.dashCharts = {};
 
         initAutoRefresh();
 
+        (function initDashClock() {
+            const el = document.getElementById('dash-live-clock');
+            if (!el) return;
+            function tick() {
+                el.textContent = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+            }
+            tick();
+            setInterval(tick, 30000);
+        })();
+
         (function initDashTabs() {
             const tabs = document.querySelectorAll('#dash-tabs .dash-tab');
             const panels = document.querySelectorAll('.dash-tab-panel');
+            const indicator = document.getElementById('dash-tab-indicator');
+            const tabsNav = document.getElementById('dash-tabs');
             let monitorStarted = false;
             let analyticsStarted = false;
             let activityStarted = false;
+
+            function moveTabIndicator(activeTab) {
+                if (!indicator || !activeTab || !tabsNav) return;
+                const navRect = tabsNav.getBoundingClientRect();
+                const tabRect = activeTab.getBoundingClientRect();
+                indicator.style.width = `${tabRect.width}px`;
+                indicator.style.height = `${tabRect.height}px`;
+                indicator.style.transform = `translate(${tabRect.left - navRect.left}px, ${tabRect.top - navRect.top}px)`;
+            }
 
             function initAnalytics() {
                 if (analyticsStarted) return;
@@ -1138,7 +1159,12 @@ window.dashCharts = {};
                     t.classList.toggle('is-active', active);
                     t.setAttribute('aria-selected', active ? 'true' : 'false');
                 });
-                panels.forEach(p => p.classList.toggle('hidden', p.dataset.tabPanel !== name));
+                panels.forEach(p => {
+                    const show = p.dataset.tabPanel === name;
+                    p.classList.toggle('hidden', !show);
+                    p.classList.toggle('dash-tab-panel--enter', show);
+                });
+                moveTabIndicator(document.querySelector(`#dash-tabs .dash-tab[data-tab="${name}"]`));
                 if (name === 'resources' && !monitorStarted && typeof window.initDashboardMonitor === 'function') {
                     monitorStarted = true;
                     window.initDashboardMonitor();
@@ -1151,6 +1177,7 @@ window.dashCharts = {};
             window.switchDashTab = showTab;
 
             tabs.forEach(t => t.addEventListener('click', () => showTab(t.dataset.tab)));
+            window.addEventListener('resize', () => moveTabIndicator(document.querySelector('#dash-tabs .dash-tab.is-active')));
             let hash = (location.hash || '').replace('#', '');
             if (hash === 'overview') hash = 'resources';
             if (hash && document.querySelector(`[data-tab-panel="${hash}"]`)) {
@@ -1158,6 +1185,9 @@ window.dashCharts = {};
             } else {
                 showTab('resources');
             }
+            requestAnimationFrame(() => {
+                moveTabIndicator(document.querySelector('#dash-tabs .dash-tab.is-active'));
+            });
         })();
 
     }

@@ -14,7 +14,9 @@
 {{ dash_stat_card('stat_cryptobot', 'CryptoBot', ('{:,.0f}'.format(stats.get('cryptobot_income', 0)).replace(',', ' ') ~ ' ₽') if stats.get('cryptobot_income') is not none else dash_stat_spinner('violet'), 'currency_bitcoin', 'violet', 'payment-stat-block') }}
 
 <div data-dash-widget="stat_heleket_ton" class="dash-stat-card dash-stat-card--cyan payment-stat-block" id="toggle-stats-card">
+    <div class="dash-stat-card__border" aria-hidden="true"></div>
     <div class="dash-stat-card__glow" aria-hidden="true"></div>
+    <div class="dash-stat-card__shine" aria-hidden="true"></div>
     <div class="dash-stat-card__body dash-stat-card__body--toggle">
         <div class="dash-stat-card__main">
             <div id="view-stat-heleket" class="stat-view">

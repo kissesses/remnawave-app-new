@@ -1,6 +1,6 @@
 <header class="dashboard-header dash-page-head">
     <div class="dashboard-header__main">
-        <p class="dashboard-breadcrumb">Панель</p>
+        <p class="dashboard-breadcrumb">Панель · <span id="dash-live-clock" class="dashboard-breadcrumb__time"></span></p>
         <div class="dashboard-header__row">
             <div class="dashboard-header__titles">
                 {% if dashboard_layout and dashboard_layout.options.show_eyebrow != false %}
@@ -10,7 +10,7 @@
                 </p>
                 {% endif %}
                 <h1 id="dash-custom-title" class="dashboard-title">
-                    {{ dashboard_layout.options.title if dashboard_layout and dashboard_layout.options.title else 'Главная' }}
+                    <span class="dashboard-title__gradient">{{ dashboard_layout.options.title if dashboard_layout and dashboard_layout.options.title else 'Главная' }}</span>
                 </h1>
                 <p id="dash-custom-subtitle" class="dashboard-subtitle">
                     <span class="dashboard-subtitle__text">{{ dashboard_layout.options.subtitle if dashboard_layout and dashboard_layout.options.subtitle else 'Статистика, мониторинг и аналитика' }}</span>
@@ -19,7 +19,7 @@
                     </button>
                 </p>
             </div>
-            <button type="button" id="dash-open-studio" class="dashboard-studio-btn" title="Dashboard Studio — виджеты и оформление">
+            <button type="button" id="dash-open-studio" class="dashboard-studio-btn dashboard-studio-btn--glow" title="Dashboard Studio — виджеты и оформление">
                 <span class="material-symbols-outlined" aria-hidden="true">dashboard_customize</span>
                 <span class="dashboard-studio-btn__label">Настроить</span>
             </button>
@@ -27,29 +27,33 @@
     </div>
 
     <div id="dash-header-chips" class="dashboard-status-strip">
-        <div data-dash-widget="chip_bot" class="dashboard-status-chip">
-            <span class="dashboard-status-chip__dot {{ 'is-online' if main_running else 'is-offline' }}"></span>
+        <div data-dash-widget="chip_bot" class="dashboard-status-chip dashboard-status-chip--status">
+            <span class="dashboard-status-chip__ring {{ 'is-online' if main_running else 'is-offline' }}" aria-hidden="true">
+                <span class="dashboard-status-chip__dot {{ 'is-online' if main_running else 'is-offline' }}"></span>
+            </span>
             <div>
                 <div class="dashboard-status-chip__label">Бот</div>
                 <div class="dashboard-status-chip__value">{{ 'В сети' if main_running else 'Не в сети' }}</div>
             </div>
         </div>
-        <div data-dash-widget="chip_support" class="dashboard-status-chip">
-            <span class="dashboard-status-chip__dot {{ 'is-online' if support_running else 'is-muted' }}"></span>
+        <div data-dash-widget="chip_support" class="dashboard-status-chip dashboard-status-chip--status">
+            <span class="dashboard-status-chip__ring {{ 'is-online' if support_running else 'is-muted' }}" aria-hidden="true">
+                <span class="dashboard-status-chip__dot {{ 'is-online' if support_running else 'is-muted' }}"></span>
+            </span>
             <div>
                 <div class="dashboard-status-chip__label">Поддержка</div>
                 <div class="dashboard-status-chip__value">{{ 'В сети' if support_running else 'Не в сети' }}</div>
             </div>
         </div>
         <a data-dash-widget="chip_tickets" href="{{ url_for('support_list_page') }}" class="dashboard-status-chip dashboard-status-chip--link">
-            <span class="material-symbols-outlined dashboard-status-chip__icon">confirmation_number</span>
+            <span class="dashboard-status-chip__icon-wrap"><span class="material-symbols-outlined dashboard-status-chip__icon">confirmation_number</span></span>
             <div>
                 <div class="dashboard-status-chip__label">Тикеты</div>
                 <div class="dashboard-status-chip__value tabular-nums">{{ open_tickets_count or 0 }} откр.</div>
             </div>
         </a>
         <a data-dash-widget="chip_nodes" href="{{ url_for('node_page') }}" class="dashboard-status-chip dashboard-status-chip--link">
-            <span class="material-symbols-outlined dashboard-status-chip__icon">hub</span>
+            <span class="dashboard-status-chip__icon-wrap"><span class="material-symbols-outlined dashboard-status-chip__icon">hub</span></span>
             <div>
                 <div class="dashboard-status-chip__label">Ноды</div>
                 <div class="dashboard-status-chip__value">Управление</div>

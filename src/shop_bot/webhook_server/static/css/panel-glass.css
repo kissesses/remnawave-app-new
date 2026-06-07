@@ -264,7 +264,13 @@ html[data-design="stealth-admin"] main .max-w-7xl {
 html[data-design="glass"] .glass-card,
 html[data-design="glass"] .bg-white\/5.border.border-white\/10,
 html[data-design="stealth-admin"] .glass-card,
-html[data-design="stealth-admin"] .bg-white\/5.border.border-white\/10 {
+html[data-design="stealth-admin"] .bg-white\/5.border.border-white\/10,
+html[data-design="glass"] .dashboard-page .dash-stat-card,
+html[data-design="glass"] .dashboard-page .dashboard-status-chip,
+html[data-design="glass"] .dashboard-page .dashboard-tabs,
+html[data-design="stealth-admin"] .dashboard-page .dash-stat-card,
+html[data-design="stealth-admin"] .dashboard-page .dashboard-status-chip,
+html[data-design="stealth-admin"] .dashboard-page .dashboard-tabs {
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border-radius: 1.25rem;

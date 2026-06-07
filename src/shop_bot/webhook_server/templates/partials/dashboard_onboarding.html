@@ -1,5 +1,8 @@
 {% if onboarding_checklist and onboarding_checklist.visible %}
 <section class="dash-onboarding" id="dash-onboarding" aria-label="Чеклист первого запуска">
+    <div class="dash-onboarding__progress" aria-hidden="true">
+        <div class="dash-onboarding__progress-bar" style="width: {{ (100 * onboarding_checklist.done_count / onboarding_checklist.total) if onboarding_checklist.total else 0 }}%"></div>
+    </div>
     <div class="dash-onboarding__head">
         <div>
             <p class="dash-onboarding__eyebrow">Первый запуск</p>

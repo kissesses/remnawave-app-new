@@ -820,7 +820,8 @@ html[data-design|="macos"] .support-inbox-item:hover {
 }
 
 /* Dashboard */
-html[data-design|="macos"] #dash-tabs {
+html[data-design|="macos"] #dash-tabs,
+html[data-design|="macos"] .dashboard-tabs {
     border-radius: 14px !important;
     background: rgba(255, 255, 255, 0.04) !important;
     border-color: rgba(255, 255, 255, 0.07) !important;
@@ -839,6 +840,12 @@ html[data-design|="macos"] .dash-tab.is-active {
     color: #0a84ff !important;
 }
 
+html[data-design|="macos"] .dashboard-page .dash-stat-card,
+html[data-design|="macos"] .dashboard-page .dashboard-status-chip {
+    border-radius: 14px !important;
+}
+
+html[data-design|="macos"] .dashboard-page [class*="bg-[#0c0818]"],
 html[data-design|="macos"] [class*="bg-[#0c0818]"] {
     background: rgba(255, 255, 255, 0.04) !important;
     border-color: rgba(255, 255, 255, 0.07) !important;

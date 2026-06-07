@@ -1,0 +1,313 @@
+/* Remnawave App — Dashboard themes per panel design (classic / macOS / glass / stealth) */
+
+/* ── Workspace legacy Tailwind surfaces ── */
+.dashboard-page .dashboard-workspace [class*="bg-[#0c0818]"] {
+    background: var(--dash-section-bg) !important;
+    border-color: var(--dash-section-border) !important;
+    border-radius: var(--dash-section-radius) !important;
+    backdrop-filter: var(--dash-section-blur);
+    -webkit-backdrop-filter: var(--dash-section-blur);
+    box-shadow: var(--dash-shadow);
+}
+
+.dashboard-page .dashboard-workspace .border-white\/10,
+.dashboard-page .dashboard-workspace .border-white\/\[0\.08\],
+.dashboard-page .dashboard-workspace .border-white\/\[0\.06\] {
+    border-color: var(--dash-section-border) !important;
+}
+
+.dashboard-page .dashboard-workspace .bg-black\/30,
+.dashboard-page .dashboard-workspace .bg-black\/25 {
+    background: var(--dash-period-bg) !important;
+}
+
+.dashboard-page .dashboard-workspace .text-white\/30,
+.dashboard-page .dashboard-workspace .text-white\/25 {
+    color: var(--dash-text-muted) !important;
+}
+
+.dashboard-page .dashboard-workspace h3.text-white,
+.dashboard-page .dashboard-workspace h4.text-white {
+    color: var(--panel-text, #f5f5f7) !important;
+}
+
+.dashboard-page .dashboard-workspace .text-2xl.font-black.text-white,
+.dashboard-page .dashboard-workspace .text-lg.font-black.text-white {
+    color: var(--panel-text, #f5f5f7) !important;
+}
+
+.dashboard-page .dashboard-workspace thead.bg-white\/\[0\.03\] {
+    background: var(--dash-btn-bg) !important;
+}
+
+.dashboard-page .dashboard-workspace .divide-y.divide-white\/\[0\.04\] > * + * {
+    border-color: var(--dash-border) !important;
+}
+
+/* ── Classic (Neon) ── */
+html[data-design="classic"] .dashboard-page {
+    --dash-surface: rgba(12, 8, 24, 0.72);
+    --dash-surface-2: rgba(12, 8, 24, 0.5);
+    --dash-border: rgba(var(--primary-rgb, 34, 211, 238), 0.12);
+    --dash-border-strong: rgba(var(--primary-rgb, 34, 211, 238), 0.28);
+    --dash-section-bg: rgba(12, 8, 24, 0.78);
+    --dash-section-border: rgba(var(--primary-rgb, 34, 211, 238), 0.1);
+    --dash-section-radius: 1.25rem;
+    --dash-tab-bg: rgba(12, 8, 24, 0.55);
+    --dash-chip-bg: rgba(12, 8, 24, 0.65);
+    --dash-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+html[data-design="classic"] .dashboard-page .dash-stat-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(var(--primary-rgb, 34, 211, 238), 0.55),
+        rgba(var(--accent-rgb, 192, 38, 211), 0.45),
+        transparent
+    );
+    pointer-events: none;
+}
+
+html[data-design="classic"] .dashboard-page .dash-stat-card:hover {
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.45),
+        0 0 24px rgba(var(--primary-rgb, 34, 211, 238), 0.08);
+}
+
+html[data-design="classic"] .dashboard-page .dashboard-tabs .dash-tab.is-active {
+    box-shadow: 0 0 16px rgba(var(--primary-rgb, 34, 211, 238), 0.12);
+}
+
+/* ── macOS / macOS v2 ── */
+html[data-design="macos"] .dashboard-page,
+html[data-design="macos-v2"] .dashboard-page {
+    --dash-surface: rgba(255, 255, 255, 0.04);
+    --dash-surface-2: rgba(255, 255, 255, 0.03);
+    --dash-border: rgba(255, 255, 255, 0.07);
+    --dash-border-strong: rgba(255, 255, 255, 0.12);
+    --dash-section-bg: rgba(255, 255, 255, 0.04);
+    --dash-section-border: rgba(255, 255, 255, 0.07);
+    --dash-section-radius: 14px;
+    --dash-section-blur: blur(20px);
+    --dash-tab-bg: rgba(255, 255, 255, 0.04);
+    --dash-chip-bg: rgba(255, 255, 255, 0.04);
+    --dash-btn-bg: rgba(255, 255, 255, 0.04);
+    --dash-btn-border: rgba(255, 255, 255, 0.08);
+    --dash-period-bg: rgba(0, 0, 0, 0.25);
+    --dash-period-active-bg: rgba(255, 255, 255, 0.08);
+    --dash-shadow: none;
+    --dash-onboarding-bg: rgba(10, 132, 255, 0.08);
+    --dash-onboarding-border: rgba(10, 132, 255, 0.2);
+}
+
+html[data-design="macos"] .dashboard-page .dashboard-tabs,
+html[data-design="macos-v2"] .dashboard-page .dashboard-tabs {
+    border-radius: 14px;
+    padding: 0.3rem;
+}
+
+html[data-design="macos"] .dashboard-page .dashboard-tabs .dash-tab,
+html[data-design="macos-v2"] .dashboard-page .dashboard-tabs .dash-tab {
+    border-radius: 10px;
+    font-size: 0.75rem;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+html[data-design="macos"] .dashboard-page .dashboard-tabs .dash-tab.is-active,
+html[data-design="macos-v2"] .dashboard-page .dashboard-tabs .dash-tab.is-active {
+    background: rgba(10, 132, 255, 0.18) !important;
+    color: #0a84ff !important;
+    border-color: transparent;
+}
+
+html[data-design="macos"] .dashboard-page .dash-stat-card,
+html[data-design="macos-v2"] .dashboard-page .dash-stat-card {
+    border-radius: 14px;
+}
+
+html[data-design="macos"] .dashboard-page .dashboard-status-chip,
+html[data-design="macos-v2"] .dashboard-page .dashboard-status-chip {
+    border-radius: 12px;
+}
+
+html[data-design="macos-v2"] .dashboard-page .dash-stat-card,
+html[data-design="macos-v2"] .dashboard-page .dashboard-workspace [class*="bg-[#0c0818]"] {
+    border-radius: 12px;
+}
+
+/* ── Glass ── */
+html[data-design="glass"] .dashboard-page {
+    --dash-surface: rgba(255, 255, 255, 0.06);
+    --dash-surface-2: rgba(255, 255, 255, 0.04);
+    --dash-border: rgba(255, 255, 255, 0.12);
+    --dash-border-strong: rgba(255, 255, 255, 0.2);
+    --dash-section-bg: rgba(255, 255, 255, 0.06);
+    --dash-section-border: rgba(255, 255, 255, 0.12);
+    --dash-section-radius: 1.25rem;
+    --dash-section-blur: blur(24px);
+    --dash-tab-bg: rgba(255, 255, 255, 0.05);
+    --dash-chip-bg: rgba(255, 255, 255, 0.06);
+    --dash-btn-bg: rgba(255, 255, 255, 0.06);
+    --dash-btn-border: rgba(255, 255, 255, 0.12);
+    --dash-period-bg: rgba(0, 0, 0, 0.2);
+    --dash-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+    --dash-onboarding-bg: rgba(255, 255, 255, 0.06);
+    --dash-onboarding-border: rgba(255, 255, 255, 0.14);
+}
+
+html[data-design="glass"] .dashboard-page .dash-stat-card,
+html[data-design="glass"] .dashboard-page .dashboard-status-chip,
+html[data-design="glass"] .dashboard-page .dashboard-tabs {
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+}
+
+/* ── Stealth Admin ── */
+html[data-design="stealth-admin"] .dashboard-page {
+    --dash-surface: rgba(8, 8, 10, 0.82);
+    --dash-surface-2: rgba(8, 8, 10, 0.65);
+    --dash-border: rgba(255, 35, 87, 0.12);
+    --dash-border-strong: rgba(255, 35, 87, 0.28);
+    --dash-section-bg: rgba(8, 8, 10, 0.85);
+    --dash-section-border: rgba(255, 35, 87, 0.1);
+    --dash-section-radius: 1rem;
+    --dash-section-blur: blur(12px);
+    --dash-tab-bg: rgba(8, 8, 10, 0.75);
+    --dash-chip-bg: rgba(8, 8, 10, 0.8);
+    --dash-btn-bg: rgba(255, 35, 87, 0.06);
+    --dash-btn-border: rgba(255, 35, 87, 0.18);
+    --dash-period-bg: rgba(0, 0, 0, 0.45);
+    --dash-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);
+    --dash-onboarding-bg: rgba(255, 35, 87, 0.06);
+    --dash-onboarding-border: rgba(255, 35, 87, 0.22);
+}
+
+html[data-design="stealth-admin"] .dashboard-page .dashboard-title {
+    font-family: 'Syncopate', 'Inter', sans-serif;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    font-size: clamp(1.25rem, 2.5vw, 1.5rem) !important;
+}
+
+html[data-design="stealth-admin"] .dashboard-page .dashboard-tabs .dash-tab.is-active {
+    background: rgba(255, 35, 87, 0.14) !important;
+    border-color: rgba(255, 35, 87, 0.28) !important;
+    color: #ff2357 !important;
+    box-shadow: 0 0 16px rgba(255, 35, 87, 0.1);
+}
+
+html[data-design="stealth-admin"] .dashboard-page .dash-stat-card:hover {
+    border-color: rgba(255, 35, 87, 0.35);
+    box-shadow: 0 0 20px rgba(255, 35, 87, 0.06);
+}
+
+/* ── Light brightness (all designs) ── */
+html:not(.dark) .dashboard-page {
+    --dash-surface: rgba(255, 255, 255, 0.88);
+    --dash-surface-2: rgba(255, 255, 255, 0.75);
+    --dash-border: rgba(0, 0, 0, 0.08);
+    --dash-border-strong: rgba(0, 0, 0, 0.14);
+    --dash-section-bg: rgba(255, 255, 255, 0.92);
+    --dash-section-border: rgba(0, 0, 0, 0.08);
+    --dash-tab-bg: rgba(0, 0, 0, 0.04);
+    --dash-chip-bg: rgba(255, 255, 255, 0.85);
+    --dash-btn-bg: rgba(0, 0, 0, 0.04);
+    --dash-btn-border: rgba(0, 0, 0, 0.1);
+    --dash-text-muted: rgba(0, 0, 0, 0.4);
+    --dash-period-bg: rgba(0, 0, 0, 0.05);
+    --dash-period-active-bg: rgba(0, 0, 0, 0.08);
+    --dash-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    --dash-onboarding-bg: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(255, 255, 255, 0.95));
+    --dash-onboarding-border: rgba(59, 130, 246, 0.2);
+}
+
+html:not(.dark)[data-design="classic"] .dashboard-page {
+    --dash-border: rgba(var(--primary-rgb, 34, 211, 238), 0.18);
+    --dash-section-border: rgba(var(--primary-rgb, 34, 211, 238), 0.12);
+}
+
+html:not(.dark)[data-design="macos"] .dashboard-page,
+html:not(.dark)[data-design="macos-v2"] .dashboard-page {
+    --dash-surface: #ffffff;
+    --dash-section-bg: #ffffff;
+    --dash-tab-bg: rgba(0, 0, 0, 0.04);
+    --dash-chip-bg: #ffffff;
+}
+
+html:not(.dark)[data-design="glass"] .dashboard-page {
+    --dash-surface: rgba(255, 255, 255, 0.72);
+    --dash-section-bg: rgba(255, 255, 255, 0.78);
+    --dash-tab-bg: rgba(255, 255, 255, 0.55);
+}
+
+html:not(.dark)[data-design="stealth-admin"] .dashboard-page {
+    --dash-surface: rgba(255, 255, 255, 0.94);
+    --dash-section-bg: rgba(255, 255, 255, 0.96);
+    --dash-border: rgba(0, 0, 0, 0.08);
+    --dash-onboarding-bg: rgba(255, 35, 87, 0.06);
+    --dash-onboarding-border: rgba(255, 35, 87, 0.15);
+}
+
+html:not(.dark) .dashboard-page .dashboard-workspace .text-white,
+html:not(.dark) .dashboard-page .dashboard-workspace h3.text-white,
+html:not(.dark) .dashboard-page .dashboard-workspace h4.text-white,
+html:not(.dark) .dashboard-page .dashboard-workspace .text-2xl.font-black.text-white,
+html:not(.dark) .dashboard-page .dashboard-workspace .text-lg.font-black.text-white {
+    color: #1c1c1e !important;
+}
+
+html:not(.dark) .dashboard-page .dashboard-workspace .text-white\/50,
+html:not(.dark) .dashboard-page .dashboard-workspace .text-white\/60,
+html:not(.dark) .dashboard-page .dashboard-workspace .text-white\/40 {
+    color: rgba(0, 0, 0, 0.45) !important;
+}
+
+html:not(.dark) .dashboard-page .dashboard-tabs .dash-tab {
+    color: rgba(60, 60, 67, 0.65);
+}
+
+html:not(.dark) .dashboard-page .dashboard-tabs .dash-tab.is-active {
+    color: rgb(var(--primary-rgb, 10, 132, 255));
+}
+
+html:not(.dark)[data-design="macos"] .dashboard-page .dashboard-tabs .dash-tab.is-active,
+html:not(.dark)[data-design="macos-v2"] .dashboard-page .dashboard-tabs .dash-tab.is-active {
+    color: #0a84ff !important;
+    background: rgba(10, 132, 255, 0.12) !important;
+}
+
+html:not(.dark) .dashboard-page .dash-period-btn.is-active {
+    color: #1c1c1e;
+}
+
+html:not(.dark) .dashboard-page .dash-onboarding__dismiss {
+    background: rgba(0, 0, 0, 0.05);
+    color: rgba(0, 0, 0, 0.45);
+}
+
+html:not(.dark) .dashboard-page .dash-onboarding__item {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.06);
+}
+
+/* Dashboard Studio modal — per design */
+html[data-design="macos"] .dash-studio-modal .modal-content,
+html[data-design="macos-v2"] .dash-studio-modal .modal-content {
+    border-radius: 16px;
+}
+
+html[data-design="glass"] .dash-studio-modal .modal-content {
+    backdrop-filter: blur(28px);
+}
+
+html[data-design="stealth-admin"] .dash-studio-modal .modal-content {
+    border-color: rgba(255, 35, 87, 0.2);
+}

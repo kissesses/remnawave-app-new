@@ -1,6 +1,24 @@
 /* Remnawave App — Dashboard panel (hybrid layout) */
 
 .dashboard-page {
+    --dash-surface: rgba(12, 8, 24, 0.65);
+    --dash-surface-2: rgba(12, 8, 24, 0.45);
+    --dash-border: rgba(255, 255, 255, 0.08);
+    --dash-border-strong: rgba(255, 255, 255, 0.14);
+    --dash-section-bg: rgba(12, 8, 24, 0.7);
+    --dash-section-border: rgba(255, 255, 255, 0.1);
+    --dash-section-radius: 1.4rem;
+    --dash-section-blur: blur(16px);
+    --dash-tab-bg: rgba(12, 8, 24, 0.45);
+    --dash-chip-bg: rgba(12, 8, 24, 0.55);
+    --dash-btn-bg: rgba(255, 255, 255, 0.04);
+    --dash-btn-border: rgba(255, 255, 255, 0.1);
+    --dash-text-muted: rgba(255, 255, 255, 0.35);
+    --dash-period-bg: rgba(0, 0, 0, 0.3);
+    --dash-period-active-bg: rgba(255, 255, 255, 0.1);
+    --dash-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+    --dash-onboarding-bg: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(15, 23, 42, 0.5));
+    --dash-onboarding-border: rgba(59, 130, 246, 0.25);
     padding-bottom: 2.5rem;
 }
 
@@ -102,8 +120,8 @@
     gap: 0.4rem;
     padding: 0.5rem 0.85rem;
     border-radius: 0.75rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--dash-btn-border);
+    background: var(--dash-btn-bg);
     color: var(--panel-text-secondary, rgba(235, 235, 245, 0.65));
     font-size: 11px;
     font-weight: 700;
@@ -130,17 +148,12 @@
     gap: 0.55rem;
     padding: 0.55rem 0.75rem;
     border-radius: 0.85rem;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(12, 8, 24, 0.55);
+    border: 1px solid var(--dash-border);
+    background: var(--dash-chip-bg);
     backdrop-filter: blur(12px);
     text-decoration: none;
     color: inherit;
     transition: border-color 0.15s;
-}
-
-html:not(.dark) .dashboard-status-chip {
-    background: rgba(255, 255, 255, 0.72);
-    border-color: rgba(0, 0, 0, 0.08);
 }
 
 .dashboard-status-chip--link:hover {
@@ -237,20 +250,16 @@ html:not(.dark) .dashboard-status-chip {
     min-height: 76px;
     padding: 0.9rem 1rem;
     border-radius: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(12, 8, 24, 0.65);
-    backdrop-filter: blur(16px);
+    border: 1px solid var(--dash-border);
+    background: var(--dash-surface);
+    backdrop-filter: var(--dash-section-blur);
+    box-shadow: var(--dash-shadow);
     transition: transform 0.2s, border-color 0.2s;
-}
-
-html:not(.dark) .dash-stat-card {
-    background: rgba(255, 255, 255, 0.82);
-    border-color: rgba(0, 0, 0, 0.08);
 }
 
 .dash-stat-card:hover {
     transform: translateY(-2px);
-    border-color: rgba(255, 255, 255, 0.14);
+    border-color: var(--dash-border-strong);
 }
 
 .dash-stat-card__glow {
@@ -366,14 +375,9 @@ html:not(.dark) .dash-stat-card {
     padding: 0.35rem;
     margin-bottom: 1.25rem;
     border-radius: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(12, 8, 24, 0.45);
+    border: 1px solid var(--dash-border);
+    background: var(--dash-tab-bg);
     backdrop-filter: blur(12px);
-}
-
-html:not(.dark) .dashboard-tabs {
-    background: rgba(255, 255, 255, 0.75);
-    border-color: rgba(0, 0, 0, 0.08);
 }
 
 .dashboard-tabs .dash-tab {
@@ -420,16 +424,16 @@ html:not(.dark) .dashboard-tabs {
 }
 
 .dash-period-btn {
-    color: rgba(255, 255, 255, 0.35);
+    color: var(--dash-text-muted);
 }
 
 .dash-period-btn:hover {
-    color: rgba(255, 255, 255, 0.85);
+    color: var(--panel-text, #f5f5f7);
 }
 
 .dash-period-btn.is-active {
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
+    background: var(--dash-period-active-bg);
+    color: var(--panel-text, #fff);
 }
 
 .dash-widget-hidden {
@@ -453,12 +457,14 @@ html:not(.dark) .dashboard-tabs {
 
 .dash-cards-flat .dash-stat-card {
     backdrop-filter: none;
-    background: rgba(255, 255, 255, 0.04);
+    background: var(--dash-surface-2);
+    box-shadow: none;
 }
 
 .dash-cards-outline .dash-stat-card {
     backdrop-filter: none;
     background: transparent;
+    box-shadow: none;
 }
 
 /* Onboarding */
@@ -466,13 +472,8 @@ html:not(.dark) .dashboard-tabs {
     margin-bottom: 1.25rem;
     padding: 1rem 1.1rem;
     border-radius: 16px;
-    border: 1px solid rgba(59, 130, 246, 0.25);
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(15, 23, 42, 0.5));
-}
-
-html:not(.dark) .dash-onboarding {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(255, 255, 255, 0.9));
-    border-color: rgba(59, 130, 246, 0.2);
+    border: 1px solid var(--dash-onboarding-border);
+    background: var(--dash-onboarding-bg);
 }
 
 .dash-onboarding__head {
