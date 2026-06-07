@@ -9,12 +9,10 @@
     <meta name="theme-color" content="#050508" />
     <meta name="csrf-token" content="{{ csrf_token() }}" />
 
-    {% set av = app_version or '' %}
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
         rel="stylesheet" />
-    <link href="{{ url_for('static', filename='css/access-panel.css') }}{% if av %}?v={{ av }}{% endif %}" rel="stylesheet" />
-    <link href="{{ url_for('static', filename='css/security-setup-page.css') }}{% if av %}?v={{ av }}{% endif %}" rel="stylesheet" />
+    <style id="sec-setup-styles">{{ static_css('css/security-setup-page.css')|safe }}</style>
     <script>
         (function () {
             const accents = {
@@ -98,7 +96,7 @@
             passkeyRegisterCompleteUrl: {{ url_for('settings_passkey_register_complete') | tojson }}
         };
     </script>
-    <script src="{{ url_for('static', filename='js/access-auth.js') }}{% if av %}?v={{ av }}{% endif %}"></script>
+    <script src="{{ url_for('static', filename='js/access-auth.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
 </body>
 
 </html>

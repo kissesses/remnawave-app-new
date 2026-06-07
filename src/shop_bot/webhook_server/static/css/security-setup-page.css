@@ -261,3 +261,237 @@
     display: block;
     border-radius: 8px;
 }
+
+/* ── Access Studio components (inlined — no /static/ dependency) ── */
+.sec-setup .material-symbols-outlined {
+    font-family: 'Material Symbols Outlined', sans-serif;
+    font-weight: normal;
+    font-style: normal;
+    line-height: 1;
+    letter-spacing: normal;
+    font-size: 1.1rem;
+    vertical-align: middle;
+}
+
+.sec-setup .acc-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0.48rem 0.85rem;
+    border-radius: 10px;
+    border: 1px solid var(--acc-border);
+    background: var(--acc-surface);
+    color: var(--acc-text);
+    font-size: 0.8125rem;
+    font-weight: 650;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s, border-color 0.15s, filter 0.15s;
+}
+
+.sec-setup .acc-btn--ghost {
+    background: transparent;
+    color: var(--acc-muted);
+}
+
+.sec-setup .acc-btn--ghost:hover {
+    color: var(--acc-accent);
+    border-color: rgba(var(--acc-accent-rgb), 0.35);
+}
+
+.sec-setup .acc-btn--primary {
+    background: var(--acc-accent);
+    border-color: transparent;
+    color: #fff;
+}
+
+.sec-setup .acc-btn--primary:hover {
+    filter: brightness(1.06);
+}
+
+.sec-setup .acc-btn--danger {
+    background: var(--acc-bad-soft);
+    border-color: rgba(255, 69, 58, 0.35);
+    color: var(--acc-bad);
+}
+
+.sec-setup .acc-setup-title {
+    margin: 0 0 0.65rem;
+    font-size: 0.8125rem;
+    font-weight: 650;
+    color: var(--acc-text);
+}
+
+.sec-setup .acc-card__title {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0 0 0.75rem;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: var(--acc-text);
+}
+
+.sec-setup .acc-card__title .material-symbols-outlined {
+    font-size: 1.1rem;
+    color: var(--acc-accent);
+}
+
+.sec-setup .acc-card__desc {
+    margin: 0 0 0.75rem;
+    font-size: 0.75rem;
+    color: var(--acc-dim);
+    line-height: 1.45;
+}
+
+.sec-setup .acc-info {
+    padding: 0.6rem 0.75rem;
+    margin-bottom: 0.75rem;
+    border-radius: 10px;
+    border: 1px solid var(--acc-border);
+    background: var(--acc-surface-2);
+    font-size: 0.75rem;
+    color: var(--acc-muted);
+    line-height: 1.45;
+}
+
+.sec-setup .acc-info--ok {
+    border-color: rgba(48, 209, 88, 0.3);
+    background: var(--acc-ok-soft);
+    color: var(--acc-ok);
+}
+
+.sec-setup .acc-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.sec-setup .acc-method-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding: 0.7rem 0.8rem;
+    margin-bottom: 0.45rem;
+    border-radius: 11px;
+    border: 1px solid var(--acc-border);
+    background: var(--acc-surface-2);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.sec-setup .acc-method-card:hover:not(.is-disabled) {
+    border-color: rgba(var(--acc-accent-rgb), 0.35);
+}
+
+.sec-setup .acc-method-card.is-selected {
+    border-color: var(--acc-accent);
+    background: var(--acc-accent-soft);
+}
+
+.sec-setup .acc-method-card.is-disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.sec-setup .acc-method-card__title {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 650;
+    color: var(--acc-text);
+}
+
+.sec-setup .acc-method-card__desc {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.6875rem;
+    color: var(--acc-dim);
+    line-height: 1.4;
+}
+
+.sec-setup .acc-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.5rem 0.7rem;
+    border-radius: 10px;
+    border: 1px solid var(--acc-border);
+    background: rgba(0, 0, 0, 0.25);
+    color: var(--acc-text);
+    font-size: 0.8125rem;
+}
+
+.sec-setup .acc-input:focus {
+    outline: none;
+    border-color: rgba(var(--acc-accent-rgb), 0.55);
+    box-shadow: 0 0 0 3px var(--acc-accent-soft);
+}
+
+.sec-setup .acc-inline-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    align-items: center;
+}
+
+.sec-setup .acc-inline-form .acc-input {
+    flex: 1;
+    min-width: 8rem;
+}
+
+.sec-setup .security-totp-secret {
+    margin: 0 0 0.75rem;
+}
+
+.sec-setup .security-totp-secret__label {
+    margin: 0 0 0.35rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--acc-dim);
+}
+
+.sec-setup .security-totp-secret__row {
+    display: flex;
+    align-items: stretch;
+    gap: 0.4rem;
+}
+
+.sec-setup .security-totp-secret__value {
+    flex: 1;
+    min-width: 0;
+    padding: 0.5rem 0.65rem;
+    border-radius: 10px;
+    border: 1px solid var(--acc-border);
+    background: rgba(0, 0, 0, 0.25);
+    color: var(--acc-text);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.75rem;
+    word-break: break-all;
+}
+
+.sec-setup .security-totp-secret__copy {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.1rem;
+    min-width: 3.25rem;
+    padding: 0.35rem 0.45rem;
+    border-radius: 10px;
+    border: 1px solid var(--acc-border);
+    background: var(--acc-surface-2);
+    color: var(--acc-muted);
+    cursor: pointer;
+}
+
+.sec-setup .security-totp-secret__copy--done {
+    border-color: rgba(48, 209, 88, 0.45);
+    background: var(--acc-ok-soft);
+    color: var(--acc-ok);
+}
+
+.sec-setup #telegram-link-wrap {
+    margin-top: 0.5rem;
+}

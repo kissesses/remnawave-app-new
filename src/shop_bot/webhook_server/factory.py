@@ -329,6 +329,7 @@ def create_webhook_app(bot_controller_instance):
             'workspace_embed': workspace_embed,
             'workspace_host': workspace_host,
             'workspace_dock_items': _workspace_dock_registry(),
+            'static_css': _static_css,
         }
 
     @flask_app.template_filter('strip_bom')
