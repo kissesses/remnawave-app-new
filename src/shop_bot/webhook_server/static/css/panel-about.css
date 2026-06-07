@@ -19,8 +19,8 @@
     --ab-shadow: 0 28px 90px rgba(0, 0, 0, 0.55), 0 0 0 0.5px rgba(255, 255, 255, 0.06);
     --ab-hero-grad: linear-gradient(135deg, rgba(var(--ab-accent-rgb), 0.22) 0%, rgba(var(--ab-accent-rgb), 0.04) 48%, transparent 100%);
 
-    width: min(480px, calc(100vw - 1.25rem));
-    max-width: 480px;
+    width: min(520px, calc(100vw - 1.25rem));
+    max-width: 520px;
     padding: 0;
     overflow: hidden;
     border-radius: var(--ab-radius);
@@ -159,179 +159,94 @@ html:not(.dark) .about-studio-window {
     text-align: left;
 }
 
-/* Cinematic stage */
-.about-studio-stage {
+/* Hero — brand lockup */
+.about-studio-hero {
     position: relative;
-    margin: 0 -0.15rem 0.85rem;
-    padding: 1.15rem 0.85rem 0.95rem;
+    margin: 0 0 0.85rem;
+    padding: 0.95rem;
     border-radius: 16px;
     overflow: hidden;
-    border: 1px solid color-mix(in srgb, var(--ab-accent) 22%, var(--ab-border));
-    background:
-        radial-gradient(120% 90% at 50% -10%, rgba(var(--ab-accent-rgb), 0.2), transparent 58%),
-        var(--ab-surface);
-    text-align: center;
+    border: 1px solid color-mix(in srgb, var(--ab-accent) 18%, var(--ab-border));
+    background: linear-gradient(145deg, var(--ab-surface) 0%, var(--ab-surface-2) 100%);
 }
 
-.about-studio-stage__fx {
+.about-studio-hero__mesh {
     position: absolute;
     inset: 0;
     pointer-events: none;
-    overflow: hidden;
+    background:
+        radial-gradient(90% 70% at 12% 0%, rgba(var(--ab-accent-rgb), 0.14), transparent 58%),
+        radial-gradient(70% 60% at 100% 100%, rgba(var(--ab-accent-rgb), 0.08), transparent 55%);
+    opacity: 0.9;
 }
 
-.about-studio-orb {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(28px);
-    opacity: 0.75;
-    animation: aboutOrbDrift 9s ease-in-out infinite alternate;
-}
-
-.about-studio-orb--1 {
-    width: 9rem;
-    height: 9rem;
-    top: -2.5rem;
-    left: -1.5rem;
-    background: rgba(var(--ab-accent-rgb), 0.42);
-}
-
-.about-studio-orb--2 {
-    width: 7rem;
-    height: 7rem;
-    top: 0.5rem;
-    right: -1.25rem;
-    background: rgba(139, 92, 246, 0.32);
-    animation-delay: -3s;
-}
-
-.about-studio-orb--3 {
-    width: 5rem;
-    height: 5rem;
-    bottom: -1.5rem;
-    left: 42%;
-    background: rgba(34, 211, 238, 0.28);
-    animation-delay: -5s;
-}
-
-@keyframes aboutOrbDrift {
-    from { transform: translate3d(0, 0, 0) scale(1); }
-    to { transform: translate3d(8px, -10px, 0) scale(1.08); }
-}
-
-.about-studio-stage__grid {
-    position: absolute;
-    inset: 0;
-    background-image:
-        linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
-    background-size: 18px 18px;
-    mask-image: linear-gradient(180deg, #000 0%, transparent 92%);
-    opacity: 0.55;
-}
-
-.about-studio-stage__shine {
-    position: absolute;
-    top: -40%;
-    left: -30%;
-    width: 60%;
-    height: 80%;
-    background: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, 0.14) 50%, transparent 60%);
-    transform: rotate(8deg);
-    animation: aboutShineSweep 7s ease-in-out infinite;
-}
-
-@keyframes aboutShineSweep {
-    0%, 100% { transform: translateX(-20%) rotate(8deg); opacity: 0; }
-    45% { opacity: 0.65; }
-    55% { transform: translateX(120%) rotate(8deg); opacity: 0; }
-}
-
-.about-studio-logo-stage {
+.about-studio-hero__main {
     position: relative;
     z-index: 1;
-    width: 6.75rem;
-    height: 6.75rem;
-    margin: 0 auto 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    text-align: left;
 }
 
-.about-studio-logo-halo {
-    position: absolute;
-    inset: -0.65rem;
-    border-radius: 28px;
-    background: radial-gradient(circle, rgba(var(--ab-accent-rgb), 0.35) 0%, transparent 68%);
-    animation: aboutHaloPulse 4s ease-in-out infinite;
-}
-
-@keyframes aboutHaloPulse {
-    0%, 100% { opacity: 0.55; transform: scale(0.96); }
-    50% { opacity: 1; transform: scale(1.04); }
-}
-
-.about-studio-logo-orbit {
-    position: absolute;
-    inset: -0.35rem;
-    border-radius: 24px;
-    border: 1px dashed color-mix(in srgb, var(--ab-accent) 45%, transparent);
-    animation: aboutOrbitSpin 14s linear infinite;
-}
-
-@keyframes aboutOrbitSpin {
-    to { transform: rotate(360deg); }
-}
-
-.about-studio-logo {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    border-radius: 22px;
+.about-studio-mark {
+    flex-shrink: 0;
+    width: 4.5rem;
+    height: 4.5rem;
+    border-radius: 16px;
     display: grid;
     place-items: center;
-    background: rgba(0, 0, 0, 0.28);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    box-shadow:
-        0 18px 40px rgba(0, 0, 0, 0.35),
-        inset 0 1px 0 rgba(255, 255, 255, 0.12);
-    animation: aboutLogoFloat 5.5s ease-in-out infinite;
+    background: rgba(0, 0, 0, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
-html:not(.dark) .about-studio-logo {
+html:not(.dark) .about-studio-mark {
     background: rgba(255, 255, 255, 0.72);
-    border-color: rgba(255, 255, 255, 0.85);
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.12);
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95);
 }
 
-@keyframes aboutLogoFloat {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-4px); }
-}
-
-.about-studio-logo__img {
-    width: 5.25rem;
-    height: 5.25rem;
+.about-studio-mark__img {
+    width: 3.35rem;
+    height: 3.35rem;
     object-fit: contain;
-    filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.35));
+    border-radius: 12px;
 }
 
-.about-studio-stage__copy {
+.about-studio-hero__copy {
+    min-width: 0;
+    flex: 1;
+}
+
+.about-studio-hero__aside {
     position: relative;
     z-index: 1;
+    margin-top: 0.65rem;
+    padding-top: 0.65rem;
+    border-top: 1px solid var(--ab-border);
+}
+
+.about-studio-grid {
+    display: grid;
+    gap: 0.75rem;
+    margin-bottom: 0.15rem;
 }
 
 .about-studio-kicker {
-    margin: 0 0 0.25rem;
+    margin: 0 0 0.2rem;
     font-size: 0.5625rem;
     font-weight: 800;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: color-mix(in srgb, var(--ab-accent) 70%, var(--ab-faint));
+    color: color-mix(in srgb, var(--ab-accent) 65%, var(--ab-faint));
 }
 
 .about-studio-devchip {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    margin-top: 0.55rem;
+    margin-top: 0;
     padding: 0.28rem 0.55rem 0.28rem 0.35rem;
     border-radius: 999px;
     border: 1px solid var(--ab-border);
@@ -394,16 +309,12 @@ html:not(.dark) .about-studio-devchip {
 
 .about-mac-name,
 .about-studio-brand {
-    margin: 0 0 0.35rem;
-    font-size: 1.45rem;
+    margin: 0 0 0.3rem;
+    font-size: 1.25rem;
     font-weight: 800;
-    letter-spacing: -0.04em;
-    line-height: 1.1;
+    letter-spacing: -0.035em;
+    line-height: 1.08;
     color: var(--ab-text);
-    background: linear-gradient(180deg, var(--ab-text) 0%, color-mix(in srgb, var(--ab-text) 72%, var(--ab-accent)) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
 }
 
 .about-mac-meta,
@@ -503,7 +414,6 @@ html:not(.dark) .about-studio-devchip {
 .about-studio-stat--metric:hover {
     border-color: color-mix(in srgb, var(--ab-accent) 28%, var(--ab-border));
     transform: translateY(-1px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
 }
 
 .about-studio-stat__icon {
@@ -798,8 +708,7 @@ html:not(.dark) .about-studio-terminal {
 .about-mac-action:hover,
 .about-studio-link:hover {
     border-color: color-mix(in srgb, var(--ab-accent) 35%, var(--ab-border));
-    transform: translateY(-2px);
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
+    transform: translateY(-1px);
 }
 
 /* Donate */
@@ -809,21 +718,9 @@ html:not(.dark) .about-studio-terminal {
     margin-bottom: 0.55rem;
     padding: 0.65rem 0.7rem;
     border-radius: 14px;
-    border: 1px solid color-mix(in srgb, var(--ab-accent) 30%, var(--ab-border));
-    background: linear-gradient(135deg, var(--ab-accent-soft), rgba(136, 84, 208, 0.1));
+    border: 1px solid color-mix(in srgb, var(--ab-accent) 24%, var(--ab-border));
+    background: linear-gradient(135deg, var(--ab-accent-soft), var(--ab-surface));
     overflow: hidden;
-}
-
-.about-studio-donate__glow {
-    position: absolute;
-    inset: -40% -20%;
-    background: conic-gradient(from 120deg, transparent, rgba(var(--ab-accent-rgb), 0.22), transparent 55%);
-    animation: aboutDonateGlow 6s linear infinite;
-    pointer-events: none;
-}
-
-@keyframes aboutDonateGlow {
-    to { transform: rotate(360deg); }
 }
 
 .about-mac-donate__head,
@@ -1106,16 +1003,11 @@ html[data-design="macos-v2"] .about-studio-window {
 }
 
 html[data-design="macos-v2"] .about-studio-window {
-    --ab-shadow: 0 32px 100px rgba(0, 0, 0, 0.62), 0 0 0 0.5px rgba(255, 255, 255, 0.08);
+    --ab-shadow: 0 28px 72px rgba(0, 0, 0, 0.48), 0 0 0 0.5px rgba(255, 255, 255, 0.06);
 }
 
-html[data-design="macos-v2"] .about-studio-logo {
-    transform: rotate(-2deg);
-}
-
-html[data-design="macos-v2"] .about-studio-logo:hover,
-html[data-design="macos-v2"] .about-studio-logo {
-    animation: aboutLogoFloat 5.5s ease-in-out infinite;
+html[data-design="macos-v2"] .about-studio-mark {
+    border-radius: 18px;
 }
 
 /* ── Theme: Glass ── */
@@ -1151,25 +1043,10 @@ html[data-design="stealth-admin"] .about-studio-window {
     --ab-bg: rgba(8, 10, 16, 0.92);
     --ab-border: rgba(34, 211, 238, 0.18);
     --ab-hero-grad: linear-gradient(135deg, rgba(34, 211, 238, 0.16) 0%, rgba(139, 92, 246, 0.12) 55%, transparent 100%);
-    box-shadow:
-        0 0 0 1px rgba(34, 211, 238, 0.12),
-        0 28px 80px rgba(0, 0, 0, 0.65),
-        0 0 40px rgba(34, 211, 238, 0.08);
+    box-shadow: 0 28px 72px rgba(0, 0, 0, 0.62), 0 0 0 0.5px rgba(34, 211, 238, 0.1);
 }
 
-html[data-design="stealth-admin"] .about-studio-stage {
-    box-shadow: inset 0 0 0 1px rgba(34, 211, 238, 0.08), 0 0 28px rgba(34, 211, 238, 0.08);
-}
-
-html[data-design="stealth-admin"] .about-studio-stage__grid {
-    background-image:
-        linear-gradient(rgba(34, 211, 238, 0.06) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(34, 211, 238, 0.06) 1px, transparent 1px);
-    opacity: 0.75;
-}
-
-html[data-design="stealth-admin"] .about-studio-stat,
-html[data-design="stealth-admin"] .about-studio-link {
+html[data-design="stealth-admin"] .about-studio-hero {
     box-shadow: inset 0 0 0 1px rgba(34, 211, 238, 0.06);
 }
 
@@ -1398,4 +1275,20 @@ html[data-design="macos-v2"] .panel-topbar__btn--update:hover {
     .about-mac-actions,
     .about-studio-links { grid-template-columns: 1fr; }
     .about-studio-stats { grid-template-columns: 1fr; }
+
+    .about-studio-hero__main {
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+    }
+
+    .about-studio-mark {
+        width: 4rem;
+        height: 4rem;
+    }
+
+    .about-studio-mark__img {
+        width: 3rem;
+        height: 3rem;
+    }
 }

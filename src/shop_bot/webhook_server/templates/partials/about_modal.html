@@ -21,30 +21,25 @@
         </header>
 
         <div class="about-studio-body about-mac-body">
-            <section class="about-studio-stage" aria-label="О бренде">
-                <div class="about-studio-stage__fx" aria-hidden="true">
-                    <span class="about-studio-orb about-studio-orb--1"></span>
-                    <span class="about-studio-orb about-studio-orb--2"></span>
-                    <span class="about-studio-orb about-studio-orb--3"></span>
-                    <span class="about-studio-stage__grid"></span>
-                    <span class="about-studio-stage__shine"></span>
-                </div>
+            <section class="about-studio-hero" aria-label="О бренде">
+                <div class="about-studio-hero__mesh" aria-hidden="true"></div>
 
-                <div class="about-studio-logo-stage">
-                    <span class="about-studio-logo-orbit" aria-hidden="true"></span>
-                    <span class="about-studio-logo-halo" aria-hidden="true"></span>
-                    <div class="about-studio-logo">
-                        <img src="{{ url_for('static', filename='img/app-icon.svg') }}" alt="" class="about-studio-logo__img" width="88" height="88" />
+                <div class="about-studio-hero__main">
+                    <div class="about-studio-mark">
+                        <img src="{{ url_for('static', filename='img/app-icon.svg') }}" alt="" class="about-studio-mark__img" width="72" height="72" />
+                    </div>
+
+                    <div class="about-studio-hero__copy">
+                        <p class="about-studio-kicker">VPN Commerce Platform</p>
+                        <h2 class="about-mac-name about-studio-brand" id="about-mac-brand">{{ project_info.brand or 'Remnawave App' }}</h2>
+                        <div class="about-mac-meta about-studio-meta">
+                            <span class="about-mac-version about-studio-pill" id="about-mac-version">v{{ project_info.version }}</span>
+                            <span class="about-mac-tagline about-studio-tagline" id="about-mac-tagline">{{ project_info.tagline or 'Telegram VPN shop' }}</span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="about-studio-stage__copy">
-                    <p class="about-studio-kicker">VPN Commerce Platform</p>
-                    <h2 class="about-mac-name about-studio-brand" id="about-mac-brand">{{ project_info.brand or 'Remnawave App' }}</h2>
-                    <div class="about-mac-meta about-studio-meta">
-                        <span class="about-mac-version about-studio-pill" id="about-mac-version">v{{ project_info.version }}</span>
-                        <span class="about-mac-tagline about-studio-tagline" id="about-mac-tagline">{{ project_info.tagline or 'Telegram VPN shop' }}</span>
-                    </div>
+                <div class="about-studio-hero__aside">
                     <a id="about-dev-name" href="{{ project_info.links.developer }}" target="_blank" rel="noopener" class="about-studio-devchip">
                         <img id="about-dev-avatar" class="about-mac-dev-avatar about-studio-avatar" src="" alt="" width="24" height="24" hidden />
                         <span class="about-mac-dev-avatar about-mac-dev-avatar--placeholder about-studio-avatar about-studio-avatar--sm" id="about-dev-avatar-ph" aria-hidden="true">
@@ -74,64 +69,103 @@
                     class="about-mac-update__btn about-mac-update__btn--external about-studio-btn about-studio-btn--ghost">Релизы</a>
             </div>
 
-            <section class="about-studio-panel" aria-label="Сведения о проекте">
-                <header class="about-studio-panel__head">
-                    <span class="material-symbols-outlined">analytics</span>
-                    <h3>Система</h3>
-                </header>
-                <div class="about-studio-stats" id="about-mac-specs">
-                    <article class="about-studio-stat about-studio-stat--metric">
-                        <span class="about-studio-stat__icon material-symbols-outlined">deployed_code</span>
-                        <div class="about-studio-stat__body">
-                            <span class="about-studio-stat__label">Версия</span>
-                            <span class="about-studio-stat__value" id="about-spec-version">{{ project_info.version }}</span>
-                        </div>
-                    </article>
-                    <article class="about-studio-stat about-studio-stat--metric">
-                        <span class="about-studio-stat__icon material-symbols-outlined">layers</span>
-                        <div class="about-studio-stat__body">
-                            <span class="about-studio-stat__label">Тег образа</span>
-                            <span class="about-studio-stat__value" id="about-spec-image-tag">—</span>
-                        </div>
-                    </article>
-                    <article class="about-studio-stat about-studio-stat--metric">
-                        <span class="about-studio-stat__icon material-symbols-outlined">gavel</span>
-                        <div class="about-studio-stat__body">
-                            <span class="about-studio-stat__label">Лицензия</span>
-                            <span class="about-studio-stat__value" id="about-spec-license">{{ project_info.license or 'MIT' }}</span>
-                        </div>
-                    </article>
-                    <article class="about-studio-stat about-studio-stat--metric">
-                        <span class="about-studio-stat__icon material-symbols-outlined">star</span>
-                        <div class="about-studio-stat__body">
-                            <span class="about-studio-stat__label">Звёзды</span>
-                            <span class="about-studio-stat__value" id="about-spec-stars">—</span>
-                        </div>
-                    </article>
-                    <article class="about-studio-stat about-studio-stat--metric">
-                        <span class="about-studio-stat__icon material-symbols-outlined">schedule</span>
-                        <div class="about-studio-stat__body">
-                            <span class="about-studio-stat__label">Обновлён</span>
-                            <span class="about-studio-stat__value" id="about-spec-updated">—</span>
-                        </div>
-                    </article>
-                    <article class="about-studio-stat about-studio-stat--metric">
-                        <span class="about-studio-stat__icon material-symbols-outlined">smart_toy</span>
-                        <div class="about-studio-stat__body">
-                            <span class="about-studio-stat__label">Статус бота</span>
-                            <span class="about-studio-stat__value" id="about-spec-bot">
-                                {% if main_running and support_running %}
-                                <span class="about-mac-status about-mac-status--ok">Live</span>
-                                {% elif main_running or support_running %}
-                                <span class="about-mac-status about-mac-status--warn">Limited</span>
-                                {% else %}
-                                <span class="about-mac-status about-mac-status--off">Stopped</span>
-                                {% endif %}
+            <div class="about-studio-grid">
+                <section class="about-studio-panel" aria-label="Сведения о проекте">
+                    <header class="about-studio-panel__head">
+                        <span class="material-symbols-outlined">analytics</span>
+                        <h3>Система</h3>
+                    </header>
+                    <div class="about-studio-stats" id="about-mac-specs">
+                        <article class="about-studio-stat about-studio-stat--metric">
+                            <span class="about-studio-stat__icon material-symbols-outlined">deployed_code</span>
+                            <div class="about-studio-stat__body">
+                                <span class="about-studio-stat__label">Версия</span>
+                                <span class="about-studio-stat__value" id="about-spec-version">{{ project_info.version }}</span>
+                            </div>
+                        </article>
+                        <article class="about-studio-stat about-studio-stat--metric">
+                            <span class="about-studio-stat__icon material-symbols-outlined">layers</span>
+                            <div class="about-studio-stat__body">
+                                <span class="about-studio-stat__label">Тег образа</span>
+                                <span class="about-studio-stat__value" id="about-spec-image-tag">—</span>
+                            </div>
+                        </article>
+                        <article class="about-studio-stat about-studio-stat--metric">
+                            <span class="about-studio-stat__icon material-symbols-outlined">gavel</span>
+                            <div class="about-studio-stat__body">
+                                <span class="about-studio-stat__label">Лицензия</span>
+                                <span class="about-studio-stat__value" id="about-spec-license">{{ project_info.license or 'MIT' }}</span>
+                            </div>
+                        </article>
+                        <article class="about-studio-stat about-studio-stat--metric">
+                            <span class="about-studio-stat__icon material-symbols-outlined">star</span>
+                            <div class="about-studio-stat__body">
+                                <span class="about-studio-stat__label">Звёзды</span>
+                                <span class="about-studio-stat__value" id="about-spec-stars">—</span>
+                            </div>
+                        </article>
+                        <article class="about-studio-stat about-studio-stat--metric">
+                            <span class="about-studio-stat__icon material-symbols-outlined">schedule</span>
+                            <div class="about-studio-stat__body">
+                                <span class="about-studio-stat__label">Обновлён</span>
+                                <span class="about-studio-stat__value" id="about-spec-updated">—</span>
+                            </div>
+                        </article>
+                        <article class="about-studio-stat about-studio-stat--metric">
+                            <span class="about-studio-stat__icon material-symbols-outlined">smart_toy</span>
+                            <div class="about-studio-stat__body">
+                                <span class="about-studio-stat__label">Статус бота</span>
+                                <span class="about-studio-stat__value" id="about-spec-bot">
+                                    {% if main_running and support_running %}
+                                    <span class="about-mac-status about-mac-status--ok">Live</span>
+                                    {% elif main_running or support_running %}
+                                    <span class="about-mac-status about-mac-status--warn">Limited</span>
+                                    {% else %}
+                                    <span class="about-mac-status about-mac-status--off">Stopped</span>
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="about-studio-panel" aria-label="Ссылки проекта">
+                    <header class="about-studio-panel__head">
+                        <span class="material-symbols-outlined">hub</span>
+                        <h3>Экосистема</h3>
+                    </header>
+                    <nav class="about-mac-actions about-studio-links" aria-label="Ссылки проекта">
+                        <a href="{{ project_info.links.repository }}" target="_blank" rel="noopener" class="about-mac-action about-studio-link">
+                            <span class="about-studio-link__icon"><span class="material-symbols-outlined">code</span></span>
+                            <span class="about-studio-link__text">
+                                <strong>Репозиторий</strong>
+                                <small>Исходный код</small>
                             </span>
-                        </div>
-                    </article>
-                </div>
-            </section>
+                        </a>
+                        <a href="{{ project_info.links.releases }}" target="_blank" rel="noopener" class="about-mac-action about-studio-link">
+                            <span class="about-studio-link__icon"><span class="material-symbols-outlined">history</span></span>
+                            <span class="about-studio-link__text">
+                                <strong>Релизы</strong>
+                                <small>Changelog</small>
+                            </span>
+                        </a>
+                        <a href="{{ project_info.links.get('issues') or (project_info.links.repository ~ '/issues') }}" target="_blank" rel="noopener" class="about-mac-action about-studio-link">
+                            <span class="about-studio-link__icon"><span class="material-symbols-outlined">bug_report</span></span>
+                            <span class="about-studio-link__text">
+                                <strong>Issues</strong>
+                                <small>Баги и идеи</small>
+                            </span>
+                        </a>
+                        <a href="{{ project_info.links.telegram }}" target="_blank" rel="noopener" class="about-mac-action about-studio-link">
+                            <span class="about-studio-link__icon"><span class="material-symbols-outlined">forum</span></span>
+                            <span class="about-studio-link__text">
+                                <strong>Сообщество</strong>
+                                <small>Telegram</small>
+                            </span>
+                        </a>
+                    </nav>
+                </section>
+            </div>
 
             <div id="about-install-block" class="about-mac-terminal about-studio-terminal hidden">
                 <div class="about-mac-terminal__head about-studio-terminal__head">
@@ -144,45 +178,7 @@
                 <code id="about-install-cmd" class="about-mac-terminal__code about-studio-terminal__code"></code>
             </div>
 
-            <section class="about-studio-panel" aria-label="Ссылки проекта">
-                <header class="about-studio-panel__head">
-                    <span class="material-symbols-outlined">hub</span>
-                    <h3>Экосистема</h3>
-                </header>
-                <nav class="about-mac-actions about-studio-links" aria-label="Ссылки проекта">
-                    <a href="{{ project_info.links.repository }}" target="_blank" rel="noopener" class="about-mac-action about-studio-link">
-                        <span class="about-studio-link__icon"><span class="material-symbols-outlined">code</span></span>
-                        <span class="about-studio-link__text">
-                            <strong>Репозиторий</strong>
-                            <small>Исходный код</small>
-                        </span>
-                    </a>
-                    <a href="{{ project_info.links.releases }}" target="_blank" rel="noopener" class="about-mac-action about-studio-link">
-                        <span class="about-studio-link__icon"><span class="material-symbols-outlined">history</span></span>
-                        <span class="about-studio-link__text">
-                            <strong>Релизы</strong>
-                            <small>Changelog</small>
-                        </span>
-                    </a>
-                    <a href="{{ project_info.links.get('issues') or (project_info.links.repository ~ '/issues') }}" target="_blank" rel="noopener" class="about-mac-action about-studio-link">
-                        <span class="about-studio-link__icon"><span class="material-symbols-outlined">bug_report</span></span>
-                        <span class="about-studio-link__text">
-                            <strong>Issues</strong>
-                            <small>Баги и идеи</small>
-                        </span>
-                    </a>
-                    <a href="{{ project_info.links.telegram }}" target="_blank" rel="noopener" class="about-mac-action about-studio-link">
-                        <span class="about-studio-link__icon"><span class="material-symbols-outlined">forum</span></span>
-                        <span class="about-studio-link__text">
-                            <strong>Сообщество</strong>
-                            <small>Telegram</small>
-                        </span>
-                    </a>
-                </nav>
-            </section>
-
             <div class="about-mac-donate about-studio-donate" id="about-mac-donate">
-                <div class="about-studio-donate__glow" aria-hidden="true"></div>
                 <div class="about-mac-donate__head about-studio-donate__head">
                     <span class="about-mac-donate__title about-studio-donate__title">
                         <span class="material-symbols-outlined">favorite</span>
