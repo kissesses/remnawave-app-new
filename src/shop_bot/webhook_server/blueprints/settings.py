@@ -871,6 +871,16 @@ def settings_database_stats():
     return jsonify({'ok': True, 'source': source, 'stats': db_admin.get_connection_stats(source)})
 
 
+@bp.route('/settings/database/health.json', methods=['GET'])
+@panel_ctx.login_required
+def settings_database_health():
+    _, err = _database_api_guard()
+    if err:
+        return err
+    source = _database_source_from_request()
+    return jsonify({'ok': True, 'source': source, 'health': db_admin.get_health_metrics(source)})
+
+
 @bp.route('/settings/database/maintenance', methods=['POST'])
 @panel_ctx.login_required
 def settings_database_maintenance_action():

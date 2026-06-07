@@ -1,99 +1,136 @@
 {% set hs = hosts_studio or {} %}
 
 <section id="tab-hosts" class="tab-content hst-panel" data-hst-default-tab="panels">
-    <header class="hst-hub">
-        <div class="hst-hub__intro">
-            <div class="hst-hub__icon" aria-hidden="true">
-                <span class="material-symbols-outlined">dns</span>
+    <header class="hst-hero">
+        <div class="hst-hero__glow" aria-hidden="true"></div>
+        <div class="hst-hero__glow hst-hero__glow--2" aria-hidden="true"></div>
+
+        <div class="hst-hero__row">
+            <div class="hst-hero__brand">
+                <div class="hst-hero__icon" aria-hidden="true">
+                    <span class="material-symbols-outlined">dns</span>
+                </div>
+                <div>
+                    <p class="hst-hero__eyebrow">Hosts Studio</p>
+                    <h2 class="hst-hero__title">Хосты</h2>
+                    <p class="hst-hero__desc" id="hst-hub-desc">Панели Remnawave · тарифы · SSH · устройства</p>
+                </div>
             </div>
-            <div>
-                <h2 class="hst-hub__title">Hosts Studio</h2>
-                <p class="hst-hub__desc" id="hst-hub-desc">Панели Remnawave · тарифы · SSH · устройства</p>
+            <div class="hst-hero__actions">
+                <a class="hst-btn hst-btn--glass" href="{{ url_for('monitor_page') }}">
+                    <span class="material-symbols-outlined">monitoring</span> Мониторинг
+                </a>
+                <a class="hst-btn hst-btn--glass" href="{{ url_for('node_page') }}">
+                    <span class="material-symbols-outlined">hub</span> Ноды
+                </a>
+                <button type="button" class="hst-btn hst-btn--primary hst-btn--glow" id="hst-add-host-btn">
+                    <span class="material-symbols-outlined">add_circle</span>
+                    Новый хост
+                </button>
             </div>
         </div>
-        <nav class="hst-channel-tabs" role="tablist" aria-label="Разделы хостов">
-            <button type="button" class="hst-channel-tab" data-hst-tab="overview" role="tab">
-                <span class="material-symbols-outlined">dashboard</span> Обзор
-            </button>
-            <button type="button" class="hst-channel-tab is-active" data-hst-tab="panels" role="tab" aria-selected="true">
-                <span class="material-symbols-outlined">dns</span> Панели
-            </button>
-            <button type="button" class="hst-channel-tab" data-hst-tab="ssh" role="tab">
-                <span class="material-symbols-outlined">terminal</span> SSH-цели
-                {% if hs.ssh_targets %}<span class="hst-channel-tab__count">{{ hs.ssh_targets }}</span>{% endif %}
-            </button>
-            <button type="button" class="hst-channel-tab" data-hst-tab="guide" role="tab">
-                <span class="material-symbols-outlined">menu_book</span> Справка
-            </button>
-        </nav>
-        <div class="hst-hub__stats" id="hst-hub-stats">
-            <span class="hst-stat">
-                <span class="material-symbols-outlined">cloud</span>
-                <span>{{ hs.total or 0 }} хостов</span>
-            </span>
-            <span class="hst-stat hst-stat--on">
-                <span class="material-symbols-outlined">visibility</span>
-                <span>{{ hs.visible or 0 }} видимых</span>
-            </span>
-            <span class="hst-stat">
-                <span class="material-symbols-outlined">category</span>
-                <span>{{ hs.plans or 0 }} тарифов</span>
-            </span>
-        </div>
-        <div class="hst-hub__actions">
-            <a class="hst-link-chip" href="{{ url_for('monitor_page') }}">
-                <span class="material-symbols-outlined">monitoring</span> Мониторинг
-            </a>
-            <a class="hst-link-chip" href="{{ url_for('node_page') }}">
-                <span class="material-symbols-outlined">hub</span> Ноды
-            </a>
-            <button type="button" class="hst-btn hst-btn--primary" id="hst-add-host-btn">
-                <span class="material-symbols-outlined">add_circle</span>
-                Новый хост
-            </button>
+
+        <div class="hst-hero__metrics" id="hst-hub-stats">
+            <div class="hst-metric">
+                <span class="material-symbols-outlined hst-metric__icon">cloud</span>
+                <div class="hst-metric__body">
+                    <span class="hst-metric__val">{{ hs.total or 0 }}</span>
+                    <span class="hst-metric__lbl">Хостов</span>
+                </div>
+            </div>
+            <div class="hst-metric hst-metric--live{% if hs.visible %} is-online{% endif %}">
+                <span class="hst-metric__pulse" aria-hidden="true"></span>
+                <span class="material-symbols-outlined hst-metric__icon">visibility</span>
+                <div class="hst-metric__body">
+                    <span class="hst-metric__val">{{ hs.visible or 0 }}</span>
+                    <span class="hst-metric__lbl">Видимых</span>
+                </div>
+            </div>
+            <div class="hst-metric">
+                <span class="material-symbols-outlined hst-metric__icon">category</span>
+                <div class="hst-metric__body">
+                    <span class="hst-metric__val">{{ hs.plans or 0 }}</span>
+                    <span class="hst-metric__lbl">Тарифов</span>
+                </div>
+            </div>
+            <div class="hst-metric">
+                <span class="material-symbols-outlined hst-metric__icon">terminal</span>
+                <div class="hst-metric__body">
+                    <span class="hst-metric__val">{{ hs.ssh_targets or 0 }}</span>
+                    <span class="hst-metric__lbl">SSH-целей</span>
+                </div>
+            </div>
         </div>
     </header>
 
+    <nav class="hst-tabs" role="tablist" aria-label="Разделы хостов">
+        <button type="button" class="hst-channel-tab hst-tab" data-hst-tab="overview" role="tab">
+            <span class="material-symbols-outlined">dashboard</span> Обзор
+        </button>
+        <button type="button" class="hst-channel-tab hst-tab is-active" data-hst-tab="panels" role="tab" aria-selected="true">
+            <span class="material-symbols-outlined">dns</span> Панели
+        </button>
+        <button type="button" class="hst-channel-tab hst-tab" data-hst-tab="ssh" role="tab">
+            <span class="material-symbols-outlined">terminal</span> SSH-цели
+            {% if hs.ssh_targets %}<span class="hst-tab__count">{{ hs.ssh_targets }}</span>{% endif %}
+        </button>
+        <button type="button" class="hst-channel-tab hst-tab" data-hst-tab="guide" role="tab">
+            <span class="material-symbols-outlined">menu_book</span> Справка
+        </button>
+    </nav>
+
     <!-- Overview -->
     <div class="hst-pane" data-hst-pane="overview" hidden>
-        <div class="hst-kpi-row">
-            <div class="hst-kpi">
-                <div class="hst-kpi__val">{{ hs.total or 0 }}</div>
-                <div class="hst-kpi__lbl">Панелей Remnawave</div>
+        <div class="hst-metrics-grid">
+            <div class="hst-metric-card">
+                <span class="material-symbols-outlined hst-metric-card__icon">dns</span>
+                <span class="hst-metric-card__val">{{ hs.total or 0 }}</span>
+                <span class="hst-metric-card__lbl">Панелей</span>
             </div>
-            <div class="hst-kpi">
-                <div class="hst-kpi__val">{{ hs.plans or 0 }}</div>
-                <div class="hst-kpi__lbl">Тарифов всего</div>
+            <div class="hst-metric-card hst-metric-card--accent">
+                <span class="material-symbols-outlined hst-metric-card__icon">category</span>
+                <span class="hst-metric-card__val">{{ hs.plans or 0 }}</span>
+                <span class="hst-metric-card__lbl">Тарифов</span>
             </div>
-            <div class="hst-kpi">
-                <div class="hst-kpi__val">{{ hs.visible or 0 }}</div>
-                <div class="hst-kpi__lbl">Видимых в боте</div>
+            <div class="hst-metric-card">
+                <span class="material-symbols-outlined hst-metric-card__icon">visibility</span>
+                <span class="hst-metric-card__val">{{ hs.visible or 0 }}</span>
+                <span class="hst-metric-card__lbl">Видимых</span>
             </div>
-            <div class="hst-kpi">
-                <div class="hst-kpi__val">{{ hs.ssh_hosts or 0 }}/{{ hs.total or 0 }}</div>
-                <div class="hst-kpi__lbl">SSH на хостах</div>
+            <div class="hst-metric-card">
+                <span class="material-symbols-outlined hst-metric-card__icon">terminal</span>
+                <span class="hst-metric-card__val">{{ hs.ssh_hosts or 0 }}/{{ hs.total or 0 }}</span>
+                <span class="hst-metric-card__lbl">SSH на хостах</span>
             </div>
         </div>
         <div class="hst-overview-grid">
-            <button type="button" class="hst-overview-card" data-hst-goto="panels">
+            <button type="button" class="hst-glass hst-overview-card" data-hst-goto="panels">
+                <span class="hst-overview-card__stripe"></span>
                 <span class="material-symbols-outlined hst-overview-card__icon">dns</span>
                 <span class="hst-overview-card__title">Управление панелями</span>
                 <span class="hst-overview-card__meta">{{ hs.total or 0 }} хостов · {{ hs.plans or 0 }} тарифов</span>
+                <span class="material-symbols-outlined hst-overview-card__chevron">arrow_forward</span>
             </button>
-            <button type="button" class="hst-overview-card" data-hst-goto="panels">
+            <button type="button" class="hst-glass hst-overview-card" data-hst-goto="panels">
+                <span class="hst-overview-card__stripe hst-overview-card__stripe--violet"></span>
                 <span class="material-symbols-outlined hst-overview-card__icon">category</span>
                 <span class="hst-overview-card__title">Тарифы и устройства</span>
                 <span class="hst-overview-card__meta">Цены · HWID · tier-режим</span>
+                <span class="material-symbols-outlined hst-overview-card__chevron">arrow_forward</span>
             </button>
-            <button type="button" class="hst-overview-card" data-hst-goto="ssh">
+            <button type="button" class="hst-glass hst-overview-card" data-hst-goto="ssh">
+                <span class="hst-overview-card__stripe hst-overview-card__stripe--cyan"></span>
                 <span class="material-symbols-outlined hst-overview-card__icon">terminal</span>
                 <span class="hst-overview-card__title">SSH-цели</span>
                 <span class="hst-overview-card__meta">{{ hs.ssh_targets or 0 }} целей · speedtest</span>
+                <span class="material-symbols-outlined hst-overview-card__chevron">arrow_forward</span>
             </button>
-            <button type="button" class="hst-overview-card" data-hst-goto="guide">
+            <button type="button" class="hst-glass hst-overview-card" data-hst-goto="guide">
+                <span class="hst-overview-card__stripe hst-overview-card__stripe--indigo"></span>
                 <span class="material-symbols-outlined hst-overview-card__icon">menu_book</span>
                 <span class="hst-overview-card__title">Справка</span>
                 <span class="hst-overview-card__meta">Подключение и настройка</span>
+                <span class="material-symbols-outlined hst-overview-card__chevron">arrow_forward</span>
             </button>
         </div>
         {% if hs.hidden %}
@@ -106,15 +143,15 @@
 
     <!-- Panels -->
     <div class="hst-pane" data-hst-pane="panels">
-        <div class="hst-add-drawer">
+        <div class="hst-glass hst-add-drawer">
             <div class="hst-add-drawer__head" onclick="toggleAddHostForm()">
-                <div class="hst-hub__intro">
-                    <div class="hst-hub__icon" aria-hidden="true">
+                <div class="hst-add-drawer__brand">
+                    <div class="hst-add-drawer__icon" aria-hidden="true">
                         <span class="material-symbols-outlined">add_link</span>
                     </div>
                     <div>
-                        <h3 class="hst-hub__title">Подключить панель Remnawave</h3>
-                        <p class="hst-hub__desc">API token · squad UUID · базовый URL</p>
+                        <h3 class="hst-add-drawer__title">Подключить панель Remnawave</h3>
+                        <p class="hst-add-drawer__sub">API token · squad UUID · базовый URL</p>
                     </div>
                 </div>
                 <span id="add-host-icon" class="material-symbols-outlined hst-add-drawer__chev">expand_more</span>
@@ -150,7 +187,7 @@
             </div>
         </div>
 
-        <div class="hst-board">
+        <div class="hst-glass hst-board">
             <div class="hst-board__toolbar">
                 <label class="hst-search hst-board__search">
                     <span class="material-symbols-outlined">search</span>
@@ -216,7 +253,7 @@
                 <div class="hst-host-head">
                     <div>
                         <h3 class="hst-host-head__title">{{ host.host_name }}</h3>
-                        <p class="hst-hub__desc">Remnawave · {{ host.plans|length }} тариф(ов)</p>
+                        <p class="hst-host-head__sub">{{ host.plans|length }} тариф(ов) · Remnawave</p>
                     </div>
                     <div class="hst-host-head__actions" onclick="event.stopPropagation()">
                         <form action="{{ url_for('toggle_host_visibility_route', host_name=host.host_name) }}" method="post" class="inline">
@@ -601,15 +638,15 @@
 
     <!-- SSH targets -->
     <div class="hst-pane" data-hst-pane="ssh" hidden>
-        <div class="hst-add-drawer">
+        <div class="hst-glass hst-add-drawer">
             <div class="hst-add-drawer__head" id="hst-add-ssh-toggle">
-                <div class="hst-hub__intro">
-                    <div class="hst-hub__icon" aria-hidden="true">
+                <div class="hst-add-drawer__brand">
+                    <div class="hst-add-drawer__icon hst-add-drawer__icon--cyan" aria-hidden="true">
                         <span class="material-symbols-outlined">add_circle</span>
                     </div>
                     <div>
-                        <h3 class="hst-hub__title">Добавить SSH-цель</h3>
-                        <p class="hst-hub__desc">Speedtest и мониторинг без привязки к панели</p>
+                        <h3 class="hst-add-drawer__title">Добавить SSH-цель</h3>
+                        <p class="hst-add-drawer__sub">Speedtest и мониторинг без привязки к панели</p>
                     </div>
                 </div>
                 <span id="hst-add-ssh-icon" class="material-symbols-outlined hst-add-drawer__chev">expand_more</span>
@@ -653,7 +690,7 @@
             </div>
         </div>
 
-        <div class="hst-board">
+        <div class="hst-glass hst-board">
             <div class="hst-board__toolbar">
                 <p class="hst-board__hint">
                     <span class="material-symbols-outlined">info</span>
@@ -663,7 +700,7 @@
             {% if ssh_targets %}
             <div class="hst-ssh-grid" id="hst-ssh-grid">
                 {% for t in ssh_targets %}
-                <div class="hst-ssh-card ssh-target-card" data-target-name="{{ t.target_name }}">
+                <div class="hst-ssh-card hst-glass ssh-target-card" data-target-name="{{ t.target_name }}">
                     <div class="hst-ssh-card__head">
                         <div class="hst-ssh-card__info">
                             <span class="material-symbols-outlined hst-ssh-card__icon">terminal</span>
@@ -715,23 +752,23 @@
     <!-- Guide -->
     <div class="hst-pane" data-hst-pane="guide" hidden>
         <div class="hst-guide">
-            <article class="hst-guide-card">
+            <article class="hst-glass hst-guide-card">
                 <h3 class="hst-guide-card__title"><span class="material-symbols-outlined">add_link</span> Подключение панели</h3>
                 <p>Укажите базовый URL Remnawave, API token и опционально Squad UUID. После добавления настройте URL панели, тарифы и видимость в боте.</p>
             </article>
-            <article class="hst-guide-card">
+            <article class="hst-glass hst-guide-card">
                 <h3 class="hst-guide-card__title"><span class="material-symbols-outlined">category</span> Тарифы</h3>
                 <p>Каждый хост имеет свой набор тарифов: месяцы, цена, лимит трафика (GB), HWID. Стиль кнопки и emoji ID задаются отдельно для хоста и тарифа.</p>
             </article>
-            <article class="hst-guide-card">
+            <article class="hst-glass hst-guide-card">
                 <h3 class="hst-guide-card__title"><span class="material-symbols-outlined">devices</span> Режим устройств</h3>
                 <p><strong>По тарифу</strong> — лимит HWID из тарифа. <strong>Выбор (tiers)</strong> — пользователь докупает устройства по tier-ценам; базовое количество задаётся отдельно.</p>
             </article>
-            <article class="hst-guide-card">
+            <article class="hst-glass hst-guide-card">
                 <h3 class="hst-guide-card__title"><span class="material-symbols-outlined">terminal</span> SSH и Speedtest</h3>
                 <p>SSH на хосте используется для автоустановки Speedtest CLI. SSH-цели — отдельные серверы для мониторинга без привязки к Remnawave-панели. Управление на странице <a href="{{ url_for('node_page') }}">Ноды</a>.</p>
             </article>
-            <article class="hst-guide-card">
+            <article class="hst-glass hst-guide-card">
                 <h3 class="hst-guide-card__title"><span class="material-symbols-outlined">visibility</span> Видимость</h3>
                 <p>Скрытые хосты не показываются пользователям в боте, но остаются в админке. Порядок хостов меняется перетаскиванием в списке слева.</p>
             </article>

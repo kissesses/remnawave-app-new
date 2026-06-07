@@ -1,5 +1,8 @@
 {% set gate = database_gate or {} %}
 {% set overview = database_overview or {} %}
+{% set tables = overview.tables or [] %}
+{% set max_rows = (tables|map(attribute='rows')|max) if tables else 1 %}
+{% if not max_rows %}{% set max_rows = 1 %}{% endif %}
 
 <section id="tab-database" class="tab-content db-panel" data-db-default-tab="overview">
     {% if gate.needs_2fa_setup %}
@@ -12,46 +15,68 @@
         </div>
     </div>
     {% elif not gate.unlocked %}
-    <div class="db-gate" id="db-stepup-gate">
-        <div class="db-gate__icon" aria-hidden="true">
-            <span class="material-symbols-outlined">verified_user</span>
-        </div>
-        <div class="db-gate__body">
-            <h2 class="db-gate__title">Подтверждение доступа</h2>
-            <p class="db-gate__desc">Для просмотра и обслуживания БД пройдите проверку: <strong>{{ gate.method_label }}</strong></p>
+    <div class="db-vault" id="db-stepup-gate">
+        <div class="db-vault__card">
+            <div class="db-vault__glow" aria-hidden="true"></div>
+            <div class="db-vault__icon" aria-hidden="true">
+                <span class="material-symbols-outlined">verified_user</span>
+            </div>
+            <h2 class="db-vault__title">Подтверждение доступа</h2>
+            <p class="db-vault__desc">Для просмотра и обслуживания БД пройдите проверку: <strong>{{ gate.method_label }}</strong></p>
 
             {% if gate.method == 'totp' %}
-            <form id="db-stepup-totp-form" class="db-gate__form" autocomplete="off">
+            <form id="db-stepup-totp-form" class="db-vault__form" autocomplete="off">
                 <input type="text" id="db-stepup-totp-code" class="db-input db-input--totp"
                     inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="000000" aria-label="Код TOTP" />
-                <button type="submit" class="db-btn db-btn--primary">Подтвердить</button>
+                <button type="submit" class="db-btn db-btn--primary db-btn--glow">Подтвердить</button>
             </form>
             {% elif gate.method == 'passkey' %}
-            <button type="button" id="db-stepup-passkey-btn" class="db-btn db-btn--primary">
+            <button type="button" id="db-stepup-passkey-btn" class="db-btn db-btn--primary db-btn--glow">
                 <span class="material-symbols-outlined">passkey</span>
                 Подтвердить Passkey
             </button>
             {% elif gate.method == 'telegram' %}
-            <div id="db-stepup-telegram-wrap" class="db-gate__telegram"></div>
+            <div id="db-stepup-telegram-wrap" class="db-vault__telegram"></div>
             {% if not gate.telegram_linked %}
-            <p class="db-gate__hint">Telegram не привязан — сначала привяжите аккаунт в «Доступ».</p>
+            <p class="db-vault__hint">Telegram не привязан — сначала привяжите аккаунт в «Доступ».</p>
             {% endif %}
             {% endif %}
-            <p class="db-gate__error hidden" id="db-stepup-error" role="alert"></p>
+            <p class="db-vault__error hidden" id="db-stepup-error" role="alert"></p>
         </div>
     </div>
     {% else %}
     <div class="db-panel__unlocked" id="db-panel-unlocked" data-source="{{ database_source or 'shopbot' }}">
-        <header class="db-hub">
-            <div class="db-hub__intro">
-                <div class="db-hub__icon" aria-hidden="true">
-                    <span class="material-symbols-outlined">database</span>
+        <header class="db-hero">
+            <div class="db-hero__glow" aria-hidden="true"></div>
+            <div class="db-hero__glow db-hero__glow--2" aria-hidden="true"></div>
+
+            <div class="db-hero__row">
+                <div class="db-hero__brand">
+                    <div class="db-hero__icon" aria-hidden="true">
+                        <span class="material-symbols-outlined">database</span>
+                    </div>
+                    <div>
+                        <p class="db-hero__eyebrow">Database Studio</p>
+                        <h2 class="db-hero__title">База данных</h2>
+                        <p class="db-hero__desc" id="db-hub-desc">PostgreSQL · SQL · обслуживание · бэкапы</p>
+                    </div>
                 </div>
-                <div>
-                    <h2 class="db-hub__title">База данных</h2>
-                    <p class="db-hub__desc" id="db-hub-desc">PostgreSQL · обслуживание · SQL · бэкапы</p>
+                <div class="db-hero__actions">
+                    <button type="button" id="db-refresh-btn" class="db-btn db-btn--glass" title="Обновить данные">
+                        <span class="material-symbols-outlined">refresh</span>
+                        Обновить
+                    </button>
+                    <a href="{{ url_for('backups_page') }}" class="db-btn db-btn--glass">
+                        <span class="material-symbols-outlined">backup</span>
+                        Бэкапы
+                    </a>
+                    <button type="button" id="db-stepup-lock-btn" class="db-btn db-btn--glass">
+                        <span class="material-symbols-outlined">lock</span>
+                        Заблокировать
+                    </button>
                 </div>
             </div>
+
             <nav class="db-source-tabs" role="tablist" aria-label="Выбор базы данных">
                 {% for opt in database_sources or [] %}
                 <button type="button" class="db-panel__source-btn db-source-tab{% if opt.id == (database_source or 'shopbot') %} is-active{% endif %}"
@@ -61,33 +86,37 @@
                 </button>
                 {% endfor %}
             </nav>
-            <div class="db-hub__stats">
-                <span class="db-stat db-stat--on" id="db-stat-connected">
-                    <span class="material-symbols-outlined">{% if overview.connected %}check_circle{% else %}error{% endif %}</span>
-                    <span>{{ 'Подключено' if overview.connected else 'Ошибка' }}</span>
-                </span>
-                <span class="db-stat">
-                    <span class="material-symbols-outlined">storage</span>
-                    <span id="db-stat-size">{{ overview.db_size_label or '—' }}</span>
-                </span>
-                <span class="db-stat">
-                    <span class="material-symbols-outlined">table_rows</span>
-                    <span id="db-stat-rows">{{ overview.table_rows_total or 0 }} строк</span>
-                </span>
-                <span class="db-stat db-stat--session" title="Сессия подтверждена">
-                    <span class="material-symbols-outlined">lock_open</span>
-                    <span id="db-stepup-remaining">{{ gate.remaining_sec // 60 }}:{{ '%02d' % (gate.remaining_sec % 60) }}</span>
-                </span>
-            </div>
-            <div class="db-hub__actions">
-                <a href="{{ url_for('backups_page') }}" class="db-btn db-btn--ghost">
-                    <span class="material-symbols-outlined">backup</span>
-                    Бэкапы
-                </a>
-                <button type="button" id="db-stepup-lock-btn" class="db-btn db-btn--ghost">
-                    <span class="material-symbols-outlined">lock</span>
-                    Заблокировать
-                </button>
+
+            <div class="db-hero__metrics">
+                <div class="db-metric db-metric--live{% if overview.connected %} is-online{% endif %}" id="db-stat-connected">
+                    <span class="db-metric__pulse" aria-hidden="true"></span>
+                    <span class="material-symbols-outlined db-metric__icon">{% if overview.connected %}check_circle{% else %}error{% endif %}</span>
+                    <div class="db-metric__body">
+                        <span class="db-metric__val">{{ 'Online' if overview.connected else 'Offline' }}</span>
+                        <span class="db-metric__lbl">Подключение</span>
+                    </div>
+                </div>
+                <div class="db-metric">
+                    <span class="material-symbols-outlined db-metric__icon">storage</span>
+                    <div class="db-metric__body">
+                        <span class="db-metric__val" id="db-stat-size">{{ overview.db_size_label or '—' }}</span>
+                        <span class="db-metric__lbl">Размер БД</span>
+                    </div>
+                </div>
+                <div class="db-metric">
+                    <span class="material-symbols-outlined db-metric__icon">table_rows</span>
+                    <div class="db-metric__body">
+                        <span class="db-metric__val" id="db-stat-rows">{{ overview.table_rows_total or 0 }}</span>
+                        <span class="db-metric__lbl">Записей</span>
+                    </div>
+                </div>
+                <div class="db-metric db-metric--session" title="Сессия подтверждена">
+                    <span class="material-symbols-outlined db-metric__icon">timer</span>
+                    <div class="db-metric__body">
+                        <span class="db-metric__val db-metric__val--mono" id="db-stepup-remaining">{{ gate.remaining_sec // 60 }}:{{ '%02d' % (gate.remaining_sec % 60) }}</span>
+                        <span class="db-metric__lbl">Сессия</span>
+                    </div>
+                </div>
             </div>
         </header>
 
@@ -108,6 +137,9 @@
             <button type="button" class="db-panel__workspace-btn db-tab" data-workspace="sql" role="tab">
                 <span class="material-symbols-outlined">terminal</span> SQL
             </button>
+            <button type="button" class="db-panel__workspace-btn db-tab" data-workspace="health" role="tab">
+                <span class="material-symbols-outlined">monitor_heart</span> Здоровье
+            </button>
             <button type="button" class="db-panel__workspace-btn db-tab" data-workspace="maintenance" role="tab">
                 <span class="material-symbols-outlined">build</span> Обслуживание
             </button>
@@ -115,28 +147,36 @@
 
         <!-- Overview -->
         <div class="db-pane db-panel__workspace is-active" id="db-workspace-overview" data-workspace="overview">
-            <div class="db-kpi-row">
-                <div class="db-kpi">
-                    <div class="db-kpi__val db-panel__mono" data-field="engine">{{ overview.engine or '—' }}</div>
-                    <div class="db-kpi__lbl">Движок</div>
+            <div class="db-metrics-grid">
+                <div class="db-metric-card">
+                    <span class="material-symbols-outlined db-metric-card__icon">dns</span>
+                    <span class="db-metric-card__val db-panel__mono" data-field="engine">{{ overview.engine or '—' }}</span>
+                    <span class="db-metric-card__lbl">Движок</span>
                 </div>
-                <div class="db-kpi">
-                    <div class="db-kpi__val db-panel__mono" data-field="db_name">{{ overview.db_name or '—' }}</div>
-                    <div class="db-kpi__lbl">База</div>
+                <div class="db-metric-card">
+                    <span class="material-symbols-outlined db-metric-card__icon">folder</span>
+                    <span class="db-metric-card__val db-panel__mono" data-field="db_name">{{ overview.db_name or '—' }}</span>
+                    <span class="db-metric-card__lbl">База</span>
                 </div>
-                <div class="db-kpi">
-                    <div class="db-kpi__val" data-field="db_size_label">{{ overview.db_size_label or '—' }}</div>
-                    <div class="db-kpi__lbl">Размер</div>
+                <div class="db-metric-card db-metric-card--accent">
+                    <span class="material-symbols-outlined db-metric-card__icon">pie_chart</span>
+                    <span class="db-metric-card__val" data-field="db_size_label">{{ overview.db_size_label or '—' }}</span>
+                    <span class="db-metric-card__lbl">Размер</span>
                 </div>
-                <div class="db-kpi">
-                    <div class="db-kpi__val" data-field="table_rows_total">{{ overview.table_rows_total or 0 }}</div>
-                    <div class="db-kpi__lbl">Записей</div>
+                <div class="db-metric-card">
+                    <span class="material-symbols-outlined db-metric-card__icon">numbers</span>
+                    <span class="db-metric-card__val" data-field="table_rows_total">{{ overview.table_rows_total or 0 }}</span>
+                    <span class="db-metric-card__lbl">Записей</span>
                 </div>
             </div>
 
             <div class="db-studio">
-                <div class="db-status-pane">
+                <div class="db-glass db-status-pane">
                     <div class="db-status-pane__head">
+                        <div class="db-status-pane__live{% if overview.connected %} is-online{% endif %}" id="db-status-live">
+                            <span class="db-status-pane__dot"></span>
+                            <span>{{ 'Connected' if overview.connected else 'Disconnected' }}</span>
+                        </div>
                         <div>
                             <p class="db-status-pane__eyebrow">Состояние</p>
                             <h3 class="db-status-pane__title" id="db-source-caption">{{ overview.source_label or 'Remnawave App' }}</h3>
@@ -145,7 +185,7 @@
                     <div class="db-kv" id="db-overview-status">
                         <div class="db-kv__row">
                             <span class="db-kv__title">Подключение</span>
-                            <span class="db-kv__value" data-field="connected">{{ 'OK' if overview.connected else 'Ошибка' }}</span>
+                            <span class="db-kv__value db-kv__value--pill" data-field="connected">{{ 'OK' if overview.connected else 'Ошибка' }}</span>
                         </div>
                         <div class="db-kv__row">
                             <span class="db-kv__title">Режим</span>
@@ -162,19 +202,23 @@
                     </div>
                 </div>
 
-                <div class="db-picker" aria-label="Топ таблиц">
+                <div class="db-glass db-picker" aria-label="Топ таблиц">
                     <div class="db-picker__toolbar">
-                        <p class="db-picker__title">Топ таблиц</p>
+                        <div>
+                            <p class="db-picker__eyebrow">По объёму данных</p>
+                            <p class="db-picker__title">Топ таблиц</p>
+                        </div>
                         <button type="button" class="db-icon-btn db-goto-tables" title="Все таблицы">
                             <span class="material-symbols-outlined">arrow_forward</span>
                         </button>
                     </div>
-                    <div class="db-kv db-kv--tiles" id="db-overview-tables">
-                        {% for t in overview.tables or [] %}
-                        <div class="db-kv__row">
-                            <span class="db-kv__title">{{ t.label }}</span>
-                            <span class="db-kv__value db-panel__mono">{{ t.rows }}</span>
-                        </div>
+                    <div class="db-rank-list" id="db-overview-tables">
+                        {% for t in tables %}
+                        <button type="button" class="db-rank db-rank--clickable" data-table-id="{{ t.id }}" title="Открыть {{ t.id }}">
+                            <span class="db-rank__name">{{ t.label }}</span>
+                            <div class="db-rank__track"><span class="db-rank__bar" style="width: {{ ((t.rows / max_rows) * 100) if max_rows else 0 }}%"></span></div>
+                            <span class="db-rank__val db-panel__mono">{{ t.rows }}</span>
+                        </button>
                         {% else %}
                         <div class="db-empty">Нет данных</div>
                         {% endfor %}
@@ -182,30 +226,30 @@
                 </div>
             </div>
 
-            <div class="db-settings{% if database_source == 'remnawave' %} hidden{% endif %}" id="db-backups-group">
-                <h3 class="db-settings__heading">
+            <div class="db-section{% if database_source == 'remnawave' %} hidden{% endif %}" id="db-backups-group">
+                <h3 class="db-section__title">
                     <span class="material-symbols-outlined">backup</span>
                     Бэкапы
                 </h3>
-                <div class="db-settings__grid">
-                    <div class="db-card">
-                        <div class="db-card__head">
+                <div class="db-section__grid">
+                    <div class="db-glass db-card">
+                        <div class="db-card__stripe"></div>
+                        <div class="db-card__inner">
                             <span class="db-card__glyph material-symbols-outlined">schedule</span>
                             <div>
                                 <h4 class="db-card__title">Автобэкап</h4>
                                 <p class="db-card__sub">{% if (settings.backup_interval_days or '0') == '0' %}Выключен{% else %}Каждые {{ settings.backup_interval_days }} д.{% endif %}</p>
+                                <p class="db-hint">Хранить: <strong>{{ settings.backup_keep_count or '7' }}</strong> архивов</p>
                             </div>
                         </div>
-                        <div class="db-card__body">
-                            <p class="db-hint">Хранить архивов: <strong>{{ settings.backup_keep_count or '7' }}</strong></p>
-                        </div>
                     </div>
-                    <a href="{{ url_for('backups_page') }}" class="db-card db-card--link">
-                        <div class="db-card__head">
+                    <a href="{{ url_for('backups_page') }}" class="db-glass db-card db-card--link">
+                        <div class="db-card__stripe db-card__stripe--cyan"></div>
+                        <div class="db-card__inner">
                             <span class="db-card__glyph material-symbols-outlined">cloud_upload</span>
                             <div>
                                 <h4 class="db-card__title">Центр бэкапов</h4>
-                                <p class="db-card__sub">Создание, восстановление, Telegram</p>
+                                <p class="db-card__sub">Создание · восстановление · Telegram</p>
                             </div>
                         </div>
                         <span class="material-symbols-outlined db-card__chevron">chevron_right</span>
@@ -215,6 +259,7 @@
                 <div class="db-backup-list">
                     {% for b in database_recent_backups %}
                     <div class="db-backup-item">
+                        <span class="material-symbols-outlined db-backup-item__icon">inventory_2</span>
                         <span class="db-backup-item__name">{{ b.name }}</span>
                         <span class="db-backup-item__meta">{{ b.mtime }} · {{ b.size_label }}</span>
                     </div>
@@ -226,13 +271,23 @@
 
         <!-- Tables -->
         <div class="db-pane db-panel__workspace hidden" id="db-workspace-tables" data-workspace="tables">
-            <div class="db-board">
+            <div class="db-glass db-board">
                 <div class="db-board__toolbar">
                     <label class="db-search db-board__search">
                         <span class="material-symbols-outlined">search</span>
                         <input type="search" id="db-table-search" class="db-search__input" placeholder="Поиск таблицы…" autocomplete="off" />
                     </label>
-                    <button type="button" id="db-tables-refresh" class="db-btn db-btn--ghost">
+                    <select id="db-table-sort" class="db-select" aria-label="Сортировка">
+                        <option value="name">По имени</option>
+                        <option value="rows-desc">Строк ↓</option>
+                        <option value="size-desc">Размер ↓</option>
+                    </select>
+                    <div class="db-filters" id="db-table-filters">
+                        <button type="button" class="db-filter is-active" data-table-filter="all">Все</button>
+                        <button type="button" class="db-filter" data-table-filter="data">Данные</button>
+                        <button type="button" class="db-filter db-filter--warn" data-table-filter="protected">Защищённые</button>
+                    </div>
+                    <button type="button" id="db-tables-refresh" class="db-btn db-btn--glass">
                         <span class="material-symbols-outlined">refresh</span>
                         Обновить
                     </button>
@@ -245,93 +300,94 @@
 
         <!-- SQL -->
         <div class="db-pane db-panel__workspace hidden" id="db-workspace-sql" data-workspace="sql">
-            <div class="db-card db-card--sql">
-                <div class="db-card__head">
-                    <span class="db-card__glyph material-symbols-outlined">terminal</span>
-                    <div>
-                        <h4 class="db-card__title">SQL-консоль</h4>
-                        <p class="db-card__sub">Только SELECT · макс. 500 строк · один запрос</p>
-                    </div>
-                </div>
-                <div class="db-card__body">
-                    <textarea id="db-sql-input" class="db-textarea" rows="6"
-                        placeholder="SELECT * FROM users LIMIT 20" spellcheck="false"></textarea>
-                    <div class="db-board__toolbar">
-                        <button type="button" id="db-sql-run" class="db-btn db-btn--primary">
+            <div class="db-terminal">
+                <div class="db-terminal__chrome">
+                    <span class="db-terminal__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                    <span class="db-terminal__label">SQL Console · SELECT only</span>
+                    <div class="db-terminal__actions">
+                        <select id="db-sql-template" class="db-select db-select--dark" aria-label="Шаблон запроса">
+                            <option value="">Шаблон…</option>
+                            <option value="users">Users · последние 20</option>
+                            <option value="transactions">Transactions · последние 20</option>
+                            <option value="counts">Сводка COUNT</option>
+                            <option value="tables">Размеры таблиц</option>
+                        </select>
+                        <button type="button" id="db-sql-copy" class="db-btn db-btn--sm db-btn--ghost-dark" title="Копировать результат" hidden>
+                            <span class="material-symbols-outlined">content_copy</span>
+                        </button>
+                        <button type="button" id="db-sql-export" class="db-btn db-btn--sm db-btn--ghost-dark" title="Скачать CSV" hidden>
+                            <span class="material-symbols-outlined">download</span>
+                        </button>
+                        <button type="button" id="db-sql-run" class="db-btn db-btn--primary db-btn--sm">
                             <span class="material-symbols-outlined">play_arrow</span>
-                            Выполнить
+                            Run
                         </button>
                     </div>
-                    <div class="db-panel__sql-result hidden" id="db-sql-result-wrap">
-                        <p class="db-sql-meta" id="db-sql-meta"></p>
-                        <div class="db-panel__grid-wrap">
-                            <table class="db-panel__grid" id="db-sql-grid">
-                                <thead></thead>
-                                <tbody></tbody>
-                            </table>
-                        </div>
+                </div>
+                <div class="db-terminal__body">
+                    <textarea id="db-sql-input" class="db-terminal__input" rows="8"
+                        placeholder="SELECT * FROM users LIMIT 20" spellcheck="false"></textarea>
+                    <p class="db-terminal__hint">Ctrl+Enter · макс. 500 строк · один запрос</p>
+                </div>
+                <div class="db-terminal__result db-panel__sql-result hidden" id="db-sql-result-wrap">
+                    <p class="db-sql-meta" id="db-sql-meta"></p>
+                    <div class="db-panel__grid-wrap">
+                        <table class="db-panel__grid" id="db-sql-grid">
+                            <thead></thead>
+                            <tbody></tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Maintenance -->
-        <div class="db-pane db-panel__workspace hidden" id="db-workspace-maintenance" data-workspace="maintenance">
-            <div class="db-settings">
-                <h3 class="db-settings__heading">
-                    <span class="material-symbols-outlined">build</span>
-                    Обслуживание · <span id="db-maint-source">{{ overview.source_label or 'Remnawave App' }}</span>
-                </h3>
-                <div class="db-settings__grid db-settings__grid--maint">
-                    <div class="db-card db-card--action">
-                        <div class="db-card__head">
-                            <span class="db-card__glyph material-symbols-outlined">analytics</span>
-                            <div>
-                                <h4 class="db-card__title">ANALYZE</h4>
-                                <p class="db-card__sub">Обновить статистику планировщика (безопасно)</p>
-                            </div>
-                        </div>
-                        <div class="db-card__foot">
-                            <button type="button" class="db-btn db-btn--primary db-maint-btn" data-action="analyze">Выполнить</button>
-                        </div>
-                    </div>
-                    <div class="db-card db-card--action">
-                        <div class="db-card__head">
-                            <span class="db-card__glyph material-symbols-outlined">cleaning_services</span>
-                            <div>
-                                <h4 class="db-card__title">VACUUM ANALYZE</h4>
-                                <p class="db-card__sub">Очистка мёртвых строк и обновление статистики</p>
-                            </div>
-                        </div>
-                        <div class="db-card__foot">
-                            <button type="button" class="db-btn db-btn--primary db-maint-btn" data-action="vacuum">Выполнить</button>
-                        </div>
-                    </div>
-                    <div class="db-card db-card--action">
-                        <div class="db-card__head">
-                            <span class="db-card__glyph material-symbols-outlined">sync</span>
-                            <div>
-                                <h4 class="db-card__title">REINDEX</h4>
-                                <p class="db-card__sub">Перестроить индексы всей базы</p>
-                            </div>
-                        </div>
-                        <div class="db-card__foot">
-                            <button type="button" class="db-btn db-btn--primary db-maint-btn" data-action="reindex">Выполнить</button>
-                        </div>
-                    </div>
-                </div>
+        <!-- Health -->
+        <div class="db-pane db-panel__workspace hidden" id="db-workspace-health" data-workspace="health">
+            <div class="db-health-grid" id="db-health-grid">
+                <div class="db-empty">Загрузка метрик…</div>
             </div>
-            <div class="db-card" id="db-conn-stats-group">
-                <div class="db-card__head">
+            <div class="db-glass db-card db-card--conn" id="db-conn-stats-group">
+                <div class="db-card__inner">
                     <span class="db-card__glyph material-symbols-outlined">lan</span>
                     <div>
                         <h4 class="db-card__title">Подключения PostgreSQL</h4>
                         <p class="db-card__sub">Активные сессии к серверу</p>
                     </div>
                 </div>
-                <div class="db-kv" id="db-conn-stats">
-                    <div class="db-kv__row">
-                        <span class="db-kv__value">—</span>
+                <div class="db-kv db-kv--conn" id="db-conn-stats">
+                    <div class="db-kv__row"><span class="db-kv__value">—</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Maintenance -->
+        <div class="db-pane db-panel__workspace hidden" id="db-workspace-maintenance" data-workspace="maintenance">
+            <div class="db-section">
+                <h3 class="db-section__title">
+                    <span class="material-symbols-outlined">build</span>
+                    Обслуживание · <span id="db-maint-source">{{ overview.source_label or 'Remnawave App' }}</span>
+                </h3>
+                <div class="db-maint-grid">
+                    <div class="db-glass db-maint-card">
+                        <div class="db-maint-card__accent db-maint-card__accent--blue"></div>
+                        <span class="material-symbols-outlined db-maint-card__icon">analytics</span>
+                        <h4 class="db-maint-card__title">ANALYZE</h4>
+                        <p class="db-maint-card__sub">Обновить статистику планировщика</p>
+                        <button type="button" class="db-btn db-btn--glass db-maint-btn" data-action="analyze">Выполнить</button>
+                    </div>
+                    <div class="db-glass db-maint-card">
+                        <div class="db-maint-card__accent db-maint-card__accent--teal"></div>
+                        <span class="material-symbols-outlined db-maint-card__icon">cleaning_services</span>
+                        <h4 class="db-maint-card__title">VACUUM ANALYZE</h4>
+                        <p class="db-maint-card__sub">Очистка мёртвых строк</p>
+                        <button type="button" class="db-btn db-btn--glass db-maint-btn" data-action="vacuum">Выполнить</button>
+                    </div>
+                    <div class="db-glass db-maint-card">
+                        <div class="db-maint-card__accent db-maint-card__accent--violet"></div>
+                        <span class="material-symbols-outlined db-maint-card__icon">sync</span>
+                        <h4 class="db-maint-card__title">REINDEX</h4>
+                        <p class="db-maint-card__sub">Перестроить индексы базы</p>
+                        <button type="button" class="db-btn db-btn--glass db-maint-btn" data-action="reindex">Выполнить</button>
                     </div>
                 </div>
             </div>
@@ -349,9 +405,14 @@
                         <span class="material-symbols-outlined">close</span>
                     </button>
                 </header>
+                <nav class="db-modal-tabs" id="db-modal-tabs">
+                    <button type="button" class="db-modal-tab is-active" data-modal-tab="data">Данные</button>
+                    <button type="button" class="db-modal-tab" data-modal-tab="schema">Схема</button>
+                </nav>
+                <div class="db-modal-pane" data-modal-pane="data">
                 <div class="db-panel__modal-actions">
-                    <button type="button" id="db-table-export" class="db-btn db-btn--ghost">CSV</button>
-                    <button type="button" id="db-table-vacuum" class="db-btn db-btn--ghost">VACUUM</button>
+                    <button type="button" id="db-table-export" class="db-btn db-btn--glass">CSV</button>
+                    <button type="button" id="db-table-vacuum" class="db-btn db-btn--glass">VACUUM</button>
                     <button type="button" id="db-table-truncate" class="db-btn db-btn--danger db-panel__danger-btn">Очистить</button>
                     <button type="button" id="db-table-delete-rows" class="db-btn db-btn--danger db-panel__danger-btn" disabled>Удалить выбранные</button>
                 </div>
@@ -361,11 +422,17 @@
                         <tbody></tbody>
                     </table>
                 </div>
-                <footer class="db-panel__modal-foot">
-                    <button type="button" id="db-table-prev" class="db-btn db-btn--ghost">←</button>
+                <footer class="db-modal-foot db-panel__modal-foot">
+                    <button type="button" id="db-table-prev" class="db-btn db-btn--glass">←</button>
                     <span id="db-table-page-label" class="db-panel__page-label">1 / 1</span>
-                    <button type="button" id="db-table-next" class="db-btn db-btn--ghost">→</button>
+                    <button type="button" id="db-table-next" class="db-btn db-btn--glass">→</button>
                 </footer>
+                </div>
+                <div class="db-modal-pane hidden" data-modal-pane="schema">
+                    <div class="db-schema-wrap" id="db-table-schema">
+                        <div class="db-empty">Загрузка схемы…</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

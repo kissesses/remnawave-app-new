@@ -242,6 +242,7 @@ ENDPOINT_PERMISSIONS: dict[str, str] = {
     "settings_database_table_export": "db_manage",
     "settings_database_query": "db_manage",
     "settings_database_stats": "db_manage",
+    "settings_database_health": "db_manage",
     "settings_database_maintenance_action": "db_manage",
     "check_updates_route": "settings",
     "project_info_route": "settings",

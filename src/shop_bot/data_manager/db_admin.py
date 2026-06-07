@@ -678,6 +678,74 @@ def get_connection_stats(source: str) -> dict[str, Any]:
         return {'supported': True, 'error': str(exc)}
 
 
+def get_health_metrics(source: str) -> dict[str, Any]:
+    """PostgreSQL health KPIs for Database Studio."""
+    source = normalize_db_source(source)
+    if source == 'shopbot' and not is_postgresql():
+        return {'supported': False}
+    try:
+        db_rows = _source_select(
+            source,
+            """
+            SELECT
+                numbackends,
+                xact_commit,
+                xact_rollback,
+                blks_hit,
+                blks_read,
+                deadlocks,
+                conflicts
+            FROM pg_stat_database
+            WHERE datname = current_database()
+            """,
+        )
+        db = db_rows[0] if db_rows else {}
+        blks_hit = float(db.get('blks_hit') or 0)
+        blks_read = float(db.get('blks_read') or 0)
+        cache_total = blks_hit + blks_read
+        cache_hit_pct = round((blks_hit / cache_total) * 100, 1) if cache_total > 0 else None
+
+        dead_rows = _source_select(
+            source,
+            """
+            SELECT
+                COALESCE(SUM(n_dead_tup), 0)::bigint AS dead_tuples,
+                COALESCE(SUM(n_live_tup), 0)::bigint AS live_tuples,
+                COUNT(*)::int AS table_count
+            FROM pg_stat_user_tables
+            WHERE schemaname = 'public'
+            """,
+        )
+        dead = dead_rows[0] if dead_rows else {}
+
+        idx_rows = _source_select(
+            source,
+            """
+            SELECT COUNT(*)::int AS index_count
+            FROM pg_indexes
+            WHERE schemaname = 'public'
+            """,
+        )
+        idx_count = int(idx_rows[0]['index_count']) if idx_rows else 0
+
+        return {
+            'supported': True,
+            'cache_hit_pct': cache_hit_pct,
+            'dead_tuples': int(dead.get('dead_tuples') or 0),
+            'live_tuples': int(dead.get('live_tuples') or 0),
+            'table_count': int(dead.get('table_count') or 0),
+            'index_count': idx_count,
+            'backends': int(db.get('numbackends') or 0),
+            'commits': int(db.get('xact_commit') or 0),
+            'rollbacks': int(db.get('xact_rollback') or 0),
+            'deadlocks': int(db.get('deadlocks') or 0),
+            'conflicts': int(db.get('conflicts') or 0),
+        }
+    except Exception as exc:
+        logger.warning('Database health metrics failed (%s): %s', source, exc)
+        return {'supported': True, 'error': str(exc)}
+
+
 def get_remnawave_database_overview() -> dict[str, Any]:
     from shop_bot.data_manager import remnawave_backup as rw
 
