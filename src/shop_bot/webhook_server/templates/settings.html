@@ -363,32 +363,7 @@ window.REF_PANEL_BOOT = {
 <script src="{{ url_for('static', filename='js/hosts-panel.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
 {% endif %}
 {% if active_tab == 'bot' %}
-<script>
-(function () {
-    const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
-    document.querySelectorAll('[data-notify-test]').forEach((btn) => {
-        btn.addEventListener('click', async () => {
-            const category = btn.getAttribute('data-notify-test');
-            btn.disabled = true;
-            try {
-                const resp = await fetch('{{ url_for("backup_test_channel_route") }}', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf, 'X-Requested-With': 'XMLHttpRequest' },
-                    credentials: 'same-origin',
-                    body: JSON.stringify({ category }),
-                });
-                const data = await resp.json();
-                if (typeof window.showToast === 'function') {
-                    window.showToast(data.ok ? 'success' : 'danger', data.message || data.error || 'Ошибка');
-                }
-            } catch (_) {
-                if (typeof window.showToast === 'function') window.showToast('danger', 'Ошибка сети');
-            } finally {
-                btn.disabled = false;
-            }
-        });
-    });
-})();
-</script>
+<div id="bot-notify-panel" hidden data-test-url="{{ url_for('backup_test_channel_route') }}"></div>
+<script src="{{ url_for('static', filename='js/bot-notify-panel.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
 {% endif %}
 {% endblock %}

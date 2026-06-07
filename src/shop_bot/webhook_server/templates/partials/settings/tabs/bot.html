@@ -187,11 +187,51 @@
 
                     <div class="bot-notify-global">
                         <label class="block text-white/60 text-[10px] uppercase font-bold tracking-wider mb-1.5 ml-1">Chat ID (группа / форум)</label>
-                        <input type="text" name="notifications_chat_id"
+                        <input type="text" name="notifications_chat_id" id="notifications_chat_id"
                             value="{{ settings.notifications_chat_id or '' }}"
                             placeholder="-1001234567890"
                             class="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm focus:ring-1 focus:ring-primary/40 outline-none" />
                         <p class="bot-notify-global__hint">Бот должен быть админом с правом писать в топики. Без Chat ID уведомления уходят админам в личку (fallback).</p>
+                    </div>
+
+                    <div class="bot-notify-link-tool" id="bot-notify-link-tool">
+                        <div class="bot-notify-link-tool__head">
+                            <span class="material-symbols-outlined" aria-hidden="true">link</span>
+                            <div>
+                                <strong class="bot-notify-link-tool__title">Chat ID из ссылки Telegram</strong>
+                                <p class="bot-notify-link-tool__desc">
+                                    Ссылка вида <code>https://t.me/c/3907207135/1</code> → Chat ID <code>-1003907207135</code>,
+                                    Topic ID <code>1</code> (число после ID чата — топик форума).
+                                </p>
+                            </div>
+                        </div>
+                        <div class="bot-notify-link-tool__row">
+                            <input type="text" id="bot-notify-link-input" class="bot-notify-link-tool__input"
+                                placeholder="Вставьте ссылку t.me/c/… или скопируйте из Telegram"
+                                autocomplete="off" spellcheck="false" />
+                            <button type="button" class="bot-notify-link-tool__btn" id="bot-notify-link-parse">
+                                <span class="material-symbols-outlined">conversion_path</span> Разобрать
+                            </button>
+                        </div>
+                        <div class="bot-notify-link-tool__result" id="bot-notify-link-result" hidden>
+                            <div class="bot-notify-link-tool__kv">
+                                <span class="bot-notify-link-tool__kv-label">Chat ID</span>
+                                <code class="bot-notify-link-tool__kv-value" id="bot-notify-parsed-chat"></code>
+                                <button type="button" class="bot-notify-link-tool__fill" data-notify-fill="chat">Подставить</button>
+                                <button type="button" class="bot-notify-link-tool__copy" data-notify-copy="chat" title="Копировать">
+                                    <span class="material-symbols-outlined">content_copy</span>
+                                </button>
+                            </div>
+                            <div class="bot-notify-link-tool__kv" id="bot-notify-parsed-topic-wrap" hidden>
+                                <span class="bot-notify-link-tool__kv-label">Topic ID</span>
+                                <code class="bot-notify-link-tool__kv-value" id="bot-notify-parsed-topic"></code>
+                                <button type="button" class="bot-notify-link-tool__fill" data-notify-fill="topic-select">Подставить в топик…</button>
+                                <button type="button" class="bot-notify-link-tool__copy" data-notify-copy="topic" title="Копировать">
+                                    <span class="material-symbols-outlined">content_copy</span>
+                                </button>
+                            </div>
+                            <p class="bot-notify-link-tool__note" id="bot-notify-link-note"></p>
+                        </div>
                     </div>
 
                     <div class="bot-notify-topics">
@@ -214,6 +254,9 @@
                                     placeholder="Topic ID (опц.)"
                                     class="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm focus:ring-1 focus:ring-primary/40 outline-none" />
                             </div>
+                            <button type="button" class="bot-notify-topic-row__link" data-notify-link-topic title="Подставить Topic ID из ссылки">
+                                <span class="material-symbols-outlined">link</span>
+                            </button>
                             <button type="button" class="bot-notify-topic-row__test" data-notify-test="{{ cat.id }}" title="Тест">
                                 <span class="material-symbols-outlined">send</span>
                             </button>

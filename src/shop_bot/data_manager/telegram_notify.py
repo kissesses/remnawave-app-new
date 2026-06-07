@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 from dataclasses import dataclass
 from typing import Any
 
@@ -85,6 +86,36 @@ def parse_topic_id(raw: str | None) -> int | None:
     s = (raw or "").strip()
     if s.isdigit():
         return int(s)
+    return None
+
+
+def parse_telegram_private_link(raw: str | None) -> dict[str, int] | None:
+    """Разбор ссылки t.me/c/… или «голого» inner id в Bot API chat_id (+ topic_id при наличии)."""
+    s = (raw or "").strip()
+    if not s:
+        return None
+
+    m = re.match(
+        r"(?:https?://)?(?:www\.)?t\.me/c/(\d+)(?:/(\d+))?(?:/(\d+))?(?:[/?#]|$)",
+        s,
+        re.IGNORECASE,
+    )
+    if m:
+        chat_id = int(f"-100{m.group(1)}")
+        topic_id = int(m.group(2)) if m.group(2) else None
+        if m.group(3):
+            topic_id = int(m.group(2)) if m.group(2) else None
+        out: dict[str, int] = {"chat_id": chat_id}
+        if topic_id is not None:
+            out["topic_id"] = topic_id
+        return out
+
+    if re.fullmatch(r"-100\d+", s):
+        return {"chat_id": int(s)}
+
+    if re.fullmatch(r"\d{6,}", s):
+        return {"chat_id": int(f"-100{s}")}
+
     return None
 
 
