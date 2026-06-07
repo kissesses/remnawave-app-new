@@ -5,6 +5,7 @@
 
 | Version | Codename | EN tagline | RU tagline |
 |---------|----------|------------|------------|
+| 1.0.7 | Amber Relay | Lite home dashboard — smooth on MacBook, proper block spacing | Лёгкая главная — без лагов на MacBook, нормальные отступы между блоками |
 | 1.0.6 | Glass Meridian | Home dashboard reborn — themed KPI hero, premium cards, sliding tabs | Главная заново — KPI-hero под каждый макет, premium-карточки, скользящие вкладки |
 | 1.0.4 | Chronicle Forge | Activity feed, forum alerts, and onboarding in one client stack | Лента, форум-уведомления и onboarding в одном клиентском стеке |
 | 1.0.5 | Velvet Stitch | Timeline page restored — panel context woven back in | Лента снова открывается — контекст панели «сшит» обратно |
@@ -18,4 +19,4 @@
 
 ## Идеи для будущих (не заняты)
 
-Signal Tapestry · Amber Relay · Silk Harbor · Prism Ledger · Nova Thread
+Signal Tapestry · Silk Harbor · Prism Ledger · Nova Thread

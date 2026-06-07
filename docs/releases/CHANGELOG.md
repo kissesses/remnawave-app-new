@@ -7,6 +7,40 @@
 
 ---
 
+## [1.0.7] — 2026-06-07 · Amber Relay
+
+> **Amber Relay** — главная без лагов: lite-оформление, отступы между блоками, лёгкие графики.
+
+### EN
+
+#### ✨ Changed
+
+- **Dashboard lite mode** — replaced heavy premium layer (blur, ambient orbs, shine animations) with performance-first styling
+- **Resource monitoring layout** — semantic blocks (`.dash-block`, `.dash-metric-grid`) with consistent `1.5rem` spacing
+- **KPI cards** — solid surfaces with accent left border instead of gradient masks
+- **Charts** — `fill: false`, `animation: false`, LTTB decimation; no gradient fills on line charts
+- **Live updates** — removed fade transitions on stats refresh and progress-bar animations on monitor
+
+#### 🐛 Fixed
+
+- **Dashboard jank on macOS** — disabled `backdrop-filter` across the home page in lite mode
+
+### RU
+
+#### ✨ Изменено
+
+- **Lite-режим главной** — вместо тяжёлого premium (blur, орбы, shine) — лёгкие стили без просадок FPS
+- **Мониторинг ресурсов** — семантические блоки с отступами `1.5rem` между секциями
+- **KPI-карточки** — сплошной фон и цветная полоска слева вместо gradient-рамок
+- **Графики** — без заливки и анимации, decimation LTTB
+- **Обновления данных** — без fade при refresh stats и без transition на progress-барах
+
+#### 🐛 Исправлено
+
+- **Лаги на MacBook** — отключён `backdrop-filter` на главной в lite-режиме
+
+---
+
 ## [1.0.6] — 2026-06-07 · Glass Meridian
 
 > **Glass Meridian** — главная страница получила premium-оформление и адаптацию под все макеты панели.

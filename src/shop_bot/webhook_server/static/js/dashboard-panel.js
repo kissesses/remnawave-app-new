@@ -93,9 +93,11 @@ window.dashCharts = {};
                 type: 'line',
                 options: {
                     responsive: true, maintainAspectRatio: false,
+                    animation: false,
                     interaction: { intersect: false, mode: 'index' },
                     layout: { padding: { top: 4, bottom: 4, left: 0, right: 4 } },
                     plugins: {
+                        decimation: { enabled: true, algorithm: 'lttb', samples: 120 },
                         legend: { display: true, position: 'top', align: 'end', labels: { color: theme.legend, boxWidth: 8, boxHeight: 8, padding: 16, usePointStyle: true, pointStyle: 'circle', font: { family: 'Inter', size: 10, weight: '600' } } },
                         tooltip: {
                             backgroundColor: theme.tooltip.backgroundColor,
@@ -234,13 +236,8 @@ window.dashCharts = {};
 
                     const trimmedHtml = html.trim();
                     if (el.innerHTML !== trimmedHtml) {
-                        el.style.opacity = '0.5';
-                        setTimeout(() => {
-                            el.innerHTML = trimmedHtml;
-                            // Удалить текстовые узлы (BOM, пробелы) из grid-контейнеров
-                            [...el.childNodes].forEach(n => { if (n.nodeType === 3) n.remove(); });
-                            el.style.opacity = '1';
-                        }, 150);
+                        el.innerHTML = trimmedHtml;
+                        [...el.childNodes].forEach(n => { if (n.nodeType === 3) n.remove(); });
                     }
                 }
             } catch (e) { console.error(`Refresh error (${id}):`, e); }
@@ -346,13 +343,13 @@ window.dashCharts = {};
                         label,
                         data: dates.map(d => obj[d] || 0),
                         borderColor: color,
-                        backgroundColor: createGrad(ctx, colorRgba, 0.18, 0.04),
-                        fill: true,
-                        tension: 0.4,
+                        backgroundColor: 'transparent',
+                        fill: false,
+                        tension: 0.15,
                         pointBackgroundColor: color,
                         pointBorderColor: 'rgba(11, 15, 14, 0.8)',
-                        pointBorderWidth: 2,
-                        pointRadius: dataLen > 40 ? 0 : dataLen > 20 ? 2 : 3,
+                        pointBorderWidth: 1,
+                        pointRadius: dataLen > 30 ? 0 : 2,
                         pointHoverRadius: 6,
                         pointHoverBorderWidth: 2,
                         pointHoverBorderColor: 'rgba(11, 15, 14, 0.9)',
@@ -506,9 +503,9 @@ window.dashCharts = {};
                 label: method,
                 data: dates.map(d => (incomeData[d] && incomeData[d][method]) || 0),
                 borderColor: methodColors[method] || '#94a3b8',
-                backgroundColor: createGrad(ctx, hexToRgba(methodColors[method] || '#94a3b8', 1), 0.15, 0.03),
-                fill: true,
-                tension: 0.4,
+                backgroundColor: 'transparent',
+                fill: false,
+                tension: 0.15,
                 pointRadius: (ctx) => {
                     const val = ctx.dataset.data[ctx.dataIndex];
                     return val > 0 ? (dataLen > 50 ? 0 : dataLen > 25 ? 2 : 3) : 0;
@@ -617,9 +614,9 @@ window.dashCharts = {};
                 label: method,
                 data: dates.map(d => (incomeData[d] && incomeData[d][method]) || 0),
                 borderColor: methodColors[method] || '#94a3b8',
-                backgroundColor: createGrad(chart.ctx, hexToRgba(methodColors[method] || '#94a3b8', 1), 0.15, 0.03),
-                fill: true,
-                tension: 0.4,
+                backgroundColor: 'transparent',
+                fill: false,
+                tension: 0.15,
                 pointRadius: (ctx) => {
                     const val = ctx.dataset.data[ctx.dataIndex];
                     return val > 0 ? (dataLen2 > 50 ? 0 : dataLen2 > 25 ? 2 : 3) : 0;
@@ -738,8 +735,8 @@ window.dashCharts = {};
                             label: 'Загрузка',
                             data: items.map(it => parseFloat(it.download_mbps) || 0),
                             borderColor: '#22d3ee',
-                            backgroundColor: createGrad(ctx, 'rgba(34, 211, 238, 1)', 0.18, 0.04),
-                            fill: true, tension: 0.4,
+                            backgroundColor: 'transparent',
+                            fill: false, tension: 0.15,
                             pointRadius: stLen > 40 ? 0 : stLen > 20 ? 2 : 3,
                             pointHoverRadius: 6,
                             pointBackgroundColor: '#22d3ee',
@@ -753,8 +750,8 @@ window.dashCharts = {};
                             label: 'Отдача',
                             data: items.map(it => parseFloat(it.upload_mbps) || 0),
                             borderColor: '#00bfff',
-                            backgroundColor: createGrad(ctx, 'rgba(0, 191, 255, 1)', 0.15, 0.03),
-                            fill: true, tension: 0.4,
+                            backgroundColor: 'transparent',
+                            fill: false, tension: 0.15,
                             pointRadius: stLen > 40 ? 0 : stLen > 20 ? 2 : 3,
                             pointHoverRadius: 6,
                             pointBackgroundColor: '#00bfff',
@@ -824,10 +821,10 @@ window.dashCharts = {};
                         label: metricLabel,
                         data: items.map(it => Number(it[metric] || 0)),
                         borderColor: metricColor,
-                        backgroundColor: createGrad(ctx, metricColorRgba, 0.18, 0.04),
+                        backgroundColor: 'transparent',
                         borderWidth: 2.5,
-                        fill: true,
-                        tension: 0.4,
+                        fill: false,
+                        tension: 0.15,
                         pointRadius: dtLen > 40 ? 0 : dtLen > 20 ? 2 : 3,
                         pointHoverRadius: 6,
                         pointBackgroundColor: metricColor,

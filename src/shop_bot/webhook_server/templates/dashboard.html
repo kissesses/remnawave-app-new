@@ -4,18 +4,12 @@
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard-panel.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard-panel-themes.css') }}" />
-<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard-panel-premium.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard-panel-lite.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard-studio.css') }}" />
 {% endblock %}
 
 {% block content %}
-<div class="dashboard-page dashboard-page--premium" id="dashboard-page">
-    <div class="dashboard-ambient" aria-hidden="true">
-        <span class="dashboard-ambient__orb dashboard-ambient__orb--1"></span>
-        <span class="dashboard-ambient__orb dashboard-ambient__orb--2"></span>
-        <span class="dashboard-ambient__orb dashboard-ambient__orb--3"></span>
-    </div>
-
+<div class="dashboard-page dashboard-page--lite" id="dashboard-page">
     <div class="dashboard-hero">
         {% include 'partials/dashboard/header.html' %}
         {% include 'partials/dashboard_onboarding.html' %}

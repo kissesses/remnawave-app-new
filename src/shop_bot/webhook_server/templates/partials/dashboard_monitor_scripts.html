@@ -131,7 +131,7 @@
                         <span class="${getStatusColor(d.percent)}">${fmtPct(d.percent)}</span>
                     </div>
                     <div class="w-full h-1.5 bg-black/40 rounded-full overflow-hidden">
-                        <div class="h-full ${d.percent >= 90 ? 'bg-red-500' : d.percent >= 70 ? 'bg-yellow-400' : 'bg-primary'} transition-all duration-500" style="width: ${d.percent || 0}%"></div>
+                        <div class="h-full ${d.percent >= 90 ? 'bg-red-500' : d.percent >= 70 ? 'bg-yellow-400' : 'bg-primary'} transition-none" style="width: ${d.percent || 0}%"></div>
                     </div>
                 </div>
             `).join('');
@@ -155,7 +155,7 @@
                             <span class="${getStatusColor(cpu.percent)}">${fmtPct(cpu.percent)}</span>
                         </div>
                         <div class="w-full h-1.5 bg-black/40 rounded-full overflow-hidden">
-                            <div class="h-full bg-primary transition-all duration-500" style="width: ${cpu.percent || 0}%"></div>
+                            <div class="h-full bg-primary transition-none" style="width: ${cpu.percent || 0}%"></div>
                         </div>
                     </div>
                     <div>
@@ -164,7 +164,7 @@
                             <span class="${getStatusColor(mem.percent)}">${fmtPct(mem.percent)}</span>
                         </div>
                         <div class="w-full h-1.5 bg-black/40 rounded-full overflow-hidden">
-                            <div class="h-full bg-green-500 transition-all duration-500" style="width: ${mem.percent || 0}%"></div>
+                            <div class="h-full bg-green-500 transition-none" style="width: ${mem.percent || 0}%"></div>
                         </div>
                         <div class="mt-1 flex justify-end text-[8px] text-white/30 font-mono tracking-tighter">${fmtBytes(mem.used)} / ${fmtBytes(mem.total)}</div>
                     </div>
@@ -175,7 +175,7 @@
                             <span class="${getStatusColor(sw.percent)}">${fmtPct(sw.percent)}</span>
                         </div>
                         <div class="w-full h-1.5 bg-black/40 rounded-full overflow-hidden">
-                            <div class="h-full bg-purple-500 transition-all duration-500" style="width: ${sw.percent || 0}%"></div>
+                            <div class="h-full bg-purple-500 transition-none" style="width: ${sw.percent || 0}%"></div>
                         </div>
                     </div>` : ''}
                     
@@ -212,7 +212,7 @@
                             <span class="${getStatusColor(cpu.percent)}">${fmtPct(cpu.percent)}</span>
                         </div>
                         <div class="w-full h-1.5 bg-black/40 rounded-full overflow-hidden">
-                            <div class="h-full bg-primary transition-all duration-500" style="width: ${cpu.percent}%"></div>
+                            <div class="h-full bg-primary transition-none" style="width: ${cpu.percent}%"></div>
                         </div>
                     </div>
                     <div>
@@ -221,7 +221,7 @@
                             <span class="${getStatusColor(mem.percent)}">${fmtPct(mem.percent)}</span>
                         </div>
                         <div class="w-full h-1.5 bg-black/40 rounded-full overflow-hidden">
-                            <div class="h-full bg-green-500 transition-all duration-500" style="width: ${mem.percent}%"></div>
+                            <div class="h-full bg-green-500 transition-none" style="width: ${mem.percent}%"></div>
                         </div>
                         <div class="mt-1 flex justify-end text-[8px] text-white/30 font-mono tracking-tighter">${mem.used_mb}MB / ${mem.total_mb}MB</div>
                     </div>
@@ -231,7 +231,7 @@
                             <span class="${getStatusColor(disk.percent)}">${fmtPct(disk.percent)}</span>
                         </div>
                         <div class="w-full h-1.5 bg-black/40 rounded-full overflow-hidden">
-                            <div class="h-full bg-yellow-400 transition-all duration-500" style="width: ${disk.percent}%"></div>
+                            <div class="h-full bg-yellow-400 transition-none" style="width: ${disk.percent}%"></div>
                         </div>
                     </div>
                 </div>
@@ -250,36 +250,36 @@
                             label: 'CPU',
                             data: [],
                             borderColor: '#22d3ee',
-                            backgroundColor: 'rgba(34, 211, 238, 0.05)',
+                            backgroundColor: 'transparent',
                             borderWidth: 2,
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: 2,
-                            pointHoverRadius: 6,
+                            fill: false,
+                            tension: 0.15,
+                            pointRadius: 0,
+                            pointHoverRadius: 4,
                             pointBackgroundColor: '#22d3ee'
                         },
                         {
                             label: 'RAM',
                             data: [],
                             borderColor: '#22c55e',
-                            backgroundColor: 'rgba(34, 197, 94, 0.05)',
+                            backgroundColor: 'transparent',
                             borderWidth: 2,
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: 2,
-                            pointHoverRadius: 6,
+                            fill: false,
+                            tension: 0.15,
+                            pointRadius: 0,
+                            pointHoverRadius: 4,
                             pointBackgroundColor: '#22c55e'
                         },
                         {
                             label: 'Disk',
                             data: [],
                             borderColor: '#facc15',
-                            backgroundColor: 'rgba(250, 204, 21, 0.05)',
+                            backgroundColor: 'transparent',
                             borderWidth: 2,
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: 2,
-                            pointHoverRadius: 6,
+                            fill: false,
+                            tension: 0.15,
+                            pointRadius: 0,
+                            pointHoverRadius: 4,
                             pointBackgroundColor: '#facc15'
                         }
                     ]
@@ -289,6 +289,7 @@
                     maintainAspectRatio: false,
                     interaction: { intersect: false, mode: 'index' },
                     plugins: {
+                        decimation: { enabled: true, algorithm: 'lttb', samples: 120 },
                         legend: {
                             position: 'top',
                             align: 'end',
@@ -343,7 +344,7 @@
                             }
                         }
                     },
-                    animation: { duration: 800, easing: 'easeOutQuart' }
+                    animation: false
                 }
             });
             return mainChart;
