@@ -185,11 +185,25 @@
         sel.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
+    function mountModals() {
+        $$('.tr-modal').forEach((modal) => {
+            if (modal.parentElement !== document.body) {
+                document.body.appendChild(modal);
+            }
+        });
+    }
+
+    function setModalOpen(open) {
+        document.documentElement.classList.toggle('tr-modal-open', open);
+        document.body.classList.toggle('tr-modal-open', open);
+    }
+
     function openGrantModal(presetUserId) {
         const m = document.getElementById('tr-grant-modal');
         if (!m) return;
         m.classList.remove('hidden');
-        document.body.classList.add('tr-modal-open');
+        m.scrollTop = 0;
+        setModalOpen(true);
 
         const userInput = $('#tr-grant-user');
         if (userInput) {
@@ -207,12 +221,13 @@
         const m = document.getElementById(id);
         if (!m) return;
         m.classList.remove('hidden');
-        document.body.classList.add('tr-modal-open');
+        m.scrollTop = 0;
+        setModalOpen(true);
     }
 
     function closeModals() {
         $$('.tr-modal').forEach((m) => m.classList.add('hidden'));
-        document.body.classList.remove('tr-modal-open');
+        if (!$$('.tr-modal:not(.hidden)').length) setModalOpen(false);
         $$('.soft-select.open').forEach((w) => w.classList.remove('open'));
         extendKeyId = null;
     }
@@ -411,6 +426,7 @@
 
     function init() {
         if (!routes.stats) return;
+        mountModals();
         bindEvents();
         initSoftSelects();
         loadStats();

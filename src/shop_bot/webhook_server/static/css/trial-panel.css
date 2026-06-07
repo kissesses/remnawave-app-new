@@ -428,14 +428,28 @@ html:not(.dark) .tr-page {
     --tr-radius-lg: 18px;
     --tr-radius-sm: 10px;
     --tr-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
-    position: fixed;
+    position: fixed !important;
     inset: 0;
-    z-index: 1200;
+    z-index: 12050;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    padding: 1rem;
+    justify-content: flex-start;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: max(1.25rem, env(safe-area-inset-top, 0px)) 1rem max(5.5rem, env(safe-area-inset-bottom, 0px));
+    box-sizing: border-box;
     color: var(--tr-text);
+}
+.tr-modal:not(.hidden)::before,
+.tr-modal:not(.hidden)::after {
+    content: '';
+    flex: 1 0 auto;
+    width: 100%;
+    min-height: 0;
+    pointer-events: none;
 }
 html:not(.dark) .tr-modal {
     --tr-text: #1c1c1e;
@@ -450,14 +464,18 @@ html:not(.dark) .tr-modal {
 }
 .tr-modal.hidden { display: none !important; }
 .tr-modal__backdrop {
-    position: absolute;
+    position: fixed;
     inset: 0;
+    z-index: 0;
     background: rgba(0, 0, 0, 0.62);
     backdrop-filter: blur(8px);
 }
 .tr-modal__panel {
     position: relative;
+    z-index: 1;
     width: min(440px, 100%);
+    margin: 0 auto;
+    flex-shrink: 0;
     border-radius: var(--tr-radius-lg);
     border: 1px solid var(--tr-border-strong);
     background: var(--tr-surface-2);
@@ -679,4 +697,11 @@ html:not(.dark) .tr-modal {
 }
 
 .hidden { display: none !important; }
-body.tr-modal-open { overflow: hidden; }
+html.tr-modal-open,
+html.tr-modal-open body {
+    overflow: hidden;
+}
+html.tr-modal-open body.workspace-embed {
+    overflow: hidden;
+    touch-action: none;
+}
