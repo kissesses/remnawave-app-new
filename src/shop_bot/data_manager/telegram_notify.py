@@ -131,7 +131,16 @@ def parse_telegram_private_link(raw: str | None) -> dict[str, int] | None:
 
 
 def global_chat_id() -> int | None:
-    return parse_chat_id(get_setting("notifications_chat_id"))
+    raw = (get_setting("notifications_chat_id") or "").strip()
+    if not raw:
+        return None
+    parsed = parse_chat_id(raw)
+    if parsed is not None:
+        return parsed
+    link = parse_telegram_private_link(raw)
+    if link and link.get("chat_id") is not None:
+        return int(link["chat_id"])
+    return None
 
 
 def resolve_destination(category: str) -> NotifyDestination:
@@ -307,7 +316,14 @@ async def send_document(
         return 1
     except Exception as exc:
         logger.warning("Notify document forum %s failed: %s", category, exc)
-        return 0
+        sent = 0
+        for aid in get_admin_ids():
+            try:
+                await bot.send_document(chat_id=int(aid), **kwargs)
+                sent += 1
+            except Exception as dm_exc:
+                logger.warning("Notify document DM to %s failed (%s): %s", aid, category, dm_exc)
+        return sent
 
 
 def send_notification_sync(

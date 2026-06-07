@@ -310,23 +310,72 @@
         });
     }
 
+    function getCreateFormValues() {
+        return {
+            note: document.getElementById('backup-create-note')?.value?.trim() || '',
+            scope: document.querySelector('input[name="backup-create-scope"]:checked')?.value || 'database',
+        };
+    }
+
+    function triggerDownload(url) {
+        if (!url) return;
+        const a = document.createElement('a');
+        a.href = url;
+        a.rel = 'noopener';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+    }
+
+    async function runBackupCreate(pCfg, options = {}) {
+        const { note = '', scope = 'database', download = false, deliverTelegram = false } = options;
+        const resp = await fetchWithCsrf(pCfg.createUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                note,
+                scope,
+                download: download ? '1' : '0',
+                deliver_telegram: deliverTelegram ? '1' : '0',
+            }),
+        });
+        const data = await resp.json();
+        if (!data.ok) {
+            window.showToast?.('danger', data.error || 'Ошибка');
+            return data;
+        }
+        window.showToast?.('success', data.message || 'Создано');
+        if (download && data.download_url) triggerDownload(data.download_url);
+        closeModal('backupCreateModal');
+        await refreshList(pCfg);
+        if (data.name) openDetailModal(pCfg, data.name);
+        return data;
+    }
+
+    async function runBackupTelegram(pCfg, options = {}) {
+        const { note = '', scope = pCfg.defaultScope || 'database', name = '' } = options;
+        const resp = await fetchWithCsrf(pCfg.telegramUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(name ? { name } : { note, scope }),
+        });
+        const data = await resp.json();
+        if (data.ok) {
+            window.showToast?.('success', data.message || 'Отправлено');
+            if (!name) {
+                closeModal('backupCreateModal');
+                await refreshList(pCfg);
+            }
+        } else {
+            window.showToast?.('danger', data.error || 'Ошибка');
+        }
+        return data;
+    }
+
     async function runQuickCreate(scope, pCfg) {
         if (!scope || !pCfg) return;
-        const note = 'Быстрое создание';
         try {
-            const resp = await fetchWithCsrf(pCfg.createUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ note, scope }),
-            });
-            const data = await resp.json();
-            if (data.ok) {
-                window.showToast?.('success', data.message || 'Создано');
-                await refreshList(pCfg);
-                if (data.name) openDetailModal(pCfg, data.name);
-            } else {
-                window.showToast?.('danger', data.error || 'Ошибка');
-            }
+            await runBackupCreate(pCfg, { note: 'Быстрое создание', scope });
         } catch (_) {
             window.showToast?.('danger', 'Ошибка сети');
         }
@@ -524,14 +573,7 @@
         if (action === 'telegram') {
             btn.disabled = true;
             try {
-                const resp = await fetchWithCsrf(pCfg.telegramUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name }),
-                });
-                const data = await resp.json();
-                if (data.ok) window.showToast?.('success', data.message || 'Отправлено');
-                else window.showToast?.('danger', data.error || 'Ошибка');
+                await runBackupTelegram(pCfg, { name });
             } catch (_) {
                 window.showToast?.('danger', 'Ошибка сети');
             } finally {
@@ -620,30 +662,35 @@
         document.getElementById('backups-refresh-btn')?.addEventListener('click', () => refreshList(panelCfg));
         document.getElementById('backups-create-open')?.addEventListener('click', () => openModal('backupCreateModal'));
 
-        document.getElementById('backup-create-confirm')?.addEventListener('click', async () => {
-            const btn = document.getElementById('backup-create-confirm');
-            const note = document.getElementById('backup-create-note')?.value?.trim() || '';
-            const scope = document.querySelector('input[name="backup-create-scope"]:checked')?.value || 'database';
+        async function handleCreateAction(action, btn) {
+            const { note, scope } = getCreateFormValues();
             btn.disabled = true;
             try {
-                const resp = await fetchWithCsrf(panelCfg.createUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ note, scope }),
-                });
-                const data = await resp.json();
-                if (data.ok) {
-                    window.showToast?.('success', data.message || 'Создано');
-                    closeModal('backupCreateModal');
-                    await refreshList(panelCfg);
-                    if (data.name) openDetailModal(panelCfg, data.name);
+                if (action === 'telegram') {
+                    await runBackupTelegram(panelCfg, { note, scope });
                 } else {
-                    window.showToast?.('danger', data.error || 'Ошибка');
+                    await runBackupCreate(panelCfg, {
+                        note,
+                        scope,
+                        download: action === 'download',
+                    });
                 }
             } catch (_) {
                 window.showToast?.('danger', 'Ошибка сети');
             } finally {
                 btn.disabled = false;
+            }
+        }
+
+        document.querySelectorAll('[data-bv-create-action]').forEach((btn) => {
+            btn.addEventListener('click', () => handleCreateAction(btn.dataset.bvCreateAction, btn));
+        });
+
+        document.getElementById('backup-create-download-hero')?.addEventListener('click', async () => {
+            openModal('backupCreateModal');
+            const downloadBtn = document.getElementById('backup-create-download');
+            if (downloadBtn) {
+                downloadBtn.focus();
             }
         });
 
@@ -790,10 +837,9 @@
             const btn = this;
             btn.disabled = true;
             try {
-                const resp = await fetchWithCsrf(panelCfg.telegramUrl, { method: 'POST' });
-                const data = await resp.json();
-                if (data.ok) window.showToast?.('success', data.message || 'Отправлено');
-                else window.showToast?.('danger', data.error || 'Ошибка');
+                await runBackupTelegram(panelCfg, {
+                    scope: panelCfg.defaultScope || 'database',
+                });
             } catch (_) {
                 window.showToast?.('danger', 'Ошибка сети');
             } finally {

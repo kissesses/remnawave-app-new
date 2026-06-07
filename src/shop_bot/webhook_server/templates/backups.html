@@ -25,13 +25,10 @@
                 <span class="material-symbols-outlined">add_circle</span>
                 Создать
             </button>
-            <form method="post" action="{{ url_for('backup_db_route') }}" class="inline">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                <button type="submit" class="backups-btn bv-btn-glow">
-                    <span class="material-symbols-outlined">download</span>
-                    Создать и скачать
-                </button>
-            </form>
+            <button type="button" class="backups-btn bv-btn-glow" id="backup-create-download-hero">
+                <span class="material-symbols-outlined">download</span>
+                Создать и скачать
+            </button>
         </div>
     </header>
 
@@ -487,10 +484,20 @@
                 <input type="text" id="backup-create-note" maxlength="500" placeholder="Перед обновлением v3…"
                     class="backups-input" />
             </label>
-            <button type="button" id="backup-create-confirm" class="backups-btn bv-btn-glow backups-btn--block">
-                <span class="material-symbols-outlined">save</span>
-                Создать на сервере
-            </button>
+            <div class="bv-create-actions">
+                <button type="button" id="backup-create-confirm" class="backups-btn bv-btn-glow backups-btn--block" data-bv-create-action="save">
+                    <span class="material-symbols-outlined">save</span>
+                    Создать на сервере
+                </button>
+                <button type="button" id="backup-create-download" class="backups-btn backups-btn--ghost backups-btn--block" data-bv-create-action="download">
+                    <span class="material-symbols-outlined">download</span>
+                    Создать и скачать
+                </button>
+                <button type="button" id="backup-create-telegram" class="backups-btn backups-btn--telegram backups-btn--block" data-bv-create-action="telegram">
+                    <span class="material-symbols-outlined">send</span>
+                    Создать и отправить
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -530,6 +537,7 @@ window.BackupsPanel.init({
     restoreConfirm: 'Восстановление перезапишет данные. Будет создан pre-restore бэкап. Продолжить?',
     deleteConfirm: 'Удалить архив без возможности восстановления?',
     telegramUrl: {{ url_for('backup_send_telegram_route')|tojson }},
+    defaultScope: {{ backup_config.autobackup_scope|tojson }},
 });
 </script>
 {% endblock %}

@@ -24,6 +24,53 @@ BACKUP_SETTING_KEYS = (
 )
 
 
+def _truthy(val) -> bool:
+    return str(val or '').strip().lower() in ('1', 'true', 'yes', 'on')
+
+
+def _run_backup_telegram_delivery(zip_path: Path, backup_password: str | None) -> dict:
+    cfg = backup_manager.get_backup_config()
+    if not cfg.get('archive_channel_configured'):
+        return {
+            'ok': False,
+            'error': 'Укажите Chat ID в Настройки → Боты → Уведомления (топик «Архив бэкапов»)',
+        }
+    bot = panel_ctx.bot_controller.get_bot_instance()
+    if not bot:
+        return {'ok': False, 'error': 'Бот недоступен — запустите основной бот в панели'}
+    loop = current_app.config.get('EVENT_LOOP')
+    if loop and loop.is_running():
+        future = asyncio.run_coroutine_threadsafe(
+            backup_manager.deliver_backup_notifications(
+                bot, zip_path, backup_password, fallback_to_admins=True,
+            ),
+            loop,
+        )
+        result = future.result(timeout=120)
+    else:
+        result = asyncio.run(
+            backup_manager.deliver_backup_notifications(
+                bot, zip_path, backup_password, fallback_to_admins=True,
+            )
+        )
+    sent = int(result.get('archive') or 0)
+    if not sent:
+        err = result.get('archive_error') or 'не удалось отправить архив в Telegram'
+        secret_err = result.get('secret_error')
+        if secret_err:
+            err = f'{err}; пароль: {secret_err}'
+        return {'ok': False, 'error': err, **result}
+    msg = f'Архив отправлен в Telegram ({sent})'
+    if result.get('secret'):
+        msg += ', пароль — в топик «Пароли архивов»'
+    elif backup_manager.resolve_delivery_password(zip_path, backup_password) and cfg.get('encrypt_enabled'):
+        if not cfg.get('secrets_channel_configured'):
+            msg += '; пароль не отправлен — настройте топик «Пароли архивов»'
+        else:
+            msg += '; пароль не отправлен — проверьте топик и права бота'
+    return {'ok': True, 'message': msg, 'sent': sent, **result}
+
+
 def _backups_list():
     return backup_manager.list_backup_files()
 
@@ -141,8 +188,11 @@ def backup_detail_json(name: str):
 @panel_ctx.login_required
 def backup_create_server_route():
     payload = request.get_json(silent=True) if request.is_json else request.form
+    payload = payload or {}
     note = (payload.get('note') or '') if payload else ''
     scope = backup_manager.normalize_scope(payload.get('scope') if payload else None)
+    deliver_telegram = _truthy(payload.get('deliver_telegram'))
+    want_download = _truthy(payload.get('download'))
 
     try:
         created = backup_manager.create_backup_file(source='manual', note=note, scope=scope)
@@ -154,14 +204,38 @@ def backup_create_server_route():
             return redirect(url_for('backups_page'))
         cleanup = backup_manager.cleanup_old_backups()
         panel_ctx.audit('db.backup.create', {'file': zip_path.name, 'note': note[:80]})
+        if want_download and not request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return send_file(str(zip_path), as_attachment=True, download_name=zip_path.name)
+        delivery = None
+        if deliver_telegram:
+            delivery = _run_backup_telegram_delivery(zip_path, created.password)
+            panel_ctx.audit('db.backup.telegram', {
+                'file': zip_path.name,
+                'sent': delivery.get('sent', 0),
+                'secret': delivery.get('secret'),
+                'existing': False,
+            })
+            if not delivery.get('ok'):
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return jsonify({
+                        'ok': False,
+                        'error': delivery.get('error'),
+                        'name': zip_path.name,
+                        'delivery': delivery,
+                    }), 502
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             detail = backup_manager.get_backup_detail(zip_path.name)
+            message = f'Архив {zip_path.name} создан'
+            if delivery and delivery.get('ok'):
+                message = delivery.get('message') or message
             return jsonify({
                 'ok': True,
-                'message': f'Архив {zip_path.name} создан',
+                'message': message,
                 'name': zip_path.name,
                 'item': detail,
                 'cleanup': cleanup,
+                'delivery': delivery,
+                'download_url': url_for('backup_download_route', name=zip_path.name) if want_download else None,
             })
         flash(f'Архив {zip_path.name} создан на сервере.', 'success')
         return redirect(url_for('backups_page'))
@@ -246,7 +320,8 @@ def backup_delete_route():
 def backup_send_telegram_route():
     payload = request.get_json(silent=True) or {}
     existing_name = (payload.get('name') or request.form.get('name') or '').strip()
-    note = payload.get('note', '') or request.form.get('note', '') or ''
+    note = (payload.get('note') or request.form.get('note') or '').strip()
+    scope = backup_manager.normalize_scope(payload.get('scope'))
 
     try:
         backup_password = None
@@ -255,50 +330,25 @@ def backup_send_telegram_route():
             if not path:
                 return jsonify({'ok': False, 'error': 'Архив не найден'}), 404
             zip_path = path
+            backup_password = backup_manager.resolve_delivery_password(zip_path, None)
         else:
-            created = backup_manager.create_backup_file(source='telegram', note=note)
+            created = backup_manager.create_backup_file(source='telegram', note=note, scope=scope)
             zip_path = created.path
             backup_password = created.password
             if not zip_path or not os.path.isfile(zip_path):
                 return jsonify({'ok': False, 'error': 'Не удалось создать бэкап'}), 500
             backup_manager.cleanup_old_backups()
 
-        cfg = backup_manager.get_backup_config()
-        if not cfg.get('archive_channel_configured'):
-            return jsonify({
-                'ok': False,
-                'error': 'Укажите Chat ID канала архивов в Настройки → Боты → Каналы и топики',
-            }), 400
-
-        bot = panel_ctx.bot_controller.get_bot_instance()
-        if not bot:
-            return jsonify({'ok': False, 'error': 'Бот недоступен'}), 503
-        loop = current_app.config.get('EVENT_LOOP')
-        if loop and loop.is_running():
-            future = asyncio.run_coroutine_threadsafe(
-                backup_manager.deliver_backup_notifications(bot, zip_path, backup_password), loop
-            )
-            result = future.result(timeout=120)
-        else:
-            result = asyncio.run(
-                backup_manager.deliver_backup_notifications(
-                    bot, zip_path, backup_password, fallback_to_admins=False
-                )
-            )
-        sent = int(result.get('archive') or 0)
+        delivery = _run_backup_telegram_delivery(zip_path, backup_password)
         panel_ctx.audit('db.backup.telegram', {
-            'file': zip_path.name, 'sent': sent, 'secret': result.get('secret'),
+            'file': zip_path.name,
+            'sent': delivery.get('sent', 0),
+            'secret': delivery.get('secret'),
             'existing': bool(existing_name),
         })
-        if not sent:
-            err = result.get('archive_error') or 'не удалось отправить в канал архивов'
-            return jsonify({'ok': False, 'error': err, **result}), 502
-        msg = f'Архив отправлен в канал ({sent})'
-        if result.get('secret'):
-            msg += ', пароль — в секретный топик'
-        elif backup_password and cfg.get('encrypt_enabled'):
-            msg += '; пароль не отправлен — проверьте секретный топик'
-        return jsonify({'ok': True, 'message': msg, 'sent': sent, **result})
+        if not delivery.get('ok'):
+            return jsonify(delivery), 502
+        return jsonify(delivery)
     except Exception as e:
         logger.error('backup send telegram: %s', e)
         return jsonify({'ok': False, 'error': str(e)}), 500

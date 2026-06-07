@@ -278,6 +278,26 @@ def _save_tab_settings(tab: str) -> None:
         update_setting('stealth_login_secret_param', stealth_login.normalize_secret_param(request.form.get('stealth_login_secret_param')))
         update_setting('stealth_login_secret_value', stealth_login.normalize_secret_value(request.form.get('stealth_login_secret_value')))
 
+    if tab == 'bot':
+        from shop_bot.data_manager import telegram_notify as tg_notify
+
+        chat_raw = (request.form.get('notifications_chat_id') or '').strip()
+        if chat_raw:
+            parsed = tg_notify.parse_chat_id(chat_raw)
+            if parsed is None:
+                link = tg_notify.parse_telegram_private_link(chat_raw)
+                if link and link.get('chat_id') is not None:
+                    parsed = int(link['chat_id'])
+            if parsed is not None:
+                update_setting('notifications_chat_id', str(parsed))
+        for topic_key in tg_notify.CATEGORY_TOPIC_KEYS.values():
+            if topic_key not in request.form:
+                continue
+            raw_topic = (request.form.get(topic_key) or '').strip()
+            if raw_topic == '1':
+                raw_topic = ''
+            update_setting(topic_key, raw_topic)
+
     if tab == 'payments':
         pay_info = {
             'id': 1 if request.form.get('pay_info_id') else 0,

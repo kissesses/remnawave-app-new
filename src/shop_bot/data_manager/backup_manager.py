@@ -935,6 +935,18 @@ def restore_from_file(
         return result
 
 
+def resolve_delivery_password(zip_path: Path, created_password: str | None = None) -> str | None:
+    """Пароль для отправки в секретный топик: свежий random, мастер или None."""
+    if created_password:
+        return created_password
+    if not backup_crypto.is_encrypted_backup(zip_path):
+        return None
+    cfg = get_backup_config()
+    if cfg.get("password_mode") == "master":
+        return _load_master_backup_password()
+    return None
+
+
 async def deliver_backup_notifications(
     bot: Bot,
     zip_path: Path,
@@ -965,6 +977,7 @@ async def deliver_backup_notifications(
     archive_error: str | None = None
     from shop_bot.data_manager import telegram_notify as tg_notify
 
+    password = resolve_delivery_password(zip_path, password)
     archive_dest = tg_notify.resolve_destination(tg_notify.CATEGORY_BACKUP)
     if not archive_dest.via_dm:
         try:
