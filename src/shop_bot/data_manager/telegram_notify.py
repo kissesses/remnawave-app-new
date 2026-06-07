@@ -89,6 +89,13 @@ def parse_topic_id(raw: str | None) -> int | None:
     return None
 
 
+def effective_thread_id(thread_id: int | None) -> int | None:
+    """General forum topic is 1 in t.me links but sendMessage must omit message_thread_id for it."""
+    if thread_id == 1:
+        return None
+    return thread_id
+
+
 def parse_telegram_private_link(raw: str | None) -> dict[str, int] | None:
     """Разбор ссылки t.me/c/… или «голого» inner id в Bot API chat_id (+ topic_id при наличии)."""
     s = (raw or "").strip()
@@ -130,7 +137,7 @@ def resolve_destination(category: str) -> NotifyDestination:
 
     topic_key = CATEGORY_TOPIC_KEYS.get(cat)
     topic_raw = get_setting(topic_key) if topic_key else None
-    thread_id = parse_topic_id(topic_raw)
+    thread_id = effective_thread_id(parse_topic_id(topic_raw))
 
     if global_chat is not None:
         return NotifyDestination(chat_id=global_chat, thread_id=thread_id, via_dm=False)
@@ -138,7 +145,7 @@ def resolve_destination(category: str) -> NotifyDestination:
     legacy = CATEGORY_LEGACY.get(cat)
     if legacy:
         leg_chat = parse_chat_id(get_setting(legacy[0]))
-        leg_topic = parse_topic_id(get_setting(legacy[1]))
+        leg_topic = effective_thread_id(parse_topic_id(get_setting(legacy[1])))
         if leg_chat is not None:
             return NotifyDestination(chat_id=leg_chat, thread_id=leg_topic, via_dm=False)
 
@@ -186,9 +193,32 @@ def _message_kwargs(dest: NotifyDestination, *, reply_markup=None) -> dict[str, 
     if dest.via_dm:
         return {"reply_markup": reply_markup}
     kwargs: dict[str, Any] = {"chat_id": dest.chat_id, "reply_markup": reply_markup}
-    if dest.thread_id is not None:
-        kwargs["message_thread_id"] = dest.thread_id
+    thread_id = effective_thread_id(dest.thread_id)
+    if thread_id is not None:
+        kwargs["message_thread_id"] = thread_id
     return kwargs
+
+
+def _is_thread_not_found(exc: Exception) -> bool:
+    msg = str(exc).lower()
+    return "message thread not found" in msg or "invalid message thread" in msg
+
+
+async def _send_forum_with_fallback(send_coro_factory, dest: NotifyDestination, *, label: str) -> None:
+    """Send to forum topic; on missing thread retry without topic (General / main chat)."""
+    thread_id = effective_thread_id(dest.thread_id)
+    try:
+        await send_coro_factory(thread_id)
+        return
+    except Exception as exc:
+        if thread_id is None or not _is_thread_not_found(exc):
+            raise
+        logger.warning(
+            "Notify forum %s: topic %s not found, retrying without topic (General/main chat)",
+            label,
+            dest.thread_id,
+        )
+        await send_coro_factory(None)
 
 
 async def send_notification(
@@ -215,7 +245,16 @@ async def send_notification(
         return sent
 
     try:
-        await bot.send_message(**base, **_message_kwargs(dest, reply_markup=reply_markup))
+        await _send_forum_with_fallback(
+            lambda thread_id: bot.send_message(
+                **base,
+                chat_id=dest.chat_id,
+                reply_markup=reply_markup,
+                **({"message_thread_id": thread_id} if thread_id is not None else {}),
+            ),
+            dest,
+            label=category,
+        )
         return 1
     except Exception as exc:
         logger.warning("Notify forum %s failed: %s", category, exc)
@@ -252,9 +291,15 @@ async def send_document(
         return sent
 
     try:
-        if dest.thread_id is not None:
-            kwargs["message_thread_id"] = dest.thread_id
-        await bot.send_document(chat_id=dest.chat_id, **kwargs)
+        await _send_forum_with_fallback(
+            lambda thread_id: bot.send_document(
+                chat_id=dest.chat_id,
+                **kwargs,
+                **({"message_thread_id": thread_id} if thread_id is not None else {}),
+            ),
+            dest,
+            label=category,
+        )
         return 1
     except Exception as exc:
         logger.warning("Notify document forum %s failed: %s", category, exc)
@@ -285,9 +330,18 @@ def send_notification_sync(
 async def send_test(category: str, bot) -> tuple[bool, str]:
     label = CATEGORY_LABELS.get(category, category)
     dest = resolve_destination(category)
-    where = "личные сообщения админам" if dest.via_dm else f"чат {dest.chat_id}" + (
-        f", топик {dest.thread_id}" if dest.thread_id else ""
-    )
+    topic_key = CATEGORY_TOPIC_KEYS.get(category)
+    raw_topic = parse_topic_id(get_setting(topic_key) if topic_key else None)
+    where = "личные сообщения админам" if dest.via_dm else f"чат {dest.chat_id}"
+    if not dest.via_dm:
+        if raw_topic == 1:
+            where += ", General (поле Topic ID = 1 → отправка без топика)"
+        elif dest.thread_id:
+            where += f", топик {dest.thread_id}"
+        elif raw_topic:
+            where += f", топик {raw_topic} (недоступен — проверьте ссылку)"
+        else:
+            where += ", без топика (General / основной чат)"
     text = f"✅ Тест Remnawave App: <b>{label}</b>\nМаршрут: {where}"
     n = await send_notification(bot, category, text)
     if n <= 0:

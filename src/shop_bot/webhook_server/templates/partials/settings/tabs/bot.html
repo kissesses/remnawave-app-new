@@ -191,7 +191,7 @@
                             value="{{ settings.notifications_chat_id or '' }}"
                             placeholder="-1001234567890"
                             class="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm focus:ring-1 focus:ring-primary/40 outline-none" />
-                        <p class="bot-notify-global__hint">Бот должен быть админом с правом писать в топики. Без Chat ID уведомления уходят админам в личку (fallback).</p>
+                        <p class="bot-notify-global__hint">Группа должна быть супергруппой с включёнными <strong>Topics (форум)</strong>. Бот — админ с правом писать в топики. Topic ID <code>1</code> (General) не указывайте — оставьте поле пустым.</p>
                     </div>
 
                     <div class="bot-notify-link-tool" id="bot-notify-link-tool">
@@ -200,8 +200,9 @@
                             <div>
                                 <strong class="bot-notify-link-tool__title">Chat ID из ссылки Telegram</strong>
                                 <p class="bot-notify-link-tool__desc">
-                                    Ссылка вида <code>https://t.me/c/3907207135/1</code> → Chat ID <code>-1003907207135</code>,
-                                    Topic ID <code>1</code> (число после ID чата — топик форума).
+                                    Ссылка <code>https://t.me/c/3907207135/1</code> → Chat ID <code>-1003907207135</code>.
+                                    Число после chat — Topic ID; для топика <strong>General</strong> поле Topic ID оставьте <strong>пустым</strong>
+                                    (Bot API не принимает <code>1</code>). Для других топиков копируйте ссылку изнутри каждого топика.
                                 </p>
                             </div>
                         </div>
@@ -251,7 +252,7 @@
                                 <label class="sr-only">Topic ID — {{ cat.label }}</label>
                                 <input type="text" name="{{ cat.field }}"
                                     value="{{ settings.get(cat.field, '') }}"
-                                    placeholder="Topic ID (опц.)"
+                                    placeholder="Topic ID (опц., не 1)"
                                     class="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm focus:ring-1 focus:ring-primary/40 outline-none" />
                             </div>
                             <button type="button" class="bot-notify-topic-row__link" data-notify-link-topic title="Подставить Topic ID из ссылки">

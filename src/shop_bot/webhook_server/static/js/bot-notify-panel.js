@@ -56,18 +56,27 @@
 
         chatEl.textContent = data.chatId;
         if (data.topicId && topicWrap && topicEl) {
-            topicEl.textContent = data.topicId;
+            if (data.topicId === '1') {
+                topicEl.textContent = '1 (General — оставьте поле пустым)';
+            } else {
+                topicEl.textContent = data.topicId;
+            }
             topicWrap.hidden = false;
         } else if (topicWrap) {
             topicWrap.hidden = true;
         }
 
         if (note) {
+            const parts = [];
             if (data.source === 'link' && data.innerId) {
-                note.textContent = `В ссылке t.me/c/${data.innerId}/… число ${data.innerId} — это внутренний ID чата; для Bot API нужен префикс -100.`;
-            } else {
-                note.textContent = '';
+                parts.push(`Chat: t.me/c/${data.innerId} → -100${data.innerId}.`);
             }
+            if (data.topicId === '1') {
+                parts.push('Topic ID 1 = General: в Bot API поле Topic ID нужно оставить пустым.');
+            } else if (data.topicId) {
+                parts.push('Topic ID берите из ссылки, скопированной внутри нужного топика (не из General).');
+            }
+            note.textContent = parts.join(' ');
         }
 
         result.hidden = false;
@@ -88,6 +97,13 @@
 
     function fillTopicId(input) {
         if (!parsed?.topicId || !input) return;
+        if (parsed.topicId === '1') {
+            input.value = '';
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            toast('success', 'General: Topic ID очищен (1 нельзя передавать в Bot API)');
+            pendingTopicInput = null;
+            return;
+        }
         input.value = parsed.topicId;
         input.dispatchEvent(new Event('input', { bubbles: true }));
         toast('success', `Topic ID ${parsed.topicId} подставлен`);

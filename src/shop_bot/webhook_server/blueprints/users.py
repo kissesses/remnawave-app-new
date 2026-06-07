@@ -660,6 +660,7 @@ def user_timeline_page(user_id: int):
         user_id=user_id,
         user=user,
         avatar_url=avatar_url,
+        **panel_ctx.get_common_template_data(),
     )
 
 
