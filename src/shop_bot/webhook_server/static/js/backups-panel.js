@@ -740,11 +740,18 @@
             }
         });
 
-        restoreSelect?.addEventListener('change', () => {
+        restoreSelect?.addEventListener('change', async () => {
             if (fileInput && restoreSelect.value) {
                 fileInput.value = '';
                 if (fileLabel) fileLabel.textContent = '.zip или .sql';
             }
+            const name = restoreSelect?.value || '';
+            if (!name || !panelCfg.detailUrl) return;
+            try {
+                const resp = await fetch(detailUrl(panelCfg, name), { credentials: 'same-origin' });
+                const data = await resp.json();
+                if (data.ok && data.item) applyRestoreOptions(data.item);
+            } catch (_) { /* keep current checkboxes */ }
         });
 
         fileInput?.addEventListener('change', () => {

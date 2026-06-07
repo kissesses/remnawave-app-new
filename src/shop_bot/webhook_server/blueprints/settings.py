@@ -1778,6 +1778,14 @@ def backup_db_route():
         flash('Ошибка при создании бэкапа.', 'danger')
         return redirect(request.referrer or url_for('backups_page'))
 
+def _form_checkbox_on(name: str, *, default: bool = False) -> bool:
+    """Последнее значение из getlist (hidden 0 + checkbox 1 → true)."""
+    values = request.form.getlist(name)
+    if not values:
+        return default
+    return str(values[-1]).lower() in ('1', 'true', 'on', 'yes')
+
+
 @bp.route('/admin/db/restore', methods=['POST'])
 @panel_ctx.login_required
 def restore_db_route():
@@ -1791,9 +1799,9 @@ def restore_db_route():
         existing = (request.form.get('existing_backup') or '').strip()
         ok = False
         result: dict = {}
-        restore_db = request.form.get('restore_database', '1') != '0'
-        restore_files = request.form.get('restore_files') == '1'
-        restore_rw = request.form.get('restore_remnawave') == '1'
+        restore_db = _form_checkbox_on('restore_database', default=True)
+        restore_files = _form_checkbox_on('restore_files')
+        restore_rw = _form_checkbox_on('restore_remnawave')
         backup_password = (request.form.get('backup_password') or '').strip() or None
         if existing:
 
