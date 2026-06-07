@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-design="classic" class="dark">
 
 <head>
     <meta charset="utf-8" />
@@ -9,48 +9,7 @@
     <meta name="theme-color" content="#0a84ff" />
     <meta name="csrf-token" content="{{ csrf_token() }}" />
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-        rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-        rel="stylesheet" />
-    <link href="{{ url_for('static', filename='css/auth-ios.css') }}" rel="stylesheet" />
-    <link href="{{ url_for('static', filename='css/panel-switches.css') }}" rel="stylesheet" />
-    <link href="{{ url_for('static', filename='css/auth-classic.css') }}" rel="stylesheet" />
-    <link href="{{ url_for('static', filename='css/auth-macos.css') }}" rel="stylesheet" />
-    <link href="{{ url_for('static', filename='css/auth-glass-stealth.css') }}" rel="stylesheet" />
-    <link href="{{ url_for('static', filename='css/panel-macos.css') }}" rel="stylesheet" />
-    <link href="{{ url_for('static', filename='css/panel-light.css') }}" rel="stylesheet" />
-
-    <script>
-        (function () {
-            const theme = localStorage.getItem('theme') || 'dark';
-            if (theme === 'dark') document.documentElement.classList.add('dark');
-            else document.documentElement.classList.remove('dark');
-            const design = localStorage.getItem('design-theme') || 'classic';
-            document.documentElement.dataset.design = design;
-            if (design !== 'stealth-admin') {
-                const accents = {
-                    blue: { c: '#0a84ff', r: '10, 132, 255' },
-                    violet: { c: '#8b5cf6', r: '139, 92, 246' },
-                    rose: { c: '#f43f5e', r: '244, 63, 94' },
-                    emerald: { c: '#10b981', r: '16, 185, 129' },
-                    cyan: { c: '#06b6d4', r: '6, 182, 212' },
-                    amber: { c: '#f59e0b', r: '245, 158, 11' },
-                    red: { c: '#ef4444', r: '239, 68, 68' },
-                };
-                const key = localStorage.getItem('panel-accent') || 'blue';
-                const a = accents[key] || accents.blue;
-                const root = document.documentElement;
-                const soft = 'rgba(' + a.r + ', 0.16)';
-                root.style.setProperty('--primary', a.c);
-                root.style.setProperty('--primary-rgb', a.r);
-                root.style.setProperty('--panel-accent', a.c);
-                root.style.setProperty('--panel-accent-soft', soft);
-                root.style.setProperty('--auth-accent', a.c);
-                root.style.setProperty('--auth-accent-soft', soft);
-            }
-        })();
-    </script>
+    {% include 'partials/auth_security_head.html' %}
 
     {% if stealth_reveal %}
     <script>history.replaceState(null, "", "/");</script>

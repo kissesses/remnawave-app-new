@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-design="classic" class="dark">
 
 <head>
     <meta charset="utf-8" />
@@ -9,6 +9,7 @@
     <meta name="theme-color" content="#0a0a0c" />
     <meta name="csrf-token" content="{{ csrf_token() }}" />
 
+    {% set auth_security_setup_page = true %}
     {% include 'partials/auth_security_head.html' %}
 </head>
 
@@ -68,7 +69,7 @@
                         <button type="submit" class="auth-secondary-btn">Выйти</button>
                     </form>
 
-                    <p class="auth-version">Remnawave App v.{{ project_info.version }}</p>
+                    <p class="auth-version">Remnawave App v.{{ project_info.version if project_info is mapping else '—' }}</p>
                 </div>
             </section>
         </div>
@@ -77,12 +78,16 @@
     {% include 'partials/theme_menu_auth.html' %}
     <div id="toast-container" class="auth-toast-container"></div>
 
-    {% set av = (project_info.version if project_info else '') or '' %}
-    <script src="{{ url_for('static', filename='js/auth-macos.js') }}{% if av %}?v={{ av }}{% endif %}"></script>
-    <script src="{{ url_for('static', filename='js/auth-glass.js') }}{% if av %}?v={{ av }}{% endif %}"></script>
-    <script src="{{ url_for('static', filename='js/auth-classic.js') }}{% if av %}?v={{ av }}{% endif %}"></script>
-    <script src="{{ url_for('static', filename='js/theme-manager.js') }}{% if av %}?v={{ av }}{% endif %}"></script>
+    {% set av = (project_info.version if project_info is mapping and project_info.get('version') else '') or '' %}
     <script>
+        window.openModal = function (modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) modal.classList.add('open');
+        };
+        window.closeModal = function (modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) modal.classList.remove('open');
+        };
         window.showToast = function (type, message, duration) {
             duration = duration || 4000;
             var mapped = type === 'error' ? 'danger' : type;
@@ -99,6 +104,10 @@
             }, duration);
         };
     </script>
+    <script src="{{ url_for('static', filename='js/auth-macos.js') }}{% if av %}?v={{ av }}{% endif %}"></script>
+    <script src="{{ url_for('static', filename='js/auth-glass.js') }}{% if av %}?v={{ av }}{% endif %}"></script>
+    <script src="{{ url_for('static', filename='js/auth-classic.js') }}{% if av %}?v={{ av }}{% endif %}"></script>
+    <script src="{{ url_for('static', filename='js/theme-manager.js') }}{% if av %}?v={{ av }}{% endif %}"></script>
 
     {% set active_method = security_method or security_info.effective_method %}
     <script>

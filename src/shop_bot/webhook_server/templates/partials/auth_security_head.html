@@ -1,14 +1,42 @@
-{# Auth CSS for mandatory security setup — same stack as login.html #}
-{% set av = (project_info.version if project_info else '') or '' %}
+{# Shared auth pages: login + mandatory 2FA setup #}
+{% set av = (project_info.version if project_info is mapping and project_info.get('version') else '') or '' %}
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
     rel="stylesheet" />
 <link href="{{ url_for('static', filename='css/auth-ios.css') }}{% if av %}?v={{ av }}{% endif %}" rel="stylesheet" />
+<link href="{{ url_for('static', filename='css/panel-switches.css') }}{% if av %}?v={{ av }}{% endif %}" rel="stylesheet" />
 <link href="{{ url_for('static', filename='css/auth-classic.css') }}{% if av %}?v={{ av }}{% endif %}" rel="stylesheet" />
 <link href="{{ url_for('static', filename='css/auth-macos.css') }}{% if av %}?v={{ av }}{% endif %}" rel="stylesheet" />
 <link href="{{ url_for('static', filename='css/auth-glass-stealth.css') }}{% if av %}?v={{ av }}{% endif %}" rel="stylesheet" />
+<link href="{{ url_for('static', filename='css/panel-macos.css') }}{% if av %}?v={{ av }}{% endif %}" rel="stylesheet" />
+<link href="{{ url_for('static', filename='css/panel-light.css') }}{% if av %}?v={{ av }}{% endif %}" rel="stylesheet" />
+{% if auth_security_setup_page %}
 <link href="{{ url_for('static', filename='css/auth-security-setup.css') }}{% if av %}?v={{ av }}{% endif %}" rel="stylesheet" />
-
+{% endif %}
+<style>
+    /* Critical fallback if a stylesheet fails to load */
+    body.auth-ios {
+        margin: 0;
+        min-height: 100vh;
+        background: #000;
+        color: #f5f5f7;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif;
+    }
+    body.auth-ios .modal-overlay:not(.open) { display: none !important; }
+    body.auth-security-setup .auth-macos-profile,
+    body.auth-security-setup .auth-security-classic-head,
+    body.auth-security-setup .auth-security-glass-head { display: none; }
+    html[data-design="classic"] body.auth-security-setup .auth-security-classic-head { display: block; }
+    html[data-design="macos"] body.auth-security-setup .auth-macos-profile,
+    html[data-design="macos-v2"] body.auth-security-setup .auth-macos-profile {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    html[data-design="glass"] body.auth-security-setup .auth-security-glass-head,
+    html[data-design="stealth-admin"] body.auth-security-setup .auth-security-glass-head { display: block; }
+</style>
 <script>
     (function () {
         const theme = localStorage.getItem('theme') || 'dark';
