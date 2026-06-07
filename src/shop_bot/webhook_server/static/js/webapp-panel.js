@@ -217,6 +217,122 @@
         });
     }
 
+    function formatUptime(sec) {
+        const n = Number(sec) || 0;
+        if (n < 60) return `${n}s`;
+        if (n < 3600) return `${Math.floor(n / 60)}m`;
+        const h = Math.floor(n / 3600);
+        const m = Math.floor((n % 3600) / 60);
+        return m ? `${h}h ${m}m` : `${h}h`;
+    }
+
+    function getModuleOrder() {
+        return Array.from(document.querySelectorAll('#wapp-module-order .wapp-module-order__item span:first-child'))
+            .map((el) => el.textContent.trim())
+            .filter(Boolean);
+    }
+
+    function getContentOverridesJson() {
+        const heroSub = ($('webapp_content_hero_sub')?.value || '').trim();
+        const payload = {};
+        if (heroSub) payload.hero_sub = heroSub;
+        return JSON.stringify(payload);
+    }
+
+    function getMaintenanceUntilIso() {
+        const raw = $('webapp_maintenance_until')?.value;
+        if (!raw) return '';
+        try {
+            const dt = new Date(raw);
+            if (Number.isNaN(dt.getTime())) return '';
+            return dt.toISOString();
+        } catch (_) {
+            return '';
+        }
+    }
+
+    async function uploadAsset(asset) {
+        const input = asset === 'icon' ? $('webapp_icon_file') : $('webapp_logo_file');
+        if (!input?.files?.length) {
+            input?.click();
+            return;
+        }
+        const file = input.files[0];
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('asset', asset);
+        fd.append('csrf_token', window.getCsrfToken?.() || cfg.csrfToken || '');
+        try {
+            const resp = await fetch('/settings/webapp/upload', { method: 'POST', body: fd });
+            const data = await resp.json();
+            if (!data.ok) {
+                toast(data.error || 'Ошибка загрузки', false);
+                return;
+            }
+            const target = asset === 'icon' ? $('webapp_icon') : $('webapp_logo');
+            if (target) {
+                target.value = data.url || data.path || '';
+                target.dispatchEvent(new Event('input'));
+            }
+            toast('Файл загружен', true);
+            input.value = '';
+        } catch (e) {
+            toast('Ошибка загрузки', false);
+        }
+    }
+
+    async function restartWebapp() {
+        const btn = $('wapp-restart-service');
+        if (btn) btn.disabled = true;
+        try {
+            const fd = new FormData();
+            fd.append('csrf_token', window.getCsrfToken?.() || cfg.csrfToken || '');
+            const resp = await fetch('/settings/webapp/restart', { method: 'POST', body: fd });
+            const data = await resp.json();
+            toast(data.message || (data.ok ? 'WebApp перезапущен' : 'Ошибка'), !!data.ok);
+            if (data.ok) setTimeout(refreshHealth, 1200);
+        } catch (e) {
+            toast('Ошибка перезапуска', false);
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+
+    function moveModule(mod, dir) {
+        const list = $('wapp-module-order');
+        if (!list) return;
+        const items = Array.from(list.querySelectorAll('.wapp-module-order__item'));
+        const idx = items.findIndex((el) => el.querySelector('span')?.textContent?.trim() === mod);
+        if (idx < 0) return;
+        const next = dir === 'up' ? idx - 1 : idx + 1;
+        if (next < 0 || next >= items.length) return;
+        if (dir === 'up') list.insertBefore(items[idx], items[next]);
+        else list.insertBefore(items[next], items[idx]);
+    }
+
+    function bindModuleOrder() {
+        document.querySelectorAll('[data-mod-move]').forEach((btn) => {
+            btn.addEventListener('click', () => moveModule(btn.dataset.mod, btn.dataset.modMove));
+        });
+    }
+
+    function bindUploads() {
+        document.querySelectorAll('[data-wapp-upload]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const asset = btn.dataset.wappUpload;
+                const input = asset === 'icon' ? $('webapp_icon_file') : $('webapp_logo_file');
+                if (input?.files?.length) uploadAsset(asset);
+                else input?.click();
+            });
+        });
+        ['webapp_logo_file', 'webapp_icon_file'].forEach((id) => {
+            $(id)?.addEventListener('change', (e) => {
+                const asset = e.target.dataset.asset;
+                if (e.target.files?.length) uploadAsset(asset);
+            });
+        });
+    }
+
     function bindEnableToggle() {
         const toggle = $('webapp_enable');
         const pill = $('wapp-status-pill');
@@ -289,6 +405,8 @@
         setCard('ssl', sslText, sslState);
         const http = health.http || {};
         setCard('http', http.status ? String(http.status) : '—', http.ok ? 'is-ok' : 'is-warn');
+        const uptime = health.uptime_sec;
+        setCard('uptime', uptime != null ? formatUptime(uptime) : '—', uptime != null ? 'is-ok' : '');
 
         const pill = $('wapp-health-pill');
         if (pill) {
@@ -316,6 +434,10 @@
                 ($('wapp-domain-pill').querySelector('span:last-child').textContent = m.domain_display || 'Не задан');
             $('wapp-kpi-picks') && ($('wapp-kpi-picks').textContent = String(m.analytics?.total_picks || 0));
             $('wapp-kpi-popular') && ($('wapp-kpi-popular').textContent = m.analytics?.popular_label || '—');
+            $('wapp-kpi-users') && ($('wapp-kpi-users').textContent = String(m.analytics?.users_total || 0));
+            $('wapp-kpi-trials') && ($('wapp-kpi-trials').textContent = String(m.analytics?.trial_used || 0));
+            $('wapp-kpi-keys') && ($('wapp-kpi-keys').textContent = String(m.analytics?.keys_active || 0));
+            $('wapp-kpi-payments') && ($('wapp-kpi-payments').textContent = String(m.analytics?.payments_30d || 0));
             renderHealth(m.health || {});
             updateStatsBars(m.analytics?.design_stats || {}, m.analytics?.total_picks || 0);
         } catch (e) {
@@ -339,17 +461,32 @@
         const view = $('wapp-log-view');
         if (!view) return;
         view.textContent = 'Загрузка…';
+        const level = $('wapp-log-level')?.value || '';
+        const search = $('wapp-log-search')?.value || '';
+        const params = new URLSearchParams({ lines: '120' });
+        if (level) params.set('level', level);
+        if (search) params.set('q', search);
         try {
-            const resp = await fetch('/settings/webapp/logs.json?lines=80');
+            const resp = await fetch(`/settings/webapp/logs.json?${params}`);
             const data = await resp.json();
             if (!data.ok) {
                 view.textContent = data.error || 'Ошибка';
                 return;
             }
-            view.textContent = (data.lines || []).join('\n') || 'Нет записей [WEBAPP]';
+            const lines = data.lines || (data.entries || []).map((e) => e.text);
+            view.textContent = lines.join('\n') || 'Нет записей [WEBAPP]';
         } catch (e) {
             view.textContent = String(e);
         }
+    }
+
+    function exportLogs() {
+        const level = $('wapp-log-level')?.value || '';
+        const search = $('wapp-log-search')?.value || '';
+        const params = new URLSearchParams({ lines: '500', format: 'txt' });
+        if (level) params.set('level', level);
+        if (search) params.set('q', search);
+        window.open(`/settings/webapp/logs.json?${params}`, '_blank');
     }
 
     function bindMiscActions() {
@@ -373,7 +510,15 @@
             }
         });
         $('wapp-refresh-logs')?.addEventListener('click', loadLogs);
+        $('wapp-export-logs')?.addEventListener('click', exportLogs);
+        $('wapp-log-level')?.addEventListener('change', loadLogs);
+        $('wapp-log-search')?.addEventListener('input', () => {
+            clearTimeout(window.__wappLogSearchTimer);
+            window.__wappLogSearchTimer = setTimeout(loadLogs, 350);
+        });
         $('wapp-refresh-stats')?.addEventListener('click', refreshMeta);
+        $('wapp-refresh-health')?.addEventListener('click', refreshHealth);
+        $('wapp-restart-service')?.addEventListener('click', restartWebapp);
         $('webapp_domen')?.addEventListener('input', updateNginxPreview);
     }
 
@@ -402,6 +547,11 @@
         formData.append('show_referrals', $('webapp_show_referrals')?.checked ? 'true' : 'false');
         formData.append('show_howto', $('webapp_show_howto')?.checked ? 'true' : 'false');
         formData.append('show_topup', $('webapp_show_topup')?.checked ? 'true' : 'false');
+        formData.append('show_promo', $('webapp_show_promo')?.checked ? 'true' : 'false');
+        formData.append('show_support', $('webapp_show_support')?.checked ? 'true' : 'false');
+        formData.append('module_order', JSON.stringify(getModuleOrder()));
+        formData.append('content_overrides', getContentOverridesJson());
+        formData.append('maintenance_until', getMaintenanceUntilIso());
         formData.append('ab_design_b', $('webapp_ab_design_b')?.value || '');
         formData.append('ab_percent', $('webapp_ab_percent')?.value || '0');
         document.querySelectorAll('.wapp-tile__enable:checked').forEach((el) => {
@@ -432,6 +582,8 @@
         bindAssetPreviews();
         bindEnableToggle();
         bindMiscActions();
+        bindModuleOrder();
+        bindUploads();
         syncDefaultSelect();
         applyFilters();
         updateNginxPreview();

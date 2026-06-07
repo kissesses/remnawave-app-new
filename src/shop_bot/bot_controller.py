@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import threading
+import time
 import uvicorn
 
 from yookassa import Configuration
@@ -31,6 +32,7 @@ class BotController:
         self._loop = None
         self._webapp_server = None
         self._webapp_thread = None
+        self._webapp_started_at: float | None = None
 
     def set_loop(self, loop: asyncio.AbstractEventLoop):
         self._loop = loop
@@ -151,11 +153,7 @@ class BotController:
             webapp_settings = rw_repo.get_webapp_settings()
             if webapp_app and webapp_settings.get("webapp_enable"):
                 logger.info("Запуск Webapp сервера...")
-                config = uvicorn.Config(webapp_app, host="0.0.0.0", port=8000, log_level="info")
-                self._webapp_server = uvicorn.Server(config)
-                self._webapp_thread = threading.Thread(target=self._webapp_server.run)
-                self._webapp_thread.daemon = True
-                self._webapp_thread.start()
+                self._start_webapp_server()
                 logger.info("Webapp сервер успешно запущен в фоновом режиме.")
 
             self._is_running = True
@@ -182,9 +180,7 @@ class BotController:
         
         if self._webapp_server:
             logger.info("Остановка Webapp сервера...")
-            self._webapp_server.should_exit = True
-            self._webapp_server = None
-            self._webapp_thread = None
+            self._stop_webapp_server()
 
         try:
             asyncio.run_coroutine_threadsafe(self._dp.stop_polling(), self._loop).result(timeout=2)
@@ -195,3 +191,50 @@ class BotController:
 
     def get_status(self):
         return {"is_running": self._is_running}
+
+    def _start_webapp_server(self) -> bool:
+        if not webapp_app:
+            return False
+        if self._webapp_server and self._webapp_thread and self._webapp_thread.is_alive():
+            return True
+        config = uvicorn.Config(webapp_app, host="0.0.0.0", port=8000, log_level="info")
+        self._webapp_server = uvicorn.Server(config)
+        self._webapp_thread = threading.Thread(target=self._webapp_server.run, name="webapp-uvicorn")
+        self._webapp_thread.daemon = True
+        self._webapp_thread.start()
+        self._webapp_started_at = time.time()
+        return True
+
+    def _stop_webapp_server(self) -> None:
+        if self._webapp_server:
+            self._webapp_server.should_exit = True
+        if self._webapp_thread and self._webapp_thread.is_alive():
+            self._webapp_thread.join(timeout=8)
+        self._webapp_server = None
+        self._webapp_thread = None
+        self._webapp_started_at = None
+
+    def restart_webapp(self) -> dict:
+        webapp_settings = rw_repo.get_webapp_settings() or {}
+        if not webapp_app:
+            return {"ok": False, "error": "WebApp module unavailable"}
+        if not webapp_settings.get("webapp_enable"):
+            self._stop_webapp_server()
+            return {"ok": True, "message": "WebApp выключен в настройках", "running": False}
+        self._stop_webapp_server()
+        started = self._start_webapp_server()
+        if not started:
+            return {"ok": False, "error": "Не удалось запустить WebApp"}
+        return {
+            "ok": True,
+            "message": "WebApp перезапущен",
+            "running": True,
+            "started_at": self._webapp_started_at,
+        }
+
+    def get_webapp_status(self) -> dict:
+        running = bool(self._webapp_thread and self._webapp_thread.is_alive())
+        uptime_sec = None
+        if running and self._webapp_started_at:
+            uptime_sec = max(0, int(time.time() - self._webapp_started_at))
+        return {"running": running, "uptime_sec": uptime_sec, "port": 8000}

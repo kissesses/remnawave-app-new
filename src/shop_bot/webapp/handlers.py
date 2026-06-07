@@ -10,6 +10,7 @@ from datetime import datetime, timedelta, timezone
 from pydantic import BaseModel
 import uuid
 import asyncio
+import time
 from aiogram import Bot
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo, FSInputFile, LabeledPrice
 from aiogram.utils.keyboard import InlineKeyboardBuilder
@@ -46,11 +47,57 @@ from shop_bot.webapp.rate_limit import (
     allow_action,
     reset_bucket,
 )
-from shop_bot.webapp.designs import build_design_config_json
+from shop_bot.webapp.designs import build_design_config_json, build_preview_design_config_json, WEBAPP_DESIGN_IDS
+from shop_bot.webapp.studio_config import parse_content_overrides, parse_module_order
 
 logger = logging.getLogger(__name__)
 
 from shop_bot.support.log_utils import log_suppressed
+
+_WEBAPP_STARTED_AT = time.time()
+
+
+def _build_branding_css(webapp_settings: dict | None) -> str:
+    webapp_settings = webapp_settings or {}
+    accent = (webapp_settings.get("webapp_accent_color") or "").strip()
+    if accent and not accent.startswith("#"):
+        accent = f"#{accent}"
+    if not accent or not re.match(r"^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$", accent):
+        return ""
+    return f"""<style>
+:root {{
+  --wa-accent: {accent};
+  --gh-accent: {accent};
+  --primary: {accent};
+}}
+.webapp-gh-hero__glow {{ background: radial-gradient(circle at 30% 20%, {accent}33, transparent 55%); }}
+</style>"""
+
+
+def _is_scheduled_maintenance(webapp_settings: dict | None) -> bool:
+    webapp_settings = webapp_settings or {}
+    raw = (webapp_settings.get("webapp_maintenance_until") or "").strip()
+    if not raw:
+        return False
+    try:
+        until = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        if until.tzinfo is None:
+            until = until.replace(tzinfo=timezone.utc)
+        return until > datetime.now(timezone.utc)
+    except (TypeError, ValueError):
+        return False
+
+
+def _maintenance_response(webapp_settings: dict | None, *, status_code: int = 503) -> HTMLResponse:
+    webapp_settings = webapp_settings or {}
+    maintenance = (webapp_settings.get("webapp_maintenance_text") or "").strip()
+    if not maintenance:
+        maintenance = "Кабинет временно недоступен. Попробуйте позже."
+    body = f"""<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WebApp</title>
+<style>body{{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0a0a0a;color:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,sans-serif;padding:24px}}
+.card{{max-width:420px;text-align:center;padding:28px;border-radius:16px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04)}}</style></head>
+<body><div class="card"><h1 style="font-size:1.1rem;margin:0 0 12px">WebApp недоступен</h1><p style="opacity:.75;line-height:1.5;margin:0">{html.escape(maintenance)}</p></div></body></html>"""
+    return HTMLResponse(content=body, status_code=status_code)
 
 WEBAPP_AUTH_COOKIE = "auth_token"
 WEBAPP_AUTH_MAX_AGE = DEFAULT_TOKEN_DAYS * 86400
@@ -323,6 +370,7 @@ def _process_template_placeholders(html: str, user_id: int, webapp_settings: dic
         "{{ webapp_design_config_script }}": (
             f'<script>window.WEBAPP_DESIGN_CONFIG={build_design_config_json(webapp_settings, user_id)};</script>'
         ),
+        "{{ webapp_branding_css }}": _build_branding_css(webapp_settings),
         "{{ tg_fullscreen_css }}": """
     <style>
         .tg-miniapp #main-page,
@@ -1106,15 +1154,14 @@ def _render_banned_page(webapp_settings: dict):
 async def _render_main_page(user_id: int):
     webapp_settings = get_webapp_settings()
     
+    if _is_scheduled_maintenance(webapp_settings):
+        return _maintenance_response(webapp_settings)
+    
     # 1. Check if Webapp is enabled
     if not webapp_settings.get("webapp_enable"):
         maintenance = (webapp_settings.get("webapp_maintenance_text") or "").strip()
         if maintenance:
-            body = f"""<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WebApp</title>
-<style>body{{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0a0a0a;color:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,sans-serif;padding:24px}}
-.card{{max-width:420px;text-align:center;padding:28px;border-radius:16px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04)}}</style></head>
-<body><div class="card"><h1 style="font-size:1.1rem;margin:0 0 12px">WebApp недоступен</h1><p style="opacity:.75;line-height:1.5;margin:0">{html.escape(maintenance)}</p></div></body></html>"""
-            return HTMLResponse(content=body, status_code=503)
+            return _maintenance_response(webapp_settings)
         return HTMLResponse(content="<h1>Webapp is disabled</h1>", status_code=403)
          
     # 2. Check if user is banned
@@ -1307,6 +1354,93 @@ async def _render_main_page(user_id: int):
     
     content = _process_template_placeholders(content, user_id, webapp_settings, context)
     return HTMLResponse(content=content)
+
+
+async def _render_studio_preview(
+    design_id: str,
+    webapp_settings: dict | None,
+    *,
+    title: str = "",
+    logo: str = "",
+    accent: str = "",
+    device: str = "mobile",
+) -> HTMLResponse:
+    settings = dict(webapp_settings or {})
+    if title:
+        settings["webapp_title"] = title
+    if logo:
+        settings["webapp_logo"] = logo
+    if accent:
+        settings["webapp_accent_color"] = accent
+    if design_id not in WEBAPP_DESIGN_IDS:
+        design_id = "classic"
+
+    p = os.path.join(os.path.dirname(__file__), "app.html")
+    with open(p, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    context = {
+        "profile_card": "",
+        "key_section": _get_no_key_html(),
+        "profile_keys_list": _get_no_key_html(),
+        "setup_keys_list": _get_no_key_html(),
+        "renew_keys_options": "",
+        "renew_plans_html_data": _get_no_key_html(),
+        "renew_selected_display": "Нет активных ключей",
+        "min_price": "0 ₽",
+        "webapp_logo": settings.get("webapp_logo") or "",
+        "webapp_icon": settings.get("webapp_icon") or "",
+    }
+    content = _process_template_placeholders(content, 0, settings, context)
+    preview_script = (
+        f'<script>window.WEBAPP_DESIGN_CONFIG={build_preview_design_config_json(settings, design_id)};'
+        f'window.STUDIO_PREVIEW=true;window.RENDERED_USER_ID=0;'
+        f'document.documentElement.dataset.webappDesign="{design_id}";'
+        f'document.documentElement.dataset.studioDevice="{device}";</script>'
+    )
+    content = re.sub(
+        r'<script>window\.WEBAPP_DESIGN_CONFIG=.*?</script>',
+        preview_script,
+        content,
+        count=1,
+    )
+    badge = (
+        '<div style="position:fixed;top:8px;right:8px;z-index:99999;font:600 10px/1 system-ui;'
+        'padding:6px 10px;border-radius:999px;background:rgba(0,0,0,.72);color:#fff;border:1px solid rgba(255,255,255,.15)">'
+        f'Studio Preview · {html.escape(design_id)} · {html.escape(device)}</div>'
+    )
+    content = content.replace("</body>", badge + "</body>")
+    return HTMLResponse(content=content)
+
+
+@app.get("/health")
+async def webapp_health():
+    uptime = max(0, int(time.time() - _WEBAPP_STARTED_AT))
+    return {"ok": True, "service": "webapp", "uptime_sec": uptime}
+
+
+@app.get("/studio-preview", response_class=HTMLResponse)
+async def studio_preview(
+    token: str,
+    design: str = "classic",
+    device: str = "mobile",
+    title: str = "",
+    logo: str = "",
+    accent: str = "",
+):
+    from shop_bot.webapp.preview_tokens import verify_studio_preview_token
+
+    if not verify_studio_preview_token(token, design):
+        return HTMLResponse("Forbidden", status_code=403)
+    webapp_settings = get_webapp_settings()
+    return await _render_studio_preview(
+        design,
+        webapp_settings,
+        title=title,
+        logo=logo,
+        accent=accent,
+        device=device,
+    )
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -2766,8 +2900,12 @@ async def api_cabinet_config(user_id: int, auth_user: AuthUser):
         show_referrals = _setting_bool(webapp_settings.get("webapp_show_referrals"), default=True)
         show_howto = _setting_bool(webapp_settings.get("webapp_show_howto"), default=True)
         show_topup = _setting_bool(webapp_settings.get("webapp_show_topup"), default=True)
+        show_promo = _setting_bool(webapp_settings.get("webapp_show_promo"), default=True)
+        show_support = _setting_bool(webapp_settings.get("webapp_show_support"), default=True)
         welcome_text = (webapp_settings.get("webapp_welcome_text") or "").strip()
         accent_color = (webapp_settings.get("webapp_accent_color") or "").strip()
+        content_overrides = parse_content_overrides(webapp_settings.get("webapp_content_overrides"))
+        module_order = parse_module_order(webapp_settings.get("webapp_module_order"))
 
         return {
             "ok": True,
@@ -2776,7 +2914,11 @@ async def api_cabinet_config(user_id: int, auth_user: AuthUser):
                 "referrals": show_referrals,
                 "howto": show_howto,
                 "topup": show_topup,
+                "promo": show_promo,
+                "support": show_support,
             },
+            "module_order": module_order,
+            "content_overrides": content_overrides,
             "branding": {
                 "welcome_text": welcome_text,
                 "accent_color": accent_color,

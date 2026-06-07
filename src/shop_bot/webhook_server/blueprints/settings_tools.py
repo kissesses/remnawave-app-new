@@ -523,6 +523,8 @@ async def send_broadcast_async(bot, users, text, media_path=None, media_type=Non
 @bp.route('/settings/webapp/save', methods=['POST'])
 @panel_ctx.login_required
 def webapp_save():
+    if not _user_can_webapp_edit():
+        return jsonify({'ok': False, 'error': 'Forbidden'}), 403
     try:
         from shop_bot.webapp.designs import WEBAPP_DESIGN_IDS, parse_enabled_designs
 
@@ -549,6 +551,10 @@ def webapp_save():
         except (TypeError, ValueError):
             ab_percent = 0
 
+        module_order_raw = (request.form.get('module_order') or '').strip()
+        content_overrides_raw = (request.form.get('content_overrides') or '').strip()
+        maintenance_until = (request.form.get('maintenance_until') or '').strip()
+
         rw_repo.update_webapp_settings(
             webapp_title=title,
             webapp_domen=domen,
@@ -566,8 +572,13 @@ def webapp_save():
             webapp_show_referrals=1 if request.form.get('show_referrals') == 'true' else 0,
             webapp_show_howto=1 if request.form.get('show_howto') == 'true' else 0,
             webapp_show_topup=1 if request.form.get('show_topup') == 'true' else 0,
+            webapp_show_promo=1 if request.form.get('show_promo') == 'true' else 0,
+            webapp_show_support=1 if request.form.get('show_support') == 'true' else 0,
             webapp_ab_design_b=ab_design_b,
             webapp_ab_percent=ab_percent,
+            webapp_module_order=module_order_raw or None,
+            webapp_content_overrides=content_overrides_raw or None,
+            webapp_maintenance_until=maintenance_until or None,
         )
         panel_ctx.audit('webapp.save', {'enabled': enable, 'domain': domen, 'designs': enabled_str})
         return jsonify({'ok': True, 'message': 'Настройки WebApp сохранены'})
@@ -582,10 +593,18 @@ def webapp_health():
     if not _user_can_webapp():
         return jsonify({'ok': False, 'error': 'Forbidden'}), 403
     from shop_bot.webhook_server.modules import webapp_panel
+    from shop_bot.webhook_server.modules.webapp_runtime import append_health_snapshot
 
     webapp = rw_repo.get_webapp_settings() or {}
     health = webapp_panel.check_health(webapp)
-    return jsonify({'ok': True, 'health': health})
+    controller = getattr(panel_ctx, 'bot_controller', None)
+    if controller and hasattr(controller, 'get_webapp_status'):
+        runtime = controller.get_webapp_status() or {}
+        if runtime.get('uptime_sec') is not None:
+            health['uptime_sec'] = runtime.get('uptime_sec')
+        health['process_running'] = runtime.get('running')
+    history = append_health_snapshot(webapp, health)
+    return jsonify({'ok': True, 'health': health, 'history': history[-24:]})
 
 
 @bp.route('/settings/webapp/meta.json', methods=['GET'])
@@ -611,7 +630,12 @@ def webapp_preview(design_id: str):
     if not _user_can_webapp():
         return 'Forbidden', 403
     from flask import make_response
+    from urllib.parse import urlencode
+    import urllib.error
+    import urllib.request
+
     from shop_bot.webapp.designs import WEBAPP_DESIGN_IDS
+    from shop_bot.webapp.preview_tokens import issue_studio_preview_token
     from shop_bot.webhook_server.modules import webapp_panel
 
     if design_id not in WEBAPP_DESIGN_IDS:
@@ -620,11 +644,38 @@ def webapp_preview(design_id: str):
     title = (request.args.get('title') or '').strip()
     logo = (request.args.get('logo') or '').strip()
     accent = (request.args.get('accent') or '').strip()
+    use_mock = request.args.get('mock') == '1'
+    webapp = rw_repo.get_webapp_settings() or {}
     if not title:
-        webapp = rw_repo.get_webapp_settings() or {}
         title = (webapp.get('webapp_title') or 'VPN').strip()
         logo = logo or (webapp.get('webapp_logo') or '').strip()
         accent = accent or (webapp.get('webapp_accent_color') or '').strip()
+
+    if not use_mock and webapp_panel.check_health(webapp).get('port_local', {}).get('ok'):
+        try:
+            token = issue_studio_preview_token(design_id)
+            params = urlencode({
+                'token': token,
+                'design': design_id,
+                'device': device,
+                'title': title,
+                'logo': logo,
+                'accent': accent,
+            })
+            req = urllib.request.Request(
+                f'http://127.0.0.1:8000/studio-preview?{params}',
+                headers={'User-Agent': 'Remnawave-WebApp-Studio/1.0'},
+            )
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                body = resp.read().decode('utf-8')
+            out = make_response(body)
+            out.headers['Content-Type'] = 'text/html; charset=utf-8'
+            out.headers['Cache-Control'] = 'private, no-cache'
+            out.headers['X-Frame-Options'] = 'SAMEORIGIN'
+            return out
+        except (urllib.error.URLError, TimeoutError, OSError):
+            pass
+
     body = webapp_panel.render_preview_html(
         design_id,
         device=device,
@@ -644,13 +695,96 @@ def webapp_preview(design_id: str):
 def webapp_logs():
     if not _user_can_webapp():
         return jsonify({'ok': False, 'error': 'Forbidden'}), 403
-    from shop_bot.webhook_server.modules import webapp_panel
+    from shop_bot.webhook_server.modules.webapp_runtime import export_webapp_logs_text, tail_webapp_logs
 
     try:
         lines = int(request.args.get('lines', 80))
     except ValueError:
         lines = 80
-    return jsonify({'ok': True, 'lines': webapp_panel.tail_webapp_logs(lines)})
+    level = (request.args.get('level') or '').strip()
+    search = (request.args.get('q') or request.args.get('search') or '').strip()
+    entries = tail_webapp_logs(lines, level=level, search=search)
+    if request.args.get('format') == 'txt':
+        from flask import Response
+        return Response(
+            export_webapp_logs_text(entries),
+            mimetype='text/plain; charset=utf-8',
+            headers={'Content-Disposition': 'attachment; filename=webapp.log'},
+        )
+    return jsonify({'ok': True, 'entries': entries, 'lines': [e.get('text', '') for e in entries]})
+
+
+@bp.route('/settings/webapp/restart', methods=['POST'])
+@panel_ctx.login_required
+def webapp_restart():
+    if not _user_can_webapp_edit():
+        return jsonify({'ok': False, 'error': 'Forbidden'}), 403
+    from shop_bot.webhook_server.modules.webapp_runtime import restart_webapp_service
+
+    result = restart_webapp_service()
+    if result.get('ok'):
+        panel_ctx.audit('webapp.restart', {'running': result.get('running')})
+    status = 200 if result.get('ok') else 500
+    return jsonify(result), status
+
+
+@bp.route('/settings/webapp/analytics.json', methods=['GET'])
+@panel_ctx.login_required
+def webapp_analytics():
+    if not _user_can_webapp():
+        return jsonify({'ok': False, 'error': 'Forbidden'}), 403
+    from shop_bot.webhook_server.modules.webapp_runtime import build_webapp_analytics
+
+    webapp = rw_repo.get_webapp_settings() or {}
+    return jsonify({'ok': True, 'analytics': build_webapp_analytics(webapp)})
+
+
+WEBAPP_UPLOAD_FOLDER = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+    'webapp', 'static', 'img', 'uploads',
+)
+os.makedirs(WEBAPP_UPLOAD_FOLDER, exist_ok=True)
+WEBAPP_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'ico'}
+
+
+def _allowed_webapp_image(filename: str) -> bool:
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in WEBAPP_IMAGE_EXTENSIONS
+
+
+@bp.route('/settings/webapp/upload', methods=['POST'])
+@panel_ctx.login_required
+def webapp_upload():
+    if not _user_can_webapp_edit():
+        return jsonify({'ok': False, 'error': 'Forbidden'}), 403
+    try:
+        if 'file' not in request.files:
+            return jsonify({'ok': False, 'error': 'Файл не предоставлен'}), 400
+        file = request.files['file']
+        if not file.filename:
+            return jsonify({'ok': False, 'error': 'Файл не выбран'}), 400
+        if not _allowed_webapp_image(file.filename):
+            return jsonify({'ok': False, 'error': 'Недопустимый тип файла'}), 400
+
+        filename = secure_filename(file.filename)
+        unique_filename = f"{uuid.uuid4().hex}_{filename}"
+        filepath = os.path.join(WEBAPP_UPLOAD_FOLDER, unique_filename)
+        file.save(filepath)
+        public_path = f"/static/img/uploads/{unique_filename}"
+        webapp = rw_repo.get_webapp_settings() or {}
+        from shop_bot.webhook_server.modules.webapp_panel import webapp_public_url
+
+        absolute_url = f"{webapp_public_url(webapp)}{public_path}"
+        asset_type = (request.form.get('asset') or 'logo').strip().lower()
+        panel_ctx.audit('webapp.upload', {'asset': asset_type, 'file': unique_filename})
+        return jsonify({
+            'ok': True,
+            'path': public_path,
+            'url': absolute_url,
+            'asset': asset_type,
+        })
+    except Exception as e:
+        logger.error(f"Ошибка загрузки WebApp asset: {e}")
+        return jsonify({'ok': False, 'error': str(e)}), 500
 
 
 def _user_can_webapp() -> bool:
@@ -663,6 +797,18 @@ def _user_can_webapp() -> bool:
         session.get('panel_permissions') or []
     )
     return allows_permission(levels, 'other_webapp', require_edit=False)
+
+
+def _user_can_webapp_edit() -> bool:
+    from flask import session
+    from shop_bot.data_manager.panel_rbac import allows_permission, normalize_permission_levels
+
+    if session.get('panel_is_superadmin'):
+        return True
+    levels = session.get('panel_permission_levels') or normalize_permission_levels(
+        session.get('panel_permissions') or []
+    )
+    return allows_permission(levels, 'other_webapp', require_edit=True)
 
 # ===== ШАБЛОНЫ РАССЫЛКИ (Broadcast Studio) =====
 @bp.route('/settings/broadcast/presets')

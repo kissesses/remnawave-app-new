@@ -94,5 +94,17 @@ def build_design_config(settings: dict | None, user_id: int | None = None) -> di
     }
 
 
+def build_preview_design_config(settings: dict | None, design_id: str) -> dict:
+    cfg = build_design_config(settings, user_id=None)
+    if design_id in WEBAPP_DESIGN_IDS:
+        cfg["default"] = design_id
+    cfg["pickerEnabled"] = False
+    return cfg
+
+
+def build_preview_design_config_json(settings: dict | None, design_id: str) -> str:
+    return json.dumps(build_preview_design_config(settings, design_id), ensure_ascii=False)
+
+
 def build_design_config_json(settings: dict | None, user_id: int | None = None) -> str:
     return json.dumps(build_design_config(settings, user_id=user_id), ensure_ascii=False)

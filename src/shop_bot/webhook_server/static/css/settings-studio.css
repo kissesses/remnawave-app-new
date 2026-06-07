@@ -270,7 +270,7 @@ html[data-design="macos-v2"] .settings-page.settings-studio .settings-sidebar.se
     color: color-mix(in srgb, var(--set-accent) 55%, var(--set-dim));
 }
 
-.settings-page.settings-studio .set-rail .tab-link .material-symbols-outlined,
+.settings-page.settings-studio .set-rail .tab-link > .material-symbols-outlined,
 html[data-design="macos-v2"] .settings-page.settings-studio .settings-sidebar.set-rail .tab-link > .material-symbols-outlined {
     display: none !important;
 }

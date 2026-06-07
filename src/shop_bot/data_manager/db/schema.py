@@ -640,6 +640,21 @@ def _ensure_webapp_studio_columns(cursor) -> None:
     _ensure_table_column(cursor, "webapp_settings", "webapp_design_stats", "TEXT DEFAULT '{}'")
     _ensure_table_column(cursor, "webapp_settings", "webapp_ab_design_b", "TEXT DEFAULT ''")
     _ensure_table_column(cursor, "webapp_settings", "webapp_ab_percent", "INTEGER DEFAULT 0")
+    _ensure_webapp_platform_columns(cursor)
+
+
+def _ensure_webapp_platform_columns(cursor) -> None:
+    _ensure_table_column(cursor, "webapp_settings", "webapp_health_history", "TEXT DEFAULT '[]'")
+    _ensure_table_column(
+        cursor,
+        "webapp_settings",
+        "webapp_module_order",
+        "TEXT DEFAULT '[\"trial\",\"referrals\",\"howto\",\"topup\",\"promo\",\"support\"]'",
+    )
+    _ensure_table_column(cursor, "webapp_settings", "webapp_content_overrides", "TEXT DEFAULT '{}'")
+    _ensure_table_column(cursor, "webapp_settings", "webapp_maintenance_until", "TEXT DEFAULT ''")
+    _ensure_table_column(cursor, "webapp_settings", "webapp_show_promo", "INTEGER DEFAULT 1")
+    _ensure_table_column(cursor, "webapp_settings", "webapp_show_support", "INTEGER DEFAULT 1")
 
 
 # ===== RUN_MIGRATION =====

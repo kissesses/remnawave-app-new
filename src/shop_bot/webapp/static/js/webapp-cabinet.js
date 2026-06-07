@@ -33,7 +33,7 @@
 
     function renderTrialBanner(cfg) {
         const container = document.getElementById('key-info-section-container');
-        if (!container || !cfg?.trial?.available) return;
+        if (!container || !cfg?.modules?.trial || !cfg?.trial?.available) return;
         if (document.getElementById('webapp-trial-banner')) return;
 
         const days = cfg.trial.duration_days || 3;
@@ -368,13 +368,45 @@
         }
     }
 
+    function applyModuleVisibility(cfg) {
+        if (!cfg?.modules) return;
+        const m = cfg.modules;
+        if (!m.trial) document.getElementById('webapp-trial-banner')?.remove();
+        if (!m.topup) {
+            document.querySelectorAll('[data-action="topup"], #webapp-topup-btn').forEach((el) => {
+                const btn = el.closest('button') || el;
+                btn.remove();
+            });
+        }
+        if (!m.referrals) document.getElementById('webapp-referral-btn')?.remove();
+        if (!m.promo) {
+            document.querySelectorAll('[data-action="promo"]').forEach((el) => el.closest('button')?.remove());
+        }
+        if (!m.howto) document.getElementById('webapp-setup-os-block')?.remove();
+        if (!m.support) {
+            document.querySelectorAll('[data-page-id="support-page"], #support-page').forEach((el) => el.remove?.());
+        }
+    }
+
+    function applyBranding(cfg) {
+        const accent = cfg?.branding?.accent_color;
+        if (accent && /^#[0-9a-fA-F]{3,8}$/.test(accent)) {
+            document.documentElement.style.setProperty('--wa-accent', accent);
+            document.documentElement.style.setProperty('--primary', accent);
+        }
+    }
+
     async function initCabinet() {
         if (!document.getElementById('main-page')) return;
+        if (window.STUDIO_PREVIEW) return;
         const cfg = await loadCabinetConfig();
+        applyBranding(cfg);
+        applyModuleVisibility(cfg);
         renderTrialBanner(cfg);
         renderQuickActions();
         renderProfileActions();
         renderSetupOsTabs(cfg);
+        applyModuleVisibility(cfg);
     }
 
     window.WebAppCabinet = {

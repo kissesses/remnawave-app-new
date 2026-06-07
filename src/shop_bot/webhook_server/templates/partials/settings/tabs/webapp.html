@@ -188,20 +188,26 @@
                         </label>
                         <label class="wapp-field wapp-field--span2">
                             <span>Приветствие (Glass Hub)</span>
-                            <input type="text" name="webapp_welcome_text" id="webapp_welcome_text" value="{{ wa.webapp_welcome_text or '' }}" placeholder="Добро пожаловать!" maxlength="120" />
+                            <input type="text" name="webapp_welcome_text" id="webapp_welcome_text" value="{{ wa.webapp_welcome_text or '' }}" placeholder="Добро пожаловать, {name}!" maxlength="120" />
+                        </label>
+                        <label class="wapp-field wapp-field--span2">
+                            <span>Hero subtitle (Glass Hub)</span>
+                            <input type="text" id="webapp_content_hero_sub" value="{{ (meta.content_overrides or {}).get('hero_sub', '') }}" placeholder="Оформите подписку или активируйте пробный период…" maxlength="200" />
                         </label>
                     </div>
                 </article>
                 <article class="wapp-card">
                     <header class="wapp-card__head">
                         <span class="wapp-card__glyph material-symbols-outlined">image</span>
-                        <div><h3>Ассеты</h3><p>Логотип и favicon по URL</p></div>
+                        <div><h3>Ассеты</h3><p>Логотип и favicon — URL или загрузка файла</p></div>
                     </header>
                     <div class="wapp-card__body wapp-card__grid">
                         <label class="wapp-field">
                             <span>Логотип (URL)</span>
                             <div class="wapp-asset-row">
                                 <input type="url" name="webapp_logo" id="webapp_logo" value="{{ wa.webapp_logo or '' }}" placeholder="https://…" />
+                                <button type="button" class="wapp-btn wapp-btn--ghost wapp-btn--sm" data-wapp-upload="logo">Загрузить</button>
+                                <input type="file" accept="image/*" class="sr-only" id="webapp_logo_file" data-asset="logo" />
                                 <div class="wapp-asset-preview" id="webapp-logo-preview-wrap">
                                     <img id="webapp-logo-preview" src="{{ wa.webapp_logo or '' }}" alt="" {% if not wa.webapp_logo %}hidden{% endif %} />
                                     <span class="material-symbols-outlined" id="webapp-logo-placeholder" {% if wa.webapp_logo %}hidden{% endif %}>image</span>
@@ -212,6 +218,8 @@
                             <span>Favicon (URL)</span>
                             <div class="wapp-asset-row">
                                 <input type="url" name="webapp_icon" id="webapp_icon" value="{{ wa.webapp_icon or '' }}" placeholder="https://…" />
+                                <button type="button" class="wapp-btn wapp-btn--ghost wapp-btn--sm" data-wapp-upload="icon">Загрузить</button>
+                                <input type="file" accept="image/*" class="sr-only" id="webapp_icon_file" data-asset="icon" />
                                 <div class="wapp-asset-preview" id="webapp-icon-preview-wrap">
                                     <img id="webapp-icon-preview" src="{{ wa.webapp_icon or '' }}" alt="" {% if not wa.webapp_icon %}hidden{% endif %} />
                                     <span class="material-symbols-outlined" id="webapp-icon-placeholder" {% if wa.webapp_icon %}hidden{% endif %}>language</span>
@@ -245,6 +253,11 @@
                             <span>Текст страницы недоступности</span>
                             <textarea name="webapp_maintenance_text" id="webapp_maintenance_text" rows="3" placeholder="Кабинет временно недоступен. Попробуйте позже.">{{ wa.webapp_maintenance_text or '' }}</textarea>
                         </label>
+                        <label class="wapp-field">
+                            <span>Запланировать maintenance до (UTC ISO)</span>
+                            <input type="datetime-local" id="webapp_maintenance_until" value="{{ (wa.webapp_maintenance_until or '')[:16] }}" />
+                            <small class="wapp-field-hint">Пока дата не прошла — кабинет показывает maintenance page</small>
+                        </label>
                     </div>
                 </article>
             </div>
@@ -256,6 +269,17 @@
                 <div class="wapp-health-card" data-health="dns"><span class="material-symbols-outlined">dns</span><strong>DNS</strong><span class="wapp-health-card__val">—</span></div>
                 <div class="wapp-health-card" data-health="ssl"><span class="material-symbols-outlined">lock</span><strong>SSL</strong><span class="wapp-health-card__val">—</span></div>
                 <div class="wapp-health-card" data-health="http"><span class="material-symbols-outlined">http</span><strong>HTTP</strong><span class="wapp-health-card__val">—</span></div>
+                <div class="wapp-health-card" data-health="uptime"><span class="material-symbols-outlined">schedule</span><strong>Uptime</strong><span class="wapp-health-card__val">—</span></div>
+            </div>
+            <div class="wapp-deploy-actions">
+                <button type="button" class="wapp-btn wapp-btn--ghost" id="wapp-restart-service">
+                    <span class="material-symbols-outlined">restart_alt</span>
+                    Перезапустить WebApp
+                </button>
+                <button type="button" class="wapp-btn wapp-btn--ghost" id="wapp-refresh-health">
+                    <span class="material-symbols-outlined">monitor_heart</span>
+                    Обновить health
+                </button>
             </div>
             <div class="wapp-cards">
                 <article class="wapp-card wapp-card--span2">
@@ -338,14 +362,51 @@
                         </label>
                     </div>
                 </article>
+                <article class="wapp-card">
+                    <header class="wapp-card__head"><span class="wapp-card__glyph material-symbols-outlined">redeem</span><div><h3>Промокоды</h3><p>Модальное окно promo</p></div></header>
+                    <div class="wapp-card__body">
+                        <label class="wapp-switch-row">
+                            <div><strong>Показывать в WebApp</strong></div>
+                            <label class="settings-macos-switch"><input type="checkbox" id="webapp_show_promo" {% if wa.webapp_show_promo is none or wa.webapp_show_promo|int != 0 %}checked{% endif %} /><span class="settings-macos-switch__track"></span></label>
+                        </label>
+                    </div>
+                </article>
+                <article class="wapp-card">
+                    <header class="wapp-card__head"><span class="wapp-card__glyph material-symbols-outlined">support_agent</span><div><h3>Поддержка</h3><p>Раздел support в кабинете</p></div></header>
+                    <div class="wapp-card__body">
+                        <label class="wapp-switch-row">
+                            <div><strong>Показывать в WebApp</strong></div>
+                            <label class="settings-macos-switch"><input type="checkbox" id="webapp_show_support" {% if wa.webapp_show_support is none or wa.webapp_show_support|int != 0 %}checked{% endif %} /><span class="settings-macos-switch__track"></span></label>
+                        </label>
+                    </div>
+                </article>
+                <article class="wapp-card wapp-card--span2">
+                    <header class="wapp-card__head"><span class="wapp-card__glyph material-symbols-outlined">sort</span><div><h3>Порядок модулей</h3><p>Quick actions в classic / ios</p></div></header>
+                    <div class="wapp-card__body">
+                        <div class="wapp-module-order" id="wapp-module-order">
+                            {% for mod in meta.module_order or ['trial','referrals','howto','topup','promo','support'] %}
+                            <label class="wapp-module-order__item">
+                                <span>{{ mod }}</span>
+                                <span class="wapp-module-order__btns">
+                                    <button type="button" class="wapp-icon-btn" data-mod-move="up" data-mod="{{ mod }}" title="Выше">↑</button>
+                                    <button type="button" class="wapp-icon-btn" data-mod-move="down" data-mod="{{ mod }}" title="Ниже">↓</button>
+                                </span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </article>
             </div>
         </div>
 
         <div class="wapp-workspace-pane hidden" data-wapp-pane="overview">
             <div class="wapp-kpi-row">
+                <div class="wapp-kpi"><div class="wapp-kpi__val" id="wapp-kpi-users">{{ meta.analytics.users_total or 0 }}</div><div class="wapp-kpi__lbl">Пользователей</div></div>
+                <div class="wapp-kpi"><div class="wapp-kpi__val" id="wapp-kpi-trials">{{ meta.analytics.trial_used or 0 }}</div><div class="wapp-kpi__lbl">Trial used</div></div>
+                <div class="wapp-kpi"><div class="wapp-kpi__val" id="wapp-kpi-keys">{{ meta.analytics.keys_active or 0 }}</div><div class="wapp-kpi__lbl">Активных ключей</div></div>
+                <div class="wapp-kpi"><div class="wapp-kpi__val" id="wapp-kpi-payments">{{ meta.analytics.payments_30d or 0 }}</div><div class="wapp-kpi__lbl">Платежей / 30д</div></div>
                 <div class="wapp-kpi"><div class="wapp-kpi__val" id="wapp-kpi-picks">{{ meta.analytics.total_picks or 0 }}</div><div class="wapp-kpi__lbl">Выборов дизайна</div></div>
                 <div class="wapp-kpi"><div class="wapp-kpi__val" id="wapp-kpi-popular">{{ meta.analytics.popular_label or '—' }}</div><div class="wapp-kpi__lbl">Популярный дизайн</div></div>
-                <div class="wapp-kpi"><div class="wapp-kpi__val">{{ meta.enabled_design_count or 0 }}</div><div class="wapp-kpi__lbl">Активных тем</div></div>
             </div>
             <div class="wapp-cards">
                 <article class="wapp-card wapp-card--span2">
@@ -389,7 +450,18 @@
                     <header class="wapp-card__head">
                         <span class="wapp-card__glyph material-symbols-outlined">article</span>
                         <div><h3>Лог WebApp</h3><p>Строки с меткой [WEBAPP]</p></div>
-                        <button type="button" class="wapp-btn wapp-btn--ghost wapp-btn--sm" id="wapp-refresh-logs">Обновить</button>
+                        <div class="wapp-log-tools">
+                            <select id="wapp-log-level" aria-label="Уровень">
+                                <option value="">Все</option>
+                                <option value="DEBUG">DEBUG</option>
+                                <option value="INFO">INFO</option>
+                                <option value="WARNING">WARNING</option>
+                                <option value="ERROR">ERROR</option>
+                            </select>
+                            <input type="search" id="wapp-log-search" placeholder="Поиск…" />
+                            <button type="button" class="wapp-btn wapp-btn--ghost wapp-btn--sm" id="wapp-export-logs">Export</button>
+                            <button type="button" class="wapp-btn wapp-btn--ghost wapp-btn--sm" id="wapp-refresh-logs">Обновить</button>
+                        </div>
                     </header>
                     <div class="wapp-card__body">
                         <pre class="wapp-log" id="wapp-log-view">Загрузка…</pre>

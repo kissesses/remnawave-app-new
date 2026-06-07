@@ -177,6 +177,12 @@ def update_webapp_settings(
     webapp_design_stats: str = None,
     webapp_ab_design_b: str = None,
     webapp_ab_percent: int = None,
+    webapp_health_history: str = None,
+    webapp_module_order: str = None,
+    webapp_content_overrides: str = None,
+    webapp_maintenance_until: str = None,
+    webapp_show_promo: int = None,
+    webapp_show_support: int = None,
 ) -> bool:
     try:
         updates = []
@@ -238,6 +244,24 @@ def update_webapp_settings(
         if webapp_ab_percent is not None:
             updates.append("webapp_ab_percent = ?")
             params.append(int(webapp_ab_percent))
+        if webapp_health_history is not None:
+            updates.append("webapp_health_history = ?")
+            params.append(webapp_health_history)
+        if webapp_module_order is not None:
+            updates.append("webapp_module_order = ?")
+            params.append(webapp_module_order)
+        if webapp_content_overrides is not None:
+            updates.append("webapp_content_overrides = ?")
+            params.append(webapp_content_overrides)
+        if webapp_maintenance_until is not None:
+            updates.append("webapp_maintenance_until = ?")
+            params.append(webapp_maintenance_until)
+        if webapp_show_promo is not None:
+            updates.append("webapp_show_promo = ?")
+            params.append(int(webapp_show_promo))
+        if webapp_show_support is not None:
+            updates.append("webapp_show_support = ?")
+            params.append(int(webapp_show_support))
         
         if not updates:
             return False

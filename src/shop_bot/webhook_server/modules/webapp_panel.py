@@ -157,6 +157,26 @@ def _http_probe(url: str, timeout: float = 3.0) -> dict[str, Any]:
         return {"ok": False, "status": None}
 
 
+def _webapp_health_probe() -> dict[str, Any]:
+    try:
+        req = urllib.request.Request(
+            "http://127.0.0.1:8000/health",
+            method="GET",
+            headers={"User-Agent": "Remnawave-WebApp-Health/1.0"},
+        )
+        with urllib.request.urlopen(req, timeout=2.0) as resp:
+            if resp.getcode() != 200:
+                return {}
+            import json as _json
+
+            data = _json.loads(resp.read().decode("utf-8"))
+            if isinstance(data, dict):
+                return {"uptime_sec": data.get("uptime_sec"), "service_ok": bool(data.get("ok"))}
+    except Exception:
+        return {}
+    return {}
+
+
 def check_health(webapp: dict | None) -> dict[str, Any]:
     webapp = webapp or {}
     domain = normalize_domain(webapp.get("webapp_domen"))
@@ -165,6 +185,7 @@ def check_health(webapp: dict | None) -> dict[str, Any]:
     ssl_data = _ssl_info(domain) if domain else {"ok": False, "reason": "no_domain"}
     public_url = webapp_public_url(webapp)
     http_data = _http_probe(public_url) if domain else {"ok": local_up, "status": 200 if local_up else None}
+    runtime = _webapp_health_probe() if local_up else {}
 
     return {
         "port_local": {"ok": local_up, "label": ":8000"},
@@ -172,6 +193,8 @@ def check_health(webapp: dict | None) -> dict[str, Any]:
         "ssl": ssl_data,
         "http": http_data,
         "public_url": public_url,
+        "uptime_sec": runtime.get("uptime_sec"),
+        "service_ok": runtime.get("service_ok", local_up),
     }
 
 
@@ -251,6 +274,15 @@ def build_webapp_meta(
     total_picks = sum(stats.values()) if stats else 0
     popular = max(stats, key=stats.get) if stats else default_design
 
+    from shop_bot.webapp.studio_config import parse_content_overrides, parse_health_history, parse_module_order
+    from shop_bot.webhook_server.modules.webapp_runtime import build_webapp_analytics
+
+    platform_analytics = build_webapp_analytics(webapp)
+    module_order = parse_module_order(webapp.get("webapp_module_order"))
+    content_overrides = parse_content_overrides(webapp.get("webapp_content_overrides"))
+    health_history = parse_health_history(webapp.get("webapp_health_history"))
+    maintenance_until = (webapp.get("webapp_maintenance_until") or "").strip()
+
     design_options = []
     for d in WEBAPP_DESIGNS:
         design_options.append({
@@ -300,12 +332,29 @@ def build_webapp_meta(
                 "webapp": _truthy(webapp.get("webapp_show_topup", 1)),
                 "global": True,
             },
+            "promo": {
+                "webapp": _truthy(webapp.get("webapp_show_promo", 1)),
+                "global": True,
+            },
+            "support": {
+                "webapp": _truthy(webapp.get("webapp_show_support", 1)),
+                "global": True,
+            },
         },
+        "module_order": module_order,
+        "content_overrides": content_overrides,
+        "maintenance_until": maintenance_until or None,
+        "health_history": health_history[-24:],
         "analytics": {
             "design_stats": stats,
             "total_picks": total_picks,
             "popular_design": popular,
             "popular_label": DESIGN_LABELS.get(popular, popular),
+            "users_total": platform_analytics.get("users_total", 0),
+            "trial_used": platform_analytics.get("trial_used", 0),
+            "keys_active": platform_analytics.get("keys_active", 0),
+            "payments_30d": platform_analytics.get("payments_30d", 0),
+            "revenue_30d": platform_analytics.get("revenue_30d", 0),
         },
         "ab": {
             "design_b": (webapp.get("webapp_ab_design_b") or "").strip(),
@@ -418,19 +467,8 @@ body {{ min-height:100vh; display:flex; align-items:center; justify-content:cent
 </html>"""
 
 
-def tail_webapp_logs(lines: int = 80) -> list[str]:
-    import os
+def tail_webapp_logs(lines: int = 80, *, level: str = "", search: str = "") -> list[str]:
+    from shop_bot.webhook_server.modules.webapp_runtime import tail_webapp_logs as _tail
 
-    lines = max(10, min(lines, 200))
-    log_files = ["logs/bot.log", "bot.log"]
-    for log_file in log_files:
-        if not os.path.exists(log_file):
-            continue
-        try:
-            with open(log_file, "r", encoding="utf-8", errors="replace") as fh:
-                all_lines = fh.readlines()
-            filtered = [ln.rstrip() for ln in all_lines if "[WEBAPP]" in ln]
-            return filtered[-lines:]
-        except OSError:
-            continue
-    return []
+    entries = _tail(lines, level=level, search=search)
+    return [e.get("text", "") for e in entries]

@@ -264,8 +264,25 @@ html:not(.dark) #tab-webapp.wapp-panel {
 .wapp-color-row { display: flex; gap: 0.45rem; align-items: center; }
 .wapp-color-row input[type="color"] { width: 2.25rem; height: 2.25rem; border: none; padding: 0; background: transparent; cursor: pointer; }
 
-.wapp-health-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.55rem; margin-bottom: 0.75rem; }
+.wapp-health-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.55rem; margin-bottom: 0.75rem; }
+@media (max-width: 900px) { .wapp-health-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 720px) { .wapp-health-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.wapp-deploy-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem; }
+.wapp-field-hint { display: block; margin-top: 0.25rem; font-size: 0.625rem; color: var(--wapp-dim); }
+.wapp-module-order { display: grid; gap: 0.35rem; }
+.wapp-module-order__item {
+    display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+    padding: 0.45rem 0.6rem; border-radius: 8px; border: 1px solid var(--wapp-border); background: rgba(0,0,0,.15);
+    font-size: 0.6875rem; text-transform: capitalize;
+}
+.wapp-module-order__btns { display: flex; gap: 0.2rem; }
+.wapp-log-tools { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; margin-left: auto; }
+.wapp-log-tools select, .wapp-log-tools input[type="search"] {
+    font-size: 0.625rem; padding: 0.25rem 0.45rem; border-radius: 8px;
+    border: 1px solid var(--wapp-border); background: var(--wapp-surface); color: var(--wapp-text);
+}
+.wapp-kpi-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.55rem; margin-bottom: 0.75rem; }
+@media (min-width: 1100px) { .wapp-kpi-row { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
 .wapp-health-card {
     padding: 0.65rem 0.75rem; border-radius: 11px; border: 1px solid var(--wapp-border); background: var(--wapp-surface);
     display: grid; gap: 0.15rem; font-size: 0.625rem; color: var(--wapp-dim);
@@ -285,7 +302,6 @@ html:not(.dark) #tab-webapp.wapp-panel {
 }
 .wapp-checklist { margin: 0; padding-left: 1.1rem; font-size: 0.6875rem; color: var(--wapp-muted); line-height: 1.6; }
 
-.wapp-kpi-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.55rem; margin-bottom: 0.75rem; }
 @media (max-width: 640px) { .wapp-kpi-row { grid-template-columns: 1fr; } }
 .wapp-kpi {
     padding: 0.75rem; border-radius: 11px; border: 1px solid var(--wapp-border); background: var(--wapp-surface); text-align: center;

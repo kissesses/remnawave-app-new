@@ -574,10 +574,11 @@ def run_migration_postgres() -> None:
                     "auto_start_bot": "0",
                 })
                 _ensure_default_button_configs(cursor)
-                from shop_bot.data_manager.db.schema import _ensure_webapp_design_columns, _ensure_webapp_studio_columns
+                from shop_bot.data_manager.db.schema import _ensure_webapp_design_columns, _ensure_webapp_studio_columns, _ensure_webapp_platform_columns
 
                 _ensure_webapp_design_columns(cursor)
                 _ensure_webapp_studio_columns(cursor)
+                _ensure_webapp_platform_columns(cursor)
                 try:
                     from shop_bot.data_manager.panel_access import (
                         _ensure_default_roles,

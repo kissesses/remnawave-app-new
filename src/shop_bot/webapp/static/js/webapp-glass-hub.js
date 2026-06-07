@@ -122,7 +122,8 @@
             </article>`;
     }
 
-    function renderBalanceCard(balance) {
+    function renderBalanceCard(balance, cfg) {
+        if (cfg?.modules?.topup === false) return '';
         return `
             <article class="webapp-gh-card webapp-gh-card--balance">
                 <div class="webapp-gh-card__head">
@@ -143,6 +144,7 @@
     }
 
     function renderReferralCard(cfg, status) {
+        if (cfg?.modules?.referrals === false) return '';
         const enabled = cfg?.referrals?.enabled;
         if (!enabled) {
             return `
@@ -180,19 +182,24 @@
             </article>`;
     }
 
-    function renderHero(key, status) {
+    function renderHero(key, status, cfg) {
         const name = getUsername();
+        const overrides = cfg?.content_overrides || {};
+        const welcomeTpl = (cfg?.branding?.welcome_text || overrides.hero_title || '').trim();
+        const heroTitle = welcomeTpl
+            ? welcomeTpl.replace('{name}', name).replace('{user}', name)
+            : `Добро пожаловать, ${name}`;
         const hasKey = key && key.days_left > 0;
-        const subText = hasKey
+        const subText = (overrides.hero_sub || '').trim() || (hasKey
             ? 'Ваша подписка активна. Подключитесь к VPN и наслаждайтесь свободным интернетом.'
-            : 'Оформите подписку или активируйте пробный период, чтобы начать пользоваться VPN.';
+            : 'Оформите подписку или активируйте пробный период, чтобы начать пользоваться VPN.');
 
         let primaryBtn;
         if (hasKey && key.sub_url) {
             primaryBtn = `<button type="button" class="webapp-gh-btn webapp-gh-btn--primary" data-gh-action="connect">
                 <span class="material-icons-round">wifi</span> Подключиться к VPN
             </button>`;
-        } else if (status?.trial_available) {
+        } else if (status?.trial_available && cfg?.modules?.trial !== false) {
             primaryBtn = `<button type="button" class="webapp-gh-btn webapp-gh-btn--primary" data-gh-action="trial">
                 <span class="material-icons-round">card_giftcard</span> Пробный период
             </button>`;
@@ -202,19 +209,22 @@
             </button>`;
         }
 
+        const topupBtn = cfg?.modules?.topup === false ? '' : `
+                        <button type="button" class="webapp-gh-btn webapp-gh-btn--secondary" data-gh-action="topup">
+                            <span class="material-icons-round">add_circle</span> Пополнить баланс
+                        </button>`;
+
         return `
             <section class="webapp-gh-hero">
                 <div class="webapp-gh-hero__glow" aria-hidden="true"></div>
                 <div class="webapp-gh-hero__body">
                     <div>
-                        <h1 class="webapp-gh-hero__title">Добро пожаловать, ${name}</h1>
+                        <h1 class="webapp-gh-hero__title">${heroTitle}</h1>
                         <p class="webapp-gh-hero__sub">${subText}</p>
                     </div>
                     <div class="webapp-gh-hero__actions">
                         ${primaryBtn}
-                        <button type="button" class="webapp-gh-btn webapp-gh-btn--secondary" data-gh-action="topup">
-                            <span class="material-icons-round">add_circle</span> Пополнить баланс
-                        </button>
+                        ${topupBtn}
                     </div>
                 </div>
             </section>`;
@@ -268,6 +278,7 @@
 
     async function renderDashboard() {
         if (!isActive()) return;
+        if (window.STUDIO_PREVIEW) return;
         const main = document.getElementById('main-page');
         if (!main) return;
 
@@ -283,14 +294,19 @@
         const data = await fetchData();
         const key = data.status?.keys?.[0] || null;
         const balance = data.status?.balance ?? data.cfg?.balance ?? 0;
+        const accent = data.cfg?.branding?.accent_color;
+        if (accent && /^#[0-9a-fA-F]{3,8}$/.test(accent)) {
+            document.documentElement.style.setProperty('--gh-accent', accent);
+            document.documentElement.style.setProperty('--wa-accent', accent);
+        }
 
         updateTopBarBalance(balance);
 
         root.innerHTML = `
-            ${renderHero(key, data.status)}
+            ${renderHero(key, data.status, data.cfg)}
             <div class="webapp-gh-cards">
                 ${renderSubscriptionCard(key)}
-                ${renderBalanceCard(balance)}
+                ${renderBalanceCard(balance, data.cfg)}
                 ${renderReferralCard(data.cfg, data.status)}
             </div>`;
 
