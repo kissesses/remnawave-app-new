@@ -122,20 +122,32 @@
 
         <aside class="btn-cstr-sidebar">
             <div class="btn-cstr-phone">
-                <div class="btn-cstr-phone__notch" aria-hidden="true"></div>
-                <div class="btn-cstr-phone__head">
-                    <span class="btn-cstr-phone__title">Telegram preview</span>
+                <div class="btn-cstr-phone__chrome">
+                    <span class="btn-cstr-phone__label">Telegram preview</span>
                     <div class="btn-cstr-phone__actions">
                         <button type="button" id="refresh-preview-btn" title="Обновить">
-                            <span class="material-symbols-outlined text-sm">refresh</span>
+                            <span class="material-symbols-outlined">refresh</span>
                         </button>
                         <button type="button" id="clear-preview-btn" title="Очистить">
-                            <span class="material-symbols-outlined text-sm">close</span>
+                            <span class="material-symbols-outlined">close</span>
                         </button>
                     </div>
                 </div>
-                <div id="preview-area" class="telegram-preview">
-                    <p class="text-white/40 text-center text-xs py-6">Предпросмотр обновляется автоматически</p>
+                <div class="btn-cstr-tg-shell">
+                    <div class="btn-cstr-tg-topbar" aria-hidden="true">
+                        <span class="btn-cstr-tg-topbar__chevron material-symbols-outlined">arrow_back_ios_new</span>
+                        <div class="btn-cstr-tg-topbar__avatar">B</div>
+                        <div class="btn-cstr-tg-topbar__meta">
+                            <span class="btn-cstr-tg-topbar__name">Bot</span>
+                            <span class="btn-cstr-tg-topbar__sub">bot</span>
+                        </div>
+                    </div>
+                    <div id="preview-area" class="telegram-preview">
+                        <div class="tg-preview-idle">
+                            <span class="material-symbols-outlined">forum</span>
+                            <p>Предпросмотр обновляется автоматически</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 

@@ -792,7 +792,7 @@
             if (!silent) {
                 this.isPreviewLoading = true;
                 area.innerHTML =
-                    '<div class="preview-loading"><div class="spinner"></div><p class="text-white/50 text-sm">Обновление…</p></div>';
+                    '<div class="preview-loading"><div class="spinner"></div><p>Обновление…</p></div>';
             }
 
             const finish = () => {
@@ -804,7 +804,7 @@
 
                 if (visible.length === 0) {
                     area.innerHTML =
-                        '<p class="text-white/40 text-center text-xs py-6">Нет активных кнопок</p>';
+                        '<div class="tg-preview-idle"><span class="material-symbols-outlined">touch_app</span><p>Нет активных кнопок</p></div>';
                     this.isPreviewLoading = false;
                     return;
                 }
@@ -816,44 +816,55 @@
                     rows[row].push(btn);
                 });
 
-                let html = `
-                    <div class="telegram-header">
-                        <div class="telegram-title">${menuInfo.title}</div>
-                        <div class="telegram-subtitle">${menuInfo.subtitle}</div>
-                    </div>
-                    <div class="telegram-button-grid">`;
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
+                let keyboardHtml = '<div class="tg-preview-keyboard"><div class="tg-preview-keyboard__rows">';
 
                 Object.keys(rows)
                     .sort((a, b) => a - b)
                     .forEach((row) => {
-                        html += '<div class="telegram-button-row">';
+                        keyboardHtml += '<div class="tg-preview-keyboard__row">';
                         rows[row]
                             .sort((a, b) => (a.column_position || 0) - (b.column_position || 0))
                             .forEach((btn) => {
                                 const width = btn.button_width || 1;
                                 const flexStyle = width === 1 ? 'flex:1' : `flex:${Math.min(width, 2)}`;
-                                const colorHex = btn.button_color ? this.getColorHex(btn.button_color) : null;
-                                const bgStyle = colorHex
-                                    ? `background:${colorHex};border-color:${colorHex};`
-                                    : '';
+                                const colorClass = btn.button_color
+                                    ? ` telegram-button--${btn.button_color}`
+                                    : btn.url
+                                      ? ' telegram-button--url'
+                                      : '';
                                 const cb = escapeHtml(btn.callback_data || '');
                                 const url = escapeHtml(btn.url || '');
                                 const txt = escapeHtml(btn.text || btn.button_id);
 
-                                html += `<div class="telegram-button" style="${flexStyle};min-width:0;${bgStyle}"
+                                keyboardHtml += `<button type="button" class="telegram-button${colorClass}" style="${flexStyle};min-width:0;"
                                     data-cb="${cb}" data-url="${url}" data-text="${txt}">
-                                    <div class="telegram-button-content">
-                                        ${btn.emoji_id ? '<span style="font-size:10px;opacity:0.7">✨</span>' : ''}
+                                    <span class="telegram-button-content">
                                         <span class="telegram-button-text">${txt}</span>
-                                        ${btn.url ? '<span class="telegram-button-url">🔗</span>' : ''}
-                                    </div>
-                                </div>`;
+                                        ${btn.url ? '<span class="telegram-button-url"><span class="material-symbols-outlined">open_in_new</span></span>' : ''}
+                                    </span>
+                                </button>`;
                             });
-                        html += '</div>';
+                        keyboardHtml += '</div>';
                     });
 
-                html += '</div>';
-                area.innerHTML = html;
+                keyboardHtml += '</div></div>';
+
+                area.innerHTML = `
+                    <div class="tg-preview-chat">
+                        <div class="tg-preview-unit">
+                            <div class="tg-preview-bubble">
+                                <div class="tg-preview-bubble__title">${menuInfo.title}</div>
+                                <div class="tg-preview-bubble__text">${menuInfo.subtitle}</div>
+                                <div class="tg-preview-bubble__foot">
+                                    <span class="tg-preview-bubble__time">${timeStr}</span>
+                                </div>
+                            </div>
+                            ${keyboardHtml}
+                        </div>
+                    </div>`;
 
                 area.querySelectorAll('.telegram-button').forEach((el) => {
                     el.addEventListener('click', () => {
@@ -898,7 +909,7 @@
             const area = document.getElementById('preview-area');
             if (area) {
                 area.innerHTML =
-                    '<p class="text-white/40 text-center text-xs py-6">Предпросмотр обновляется автоматически</p>';
+                    '<div class="tg-preview-idle"><span class="material-symbols-outlined">forum</span><p>Предпросмотр обновляется автоматически</p></div>';
             }
             this.isPreviewLoading = false;
         }
