@@ -1,3 +1,5 @@
+.cursor/
+.DS_Store
 users.db
 users-*.db
 data/.master.key

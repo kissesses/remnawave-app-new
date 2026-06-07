@@ -20,4 +20,4 @@
 
 ## Идеи для будущих (не заняты)
 
-Silk Harbor · Prism Ledger · Nova Thread
+Prism Ledger · Nova Thread · Copper Loom

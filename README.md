@@ -178,7 +178,8 @@ docker compose pull && docker compose up -d --force-recreate
 | Документ | О чём |
 |----------|--------|
 | [**docs/INSTALL.md**](docs/INSTALL.md) | Установка, co-install, Nginx Remnawave, диагностика |
-| [**docs/CHANGELOG.md**](docs/CHANGELOG.md) | История версий |
+| [**docs/releases/CHANGELOG.md**](docs/releases/CHANGELOG.md) | История версий (релизы) |
+| [**docs/DEVELOPER-SUPPORT.md**](docs/DEVELOPER-SUPPORT.md) | Поддержка разработчика (клиент) |
 | [**.env.example**](.env.example) | Все переменные окружения |
 
 ---
