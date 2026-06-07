@@ -655,6 +655,9 @@ def _ensure_webapp_platform_columns(cursor) -> None:
     _ensure_table_column(cursor, "webapp_settings", "webapp_maintenance_until", "TEXT DEFAULT ''")
     _ensure_table_column(cursor, "webapp_settings", "webapp_show_promo", "INTEGER DEFAULT 1")
     _ensure_table_column(cursor, "webapp_settings", "webapp_show_support", "INTEGER DEFAULT 1")
+    _ensure_table_column(cursor, "webapp_settings", "webapp_menu_button", "INTEGER DEFAULT 1")
+    _ensure_table_column(cursor, "webapp_settings", "webapp_menu_button_text", "TEXT DEFAULT 'Открыть кабинет'")
+    _ensure_table_column(cursor, "webapp_settings", "webapp_miniapp_buttons", "INTEGER DEFAULT 0")
 
 
 # ===== RUN_MIGRATION =====

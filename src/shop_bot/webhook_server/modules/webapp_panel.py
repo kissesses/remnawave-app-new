@@ -252,6 +252,11 @@ def _build_alerts(webapp: dict, health: dict, enabled_designs: list[str]) -> lis
             "level": "warn",
             "text": "Порт :8000 не отвечает — перезапустите бота после включения WebApp.",
         })
+    if enabled and domain and not (health.get("public_url") or "").startswith("https://"):
+        alerts.append({
+            "level": "warn",
+            "text": "Telegram Mini App требует HTTPS-домен — кнопки WebApp и Menu Button не будут работать без SSL.",
+        })
     return alerts
 
 
@@ -276,6 +281,13 @@ def build_webapp_meta(
 
     from shop_bot.webapp.studio_config import parse_content_overrides, parse_health_history, parse_module_order
     from shop_bot.webhook_server.modules.webapp_runtime import build_webapp_analytics
+    from shop_bot.webapp.telegram_bridge import (
+        build_cabinet_url,
+        is_cabinet_miniapp_ready,
+        menu_button_enabled,
+        menu_button_text,
+        miniapp_buttons_enabled,
+    )
 
     platform_analytics = build_webapp_analytics(webapp)
     module_order = parse_module_order(webapp.get("webapp_module_order"))
@@ -359,6 +371,13 @@ def build_webapp_meta(
         "ab": {
             "design_b": (webapp.get("webapp_ab_design_b") or "").strip(),
             "percent": normalize_ab_percent(webapp.get("webapp_ab_percent")),
+        },
+        "telegram": {
+            "cabinet_url": build_cabinet_url(webapp_settings=webapp),
+            "cabinet_ready": is_cabinet_miniapp_ready(webapp),
+            "menu_button": menu_button_enabled(webapp),
+            "menu_button_text": menu_button_text(webapp),
+            "miniapp_buttons": miniapp_buttons_enabled(webapp),
         },
     }
 

@@ -579,13 +579,33 @@ def webapp_save():
             webapp_module_order=module_order_raw or None,
             webapp_content_overrides=content_overrides_raw or None,
             webapp_maintenance_until=maintenance_until or None,
+            webapp_menu_button=1 if request.form.get('menu_button') == 'true' else 0,
+            webapp_menu_button_text=(request.form.get('menu_button_text') or '').strip() or None,
+            webapp_miniapp_buttons=1 if request.form.get('miniapp_buttons') == 'true' else 0,
         )
         panel_ctx.audit('webapp.save', {'enabled': enable, 'domain': domen, 'designs': enabled_str})
-        return jsonify({'ok': True, 'message': 'Настройки WebApp сохранены'})
+        menu_sync = None
+        controller = getattr(panel_ctx, 'bot_controller', None)
+        if controller and hasattr(controller, 'sync_telegram_menu_button'):
+            menu_sync = controller.sync_telegram_menu_button()
+        return jsonify({'ok': True, 'message': 'Настройки WebApp сохранены', 'menu_sync': menu_sync})
     except Exception as e:
         logger.error(f"Ошибка сохранения настроек Webapp: {e}")
         return jsonify({'ok': False, 'error': str(e)}), 500
 # ===== Конец роута webapp_save =====
+
+@bp.route('/settings/webapp/sync-menu-button', methods=['POST'])
+@panel_ctx.login_required
+def webapp_sync_menu_button():
+    if not _user_can_webapp_edit():
+        return jsonify({'ok': False, 'error': 'Forbidden'}), 403
+    controller = getattr(panel_ctx, 'bot_controller', None)
+    if not controller or not hasattr(controller, 'sync_telegram_menu_button'):
+        return jsonify({'ok': False, 'error': 'bot_controller_unavailable'}), 503
+    result = controller.sync_telegram_menu_button()
+    panel_ctx.audit('webapp.menu_sync', result)
+    status = 200 if result.get('ok') or result.get('skipped') else 502
+    return jsonify({'ok': bool(result.get('ok')), 'result': result}), status
 
 @bp.route('/settings/webapp/health.json', methods=['GET'])
 @panel_ctx.login_required

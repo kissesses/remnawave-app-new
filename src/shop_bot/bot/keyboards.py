@@ -10,6 +10,12 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from shop_bot.data_manager.remnawave_repository import get_setting
 from shop_bot.data_manager.database import get_button_configs
 from shop_bot.config import get_msk_time
+from shop_bot.webapp.telegram_bridge import (
+    build_cabinet_or_callback_button,
+    is_webapp_url_placeholder,
+    miniapp_buttons_enabled,
+    resolve_webapp_placeholder_url,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -1085,10 +1091,17 @@ def create_dynamic_keyboard(menu_type: str, user_keys: list = None, trial_availa
                    if url and "{connection_string}" in url:
                        url = url.replace("{connection_string}", connection_string)
                        pass
+
+                cabinet_placeholder_url = resolve_webapp_placeholder_url(url) if url else None
                 
                 is_web_app = False
                 if cfg.get('url') == "{connection_string}" and connection_string:
                      is_web_app = True
+                elif cabinet_placeholder_url:
+                     url = cabinet_placeholder_url
+                     is_web_app = True
+                elif url and is_webapp_url_placeholder(url):
+                     continue
 
                 btn_text = apply_html_to_button_text(text)
                 extra_kwargs = {}
@@ -1104,6 +1117,16 @@ def create_dynamic_keyboard(menu_type: str, user_keys: list = None, trial_availa
                     row_buttons_objs.append(InlineKeyboardButton(text=btn_text, url=url, **extra_kwargs))
                     included_row.append(cfg)
                 elif callback_data:
+                    if menu_type == "main_menu" and miniapp_buttons_enabled():
+                        mini_btn = build_cabinet_or_callback_button(
+                            btn_text,
+                            callback_data,
+                            extra_kwargs=extra_kwargs,
+                        )
+                        if mini_btn:
+                            row_buttons_objs.append(mini_btn)
+                            included_row.append(cfg)
+                            continue
                     row_buttons_objs.append(InlineKeyboardButton(text=btn_text, callback_data=callback_data, **extra_kwargs))
                     included_row.append(cfg)
 

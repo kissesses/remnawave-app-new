@@ -1119,6 +1119,17 @@
 
         window.addEventListener('hashchange', handleHashChange);
 
+        if (window.Telegram?.WebApp?.initDataUnsafe?.start_param) {
+            const startParam = window.Telegram.WebApp.initDataUnsafe.start_param;
+            const routeMap = { cabinet: '', profile: 'pro', buy: 'bay', support: 'support', setup: 'setup' };
+            const route = routeMap[startParam] ?? startParam.replace(/^#/, '');
+            if (route) window.location.hash = route;
+            else window.location.hash = '';
+            handleHashChange();
+        } else {
+            handleHashChange();
+        }
+
         // Accordion for keys
         document.querySelectorAll('.key-toggle').forEach(button => {
             button.addEventListener('click', () => {

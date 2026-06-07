@@ -280,8 +280,51 @@
                     <span class="material-symbols-outlined">monitor_heart</span>
                     Обновить health
                 </button>
+                <button type="button" class="wapp-btn wapp-btn--ghost" id="wapp-sync-menu-button">
+                    <span class="material-symbols-outlined">smart_button</span>
+                    Синх. Menu Button
+                </button>
             </div>
             <div class="wapp-cards">
+                <article class="wapp-card wapp-card--span2">
+                    <header class="wapp-card__head">
+                        <span class="wapp-card__glyph material-symbols-outlined">smart_button</span>
+                        <div><h3>Telegram Mini App</h3><p>Menu Button и inline WebApp-кнопки в боте</p></div>
+                    </header>
+                    <div class="wapp-card__body wapp-card__grid">
+                        <label class="wapp-switch-row wapp-field--span2">
+                            <div>
+                                <strong>Menu Button</strong>
+                                <p>Кнопка «Меню» в чате открывает кабинет как Mini App</p>
+                            </div>
+                            <label class="settings-macos-switch">
+                                <input type="checkbox" id="webapp_menu_button" {% if wa.webapp_menu_button is none or wa.webapp_menu_button|int != 0 %}checked{% endif %} />
+                                <span class="settings-macos-switch__track"></span>
+                            </label>
+                        </label>
+                        <label class="wapp-field">
+                            <span>Текст Menu Button</span>
+                            <input type="text" id="webapp_menu_button_text" value="{{ wa.webapp_menu_button_text or 'Открыть кабинет' }}" placeholder="Открыть кабинет" maxlength="64" />
+                        </label>
+                        <label class="wapp-switch-row wapp-field--span2">
+                            <div>
+                                <strong>WebApp-кнопки в главном меню</strong>
+                                <p>Callback-кнопки бота открывают кабинет вместо inline-обработчиков</p>
+                            </div>
+                            <label class="settings-macos-switch">
+                                <input type="checkbox" id="webapp_miniapp_buttons" {% if wa.webapp_miniapp_buttons|int != 0 %}checked{% endif %} />
+                                <span class="settings-macos-switch__track"></span>
+                            </label>
+                        </label>
+                        <p class="wapp-field wapp-field--span2 wapp-hint" id="wapp-menu-sync-status">
+                            {% if meta.telegram and meta.telegram.cabinet_ready %}
+                            Кабинет: <code>{{ meta.telegram.cabinet_url }}</code>
+                            {% else %}
+                            Для Mini App нужен HTTPS-домен и включённый WebApp.
+                            {% endif %}
+                        </p>
+                    </div>
+                </article>
                 <article class="wapp-card wapp-card--span2">
                     <header class="wapp-card__head">
                         <span class="wapp-card__glyph material-symbols-outlined">link</span>
@@ -314,6 +357,8 @@
                         <li>Nginx upstream <code>remnawave-app:8000</code></li>
                         <li>SSL: <code>certbot --nginx -d ваш-домен</code></li>
                         <li>Включить WebApp и перезапустить бота</li>
+                        <li>В BotFather: домен Mini App = ваш HTTPS-домен</li>
+                        <li>Синхронизировать Menu Button (кнопка «Меню» в чате)</li>
                         <li>Проверить Deep Link в Telegram</li>
                     </ul>
                 </article>

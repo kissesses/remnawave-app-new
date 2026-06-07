@@ -183,6 +183,9 @@ def update_webapp_settings(
     webapp_maintenance_until: str = None,
     webapp_show_promo: int = None,
     webapp_show_support: int = None,
+    webapp_menu_button: int = None,
+    webapp_menu_button_text: str = None,
+    webapp_miniapp_buttons: int = None,
 ) -> bool:
     try:
         updates = []
@@ -262,6 +265,15 @@ def update_webapp_settings(
         if webapp_show_support is not None:
             updates.append("webapp_show_support = ?")
             params.append(int(webapp_show_support))
+        if webapp_menu_button is not None:
+            updates.append("webapp_menu_button = ?")
+            params.append(int(webapp_menu_button))
+        if webapp_menu_button_text is not None:
+            updates.append("webapp_menu_button_text = ?")
+            params.append(webapp_menu_button_text)
+        if webapp_miniapp_buttons is not None:
+            updates.append("webapp_miniapp_buttons = ?")
+            params.append(int(webapp_miniapp_buttons))
         
         if not updates:
             return False

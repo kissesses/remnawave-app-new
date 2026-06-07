@@ -440,8 +440,65 @@
             $('wapp-kpi-payments') && ($('wapp-kpi-payments').textContent = String(m.analytics?.payments_30d || 0));
             renderHealth(m.health || {});
             updateStatsBars(m.analytics?.design_stats || {}, m.analytics?.total_picks || 0);
+            updateTelegramMiniAppMeta(m.telegram || {});
         } catch (e) {
             console.error(e);
+        }
+    }
+
+    function updateTelegramMiniAppMeta(tg) {
+        const el = $('wapp-menu-sync-status');
+        if (!el) return;
+        if (tg.cabinet_ready && tg.cabinet_url) {
+            el.innerHTML = `Кабинет: <code>${escapeHtml(tg.cabinet_url)}</code>`;
+        } else {
+            el.textContent = 'Для Mini App нужен HTTPS-домен и включённый WebApp.';
+        }
+    }
+
+    function updateMenuSyncStatus(result) {
+        const el = $('wapp-menu-sync-status');
+        if (!el || !result) return;
+        if (result.ok && result.action === 'set') {
+            el.innerHTML = `Menu Button: <strong>${escapeHtml(result.text || '')}</strong> → <code>${escapeHtml(result.url || '')}</code>`;
+            toast('Menu Button синхронизирован', true);
+        } else if (result.ok && result.action === 'reset') {
+            el.textContent = 'Menu Button сброшен (WebApp выключен или отключён в настройках).';
+            toast('Menu Button сброшен', true);
+        } else if (result.skipped) {
+            el.textContent = result.hint || result.reason || 'Menu Button не установлен';
+            toast(el.textContent, false);
+        } else {
+            el.textContent = result.error || 'Ошибка синхронизации Menu Button';
+            toast(el.textContent, false);
+        }
+    }
+
+    function escapeHtml(str) {
+        return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    async function syncMenuButton() {
+        const btn = $('wapp-sync-menu-button');
+        const original = btn?.innerHTML;
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="material-symbols-outlined">progress_activity</span> Синх…';
+        }
+        try {
+            const fd = new FormData();
+            fd.append('csrf_token', window.getCsrfToken?.() || cfg.csrfToken || '');
+            const resp = await fetch('/settings/webapp/sync-menu-button', { method: 'POST', body: fd });
+            const data = await resp.json();
+            updateMenuSyncStatus(data.result || data);
+        } catch (e) {
+            console.error(e);
+            toast('Ошибка синхронизации Menu Button', false);
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = original;
+            }
         }
     }
 
@@ -519,6 +576,7 @@
         $('wapp-refresh-stats')?.addEventListener('click', refreshMeta);
         $('wapp-refresh-health')?.addEventListener('click', refreshHealth);
         $('wapp-restart-service')?.addEventListener('click', restartWebapp);
+        $('wapp-sync-menu-button')?.addEventListener('click', syncMenuButton);
         $('webapp_domen')?.addEventListener('input', updateNginxPreview);
     }
 
@@ -549,6 +607,9 @@
         formData.append('show_topup', $('webapp_show_topup')?.checked ? 'true' : 'false');
         formData.append('show_promo', $('webapp_show_promo')?.checked ? 'true' : 'false');
         formData.append('show_support', $('webapp_show_support')?.checked ? 'true' : 'false');
+        formData.append('menu_button', $('webapp_menu_button')?.checked ? 'true' : 'false');
+        formData.append('menu_button_text', $('webapp_menu_button_text')?.value || '');
+        formData.append('miniapp_buttons', $('webapp_miniapp_buttons')?.checked ? 'true' : 'false');
         formData.append('module_order', JSON.stringify(getModuleOrder()));
         formData.append('content_overrides', getContentOverridesJson());
         formData.append('maintenance_until', getMaintenanceUntilIso());
@@ -561,6 +622,7 @@
             const resp = await fetch('/settings/webapp/save', { method: 'POST', body: formData });
             const data = await resp.json();
             toast(data.message || (data.ok ? 'Сохранено' : 'Ошибка'), !!data.ok);
+            if (data.menu_sync) updateMenuSyncStatus(data.menu_sync);
             if (data.ok) refreshMeta();
         } catch (err) {
             console.error(err);

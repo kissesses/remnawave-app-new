@@ -1569,6 +1569,13 @@ def _setting_bool(key: str, default: bool = False) -> bool:
     raw = (get_setting(key) or ("true" if default else "false")).strip().lower()
     return raw in ("1", "true", "yes", "on")
 
+
+def _db_flag(value: Any, default: bool = True) -> bool:
+    """Interpret INTEGER/TEXT flag from a settings row (not bot_settings key lookup)."""
+    if value is None:
+        return default
+    return str(value).strip().lower() in ("1", "true", "yes", "on")
+
 def _transaction_action_label(action: str, payment_method: str) -> str:
     action_norm = (action or "").strip().lower()
     method_norm = (payment_method or "").strip().lower()
@@ -2896,12 +2903,12 @@ async def api_cabinet_config(user_id: int, auth_user: AuthUser):
         bot_username = re.sub(r"[^A-Za-z0-9_]", "", bot_username_raw) or "bot"
         referrals_enabled = _setting_bool("enable_referrals", default=False)
         webapp_settings = get_webapp_settings() or {}
-        show_trial = _setting_bool(webapp_settings.get("webapp_show_trial"), default=True)
-        show_referrals = _setting_bool(webapp_settings.get("webapp_show_referrals"), default=True)
-        show_howto = _setting_bool(webapp_settings.get("webapp_show_howto"), default=True)
-        show_topup = _setting_bool(webapp_settings.get("webapp_show_topup"), default=True)
-        show_promo = _setting_bool(webapp_settings.get("webapp_show_promo"), default=True)
-        show_support = _setting_bool(webapp_settings.get("webapp_show_support"), default=True)
+        show_trial = _db_flag(webapp_settings.get("webapp_show_trial"), default=True)
+        show_referrals = _db_flag(webapp_settings.get("webapp_show_referrals"), default=True)
+        show_howto = _db_flag(webapp_settings.get("webapp_show_howto"), default=True)
+        show_topup = _db_flag(webapp_settings.get("webapp_show_topup"), default=True)
+        show_promo = _db_flag(webapp_settings.get("webapp_show_promo"), default=True)
+        show_support = _db_flag(webapp_settings.get("webapp_show_support"), default=True)
         welcome_text = (webapp_settings.get("webapp_welcome_text") or "").strip()
         accent_color = (webapp_settings.get("webapp_accent_color") or "").strip()
         content_overrides = parse_content_overrides(webapp_settings.get("webapp_content_overrides"))

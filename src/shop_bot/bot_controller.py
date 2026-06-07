@@ -45,6 +45,15 @@ class BotController:
         self._is_running = True
         logger.info("Запущен опрос Telegram (Основной-бот).")
         try:
+            from shop_bot.webapp.telegram_bridge import sync_chat_menu_button
+            try:
+                result = await sync_chat_menu_button(self._bot)
+                if result.get("ok") and result.get("action") == "set":
+                    logger.info("Menu Button Mini App: %s", result.get("url"))
+                elif result.get("skipped"):
+                    logger.info("Menu Button пропущен: %s", result.get("reason"))
+            except Exception as exc:
+                logger.warning("Не удалось синхронизировать Menu Button: %s", exc)
             await self._dp.start_polling(self._bot)
         except asyncio.CancelledError:
             logger.info("Опрос остановлен (задача отменена).")
@@ -238,3 +247,16 @@ class BotController:
         if running and self._webapp_started_at:
             uptime_sec = max(0, int(time.time() - self._webapp_started_at))
         return {"running": running, "uptime_sec": uptime_sec, "port": 8000}
+
+    def sync_telegram_menu_button(self) -> dict:
+        """Sync Telegram Menu Button with current WebApp settings (if bot is running)."""
+        if not self._bot or not self._loop or not self._loop.is_running():
+            return {"ok": False, "error": "bot_not_running"}
+        from shop_bot.webapp.telegram_bridge import sync_chat_menu_button
+
+        try:
+            future = asyncio.run_coroutine_threadsafe(sync_chat_menu_button(self._bot), self._loop)
+            return future.result(timeout=15)
+        except Exception as exc:
+            logger.error("sync_telegram_menu_button failed: %s", exc, exc_info=True)
+            return {"ok": False, "error": str(exc)}
