@@ -341,18 +341,18 @@
             }
         }
         window.showPage = showPage;
-        purchaseBtn.addEventListener('click', () => { window.location.hash = 'bay'; });
-        renewBtn.addEventListener('click', () => { window.location.hash = 'rebay'; });
-        setupBtn.addEventListener('click', () => { window.location.hash = 'setup'; });
-        profileBtn.addEventListener('click', () => { window.location.hash = 'pro'; });
-        supportBtn.addEventListener('click', () => { window.location.hash = 'support'; });
+        if (purchaseBtn) purchaseBtn.addEventListener('click', () => { window.location.hash = 'bay'; });
+        if (renewBtn) renewBtn.addEventListener('click', () => { window.location.hash = 'rebay'; });
+        if (setupBtn) setupBtn.addEventListener('click', () => { window.location.hash = 'setup'; });
+        if (profileBtn) profileBtn.addEventListener('click', () => { window.location.hash = 'pro'; });
+        if (supportBtn) supportBtn.addEventListener('click', () => { window.location.hash = 'support'; });
 
         const goBackToMain = () => { window.location.hash = ''; };
-        backBtn.addEventListener('click', goBackToMain);
-        backRenewBtn.addEventListener('click', goBackToMain);
-        backSetupBtn.addEventListener('click', goBackToMain);
-        backProfileBtn.addEventListener('click', goBackToMain);
-        backSupportBtn.addEventListener('click', goBackToMain);
+        if (backBtn) backBtn.addEventListener('click', goBackToMain);
+        if (backRenewBtn) backRenewBtn.addEventListener('click', goBackToMain);
+        if (backSetupBtn) backSetupBtn.addEventListener('click', goBackToMain);
+        if (backProfileBtn) backProfileBtn.addEventListener('click', goBackToMain);
+        if (backSupportBtn) backSupportBtn.addEventListener('click', goBackToMain);
 
         function handleHashChange() {
             const hash = window.location.hash.replace('#', '');
@@ -1981,3 +1981,4 @@
             } else {
                 showNotification("Ошибка: токен не найден", "error");
             }
+        }

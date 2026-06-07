@@ -4,7 +4,19 @@ from __future__ import annotations
 
 import json
 
-WEBAPP_DESIGN_IDS = ("classic", "ios", "desktop", "stealth", "stealth-glass", "glass-hub", "nova")
+WEBAPP_DESIGN_IDS = (
+    "classic",
+    "ios",
+    "desktop",
+    "stealth",
+    "stealth-glass",
+    "glass-hub",
+    "nova",
+    "pref-classic",
+    "pref-macos",
+    "pref-macos-v2",
+    "pref-glass-stealth",
+)
 
 WEBAPP_DESIGNS: list[dict[str, str]] = [
     {
@@ -56,6 +68,34 @@ WEBAPP_DESIGNS: list[dict[str, str]] = [
         "icon": "auto_awesome",
         "accent": "#6366f1",
     },
+    {
+        "id": "pref-classic",
+        "label": "Classic Premium",
+        "desc": "Сдержанный тёмный кабинет без неона — для мобильных",
+        "icon": "palette",
+        "accent": "#10b981",
+    },
+    {
+        "id": "pref-macos",
+        "label": "macOS",
+        "desc": "Стиль Apple: frosted glass, синий акцент, нижняя навигация",
+        "icon": "laptop_mac",
+        "accent": "#0a84ff",
+    },
+    {
+        "id": "pref-macos-v2",
+        "label": "macOS v2",
+        "desc": "Компактный workspace-кабинет с сегментированной навигацией",
+        "icon": "dashboard",
+        "accent": "#0a84ff",
+    },
+    {
+        "id": "pref-glass-stealth",
+        "label": "Glass Stealth",
+        "desc": "Матовое стекло, нейтральные тона — без неоновых теней",
+        "icon": "blur_on",
+        "accent": "#e4e4e7",
+    },
 ]
 
 DEFAULT_ENABLED_DESIGNS = ",".join(WEBAPP_DESIGN_IDS)
@@ -75,11 +115,19 @@ WEBAPP_THEME_CSS: dict[str, str] = {
     "stealth-glass": "webapp-stealth-glass.css",
     "glass-hub": "webapp-glass-hub.css",
     "nova": "webapp-nova.css",
+    "pref-classic": "webapp-pref-shell.css",
+    "pref-macos": "webapp-pref-shell.css",
+    "pref-macos-v2": "webapp-pref-shell.css",
+    "pref-glass-stealth": "webapp-pref-shell.css",
 }
 
 WEBAPP_THEME_JS: dict[str, str] = {
     "glass-hub": "webapp-glass-hub.js",
     "nova": "webapp-nova.js",
+    "pref-classic": "webapp-pref-shell.js",
+    "pref-macos": "webapp-pref-shell.js",
+    "pref-macos-v2": "webapp-pref-shell.js",
+    "pref-glass-stealth": "webapp-pref-shell.js",
 }
 
 

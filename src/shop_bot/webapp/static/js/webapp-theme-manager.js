@@ -10,7 +10,17 @@
         'stealth-glass': { id: 'stealth-glass', label: 'Glass', desc: 'Стеклянная классика с верхним меню', icon: 'blur_on' },
         'glass-hub': { id: 'glass-hub', label: 'Hub', desc: 'Дашборд: подписка, баланс и рефералы', icon: 'dashboard' },
         nova: { id: 'nova', label: 'Nova', desc: 'Премиум-кабинет с нижней навигацией', icon: 'auto_awesome' },
+        'pref-classic': { id: 'pref-classic', label: 'Classic Premium', desc: 'Сдержанный тёмный кабинет для мобильных', icon: 'palette' },
+        'pref-macos': { id: 'pref-macos', label: 'macOS', desc: 'Apple-style: frosted glass и синий акцент', icon: 'laptop_mac' },
+        'pref-macos-v2': { id: 'pref-macos-v2', label: 'macOS v2', desc: 'Компактный workspace с сегмент-навигацией', icon: 'dashboard' },
+        'pref-glass-stealth': { id: 'pref-glass-stealth', label: 'Glass Stealth', desc: 'Матовое стекло без неоновых теней', icon: 'blur_on' },
     };
+
+    const PREF_DESIGNS = ['pref-classic', 'pref-macos', 'pref-macos-v2', 'pref-glass-stealth'];
+
+    function isPrefDesign(design) {
+        return PREF_DESIGNS.includes(design);
+    }
 
     let sheetOpen = false;
 
@@ -38,6 +48,7 @@
 
     function normalizeDesign(value) {
         if (value === 'ios' || value === 'desktop' || value === 'stealth' || value === 'stealth-glass' || value === 'glass-hub' || value === 'nova') return value;
+        if (isPrefDesign(value)) return value;
         return 'classic';
     }
 
@@ -45,9 +56,9 @@
         const enabled = getEnabledDesigns();
         let list;
         if (isMobileViewport()) {
-            list = ['classic', 'ios', 'stealth', 'stealth-glass', 'glass-hub', 'nova'];
+            list = ['classic', 'ios', 'stealth', 'stealth-glass', 'glass-hub', 'nova', ...PREF_DESIGNS];
         } else {
-            list = ['classic', 'ios', 'desktop', 'stealth', 'stealth-glass', 'glass-hub', 'nova'];
+            list = ['classic', 'ios', 'desktop', 'stealth', 'stealth-glass', 'glass-hub', 'nova', ...PREF_DESIGNS];
         }
         if (enabled) list = list.filter((id) => enabled.includes(id));
         return list.length ? list : ['classic'];
@@ -93,6 +104,10 @@
         document.body.classList.toggle('webapp-design-glass-hub', finalDesign === 'glass-hub');
         document.body.classList.toggle('webapp-design-nova', finalDesign === 'nova');
         document.body.classList.toggle('webapp-design-classic', finalDesign === 'classic');
+        PREF_DESIGNS.forEach((id) => {
+            document.body.classList.toggle('webapp-design-' + id, finalDesign === id);
+        });
+        document.body.classList.toggle('webapp-design-pref', isPrefDesign(finalDesign));
         updateMetaThemeColor(finalDesign);
         renderChrome(finalDesign);
         syncPickerState(finalDesign);
@@ -108,6 +123,10 @@
         else if (design === 'stealth-glass') meta.content = '#0b0f19';
         else if (design === 'glass-hub') meta.content = '#0b0e14';
         else if (design === 'nova') meta.content = '#0f1117';
+        else if (design === 'pref-classic') meta.content = '#0d0d0f';
+        else if (design === 'pref-macos') meta.content = '#000000';
+        else if (design === 'pref-macos-v2') meta.content = '#121214';
+        else if (design === 'pref-glass-stealth') meta.content = '#09090b';
         else meta.content = '#0a0a0a';
     }
 
@@ -180,6 +199,7 @@
         document.getElementById('webapp-stealth-glass-topnav')?.remove();
         window.WebAppGlassHub?.destroy?.();
         window.WebAppNova?.destroy?.();
+        window.WebAppPref?.destroy?.();
         unwrapDesktopHomeGrid();
         document.body.classList.remove('webapp-has-tabbar', 'webapp-has-sidebar', 'webapp-has-stealth-tabbar');
     }
@@ -322,6 +342,7 @@
         if (design === 'stealth-glass') renderStealthGlassTopNav();
         if (design === 'glass-hub') window.WebAppGlassHub?.init?.();
         if (design === 'nova') window.WebAppNova?.init?.();
+        if (isPrefDesign(design)) window.WebAppPref?.init?.();
     }
 
     function renderIosTabBar() {
@@ -504,12 +525,13 @@
     function syncNav(pageId) {
         const id = pageId || getCurrentPageId();
         document.querySelectorAll(
-            '#webapp-ios-tabbar [data-page-id], #webapp-desktop-sidebar [data-page-id], #webapp-stealth-tabbar [data-page-id], #webapp-stealth-glass-topnav [data-page-id], #webapp-glass-hub-topnav [data-page-id], #webapp-nova-tabbar [data-page-id]'
+            '#webapp-ios-tabbar [data-page-id], #webapp-desktop-sidebar [data-page-id], #webapp-stealth-tabbar [data-page-id], #webapp-stealth-glass-topnav [data-page-id], #webapp-glass-hub-topnav [data-page-id], #webapp-nova-tabbar [data-page-id], #webapp-pf-tabbar [data-page-id]'
         ).forEach((btn) => {
             btn.classList.toggle('is-active', btn.dataset.pageId === id);
         });
         window.WebAppGlassHub?.syncNav?.(id);
         window.WebAppNova?.syncNav?.(id);
+        window.WebAppPref?.syncNav?.(id);
     }
 
     function buildPickerOptions() {
