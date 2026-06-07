@@ -348,11 +348,13 @@
             if (typeof window.reinitAccessPanel === 'function') {
                 window.reinitAccessPanel();
             }
+            if (typeof window.reinitHostsPanel === 'function') {
+                window.reinitHostsPanel();
+            }
         } catch (e) { console.error('Smart Refresh failed:', e); }
     }
     // ===== Конец умного обновления =====
 
-    // ===== ЗАГРУЗКА ДАННЫХ SPEEDTEST =====
     async function loadAllSpeedtestData() {
         const cards = document.querySelectorAll('.ssh-target-card');
         const results = [];
@@ -399,11 +401,19 @@
 
             if (data && data.items && data.items.length > 0) {
                 const last = data.items[0];
-                const ping = `<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[12px] text-white/50">timer</span>${last.ping_ms ?? '—'} <span class="text-[8px] text-white/30">ms</span></span>`;
-                const down = `<span class="flex items-center gap-1 text-[#22d3ee]"><span class="material-symbols-outlined text-[12px]">download</span>${last.download_mbps ?? '—'} <span class="text-[8px] text-white/30">Mbps</span></span>`;
-                const up = `<span class="flex items-center gap-1 text-[#00bfff]"><span class="material-symbols-outlined text-[12px]">upload</span>${last.upload_mbps ?? '—'} <span class="text-[8px] text-white/30">Mbps</span></span>`;
-
-                dataContainer.innerHTML = `${down}${up}${ping}`;
+                const inHosts = document.getElementById('tab-hosts')?.contains(resultContainer);
+                if (inHosts) {
+                    dataContainer.innerHTML = [
+                        `<span class="hst-ssh-metric"><span class="material-symbols-outlined">download</span>${last.download_mbps ?? '—'} Mbps</span>`,
+                        `<span class="hst-ssh-metric"><span class="material-symbols-outlined">upload</span>${last.upload_mbps ?? '—'} Mbps</span>`,
+                        `<span class="hst-ssh-metric"><span class="material-symbols-outlined">timer</span>${last.ping_ms ?? '—'} ms</span>`,
+                    ].join('');
+                } else {
+                    const ping = `<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[12px] text-white/50">timer</span>${last.ping_ms ?? '—'} <span class="text-[8px] text-white/30">ms</span></span>`;
+                    const down = `<span class="flex items-center gap-1 text-[#22d3ee]"><span class="material-symbols-outlined text-[12px]">download</span>${last.download_mbps ?? '—'} <span class="text-[8px] text-white/30">Mbps</span></span>`;
+                    const up = `<span class="flex items-center gap-1 text-[#00bfff]"><span class="material-symbols-outlined text-[12px]">upload</span>${last.upload_mbps ?? '—'} <span class="text-[8px] text-white/30">Mbps</span></span>`;
+                    dataContainer.innerHTML = `${down}${up}${ping}`;
+                }
                 resultContainer.classList.remove('hidden');
                 return parseFloat(last.download_mbps) || 0;
             }
@@ -412,6 +422,8 @@
         }
         return null;
     }
+
+    window.loadAllSpeedtestData = loadAllSpeedtestData;
 
     document.addEventListener('DOMContentLoaded', loadAllSpeedtestData);
 

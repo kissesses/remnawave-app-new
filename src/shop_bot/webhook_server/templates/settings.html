@@ -27,7 +27,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/bot-panel.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
 {% endif %}
 {% if active_tab == 'database' %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/database-panel.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/database-panel.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
 {% endif %}
 {% if active_tab == 'payments' %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/payments-panel.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
@@ -306,7 +306,7 @@ window.DATABASE_PANEL = {
     remnawaveConfigured: {{ (remnawave_db_configured | default(false)) | tojson }},
 };
 </script>
-<script src="{{ url_for('static', filename='js/database-panel.js') }}"></script>
+<script src="{{ url_for('static', filename='js/database-panel.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
 {% endif %}
 {% if active_tab in ['broadcast', 'promo', 'logs', 'webapp'] %}
 {% include 'partials/settings_other_scripts.html' %}

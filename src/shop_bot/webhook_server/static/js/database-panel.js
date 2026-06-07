@@ -30,6 +30,46 @@
         el.classList.toggle('hidden', !msg);
     }
 
+    function kvRow(title, value, mono) {
+        const row = document.createElement('div');
+        row.className = 'db-kv__row';
+        const valCls = mono ? 'db-kv__value db-panel__mono' : 'db-kv__value';
+        row.innerHTML = `<span class="db-kv__title">${title}</span><span class="${valCls}">${value}</span>`;
+        return row;
+    }
+
+    function setHubStats(overview) {
+        const connected = document.getElementById('db-stat-connected');
+        if (connected && overview) {
+            const ok = !!overview.connected;
+            connected.classList.toggle('db-stat--on', ok);
+            const icon = connected.querySelector('.material-symbols-outlined');
+            const text = connected.querySelector('span:last-child');
+            if (icon) icon.textContent = ok ? 'check_circle' : 'error';
+            if (text) text.textContent = ok ? 'Подключено' : 'Ошибка';
+        }
+        const sizeEl = document.getElementById('db-stat-size');
+        if (sizeEl) sizeEl.textContent = overview?.db_size_label || '—';
+        const rowsEl = document.getElementById('db-stat-rows');
+        if (rowsEl) rowsEl.textContent = `${overview?.table_rows_total ?? 0} строк`;
+    }
+
+    function setKpiFields(overview) {
+        if (!overview) return;
+        const root = document.getElementById('db-workspace-overview');
+        if (!root) return;
+        const map = {
+            engine: overview.engine || '—',
+            db_name: overview.db_name || '—',
+            db_size_label: overview.db_size_label || '—',
+            table_rows_total: String(overview.table_rows_total ?? 0),
+        };
+        Object.entries(map).forEach(([name, text]) => {
+            const el = root.querySelector(`.db-kpi__val[data-field="${name}"]`);
+            if (el) el.textContent = text;
+        });
+    }
+
     async function postJson(url, body) {
         const res = await fetch(url, {
             method: 'POST',
@@ -192,6 +232,9 @@
         document.getElementById('db-source-caption')?.replaceChildren(document.createTextNode(label));
         document.getElementById('db-maint-source')?.replaceChildren(document.createTextNode(label));
 
+        setHubStats(overview);
+        setKpiFields(overview);
+
         const status = document.getElementById('db-overview-status');
         if (status) {
             const setField = (name, text) => {
@@ -201,9 +244,6 @@
             setField('engine', overview.engine || '—');
             setField('connected', overview.connected ? 'OK' : 'Ошибка');
             setField('connection_mode', overview.connection_mode || '—');
-            setField('db_name', overview.db_name || '—');
-            setField('db_size_label', overview.db_size_label || '—');
-            setField('table_rows_total', String(overview.table_rows_total ?? 0));
             const pgRow = status.querySelector('[data-row="postgres_version"]');
             const pgVal = overview.postgres_version || '';
             if (pgRow) {
@@ -217,25 +257,13 @@
             tablesEl.innerHTML = '';
             const tables = overview.tables || [];
             if (!tables.length) {
-                const row = document.createElement('div');
-                row.className = 'settings-macos-row settings-macos-row--info db-panel__empty-tables';
-                const val = document.createElement('span');
-                val.className = 'settings-macos-row__value';
-                val.textContent = 'Нет данных';
-                row.appendChild(val);
-                tablesEl.appendChild(row);
+                const empty = document.createElement('div');
+                empty.className = 'db-empty';
+                empty.textContent = 'Нет данных';
+                tablesEl.appendChild(empty);
             } else {
                 tables.forEach((t) => {
-                    const row = document.createElement('div');
-                    row.className = 'settings-macos-row settings-macos-row--info';
-                    const title = document.createElement('span');
-                    title.className = 'settings-macos-row__title';
-                    title.textContent = t.label || t.id || '—';
-                    const value = document.createElement('span');
-                    value.className = 'settings-macos-row__value db-panel__mono';
-                    value.textContent = String(t.rows ?? 0);
-                    row.append(title, value);
-                    tablesEl.appendChild(row);
+                    tablesEl.appendChild(kvRow(t.label || t.id || '—', String(t.rows ?? 0), true));
                 });
             }
         }
@@ -261,7 +289,9 @@
     function switchWorkspace(name) {
         state.workspace = name;
         document.querySelectorAll('.db-panel__workspace-btn').forEach((btn) => {
-            btn.classList.toggle('is-active', btn.dataset.workspace === name);
+            const active = btn.dataset.workspace === name;
+            btn.classList.toggle('is-active', active);
+            btn.setAttribute('aria-selected', active ? 'true' : 'false');
         });
         document.querySelectorAll('.db-panel__workspace').forEach((panel) => {
             const active = panel.dataset.workspace === name;
@@ -295,13 +325,13 @@
     async function loadTables() {
         const list = document.getElementById('db-tables-list');
         if (!list) return;
-        list.innerHTML = '<div class="settings-macos-row settings-macos-row--info"><span class="settings-macos-row__value">Загрузка…</span></div>';
+        list.innerHTML = '<div class="db-empty">Загрузка…</div>';
         try {
             const data = await getJson(`/settings/database/tables.json?${sourceQuery()}`);
             state.tables = data.tables || [];
             renderTablesList(document.getElementById('db-table-search')?.value || '');
         } catch (e) {
-            list.innerHTML = `<div class="settings-macos-row settings-macos-row--info"><span class="settings-macos-row__value">${e.message}</span></div>`;
+            list.innerHTML = `<div class="db-empty">${e.message}</div>`;
         }
     }
 
@@ -315,19 +345,19 @@
         });
         list.innerHTML = '';
         if (!items.length) {
-            list.innerHTML = '<div class="settings-macos-row settings-macos-row--info db-panel__empty-tables"><span class="settings-macos-row__value">Нет таблиц</span></div>';
+            list.innerHTML = '<div class="db-empty">Нет таблиц</div>';
             return;
         }
         items.forEach((t) => {
             const row = document.createElement('button');
             row.type = 'button';
-            row.className = 'settings-macos-row settings-macos-row--link db-panel__table-row';
+            row.className = 'db-table-row db-panel__table-row';
             row.innerHTML = `
-                <span class="settings-macos-row__body">
-                    <span class="settings-macos-row__title db-panel__mono">${t.id}${t.protected ? ' <span class="db-panel__badge">без удаления</span>' : ''}</span>
-                    <span class="settings-macos-row__sub">${t.label || t.id} · ${t.rows ?? 0} строк · ${t.size_label || '—'}</span>
+                <span class="db-table-row__body">
+                    <span class="db-table-row__title db-panel__mono">${t.id}${t.protected ? ' <span class="db-panel__badge">без удаления</span>' : ''}</span>
+                    <span class="db-table-row__sub">${t.label || t.id} · ${t.rows ?? 0} строк · ${t.size_label || '—'}</span>
                 </span>
-                <span class="material-symbols-outlined settings-macos-row__chevron">chevron_right</span>`;
+                <span class="material-symbols-outlined db-table-row__chevron">chevron_right</span>`;
             row.addEventListener('click', () => openTableModal(t.id));
             list.appendChild(row);
         });
@@ -548,24 +578,17 @@
             }
             group?.classList.remove('hidden');
             if (stats.error) {
-                el.innerHTML = `<div class="settings-macos-row settings-macos-row--info"><span class="settings-macos-row__value">${stats.error}</span></div>`;
+                el.innerHTML = `<div class="db-empty">${stats.error}</div>`;
                 return;
             }
-            el.innerHTML = `
-                <div class="settings-macos-row settings-macos-row--info">
-                    <span class="settings-macos-row__title">Активные</span>
-                    <span class="settings-macos-row__value">${stats.active ?? 0}</span>
-                </div>
-                <div class="settings-macos-row settings-macos-row--info">
-                    <span class="settings-macos-row__title">Idle</span>
-                    <span class="settings-macos-row__value">${stats.idle ?? 0}</span>
-                </div>
-                <div class="settings-macos-row settings-macos-row--info">
-                    <span class="settings-macos-row__title">Всего</span>
-                    <span class="settings-macos-row__value">${stats.total ?? 0}</span>
-                </div>`;
+            el.innerHTML = '';
+            el.append(
+                kvRow('Активные', String(stats.active ?? 0)),
+                kvRow('Idle', String(stats.idle ?? 0)),
+                kvRow('Всего', String(stats.total ?? 0)),
+            );
         } catch (e) {
-            el.innerHTML = `<div class="settings-macos-row settings-macos-row--info"><span class="settings-macos-row__value">${e.message}</span></div>`;
+            el.innerHTML = `<div class="db-empty">${e.message}</div>`;
         }
     }
 
@@ -580,6 +603,10 @@
 
         document.querySelectorAll('.db-panel__workspace-btn').forEach((btn) => {
             btn.addEventListener('click', () => switchWorkspace(btn.dataset.workspace));
+        });
+
+        document.querySelectorAll('.db-goto-tables').forEach((btn) => {
+            btn.addEventListener('click', () => switchWorkspace('tables'));
         });
 
         if (state.source === 'remnawave' && cfg.remnawaveConfigured === false) {
@@ -633,6 +660,8 @@
         initStepupGate();
         if (document.getElementById('db-panel-unlocked')) initUnlocked();
     }
+
+    window.reinitDatabasePanel = init;
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);

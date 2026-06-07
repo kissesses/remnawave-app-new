@@ -1,10 +1,6 @@
-{% set hst_ns = namespace(visible=0, plans=0) %}
-{% for h in hosts or [] %}
-{% if h.see is none or h.see == 1 %}{% set hst_ns.visible = hst_ns.visible + 1 %}{% endif %}
-{% set hst_ns.plans = hst_ns.plans + (h.plans|length) %}
-{% endfor %}
+{% set hs = hosts_studio or {} %}
 
-<section id="tab-hosts" class="tab-content hst-panel">
+<section id="tab-hosts" class="tab-content hst-panel" data-hst-default-tab="panels">
     <header class="hst-hub">
         <div class="hst-hub__intro">
             <div class="hst-hub__icon" aria-hidden="true">
@@ -12,90 +8,185 @@
             </div>
             <div>
                 <h2 class="hst-hub__title">Hosts Studio</h2>
-                <p class="hst-hub__desc">Панели Remnawave · тарифы · SSH · устройства</p>
+                <p class="hst-hub__desc" id="hst-hub-desc">Панели Remnawave · тарифы · SSH · устройства</p>
             </div>
         </div>
-        <div class="hst-hub__stats">
+        <nav class="hst-channel-tabs" role="tablist" aria-label="Разделы хостов">
+            <button type="button" class="hst-channel-tab" data-hst-tab="overview" role="tab">
+                <span class="material-symbols-outlined">dashboard</span> Обзор
+            </button>
+            <button type="button" class="hst-channel-tab is-active" data-hst-tab="panels" role="tab" aria-selected="true">
+                <span class="material-symbols-outlined">dns</span> Панели
+            </button>
+            <button type="button" class="hst-channel-tab" data-hst-tab="ssh" role="tab">
+                <span class="material-symbols-outlined">terminal</span> SSH-цели
+                {% if hs.ssh_targets %}<span class="hst-channel-tab__count">{{ hs.ssh_targets }}</span>{% endif %}
+            </button>
+            <button type="button" class="hst-channel-tab" data-hst-tab="guide" role="tab">
+                <span class="material-symbols-outlined">menu_book</span> Справка
+            </button>
+        </nav>
+        <div class="hst-hub__stats" id="hst-hub-stats">
             <span class="hst-stat">
                 <span class="material-symbols-outlined">cloud</span>
-                <span>{{ hosts|length if hosts else 0 }} хостов</span>
+                <span>{{ hs.total or 0 }} хостов</span>
             </span>
-            <span class="hst-stat">
+            <span class="hst-stat hst-stat--on">
                 <span class="material-symbols-outlined">visibility</span>
-                <span>{{ hst_ns.visible }} видимых</span>
+                <span>{{ hs.visible or 0 }} видимых</span>
             </span>
             <span class="hst-stat">
                 <span class="material-symbols-outlined">category</span>
-                <span>{{ hst_ns.plans }} тарифов</span>
+                <span>{{ hs.plans or 0 }} тарифов</span>
             </span>
         </div>
-        <button type="button" class="hst-btn hst-btn--primary" id="hst-add-host-btn">
-            <span class="material-symbols-outlined">add_circle</span>
-            Новый хост
-        </button>
+        <div class="hst-hub__actions">
+            <a class="hst-link-chip" href="{{ url_for('monitor_page') }}">
+                <span class="material-symbols-outlined">monitoring</span> Мониторинг
+            </a>
+            <a class="hst-link-chip" href="{{ url_for('node_page') }}">
+                <span class="material-symbols-outlined">hub</span> Ноды
+            </a>
+            <button type="button" class="hst-btn hst-btn--primary" id="hst-add-host-btn">
+                <span class="material-symbols-outlined">add_circle</span>
+                Новый хост
+            </button>
+        </div>
     </header>
 
-    <div class="hst-add-drawer">
-        <div class="hst-add-drawer__head" onclick="toggleAddHostForm()">
-            <div class="hst-hub__intro">
-                <div class="hst-hub__icon" aria-hidden="true">
-                    <span class="material-symbols-outlined">add_link</span>
-                </div>
-                <div>
-                    <h3 class="hst-hub__title">Подключить панель Remnawave</h3>
-                    <p class="hst-hub__desc">API token · squad UUID · базовый URL</p>
-                </div>
+    <!-- Overview -->
+    <div class="hst-pane" data-hst-pane="overview" hidden>
+        <div class="hst-kpi-row">
+            <div class="hst-kpi">
+                <div class="hst-kpi__val">{{ hs.total or 0 }}</div>
+                <div class="hst-kpi__lbl">Панелей Remnawave</div>
             </div>
-            <span id="add-host-icon" class="material-symbols-outlined" style="color:var(--hst-dim);transition:transform .3s">expand_more</span>
+            <div class="hst-kpi">
+                <div class="hst-kpi__val">{{ hs.plans or 0 }}</div>
+                <div class="hst-kpi__lbl">Тарифов всего</div>
+            </div>
+            <div class="hst-kpi">
+                <div class="hst-kpi__val">{{ hs.visible or 0 }}</div>
+                <div class="hst-kpi__lbl">Видимых в боте</div>
+            </div>
+            <div class="hst-kpi">
+                <div class="hst-kpi__val">{{ hs.ssh_hosts or 0 }}/{{ hs.total or 0 }}</div>
+                <div class="hst-kpi__lbl">SSH на хостах</div>
+            </div>
         </div>
-        <div id="add-host-form" class="hst-add-drawer__body hidden">
-            <form action="{{ url_for('add_host_route') }}" method="post">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                <div class="hst-grid-2">
-                    <div class="hst-field">
-                        <label class="hst-label">Название хоста</label>
-                        <input type="text" name="host_name" placeholder="server1" required class="hst-input" />
-                    </div>
-                    <div class="hst-field">
-                        <label class="hst-label">Базовый URL Remnawave</label>
-                        <input type="url" name="remnawave_base_url" placeholder="https://panel.example.com" required autocomplete="off" class="hst-input" />
-                    </div>
-                    <div class="hst-field">
-                        <label class="hst-label">API Token</label>
-                        <input type="password" name="remnawave_api_token" placeholder="••••••••••••••••" required autocomplete="new-password" class="hst-input" />
-                    </div>
-                    <div class="hst-field">
-                        <label class="hst-label">Squad UUID (опционально)</label>
-                        <input type="text" name="squad_uuid" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" class="hst-input" />
-                    </div>
-                </div>
-                <div style="margin-top:0.65rem;display:flex;justify-content:flex-end">
-                    <button type="submit" class="hst-btn hst-btn--primary">
-                        <span class="material-symbols-outlined">save</span>
-                        Сохранить хост
-                    </button>
-                </div>
-            </form>
+        <div class="hst-overview-grid">
+            <button type="button" class="hst-overview-card" data-hst-goto="panels">
+                <span class="material-symbols-outlined hst-overview-card__icon">dns</span>
+                <span class="hst-overview-card__title">Управление панелями</span>
+                <span class="hst-overview-card__meta">{{ hs.total or 0 }} хостов · {{ hs.plans or 0 }} тарифов</span>
+            </button>
+            <button type="button" class="hst-overview-card" data-hst-goto="panels">
+                <span class="material-symbols-outlined hst-overview-card__icon">category</span>
+                <span class="hst-overview-card__title">Тарифы и устройства</span>
+                <span class="hst-overview-card__meta">Цены · HWID · tier-режим</span>
+            </button>
+            <button type="button" class="hst-overview-card" data-hst-goto="ssh">
+                <span class="material-symbols-outlined hst-overview-card__icon">terminal</span>
+                <span class="hst-overview-card__title">SSH-цели</span>
+                <span class="hst-overview-card__meta">{{ hs.ssh_targets or 0 }} целей · speedtest</span>
+            </button>
+            <button type="button" class="hst-overview-card" data-hst-goto="guide">
+                <span class="material-symbols-outlined hst-overview-card__icon">menu_book</span>
+                <span class="hst-overview-card__title">Справка</span>
+                <span class="hst-overview-card__meta">Подключение и настройка</span>
+            </button>
         </div>
+        {% if hs.hidden %}
+        <div class="hst-notice hst-notice--warn">
+            <span class="material-symbols-outlined">visibility_off</span>
+            <span>{{ hs.hidden }} скрыт{% if hs.hidden == 1 %}ый{% else %}ых{% endif %} хост{% if hs.hidden == 1 %}{% else %}ов{% endif %} — не отобража{% if hs.hidden == 1 %}ется{% else %}ются{% endif %} в боте</span>
+        </div>
+        {% endif %}
     </div>
 
-    <div class="hst-studio">
-        <aside class="hst-picker">
-            <div class="hst-picker__toolbar">
-                <label class="hst-search">
-                    <span class="material-symbols-outlined" style="font-size:1rem;color:var(--hst-dim)">search</span>
+    <!-- Panels -->
+    <div class="hst-pane" data-hst-pane="panels">
+        <div class="hst-add-drawer">
+            <div class="hst-add-drawer__head" onclick="toggleAddHostForm()">
+                <div class="hst-hub__intro">
+                    <div class="hst-hub__icon" aria-hidden="true">
+                        <span class="material-symbols-outlined">add_link</span>
+                    </div>
+                    <div>
+                        <h3 class="hst-hub__title">Подключить панель Remnawave</h3>
+                        <p class="hst-hub__desc">API token · squad UUID · базовый URL</p>
+                    </div>
+                </div>
+                <span id="add-host-icon" class="material-symbols-outlined hst-add-drawer__chev">expand_more</span>
+            </div>
+            <div id="add-host-form" class="hst-add-drawer__body hidden">
+                <form action="{{ url_for('add_host_route') }}" method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <div class="hst-grid-2">
+                        <div class="hst-field">
+                            <label class="hst-label">Название хоста</label>
+                            <input type="text" name="host_name" placeholder="server1" required class="hst-input" />
+                        </div>
+                        <div class="hst-field">
+                            <label class="hst-label">Базовый URL Remnawave</label>
+                            <input type="url" name="remnawave_base_url" placeholder="https://panel.example.com" required autocomplete="off" class="hst-input" />
+                        </div>
+                        <div class="hst-field">
+                            <label class="hst-label">API Token</label>
+                            <input type="password" name="remnawave_api_token" placeholder="••••••••••••••••" required autocomplete="new-password" class="hst-input" />
+                        </div>
+                        <div class="hst-field">
+                            <label class="hst-label">Squad UUID (опционально)</label>
+                            <input type="text" name="squad_uuid" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" class="hst-input" />
+                        </div>
+                    </div>
+                    <div class="hst-form-row" style="margin-top:0.65rem;justify-content:flex-end">
+                        <button type="submit" class="hst-btn hst-btn--primary">
+                            <span class="material-symbols-outlined">save</span>
+                            Сохранить хост
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="hst-board">
+            <div class="hst-board__toolbar">
+                <label class="hst-search hst-board__search">
+                    <span class="material-symbols-outlined">search</span>
                     <input type="search" id="hst-search-input" class="hst-search__input" placeholder="Поиск хоста…" autocomplete="off" />
                 </label>
+                <div class="hst-filters" id="hst-filters">
+                    <button type="button" class="hst-filter is-active" data-hst-filter="all">Все</button>
+                    <button type="button" class="hst-filter" data-hst-filter="visible">Видимые</button>
+                    <button type="button" class="hst-filter hst-filter--warn" data-hst-filter="hidden">Скрытые</button>
+                </div>
             </div>
-            <div id="hosts-grid-container">
+
+            <div class="hst-studio">
+                <aside class="hst-picker">
+                    <div id="hosts-grid-container">
                 {% if hosts %}
                 {% for host in hosts %}
-                <div class="hst-tile host-card" draggable="true" data-host-name="{{ host.host_name }}">
+                <div class="hst-tile host-card" draggable="true"
+                    data-host-name="{{ host.host_name }}"
+                    data-hst-visible="{% if host.see is none or host.see == 1 %}1{% else %}0{% endif %}"
+                    data-hst-ssh="{% if host.ssh_host %}1{% else %}0{% endif %}">
                     <span class="material-symbols-outlined hst-tile__drag drag-handle" onclick="event.stopPropagation()">drag_indicator</span>
                     <div class="hst-tile__icon"><span class="material-symbols-outlined">dns</span></div>
-                    <div style="min-width:0">
+                    <div class="hst-tile__body">
                         <p class="hst-tile__name">{{ host.host_name }}</p>
                         <p class="hst-tile__meta">{{ host.plans|length }} тариф · {{ host.host_url or 'URL не задан' }}</p>
+                        <div class="hst-tile__tags">
+                            {% if host.ssh_host %}
+                            <span class="hst-tile__tag hst-tile__tag--ssh" title="SSH настроен"><span class="material-symbols-outlined">terminal</span></span>
+                            {% endif %}
+                            {% if host.latest_speedtest and host.latest_speedtest.ok and host.latest_speedtest.download_mbps %}
+                            <span class="hst-tile__tag hst-tile__tag--speed" title="Последний speedtest">
+                                <span class="material-symbols-outlined">speed</span>{{ host.latest_speedtest.download_mbps|round(0) }}↓
+                            </span>
+                            {% endif %}
+                        </div>
                     </div>
                     {% if host.see is not none and host.see != 1 %}
                     <span class="hst-tile__badge hst-tile__badge--hidden">скрыт</span>
@@ -503,6 +594,147 @@
             </div>
             {% endfor %}
             {% endif %}
+        </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SSH targets -->
+    <div class="hst-pane" data-hst-pane="ssh" hidden>
+        <div class="hst-add-drawer">
+            <div class="hst-add-drawer__head" id="hst-add-ssh-toggle">
+                <div class="hst-hub__intro">
+                    <div class="hst-hub__icon" aria-hidden="true">
+                        <span class="material-symbols-outlined">add_circle</span>
+                    </div>
+                    <div>
+                        <h3 class="hst-hub__title">Добавить SSH-цель</h3>
+                        <p class="hst-hub__desc">Speedtest и мониторинг без привязки к панели</p>
+                    </div>
+                </div>
+                <span id="hst-add-ssh-icon" class="material-symbols-outlined hst-add-drawer__chev">expand_more</span>
+            </div>
+            <div id="hst-add-ssh-form" class="hst-add-drawer__body hidden">
+                <form action="{{ url_for('node_create_ssh_target_route') }}" method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <div class="hst-grid-2">
+                        <div class="hst-field">
+                            <label class="hst-label">Название цели</label>
+                            <input type="text" name="target_name" placeholder="server-eu" required class="hst-input" />
+                        </div>
+                        <div class="hst-field">
+                            <label class="hst-label">SSH Host</label>
+                            <input type="text" name="ssh_host" placeholder="1.2.3.4" required autocomplete="off" class="hst-input" />
+                        </div>
+                        <div class="hst-field">
+                            <label class="hst-label">Порт</label>
+                            <input type="number" name="ssh_port" value="22" required class="hst-input" />
+                        </div>
+                        <div class="hst-field">
+                            <label class="hst-label">Пользователь</label>
+                            <input type="text" name="ssh_user" value="root" required autocomplete="off" class="hst-input" />
+                        </div>
+                        <div class="hst-field">
+                            <label class="hst-label">Пароль (опц.)</label>
+                            <input type="password" name="ssh_password" placeholder="••••••" autocomplete="new-password" class="hst-input" />
+                        </div>
+                        <div class="hst-field">
+                            <label class="hst-label">Описание</label>
+                            <input type="text" name="description" placeholder="Европа" class="hst-input" />
+                        </div>
+                    </div>
+                    <div class="hst-form-row" style="margin-top:0.65rem;justify-content:flex-end">
+                        <button type="submit" class="hst-btn hst-btn--primary">
+                            <span class="material-symbols-outlined">add</span>
+                            Создать SSH-цель
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="hst-board">
+            <div class="hst-board__toolbar">
+                <p class="hst-board__hint">
+                    <span class="material-symbols-outlined">info</span>
+                    Полное управление — deploy, WARP, терминал — на странице <a href="{{ url_for('node_page') }}">Ноды</a>
+                </p>
+            </div>
+            {% if ssh_targets %}
+            <div class="hst-ssh-grid" id="hst-ssh-grid">
+                {% for t in ssh_targets %}
+                <div class="hst-ssh-card ssh-target-card" data-target-name="{{ t.target_name }}">
+                    <div class="hst-ssh-card__head">
+                        <div class="hst-ssh-card__info">
+                            <span class="material-symbols-outlined hst-ssh-card__icon">terminal</span>
+                            <div>
+                                <p class="hst-ssh-card__name">{{ t.target_name }}</p>
+                                <p class="hst-ssh-card__host">{{ t.ssh_host }}:{{ t.ssh_port or 22 }}</p>
+                            </div>
+                        </div>
+                        <form action="{{ url_for('node_delete_ssh_target_route', target_name=t.target_name) }}" method="post" data-confirm="Удалить SSH-цель «{{ t.target_name }}»?">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                            <button type="submit" class="hst-btn hst-btn--danger" title="Удалить">
+                                <span class="material-symbols-outlined">delete</span>
+                            </button>
+                        </form>
+                    </div>
+                    {% if t.description %}
+                    <p class="hst-ssh-card__desc">{{ t.description }}</p>
+                    {% endif %}
+                    <div id="st-result-{{ t.target_name }}" class="hst-ssh-card__metrics hidden">
+                        <div id="st-data-{{ t.target_name }}" class="hst-ssh-card__metrics-row"></div>
+                        <span id="st-badge-{{ t.target_name }}"></span>
+                    </div>
+                    <div class="hst-ssh-card__actions">
+                        <form action="{{ url_for('node_run_ssh_target_speedtest_route', target_name=t.target_name) }}" method="post">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                            <button type="submit" class="hst-btn speedtest-loading-btn" data-label="Speedtest">
+                                <span class="material-symbols-outlined">speed</span> Speedtest
+                            </button>
+                        </form>
+                        <a href="{{ url_for('node_page') }}#ssh" class="hst-btn">
+                            <span class="material-symbols-outlined">open_in_new</span> Ноды
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="hst-empty-state">
+                <span class="material-symbols-outlined" style="font-size:2rem;opacity:.35">terminal</span>
+                <p>SSH-цели не настроены</p>
+                <button type="button" class="hst-btn hst-btn--primary" id="hst-add-ssh-empty">
+                    <span class="material-symbols-outlined">add</span> Добавить первую
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Guide -->
+    <div class="hst-pane" data-hst-pane="guide" hidden>
+        <div class="hst-guide">
+            <article class="hst-guide-card">
+                <h3 class="hst-guide-card__title"><span class="material-symbols-outlined">add_link</span> Подключение панели</h3>
+                <p>Укажите базовый URL Remnawave, API token и опционально Squad UUID. После добавления настройте URL панели, тарифы и видимость в боте.</p>
+            </article>
+            <article class="hst-guide-card">
+                <h3 class="hst-guide-card__title"><span class="material-symbols-outlined">category</span> Тарифы</h3>
+                <p>Каждый хост имеет свой набор тарифов: месяцы, цена, лимит трафика (GB), HWID. Стиль кнопки и emoji ID задаются отдельно для хоста и тарифа.</p>
+            </article>
+            <article class="hst-guide-card">
+                <h3 class="hst-guide-card__title"><span class="material-symbols-outlined">devices</span> Режим устройств</h3>
+                <p><strong>По тарифу</strong> — лимит HWID из тарифа. <strong>Выбор (tiers)</strong> — пользователь докупает устройства по tier-ценам; базовое количество задаётся отдельно.</p>
+            </article>
+            <article class="hst-guide-card">
+                <h3 class="hst-guide-card__title"><span class="material-symbols-outlined">terminal</span> SSH и Speedtest</h3>
+                <p>SSH на хосте используется для автоустановки Speedtest CLI. SSH-цели — отдельные серверы для мониторинга без привязки к Remnawave-панели. Управление на странице <a href="{{ url_for('node_page') }}">Ноды</a>.</p>
+            </article>
+            <article class="hst-guide-card">
+                <h3 class="hst-guide-card__title"><span class="material-symbols-outlined">visibility</span> Видимость</h3>
+                <p>Скрытые хосты не показываются пользователям в боте, но остаются в админке. Порядок хостов меняется перетаскиванием в списке слева.</p>
+            </article>
         </div>
     </div>
 </section>

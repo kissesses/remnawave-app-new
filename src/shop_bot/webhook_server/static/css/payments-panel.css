@@ -261,6 +261,17 @@ html:not(.dark) #tab-payments.pay-panel {
 
 .pay-card.is-filter-hidden { display: none !important; }
 
+#tab-payments .pay-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+#tab-payments .pay-stack > .pay-domain-card,
+#tab-payments .pay-stack > .pay-grid {
+    margin-bottom: 0;
+}
+
 /* Legacy hero — removed from markup */
 .pay-panel__hero { display: none; }
 
@@ -385,7 +396,6 @@ html:not(.dark) #tab-payments.pay-panel {
 /* Domain highlight card */
 .pay-domain-card {
     padding: 1rem 1.1rem;
-    margin-bottom: 0.85rem;
     border-radius: 14px;
     border: 1px solid rgba(var(--pay-accent-rgb), 0.28);
     background: var(--pay-accent-soft);
@@ -840,13 +850,7 @@ html:not(.dark) .pay-webhook {
     font-size: 1.05rem;
 }
 
-/* Section body spacing */
+/* Section body spacing (legacy markup) */
 .pay-panel .settings-form-section__body {
     padding-top: 0.25rem;
-}
-
-.pay-panel .settings-form-section__body > .pay-stack {
-    display: flex;
-    flex-direction: column;
-    gap: 0.85rem;
 }

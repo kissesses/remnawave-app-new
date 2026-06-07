@@ -504,6 +504,7 @@ def _load_settings_page_context(tab: str) -> dict:
 
     if tab == 'hosts':
         hosts = get_all_hosts()
+        visible_count = hidden_count = plans_total = ssh_on_hosts = 0
         for host in hosts:
             host['plans'] = get_plans_for_host(host['host_name'])
             host['device_tiers'] = get_device_tiers(host['host_name'])
@@ -511,11 +512,26 @@ def _load_settings_page_context(tab: str) -> dict:
                 host['latest_speedtest'] = get_latest_speedtest(host['host_name'])
             except Exception:
                 host['latest_speedtest'] = None
+            plans_total += len(host['plans'])
+            if host.get('see') is not None and host.get('see') != 1:
+                hidden_count += 1
+            else:
+                visible_count += 1
+            if host.get('ssh_host'):
+                ssh_on_hosts += 1
         ctx['hosts'] = hosts
         try:
             ctx['ssh_targets'] = get_all_ssh_targets()
         except Exception:
             ctx['ssh_targets'] = []
+        ctx['hosts_studio'] = {
+            'total': len(hosts),
+            'visible': visible_count,
+            'hidden': hidden_count,
+            'plans': plans_total,
+            'ssh_hosts': ssh_on_hosts,
+            'ssh_targets': len(ctx.get('ssh_targets') or []),
+        }
 
     if tab == 'panel':
         backups = []
