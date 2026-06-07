@@ -24,6 +24,7 @@
 {% endif %}
 {% if active_tab == 'bot' %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/bot-channels.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/bot-panel.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
 {% endif %}
 {% if active_tab == 'database' %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/database-panel.css') }}" />
@@ -364,66 +365,20 @@ window.REF_PANEL_BOOT = {
 {% endif %}
 {% if active_tab == 'bot' %}
 <script>
-(function () {
-    const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
-    document.querySelectorAll('[data-notify-test]').forEach((btn) => {
-        btn.addEventListener('click', async () => {
-            const category = btn.getAttribute('data-notify-test');
-            btn.disabled = true;
-            try {
-                const resp = await fetch('{{ url_for("backup_test_channel_route") }}', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf, 'X-Requested-With': 'XMLHttpRequest' },
-                    credentials: 'same-origin',
-                    body: JSON.stringify({ category }),
-                });
-                const data = await resp.json();
-                if (typeof window.showToast === 'function') {
-                    window.showToast(data.ok ? 'success' : 'danger', data.message || data.error || 'Ошибка');
-                }
-            } catch (_) {
-                if (typeof window.showToast === 'function') window.showToast('danger', 'Ошибка сети');
-            } finally {
-                btn.disabled = false;
-            }
-        });
-    });
-
-    document.getElementById('bot-notify-create-topics')?.addEventListener('click', async () => {
-        const btn = document.getElementById('bot-notify-create-topics');
-        if (!btn) return;
-        const chatInput = document.querySelector('input[name="notifications_chat_id"]');
-        const chatId = chatInput?.value?.trim() || '';
-        btn.disabled = true;
-        try {
-            const resp = await fetch('{{ url_for("create_notification_topics_route") }}', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf, 'X-Requested-With': 'XMLHttpRequest' },
-                credentials: 'same-origin',
-                body: JSON.stringify({ chat_id: chatId }),
-            });
-            const data = await resp.json();
-            if (data.ok && data.topics) {
-                Object.entries(data.topics).forEach(([field, topicId]) => {
-                    const input = document.querySelector(`input[name="${field}"]`);
-                    if (input && topicId) input.value = topicId;
-                });
-            }
-            const created = (data.created || []).length;
-            const skipped = (data.skipped || []).length;
-            const msg = data.ok
-                ? `Топики: создано ${created}, пропущено ${skipped}`
-                : (data.error || 'Ошибка создания топиков');
-            if (typeof window.showToast === 'function') {
-                window.showToast(data.ok ? 'success' : 'danger', msg);
-            }
-        } catch (_) {
-            if (typeof window.showToast === 'function') window.showToast('danger', 'Ошибка сети');
-        } finally {
-            btn.disabled = false;
-        }
-    });
-})();
+window.BOT_PANEL_BOOT = {
+    statusUrl: {{ url_for('settings_bot_status_json') | tojson }},
+    validateUrl: {{ url_for('settings_bot_validate_token') | tojson }},
+    startMain: {{ url_for('start_bot_route') | tojson }},
+    stopMain: {{ url_for('stop_bot_route') | tojson }},
+    startSupport: {{ url_for('start_support_bot_route') | tojson }},
+    stopSupport: {{ url_for('stop_support_bot_route') | tojson }},
+    startBoth: {{ url_for('start_both_bots_route') | tojson }},
+    stopBoth: {{ url_for('stop_both_bots_route') | tojson }},
+    notifyTest: {{ url_for('backup_test_channel_route') | tojson }},
+    createTopics: {{ url_for('create_notification_topics_route') | tojson }},
+    canControl: {{ 'true' if can('bot_control') else 'false' }}
+};
 </script>
+<script src="{{ url_for('static', filename='js/bot-panel.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
 {% endif %}
 {% endblock %}

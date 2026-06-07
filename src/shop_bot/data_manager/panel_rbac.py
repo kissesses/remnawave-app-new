@@ -199,6 +199,8 @@ ENDPOINT_PERMISSIONS: dict[str, str] = {
     "settings_audit_entry": "settings_audit",
     "settings_audit_export": "settings_audit",
     "settings_audit_catalog": "settings_audit",
+    "settings_bot_status_json": "settings_bot",
+    "settings_bot_validate_token": "settings_bot",
     "settings_anti_fraud_signals": "settings_anti_fraud",
     "settings_anti_fraud_signal": "settings_anti_fraud",
     "settings_access_role_duplicate": "settings_access",

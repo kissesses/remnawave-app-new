@@ -422,7 +422,10 @@ def _load_settings_page_context(tab: str) -> dict:
 
     if tab == 'bot':
         from shop_bot.data_manager import telegram_notify as tg_notify
-        ctx['notification_categories'] = [
+        from shop_bot.data_manager.db.hosts import get_admin_stats
+        from shop_bot.data_manager.remnawave_repository import get_webapp_settings
+
+        notification_categories = [
             {
                 'id': cat,
                 'label': tg_notify.CATEGORY_LABELS.get(cat, cat),
@@ -442,6 +445,45 @@ def _load_settings_page_context(tab: str) -> dict:
             }
             for cat in tg_notify.ALL_CATEGORIES
         ]
+        ctx['notification_categories'] = notification_categories
+
+        webapp = get_webapp_settings() or {}
+        topics_set = sum(
+            1 for cat in notification_categories
+            if (current_settings.get(cat['field']) or '').strip()
+        )
+        try:
+            shop_stats = get_admin_stats()
+        except Exception:
+            shop_stats = {}
+        main_username = (current_settings.get('telegram_bot_username') or '').strip().lstrip('@')
+        support_username = (current_settings.get('support_bot_username') or '').strip().lstrip('@')
+        admin_ids_extra = ''
+        raw_admin_ids = (current_settings.get('admin_telegram_ids') or '').strip()
+        if raw_admin_ids:
+            try:
+                parsed_ids = json.loads(raw_admin_ids)
+                if isinstance(parsed_ids, list):
+                    admin_ids_extra = ', '.join(str(x) for x in parsed_ids if str(x).strip())
+                else:
+                    admin_ids_extra = raw_admin_ids
+            except (ValueError, TypeError):
+                admin_ids_extra = raw_admin_ids
+        ctx['bot_studio'] = {
+            'main_username': main_username,
+            'support_username': support_username,
+            'main_link': f'https://t.me/{main_username}' if main_username else '',
+            'support_link': f'https://t.me/{support_username}' if support_username else '',
+            'notify_chat_configured': bool((current_settings.get('notifications_chat_id') or '').strip()),
+            'notify_topics_set': topics_set,
+            'notify_topics_total': len(notification_categories),
+            'webapp_enabled': bool(webapp.get('webapp_enable')),
+            'webapp_title': (webapp.get('webapp_title') or 'VPN').strip(),
+            'total_users': int(shop_stats.get('total_users') or 0),
+            'today_new_users': int(shop_stats.get('today_new_users') or 0),
+            'auto_start': (current_settings.get('auto_start_bot') or '0') == '1',
+            'admin_ids_extra': admin_ids_extra,
+        }
 
     if tab == 'hosts':
         hosts = get_all_hosts()
@@ -1931,6 +1973,72 @@ def settings_anti_fraud_signal(key: str):
     return jsonify({'ok': True, **detail})
 
 
+def _bot_status_payload() -> dict:
+    main_status = panel_ctx.bot_controller.get_status() or {}
+    support_status = panel_ctx.support_bot_controller.get_status() or {}
+    settings = get_all_settings()
+    main_ok = all(settings.get(k) for k in ('telegram_bot_token', 'telegram_bot_username', 'admin_telegram_id'))
+    support_ok = all(settings.get(k) for k in ('support_bot_token', 'support_bot_username', 'admin_telegram_id'))
+    try:
+        from shop_bot.data_manager.remnawave_repository import get_webapp_settings
+        webapp = get_webapp_settings() or {}
+    except Exception:
+        webapp = {}
+    return {
+        'main': {
+            'running': bool(main_status.get('is_running')),
+            'configured': main_ok,
+            'username': (settings.get('telegram_bot_username') or '').strip().lstrip('@'),
+        },
+        'support': {
+            'running': bool(support_status.get('is_running')),
+            'configured': support_ok,
+            'username': (settings.get('support_bot_username') or '').strip().lstrip('@'),
+        },
+        'webapp': {
+            'enabled': bool(webapp.get('webapp_enable')),
+            'title': (webapp.get('webapp_title') or 'VPN').strip(),
+        },
+    }
+
+
+@bp.route('/settings/bot/status.json', methods=['GET'])
+@panel_ctx.login_required
+def settings_bot_status_json():
+    if not _user_can_settings_tab('bot'):
+        return jsonify({'ok': False, 'error': 'Недостаточно прав'}), 403
+    return jsonify({'ok': True, **_bot_status_payload()})
+
+
+@bp.route('/settings/bot/validate-token', methods=['POST'])
+@panel_ctx.login_required
+def settings_bot_validate_token():
+    if not _user_can_settings_tab_edit('bot'):
+        return jsonify({'ok': False, 'error': 'Недостаточно прав'}), 403
+    import httpx
+
+    payload = request.get_json(silent=True) or {}
+    token = (payload.get('token') or '').strip()
+    if not token:
+        return jsonify({'ok': False, 'error': 'Токен не указан'}), 400
+    try:
+        with httpx.Client(timeout=12.0) as client:
+            resp = client.get(f'https://api.telegram.org/bot{token}/getMe')
+        data = resp.json()
+    except Exception as exc:
+        return jsonify({'ok': False, 'error': f'Не удалось проверить токен: {exc}'}), 502
+    if not data.get('ok'):
+        return jsonify({'ok': False, 'error': data.get('description') or 'Некорректный токен'}), 400
+    bot_info = data.get('result') or {}
+    return jsonify({
+        'ok': True,
+        'username': bot_info.get('username') or '',
+        'first_name': bot_info.get('first_name') or '',
+        'can_join_groups': bot_info.get('can_join_groups'),
+        'supports_inline_queries': bot_info.get('supports_inline_queries'),
+    })
+
+
 @bp.route('/api/settings/update-pay-info', methods=['POST'])
 @panel_ctx.login_required
 def update_pay_info_api():
@@ -2226,15 +2334,6 @@ def update_host_button_style_route():
     flash('Стиль кнопки хоста обновлён.' if ok else 'Ошибка.', 'success' if ok else 'danger')
     return redirect(url_for('settings_tab_page', tab='hosts'))
 
-@bp.route('/start-support-bot', methods=['POST'])
-@panel_ctx.login_required
-def start_support_bot_route():
-    loop = current_app.config.get('EVENT_LOOP')
-    if loop and loop.is_running():
-        panel_ctx.support_bot_controller.set_loop(loop)
-    result = panel_ctx.support_bot_controller.start()
-    flash(result['message'], 'success' if result['status'] == 'success' else 'danger')
-    return redirect(request.referrer or url_for('settings_tab_page', tab='panel'))
 
 def _wait_for_stop(controller, timeout: float = 5.0) -> bool:
     start = time.time()
@@ -2245,21 +2344,41 @@ def _wait_for_stop(controller, timeout: float = 5.0) -> bool:
         time.sleep(0.1)
     return False
 
+
+@bp.route('/start-support-bot', methods=['POST'])
+@panel_ctx.login_required
+def start_support_bot_route():
+    loop = current_app.config.get('EVENT_LOOP')
+    if loop and loop.is_running():
+        panel_ctx.support_bot_controller.set_loop(loop)
+    result = panel_ctx.support_bot_controller.start()
+    ok = result.get('status') == 'success'
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({'ok': ok, 'message': result.get('message'), **_bot_status_payload()})
+    flash(result['message'], 'success' if ok else 'danger')
+    return redirect(request.referrer or url_for('settings_tab_page', tab='bot'))
+
 @bp.route('/stop-support-bot', methods=['POST'])
 @panel_ctx.login_required
 def stop_support_bot_route():
     result = panel_ctx.support_bot_controller.stop()
     _wait_for_stop(panel_ctx.support_bot_controller)
-    flash(result['message'], 'success' if result['status'] == 'success' else 'danger')
-    return redirect(request.referrer or url_for('settings_tab_page', tab='panel'))
+    ok = result.get('status') == 'success'
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({'ok': ok, 'message': result.get('message'), **_bot_status_payload()})
+    flash(result['message'], 'success' if ok else 'danger')
+    return redirect(request.referrer or url_for('settings_tab_page', tab='bot'))
 
 @bp.route('/start-bot', methods=['POST'])
 @panel_ctx.login_required
 def start_bot_route():
     result = panel_ctx.bot_controller.start()
-    if result.get('status') == 'success':
+    ok = result.get('status') == 'success'
+    if ok:
         panel_ctx.audit('bot.start', {'bot': 'main'})
-    flash(result['message'], 'success' if result['status'] == 'success' else 'danger')
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({'ok': ok, 'message': result.get('message'), **_bot_status_payload()})
+    flash(result['message'], 'success' if ok else 'danger')
     return redirect(request.referrer or url_for('dashboard_page'))
 
 @bp.route('/stop-bot', methods=['POST'])
@@ -2267,9 +2386,12 @@ def start_bot_route():
 def stop_bot_route():
     result = panel_ctx.bot_controller.stop()
     _wait_for_stop(panel_ctx.bot_controller)
-    if result.get('status') == 'success':
+    ok = result.get('status') == 'success'
+    if ok:
         panel_ctx.audit('bot.stop', {'bot': 'main'})
-    flash(result['message'], 'success' if result['status'] == 'success' else 'danger')
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({'ok': ok, 'message': result.get('message'), **_bot_status_payload()})
+    flash(result['message'], 'success' if ok else 'danger')
     return redirect(request.referrer or url_for('dashboard_page'))
 
 @bp.route('/stop-both-bots', methods=['POST'])
@@ -2293,7 +2415,7 @@ def stop_both_bots_route():
     message = ' | '.join(statuses)
     
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return jsonify({'ok': category == 'success', 'message': message})
+        return jsonify({'ok': category == 'success', 'message': message, **_bot_status_payload()})
     
     flash(message, category)
     return redirect(request.referrer or url_for('dashboard_page'))
@@ -2320,10 +2442,10 @@ def start_both_bots_route():
     message = ' | '.join(statuses)
     
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return jsonify({'ok': category == 'success', 'message': message})
+        return jsonify({'ok': category == 'success', 'message': message, **_bot_status_payload()})
     
     flash(message, category)
-    return redirect(request.referrer or url_for('settings_tab_page', tab='panel'))
+    return redirect(request.referrer or url_for('settings_tab_page', tab='bot'))
 
 @bp.route('/add-host', methods=['POST'])
 @panel_ctx.login_required

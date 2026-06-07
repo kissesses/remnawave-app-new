@@ -109,8 +109,11 @@ SETTINGS_TAB_SECTIONS: dict[str, list[dict[str, str]]] = {
         {"id": "payments-telegram", "label": "Telegram", "icon": "star"},
     ],
     "bot": [
-        {"id": "bot-telegram", "label": "Telegram боты", "icon": "smart_toy"},
-        {"id": "bot-channels", "label": "Уведомления", "icon": "chat"},
+        {"id": "overview", "label": "Обзор", "icon": "dashboard"},
+        {"id": "main", "label": "Основной бот", "icon": "smart_toy"},
+        {"id": "support", "label": "Support", "icon": "support_agent"},
+        {"id": "notifications", "label": "Уведомления", "icon": "chat"},
+        {"id": "control", "label": "Управление", "icon": "play_circle"},
     ],
     "content": [
         {"id": "all", "label": "Все", "icon": "forum"},
@@ -200,7 +203,7 @@ SETTINGS_TAB_TEXT_KEYS: dict[str, list[str]] = {
         "smtp_from_email", "smtp_from_name", "smtp_encryption", "smtp_notify_emails",
     ],
     "bot": [
-        "telegram_bot_token", "telegram_bot_username", "admin_telegram_id",
+        "telegram_bot_token", "telegram_bot_username", "admin_telegram_id", "admin_telegram_ids",
         "support_bot_token", "support_bot_username", "support_forum_chat_id",
         "notifications_chat_id",
         "notifications_topic_crm", "notifications_topic_backup", "notifications_topic_secrets",
