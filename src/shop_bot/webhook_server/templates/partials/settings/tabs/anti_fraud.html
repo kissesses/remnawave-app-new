@@ -1,0 +1,92 @@
+<section id="tab-anti-fraud" class="tab-content af-page af-studio">
+    <div class="af-mesh" aria-hidden="true"></div>
+
+    <header class="af-hub">
+        <div class="af-hub__intro">
+            <div class="af-hub__icon" aria-hidden="true">
+                <span class="material-symbols-outlined">shield</span>
+            </div>
+            <div class="af-hub__copy">
+                <h2 class="af-hub__title">Anti-Fraud Studio</h2>
+                <p class="af-hub__desc">Read-only сигналы подозрительной активности · защита регистрации email</p>
+            </div>
+        </div>
+        <div class="af-hub__actions">
+            <label class="af-live-toggle" title="Автообновление каждые 60 сек">
+                <input type="checkbox" id="af-live" />
+                <span class="af-live-toggle__ui"></span>
+                <span>Live</span>
+            </label>
+            <button type="button" class="af-btn af-btn--soft" id="af-refresh">
+                <span class="material-symbols-outlined">refresh</span> Обновить
+            </button>
+        </div>
+    </header>
+
+    <div class="af-kpis" aria-label="Сводка">
+        <article class="af-kpi">
+            <span class="material-symbols-outlined">radar</span>
+            <div>
+                <p class="af-kpi__val" id="af-stat-total">—</p>
+                <p class="af-kpi__lbl">Сигналов с данными</p>
+            </div>
+        </article>
+        <article class="af-kpi af-kpi--warn">
+            <span class="material-symbols-outlined">warning</span>
+            <div>
+                <p class="af-kpi__val" id="af-stat-warn">—</p>
+                <p class="af-kpi__lbl">Предупреждения</p>
+            </div>
+        </article>
+        <article class="af-kpi af-kpi--error">
+            <span class="material-symbols-outlined">error</span>
+            <div>
+                <p class="af-kpi__val" id="af-stat-error">—</p>
+                <p class="af-kpi__lbl">Критичные</p>
+            </div>
+        </article>
+        <article class="af-kpi">
+            <span class="material-symbols-outlined">schedule</span>
+            <div>
+                <p class="af-kpi__val af-kpi__val--sm" id="af-stat-generated">—</p>
+                <p class="af-kpi__lbl">Обновлено</p>
+            </div>
+        </article>
+    </div>
+
+    <div class="af-grid" id="af-signals-grid">
+        <p class="af-empty">Загрузка сигналов…</p>
+    </div>
+
+    <section class="af-blocklist">
+        <header class="af-blocklist__head">
+            <span class="material-symbols-outlined">mail_lock</span>
+            <div>
+                <h3>Блоклист email при регистрации</h3>
+                <p>Disposable-домены встроены. Дополните списки ниже (по одному домену или regex на строку).</p>
+            </div>
+        </header>
+        <div class="af-blocklist__fields">
+            <label class="af-field">
+                <span>Доп. домены (через запятую или с новой строки)</span>
+                <textarea name="email_domain_blocklist" rows="3" class="af-textarea">{{ settings.email_domain_blocklist or '' }}</textarea>
+            </label>
+            <label class="af-field">
+                <span>Доп. regex-паттерны локальной части email</span>
+                <textarea name="email_pattern_blocklist" rows="3" class="af-textarea" placeholder="^spam\d+@">{{ settings.email_pattern_blocklist or '' }}</textarea>
+            </label>
+        </div>
+    </section>
+
+    <dialog class="af-modal" id="af-detail-modal">
+        <div class="af-modal__head">
+            <h3 id="af-detail-title">Детали сигнала</h3>
+            <button type="button" class="af-modal__close" id="af-detail-close" aria-label="Закрыть">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="af-modal__body">
+            <pre id="af-detail-json" class="af-detail-json"></pre>
+        </div>
+    </dialog>
+</section>

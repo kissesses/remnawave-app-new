@@ -170,6 +170,10 @@ SETTINGS_TAB_CHECKBOXES: dict[str, dict[str, str]] = {
         "enable_fixed_referral_bonus": "false",
         "referral_notify_bonus": "true",
     },
+    "anti-fraud": {
+        "email_domain_blocklist": "",
+        "email_pattern_blocklist": "",
+    },
     "content": {
         "force_subscription": "false",
     },
@@ -222,6 +226,9 @@ SETTINGS_TAB_TEXT_KEYS: dict[str, list[str]] = {
         "referral_reward_type", "minimum_withdrawal", "referral_percentage",
         "fixed_referral_bonus_amount", "referral_on_start_referrer_amount", "referral_discount",
         "referral_share_message", "referral_program_extra", "referral_payout_mode",
+    ],
+    "anti-fraud": [
+        "email_domain_blocklist", "email_pattern_blocklist",
     ],
     "content": [
         k for k in ALL_SETTINGS_KEYS

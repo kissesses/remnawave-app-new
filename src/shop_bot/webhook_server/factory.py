@@ -60,6 +60,11 @@ AUDIT_ENDPOINTS = frozenset({
     'settings_access_audit_export',
 })
 
+ANTI_FRAUD_ENDPOINTS = frozenset({
+    'settings_anti_fraud_signals',
+    'settings_anti_fraud_signal',
+})
+
 # Force MSK (UTC+3)
 os.environ['TZ'] = 'Etc/GMT-3'
 if hasattr(time, 'tzset'):
@@ -516,6 +521,13 @@ def create_webhook_app(bot_controller_instance):
                     or allows_permission(levels, 'settings_access', require_edit=False)
                 )
             )
+            anti_fraud_ok = (
+                endpoint in ANTI_FRAUD_ENDPOINTS
+                and (
+                    allows_permission(levels, 'settings_anti_fraud', require_edit=False)
+                    or allows_permission(levels, 'settings_access', require_edit=False)
+                )
+            )
             perm_ok = False
             if any_required:
                 perm_ok = any(
@@ -524,7 +536,7 @@ def create_webhook_app(bot_controller_instance):
                 )
             elif required:
                 perm_ok = allows_permission(levels, required, require_edit=need_edit)
-            if not audit_ok and not perm_ok:
+            if not audit_ok and not anti_fraud_ok and not perm_ok:
                 if request.path.startswith('/api/') or request.is_json or settings_api_wants_json():
                     return jsonify({'ok': False, 'error': 'forbidden', 'message': 'Недостаточно прав'}), 403
                 flash('Недостаточно прав для этого раздела', 'danger')
@@ -541,6 +553,14 @@ def create_webhook_app(bot_controller_instance):
             if tab == 'audit':
                 if not (
                     allows_permission(levels, 'settings_audit', require_edit=False)
+                    or allows_permission(levels, 'settings_access', require_edit=False)
+                ):
+                    flash('Недостаточно прав для этого раздела настроек', 'danger')
+                    landing_ep, landing_kw = resolve_landing_route(levels)
+                    return redirect(url_for(landing_ep, **landing_kw))
+            elif tab == 'anti-fraud':
+                if not (
+                    allows_permission(levels, 'settings_anti_fraud', require_edit=False)
                     or allows_permission(levels, 'settings_access', require_edit=False)
                 ):
                     flash('Недостаточно прав для этого раздела настроек', 'danger')

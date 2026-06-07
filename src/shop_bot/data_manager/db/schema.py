@@ -198,6 +198,8 @@ def get_bot_default_settings() -> dict:
         "smtp_notify_password_reset": "0",
         "smtp_notify_key_expiry": "0",
         "smtp_notify_payment_receipt": "0",
+        "email_domain_blocklist": "",
+        "email_pattern_blocklist": "",
         "smtp_templates_json": "",
         "bot_messages_json": "",
         "smtp_template_accent": "#0A84FF",

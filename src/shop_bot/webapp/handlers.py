@@ -1672,6 +1672,17 @@ def _validate_password(password: str) -> str | None:
 @app.post("/api/auth/email/register")
 async def api_email_register(req: EmailAuthRequest):
     from shop_bot.data_manager import database
+    from shop_bot.data_manager.remnawave_repository import get_setting
+    from shop_bot.security.email_blocklist import validate_email_for_signup, signup_rejection_message
+
+    validation = validate_email_for_signup(
+        req.email,
+        custom_domain_blocklist=get_setting("email_domain_blocklist"),
+        custom_pattern_blocklist=get_setting("email_pattern_blocklist"),
+    )
+    if not validation.ok:
+        return {"ok": False, "error": signup_rejection_message(validation.reason)}
+
     existing = database.get_user_by_email(req.email)
     if existing:
         return {"ok": False, "error": "Email уже зарегистрирован"}

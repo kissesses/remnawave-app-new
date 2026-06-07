@@ -170,6 +170,11 @@ def _user_can_settings_tab(tab: str) -> bool:
             allows_permission(levels, 'settings_audit', require_edit=False)
             or allows_permission(levels, 'settings_access', require_edit=False)
         )
+    if tab == 'anti-fraud':
+        return (
+            allows_permission(levels, 'settings_anti_fraud', require_edit=False)
+            or allows_permission(levels, 'settings_access', require_edit=False)
+        )
     perm = SETTINGS_TAB_PERMISSIONS.get(tab)
     if not perm:
         return False
@@ -190,6 +195,11 @@ def _user_can_settings_tab_edit(tab: str) -> bool:
             allows_permission(levels, 'settings_audit', require_edit=True)
             or allows_permission(levels, 'settings_access', require_edit=True)
         )
+    if tab == 'anti-fraud':
+        return (
+            allows_permission(levels, 'settings_anti_fraud', require_edit=True)
+            or allows_permission(levels, 'settings_access', require_edit=True)
+        )
     perm = SETTINGS_TAB_PERMISSIONS.get(tab)
     if not perm:
         return False
@@ -208,6 +218,16 @@ def _user_can_audit() -> bool:
     levels = _session_permission_levels()
     return (
         allows_permission(levels, 'settings_audit', require_edit=False)
+        or allows_permission(levels, 'settings_access', require_edit=False)
+    )
+
+
+def _user_can_anti_fraud() -> bool:
+    if session.get('panel_is_superadmin'):
+        return True
+    levels = _session_permission_levels()
+    return (
+        allows_permission(levels, 'settings_anti_fraud', require_edit=False)
         or allows_permission(levels, 'settings_access', require_edit=False)
     )
 
@@ -1882,6 +1902,33 @@ def settings_audit_export():
         as_attachment=True,
         download_name=f'panel-audit-{ts}.csv',
     )
+
+
+@bp.route('/settings/anti-fraud/signals', methods=['GET'])
+@panel_ctx.login_required
+def settings_anti_fraud_signals():
+    if not _user_can_anti_fraud():
+        return jsonify({'ok': False, 'error': 'Недостаточно прав'}), 403
+    from shop_bot.webhook_server.services.anti_fraud import get_all_signals
+
+    preview_limit = request.args.get('limit', 5, type=int)
+    preview_limit = max(1, min(preview_limit, 20))
+    payload = get_all_signals(preview_limit=preview_limit)
+    return jsonify({'ok': True, **payload})
+
+
+@bp.route('/settings/anti-fraud/signal/<key>', methods=['GET'])
+@panel_ctx.login_required
+def settings_anti_fraud_signal(key: str):
+    if not _user_can_anti_fraud():
+        return jsonify({'ok': False, 'error': 'Недостаточно прав'}), 403
+    from shop_bot.webhook_server.services.anti_fraud import get_signal_detail
+
+    limit = request.args.get('limit', 50, type=int)
+    detail = get_signal_detail(key, limit=limit)
+    if detail is None:
+        return jsonify({'ok': False, 'error': 'Unknown signal key'}), 404
+    return jsonify({'ok': True, **detail})
 
 
 @bp.route('/api/settings/update-pay-info', methods=['POST'])

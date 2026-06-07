@@ -42,6 +42,9 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/audit-panel.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/tool-surface.css') }}" />
 {% endif %}
+{% if active_tab == 'anti-fraud' %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/anti-fraud-panel.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
+{% endif %}
 {% if active_tab == 'referrals' %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/referrals-panel.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
 {% endif %}
@@ -58,7 +61,7 @@
 
 {% block content %}
 {% set needs_security_setup = security_info.needs_setup %}
-{% set form_tabs = ['panel', 'stealth-login', 'bot', 'payments', 'referrals', 'content'] %}
+{% set form_tabs = ['panel', 'stealth-login', 'bot', 'payments', 'referrals', 'content', 'anti-fraud'] %}
 {% set show_save_btn = active_tab in form_tabs %}
 {% set settings_nav_items = [
     {'id': 'panel', 'label': 'Панель', 'desc': 'Доступ, база данных и системные функции', 'icon': 'dashboard', 'perm': 'settings_panel', 'group': 'system'},
@@ -67,6 +70,7 @@
     {'id': 'bot', 'label': 'Настройка ботов' if not (all_settings_ok and support_settings_ok) else 'Боты', 'desc': 'Конфигурация основного бота и службы поддержки', 'icon': 'smart_toy', 'perm': 'settings_bot', 'group': 'system'},
     {'id': 'access', 'label': 'Доступ', 'desc': 'Разграничение доступа к разделам панели', 'icon': 'shield_person', 'perm': 'settings_access', 'group': 'system'},
     {'id': 'audit', 'label': 'Журнал аудита', 'desc': 'Audit Studio — действия администраторов, фильтры и экспорт', 'icon': 'policy', 'perm': 'settings_audit', 'group': 'system'},
+    {'id': 'anti-fraud', 'label': 'Anti-Fraud', 'desc': 'Сигналы подозрительной активности и блоклист email', 'icon': 'shield', 'perm': 'settings_anti_fraud', 'group': 'system'},
     {'id': 'payments', 'label': 'Платежи', 'desc': 'Методы оплаты и параметры транзакций', 'icon': 'payments', 'perm': 'settings_payments', 'group': 'services'},
     {'id': 'hosts', 'label': 'Хосты', 'desc': 'Hosts Studio — панели, тарифы, SSH и устройства', 'icon': 'dns', 'perm': 'settings_hosts', 'group': 'services'},
     {'id': 'referrals', 'label': 'Рефералы', 'desc': 'Referrals Studio — партнёрская программа', 'icon': 'group', 'perm': 'settings_referrals', 'group': 'services'},
@@ -113,7 +117,7 @@
     <div class="settings-macos-nav-rail" id="settings-macos-nav-rail">
     {% set ns = namespace(last_group='') %}
     {% for item in settings_nav_items %}
-    {% if (can(item.perm) or (item.id == 'content' and can('settings_mail_templates')) or (item.id == 'audit' and can('settings_access')) or (item.id == 'access' and needs_security_setup)) and (not item.get('needs_webapp') or webapp_exists) %}
+    {% if (can(item.perm) or (item.id == 'content' and can('settings_mail_templates')) or (item.id == 'audit' and can('settings_access')) or (item.id == 'anti-fraud' and can('settings_access')) or (item.id == 'access' and needs_security_setup)) and (not item.get('needs_webapp') or webapp_exists) %}
     {% if item.group != ns.last_group %}
     {% if ns.last_group != '' %}</div>{% endif %}
     <div class="settings-macos-nav-group" data-group="{{ item.group }}">
@@ -205,6 +209,7 @@
     {% if active_tab == 'payments' %}{% include 'partials/settings/tabs/payments.html' %}{% endif %}
     {% if active_tab == 'referrals' %}{% include 'partials/settings/tabs/referrals.html' %}{% endif %}
     {% if active_tab == 'content' %}{% include 'partials/settings/tabs/content.html' %}{% endif %}
+    {% if active_tab == 'anti-fraud' %}{% include 'partials/settings/tabs/anti_fraud.html' %}{% endif %}
 </form>
 {% elif active_tab == 'hosts' %}
 {% include 'partials/settings/tabs/hosts.html' %}
@@ -325,6 +330,9 @@ window.PROMO_PANEL_BOOT = {
 {% endif %}
 {% if active_tab == 'audit' %}
 <script src="{{ url_for('static', filename='js/audit-panel.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
+{% endif %}
+{% if active_tab == 'anti-fraud' %}
+<script src="{{ url_for('static', filename='js/anti-fraud-panel.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
 {% endif %}
 {% if active_tab == 'access' %}
 <script>
