@@ -330,6 +330,15 @@
             initInteractiveElements();
             restoreHostStates();
             loadAllSpeedtestData();
+            if (window.SettingsPage && typeof window.SettingsPage.initSectionNav === 'function') {
+                window.SettingsPage.initSectionNav();
+            }
+            if (typeof window.reinitBotPanel === 'function') {
+                window.reinitBotPanel();
+            }
+            if (typeof window.reinitReferralsPanel === 'function') {
+                window.reinitReferralsPanel();
+            }
             if (typeof window.reinitAccessPanel === 'function') {
                 window.reinitAccessPanel();
             }

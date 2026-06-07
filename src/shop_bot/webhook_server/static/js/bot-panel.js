@@ -6,6 +6,7 @@
 
     const STORAGE_KEY = 'bot-studio-tab';
     const boot = window.BOT_PANEL_BOOT || {};
+    let statusPollId = null;
 
     function $(id) {
         return document.getElementById(id);
@@ -147,8 +148,12 @@
     }
 
     function initStatusPolling() {
+        if (statusPollId) {
+            clearInterval(statusPollId);
+            statusPollId = null;
+        }
         refreshStatus();
-        setInterval(refreshStatus, 12000);
+        statusPollId = setInterval(refreshStatus, 12000);
     }
 
     async function validateToken(kind) {
@@ -269,7 +274,7 @@
         });
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+    function initBotPanel() {
         if (!$('tab-bot')) return;
         initSectionHooks();
         initValidateButtons();
@@ -278,5 +283,13 @@
         initCreateTopics();
         initPasswordToggles();
         initStatusPolling();
-    });
+    }
+
+    window.reinitBotPanel = initBotPanel;
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initBotPanel);
+    } else {
+        initBotPanel();
+    }
 })();

@@ -173,6 +173,10 @@ SETTINGS_TAB_CHECKBOXES: dict[str, dict[str, str]] = {
         "enable_fixed_referral_bonus": "false",
         "referral_notify_bonus": "true",
     },
+    "bot": {
+        "notifications_admin_audit_enabled": "1",
+        "notifications_admin_audit_include_sql": "0",
+    },
     "content": {
         "force_subscription": "false",
     },
@@ -209,7 +213,7 @@ SETTINGS_TAB_TEXT_KEYS: dict[str, list[str]] = {
         "notifications_topic_crm", "notifications_topic_backup", "notifications_topic_secrets",
         "notifications_topic_auth", "notifications_topic_nodes", "notifications_topic_payments",
         "notifications_topic_sql", "notifications_topic_trial", "notifications_topic_tickets",
-        "notifications_topic_admin", "notifications_admin_audit_enabled", "notifications_admin_audit_include_sql",
+        "notifications_topic_admin",
         "backup_telegram_chat_id", "backup_telegram_topic_id",
         "backup_secrets_chat_id", "backup_secrets_topic_id",
     ],
