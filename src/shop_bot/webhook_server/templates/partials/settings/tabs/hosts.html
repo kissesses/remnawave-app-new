@@ -369,8 +369,8 @@
                     {% if host.plans %}
                     <div id="plans-grid-{{ host.host_name }}" class="hst-plans-grid">
                         {% for plan in host.plans %}
-                        <div id="plan-card-{{ plan.plan_id }}" class="hst-plan-card">
-                            <div id="view-plan-{{ plan.plan_id }}">
+                        <div id="plan-card-{{ plan.plan_id }}" class="hst-plan-card{% if plan.button_style %} hst-plan-card--{{ plan.button_style }}{% endif %}">
+                            <div id="view-plan-{{ plan.plan_id }}" class="hst-plan-card__view">
                                 <div class="hst-plan-card__head">
                                     <h5 class="hst-plan-card__name">{{ plan.plan_name }}</h5>
                                     <span class="hst-plan-card__price">{{ plan.price|round(0) }}₽</span>
@@ -381,16 +381,20 @@
                                     <span class="hst-plan-tag"><span class="material-symbols-outlined">devices</span>{{ plan.hwid_limit or '∞' }} HWID</span>
                                 </div>
                                 <div class="hst-plan-actions">
-                                    <button type="button" class="hst-btn" onclick="document.getElementById('view-plan-{{ plan.plan_id }}').classList.add('hidden');document.getElementById('edit-plan-{{ plan.plan_id }}').classList.remove('hidden')">
-                                        <span class="material-symbols-outlined">edit</span> Изменить
+                                    <button type="button" class="hst-btn" title="Изменить тариф" onclick="document.getElementById('view-plan-{{ plan.plan_id }}').classList.add('hidden');document.getElementById('edit-plan-{{ plan.plan_id }}').classList.remove('hidden')">
+                                        <span class="material-symbols-outlined">edit</span>
+                                        <span class="hst-btn__label">Изменить</span>
                                     </button>
-                                    <form action="{{ url_for('delete_plan_route', plan_id=plan.plan_id) }}" method="post">
+                                    <form action="{{ url_for('delete_plan_route', plan_id=plan.plan_id) }}" method="post" data-confirm="Удалить тариф «{{ plan.plan_name }}»?">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                                        <button type="submit" class="hst-btn hst-btn--danger" style="width:100%"><span class="material-symbols-outlined">delete</span> Удалить</button>
+                                        <button type="submit" class="hst-btn hst-btn--danger" title="Удалить тариф">
+                                            <span class="material-symbols-outlined">delete</span>
+                                            <span class="hst-btn__label">Удалить</span>
+                                        </button>
                                     </form>
                                 </div>
                             </div>
-                            <div id="edit-plan-{{ plan.plan_id }}" class="hidden">
+                            <div id="edit-plan-{{ plan.plan_id }}" class="hst-plan-card__edit hidden">
                                 <form action="{{ url_for('update_plan_route', plan_id=plan.plan_id) }}" method="post">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                                     <div class="hst-field"><input type="text" name="plan_name" value="{{ plan.plan_name }}" placeholder="Название" required class="hst-input" /></div>
@@ -435,17 +439,21 @@
                     {% endif %}
 
                     <div class="hst-add-plan">
+                        <div class="hst-add-plan__head">
+                            <span class="material-symbols-outlined">add_circle</span>
+                            Новый тариф
+                        </div>
                         <form action="{{ url_for('add_plan_route') }}" method="post">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                             <input type="hidden" name="host_name" value="{{ host.host_name }}" />
-                            <div class="hst-grid-5" style="margin-bottom:0.45rem">
+                            <div class="hst-add-plan-grid">
                                 <div class="hst-field"><label class="hst-label">Название</label><input type="text" name="plan_name" placeholder="Pro Plan" required class="hst-input" /></div>
                                 <div class="hst-field"><label class="hst-label">Месяцев</label><input type="number" name="months" placeholder="12" required class="hst-input" /></div>
                                 <div class="hst-field"><label class="hst-label">Цена (₽)</label><input type="number" name="price" placeholder="500" required class="hst-input" /></div>
                                 <div class="hst-field"><label class="hst-label">Трафик (GB)</label><input type="number" name="traffic_limit_gb" placeholder="100" class="hst-input" /></div>
                                 <div class="hst-field"><label class="hst-label">HWID</label><input type="number" name="hwid_limit" placeholder="1" class="hst-input" /></div>
                             </div>
-                            <div class="hst-form-row">
+                            <div class="hst-add-plan__footer">
                                 <div class="hst-swatch-row">
                                     {% for val, lbl, dot in [('', '—', ''), ('danger', 'Красный', 'danger'), ('success', 'Зелёный', 'success'), ('primary', 'Синий', 'primary')] %}
                                     <label>
@@ -460,7 +468,7 @@
                                     </label>
                                     {% endfor %}
                                 </div>
-                                <input type="text" name="icon_emoji_id" placeholder="Emoji ID" class="hst-input" style="max-width:8rem" />
+                                <input type="text" name="icon_emoji_id" placeholder="Emoji ID" class="hst-input" />
                                 <button type="submit" class="hst-btn hst-btn--primary"><span class="material-symbols-outlined">add</span> Добавить тариф</button>
                             </div>
                         </form>

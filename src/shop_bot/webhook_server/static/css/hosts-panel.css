@@ -109,10 +109,152 @@ html:not(.dark) #tab-hosts.hst-panel {
 .hst-block__head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.55rem; }
 .hst-block__title { display: flex; align-items: center; gap: 0.35rem; margin: 0; font-size: 0.75rem; font-weight: 700; color: var(--hst-text); }
 
-.hst-plans-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); gap: 0.55rem; margin-bottom: 0.65rem; }
-.hst-plan-card { border-radius: 12px; border: 1px solid var(--hst-border); background: var(--hst-surface); padding: 0.65rem 0.7rem; }
-.hst-plan-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem; margin-top: 0.45rem; }
-.hst-add-plan { padding: 0.75rem; border-radius: 12px; border: 1px dashed var(--hst-border); }
+.hst-plans-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(12.5rem, 1fr));
+    gap: 0.65rem;
+    margin-bottom: 0.75rem;
+}
+
+.hst-plan-card {
+    position: relative;
+    min-width: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    border-radius: 12px;
+    border: 1px solid var(--hst-border);
+    background: var(--hst-surface);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.hst-plan-card:hover {
+    border-color: rgba(var(--hst-accent-rgb), 0.28);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+}
+
+.hst-plan-card::before {
+    content: '';
+    display: block;
+    height: 3px;
+    background: rgba(var(--hst-accent-rgb), 0.35);
+}
+
+.hst-plan-card--danger::before { background: rgba(255, 69, 58, 0.75); }
+.hst-plan-card--success::before { background: rgba(48, 209, 88, 0.75); }
+.hst-plan-card--primary::before { background: rgba(var(--hst-accent-rgb), 0.85); }
+
+.hst-plan-card__view,
+.hst-plan-card__edit {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    padding: 0.65rem 0.7rem 0.55rem;
+}
+
+.hst-plan-actions {
+    display: flex;
+    gap: 0.3rem;
+    margin-top: auto;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--hst-border);
+}
+
+.hst-plan-actions form {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+}
+
+.hst-plan-actions .hst-btn {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 0.34rem 0.4rem;
+    font-size: 0.5625rem;
+    white-space: nowrap;
+}
+
+.hst-plan-actions .hst-btn .material-symbols-outlined {
+    font-size: 0.85rem;
+}
+
+@media (max-width: 1280px) {
+    .hst-plan-actions .hst-btn__label {
+        display: none;
+    }
+
+    .hst-plan-actions .hst-btn {
+        justify-content: center;
+        padding: 0.38rem;
+    }
+}
+
+.hst-add-plan {
+    margin-top: 0.15rem;
+    padding: 0.85rem 0.9rem;
+    border-radius: 12px;
+    border: 1px dashed rgba(var(--hst-accent-rgb), 0.35);
+    background: linear-gradient(165deg, var(--hst-accent-soft) 0%, var(--hst-surface) 55%);
+}
+
+.hst-add-plan__head {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-bottom: 0.65rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--hst-text);
+}
+
+.hst-add-plan__head .material-symbols-outlined {
+    font-size: 1rem;
+    color: var(--hst-accent);
+}
+
+.hst-add-plan-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.hst-add-plan-grid .hst-field {
+    margin-bottom: 0;
+}
+
+@media (min-width: 900px) {
+    .hst-add-plan-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1200px) {
+    .hst-add-plan-grid {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+}
+
+.hst-add-plan__footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    align-items: flex-end;
+    justify-content: space-between;
+}
+
+.hst-add-plan__footer .hst-swatch-row {
+    flex: 1;
+    min-width: 8rem;
+}
+
+.hst-add-plan__footer .hst-input {
+    max-width: 8rem;
+    flex: 0 1 8rem;
+}
+
 .hst-tier-list { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.55rem; }
 .hst-empty-plans { padding: 1.5rem; text-align: center; color: var(--hst-dim); font-size: 0.6875rem; border: 1px dashed var(--hst-border); border-radius: 12px; margin-bottom: 0.65rem; }
 .hst-empty-state { padding: 2rem 1rem; text-align: center; color: var(--hst-dim); }
@@ -154,11 +296,11 @@ html:not(.dark) #tab-hosts.hst-panel {
 .hst-tier-edit.flex { display: inline-flex !important; }
 .hst-tier-edit input { width: 2.5rem; border: none; border-bottom: 1px solid rgba(100, 210, 255, 0.4); background: transparent; color: var(--hst-cyan); font-size: 0.625rem; font-weight: 700; text-align: center; outline: none; }
 
-.hst-plan-card__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.35rem; margin-bottom: 0.45rem; }
-.hst-plan-card__name { margin: 0; font-size: 0.75rem; font-weight: 700; color: var(--hst-text); }
-.hst-plan-card__price { padding: 0.2rem 0.45rem; border-radius: 8px; background: var(--hst-accent-soft); color: var(--hst-accent); font-size: 0.625rem; font-weight: 700; }
-.hst-plan-tags { display: flex; flex-wrap: wrap; gap: 0.25rem; justify-content: center; margin-bottom: 0.45rem; }
-.hst-plan-tag { display: inline-flex; align-items: center; gap: 0.15rem; padding: 0.15rem 0.35rem; border-radius: 6px; background: var(--hst-surface-2); font-size: 0.5625rem; color: var(--hst-dim); font-weight: 650; }
+.hst-plan-card__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.35rem; margin-bottom: 0.45rem; min-width: 0; }
+.hst-plan-card__name { margin: 0; font-size: 0.8125rem; font-weight: 700; color: var(--hst-text); line-height: 1.25; word-break: break-word; }
+.hst-plan-card__price { flex-shrink: 0; padding: 0.22rem 0.5rem; border-radius: 8px; background: var(--hst-accent-soft); color: var(--hst-accent); font-size: 0.6875rem; font-weight: 800; letter-spacing: -0.02em; }
+.hst-plan-tags { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-bottom: 0.35rem; }
+.hst-plan-tag { display: inline-flex; align-items: center; gap: 0.15rem; padding: 0.18rem 0.38rem; border-radius: 6px; background: var(--hst-surface-2); font-size: 0.5625rem; color: var(--hst-dim); font-weight: 650; }
 .hst-plan-tag .material-symbols-outlined { font-size: 0.75rem; }
 
 .hst-form-row { display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: flex-end; }
