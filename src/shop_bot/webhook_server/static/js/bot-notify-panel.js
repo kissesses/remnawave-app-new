@@ -240,10 +240,76 @@
         });
     }
 
+    function applyCreatedTopics(topics) {
+        if (!topics || typeof topics !== 'object') return;
+        let n = 0;
+        Object.entries(topics).forEach(([fieldName, topicId]) => {
+            const input = document.querySelector(`input[name="${fieldName}"]`);
+            if (!input || !topicId) return;
+            input.value = String(topicId);
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            n += 1;
+        });
+        return n;
+    }
+
+    function initCreateTopics() {
+        const panel = document.getElementById('bot-notify-panel');
+        const createUrl = panel?.dataset?.createTopicsUrl;
+        const btn = document.getElementById('bot-notify-create-topics');
+        if (!createUrl || !btn) return;
+
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+
+        btn.addEventListener('click', async () => {
+            const chatInput = document.getElementById('notifications_chat_id');
+            const chatId = chatInput?.value?.trim();
+            if (!chatId) {
+                toast('danger', 'Сначала укажите Chat ID группы-форума');
+                chatInput?.focus();
+                return;
+            }
+
+            if (!window.confirm(
+                'Создать топики для категорий с пустым Topic ID?\n'
+                + 'Уже заполненные поля не изменятся. Новые ID сохранятся в настройках.'
+            )) {
+                return;
+            }
+
+            btn.disabled = true;
+            try {
+                const resp = await fetch(createUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrf,
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ chat_id: chatId }),
+                });
+                const data = await resp.json();
+                if (data.ok) {
+                    const filled = applyCreatedTopics(data.topics);
+                    const msg = data.message || 'Готово';
+                    toast('success', filled ? `${msg}. Поля обновлены (${filled}).` : msg);
+                } else {
+                    toast('danger', data.error || data.message || 'Не удалось создать топики');
+                }
+            } catch (_) {
+                toast('danger', 'Ошибка сети');
+            } finally {
+                btn.disabled = false;
+            }
+        });
+    }
+
     function init() {
         if (!document.getElementById('bot-channels')) return;
         initLinkTool();
         initNotifyTests();
+        initCreateTopics();
     }
 
     if (document.readyState === 'loading') {

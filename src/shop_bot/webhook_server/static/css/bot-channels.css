@@ -300,6 +300,41 @@
     line-height: 1.4;
 }
 
+.bot-notify-topics-create {
+    margin-top: 0.85rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.bot-notify-topics-create__btn {
+    width: 100%;
+    justify-content: center;
+}
+
+.bot-notify-topics-create__hint {
+    margin: 0.55rem 0 0;
+    font-size: 0.625rem;
+    color: rgba(255, 255, 255, 0.42);
+    line-height: 1.45;
+}
+
+.bot-notify-topics-create__hint a {
+    color: #64d2ff;
+    text-decoration: none;
+}
+
+.bot-notify-topics-create__hint a:hover {
+    text-decoration: underline;
+}
+
+.bot-notify-topics-create__hint code {
+    font-size: 0.5625rem;
+    padding: 0.05rem 0.3rem;
+    border-radius: 0.25rem;
+    background: rgba(0, 0, 0, 0.35);
+    color: rgba(255, 255, 255, 0.85);
+}
+
 .bot-notify-topics {
     display: flex;
     flex-direction: column;

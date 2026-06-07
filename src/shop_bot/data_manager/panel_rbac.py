@@ -215,6 +215,7 @@ ENDPOINT_PERMISSIONS: dict[str, str] = {
     "backup_delete_route": "db_manage",
     "backup_send_telegram_route": "db_manage",
     "backup_test_channel_route": "db_manage",
+    "create_notification_topics_route": "settings",
     "backup_settings_json": "db_manage",
     "backup_settings_save": "db_manage",
     "backup_detail_json": "db_manage",

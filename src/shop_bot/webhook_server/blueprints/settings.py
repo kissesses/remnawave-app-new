@@ -2640,3 +2640,63 @@ def settings_referrals_recent_route():
         logger.exception('referrals recent failed')
         return jsonify({'ok': False, 'error': str(exc)}), 500
 
+
+@bp.route('/settings/bot-notifications/create-topics', methods=['POST'])
+@panel_ctx.login_required
+def create_notification_topics_route():
+    from shop_bot.data_manager import telegram_forum_topics as forum_topics
+    from shop_bot.data_manager import telegram_notify as tg_notify
+
+    payload = request.get_json(silent=True) or {}
+    chat_raw = (payload.get('chat_id') or get_setting('notifications_chat_id') or '').strip()
+    chat_id = tg_notify.parse_chat_id(chat_raw)
+    if chat_id is None:
+        return jsonify({
+            'ok': False,
+            'error': 'Укажите Chat ID группы-форума (поле выше или в запросе).',
+        }), 400
+
+    bot = panel_ctx.bot_controller.get_bot_instance()
+    if not bot:
+        return jsonify({'ok': False, 'error': 'Бот недоступен'}), 503
+
+    loop = current_app.config.get('EVENT_LOOP')
+    try:
+        if loop and loop.is_running():
+            future = asyncio.run_coroutine_threadsafe(
+                forum_topics.create_notification_forum_topics(bot, chat_id),
+                loop,
+            )
+            result = future.result(timeout=120)
+        else:
+            result = asyncio.run(
+                forum_topics.create_notification_forum_topics(bot, chat_id),
+            )
+    except Exception as exc:
+        logger.exception('create notification topics failed')
+        return jsonify({'ok': False, 'error': str(exc)}), 500
+
+    created_n = len(result.get('created') or [])
+    skipped_n = len(result.get('skipped') or [])
+    errors = result.get('errors') or []
+    if errors and not created_n:
+        err = errors[0].get('error') or 'не удалось создать топики'
+        return jsonify({'ok': False, 'error': err, **result}), 400
+
+    panel_ctx.audit('settings.bot_topics_create', {
+        'chat_id': chat_id,
+        'created': created_n,
+        'skipped': skipped_n,
+        'errors': len(errors),
+    })
+
+    parts: list[str] = []
+    if created_n:
+        parts.append(f'создано {created_n}')
+    if skipped_n:
+        parts.append(f'пропущено {skipped_n} (Topic ID уже задан)')
+    if errors:
+        parts.append(f'ошибок {len(errors)}')
+    message = 'Топики: ' + (', '.join(parts) if parts else 'ничего не изменилось')
+    return jsonify({'ok': True, 'message': message, **result})
+

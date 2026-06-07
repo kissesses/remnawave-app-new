@@ -363,7 +363,9 @@ window.REF_PANEL_BOOT = {
 <script src="{{ url_for('static', filename='js/hosts-panel.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
 {% endif %}
 {% if active_tab == 'bot' %}
-<div id="bot-notify-panel" hidden data-test-url="{{ url_for('backup_test_channel_route') }}"></div>
+<div id="bot-notify-panel" hidden
+    data-test-url="{{ url_for('backup_test_channel_route') }}"
+    data-create-topics-url="{{ url_for('create_notification_topics_route') }}"></div>
 <script src="{{ url_for('static', filename='js/bot-notify-panel.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
 {% endif %}
 {% endblock %}
