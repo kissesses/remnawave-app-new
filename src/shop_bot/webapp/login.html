@@ -22,12 +22,6 @@
             document.documentElement.dataset.webappDesign = design;
         })();
     </script>
-    <link rel="stylesheet" href="/static/css/webapp-ios.css" />
-    <link rel="stylesheet" href="/static/css/webapp-desktop.css" />
-    <link rel="stylesheet" href="/static/css/webapp-stealth.css" />
-    <link rel="stylesheet" href="/static/css/webapp-stealth-glass.css" />
-    <link rel="stylesheet" href="/static/css/webapp-glass-hub.css" />
-    <link rel="stylesheet" href="/static/css/webapp-theme-picker.css" />
     <link rel="stylesheet" href="/static/css/webapp-login-themes.css" />
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -36,6 +30,50 @@
     <link rel="icon" type="image/x-icon" href="{{ webapp_icon }}">
     <title>Загрузка...</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        (function () {
+            function setAuthToken(token) {
+                try { localStorage.setItem('auth_token', token); } catch (e) { }
+                try {
+                    document.cookie = 'auth_token=' + encodeURIComponent(token) + '; path=/; max-age=' + (30 * 86400) + '; SameSite=Lax';
+                } catch (e) { }
+            }
+
+            async function loginWithToken(token) {
+                setAuthToken(token);
+                window.location.replace('/?token=' + encodeURIComponent(token));
+            }
+
+            async function tryTelegramAuth() {
+                try {
+                    const tg = window.Telegram && window.Telegram.WebApp;
+                    if (!tg) return false;
+                    tg.ready();
+                    tg.expand();
+                    const user = tg.initDataUnsafe && tg.initDataUnsafe.user;
+                    if (!user || !user.id) return false;
+                    const initData = tg.initData;
+                    if (!initData) return false;
+                    const response = await fetch('/api/auth/token', {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ init_data: initData })
+                    });
+                    if (!response.ok) return false;
+                    const data = await response.json();
+                    if (data.token) {
+                        await loginWithToken(data.token);
+                        return true;
+                    }
+                } catch (e) { }
+                return false;
+            }
+
+            window.__webappFastTgAuth = tryTelegramAuth;
+            tryTelegramAuth();
+        })();
+    </script>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -610,10 +648,13 @@
 
             async function loginWithToken(token) {
                 setAuthToken(token);
-                window.location.href = "/?token=" + token;
+                window.location.replace("/?token=" + encodeURIComponent(token));
             }
 
             async function tryTelegramAuth() {
+                if (typeof window.__webappFastTgAuth === 'function') {
+                    return window.__webappFastTgAuth();
+                }
                 try {
                     const tg = window.Telegram && window.Telegram.WebApp;
                     if (!tg) return false;
@@ -648,16 +689,15 @@
                 }
             }
 
-            setTimeout(async () => {
+            (async function bootstrapAuth() {
                 let success = await tryTelegramAuth();
                 if (!success) {
-                    await new Promise(r => setTimeout(r, 500));
                     success = await tryTelegramAuth();
                 }
                 if (!success) {
                     handleExternalAuth();
                 }
-            }, 300);
+            })();
         });
 
         let secretSequence = '';

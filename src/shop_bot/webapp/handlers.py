@@ -102,6 +102,7 @@ def _maintenance_response(webapp_settings: dict | None, *, status_code: int = 50
 WEBAPP_AUTH_COOKIE = "auth_token"
 WEBAPP_AUTH_MAX_AGE = DEFAULT_TOKEN_DAYS * 86400
 WEBAPP_INIT_DATA_MAX_AGE_SEC = 86400
+WEBAPP_LIVE_STATS_TIMEOUT_SEC = 2.5
 
 
 def _webapp_auth_response(payload: dict, token: str | None = None) -> JSONResponse:
@@ -1151,6 +1152,107 @@ def _render_banned_page(webapp_settings: dict):
     return HTMLResponse(content=html, status_code=403)
 
 
+async def _enrich_active_keys_live_stats(active_keys: list) -> None:
+    """Fetch Remnawave live stats with parallel requests and a hard timeout."""
+    if not active_keys:
+        return
+    try:
+        await asyncio.wait_for(
+            _enrich_active_keys_live_stats_inner(active_keys),
+            timeout=WEBAPP_LIVE_STATS_TIMEOUT_SEC,
+        )
+    except asyncio.TimeoutError:
+        logger.warning(
+            "[WEBAPP] Live key stats timed out after %.1fs (%s keys)",
+            WEBAPP_LIVE_STATS_TIMEOUT_SEC,
+            len(active_keys),
+        )
+    except Exception as e:
+        logger.error("[WEBAPP] Live key stats failed: %s", e)
+
+
+async def _enrich_active_keys_live_stats_inner(active_keys: list) -> None:
+    details_tasks = [remnawave_api.get_key_details_from_host(k) for k in active_keys]
+    details_results = await asyncio.gather(*details_tasks, return_exceptions=True)
+
+    sub_tasks = []
+    key_details_map: dict[int, dict] = {}
+
+    for k, res in zip(active_keys, details_results):
+        if isinstance(res, Exception) or not res or not res.get("user"):
+            sub_tasks.append(asyncio.sleep(0, None))
+            continue
+
+        u = res["user"]
+        key_details_map[k["key_id"]] = u
+
+        if u.get("trafficLimitBytes") is not None:
+            k["limit_bytes"] = u.get("trafficLimitBytes")
+        if u.get("hwidDeviceLimit") is not None:
+            k["limit_ips"] = u.get("hwidDeviceLimit")
+
+        if not k.get("email") and not k.get("key_email"):
+            api_email = u.get("username") or u.get("email") or ""
+            if api_email:
+                k["email"] = api_email
+                k["key_email"] = api_email
+
+        target_uuid = k.get("remnawave_user_uuid") or u.get("uuid")
+        host = k.get("host_name")
+        if target_uuid:
+            sub_tasks.append(remnawave_api.get_subscription_info(str(target_uuid), host_name=host))
+        else:
+            sub_tasks.append(asyncio.sleep(0, None))
+
+    sub_results = await asyncio.gather(*sub_tasks, return_exceptions=True)
+
+    device_tasks: list[tuple[dict, Any]] = []
+    for k, sub_res in zip(active_keys, sub_results):
+        found_traffic = None
+        if not isinstance(sub_res, Exception) and sub_res and isinstance(sub_res, dict):
+            for key_name in ("trafficUsed", "traffic", "used_traffic"):
+                val = sub_res.get(key_name)
+                if val is not None:
+                    found_traffic = val
+                    break
+        if found_traffic is not None:
+            k["used_bytes"] = found_traffic
+
+        if "used_bytes" not in k:
+            u = key_details_map.get(k["key_id"])
+            if u:
+                for key_name in ("traffic", "trafficUsed", "used_traffic"):
+                    if u.get(key_name) is not None:
+                        try:
+                            k["used_bytes"] = int(u.get(key_name))
+                            break
+                        except Exception:
+                            log_suppressed()
+                if "used_bytes" not in k:
+                    uploaded = int(u.get("upload") or 0)
+                    downloaded = int(u.get("download") or 0)
+                    k["used_bytes"] = uploaded + downloaded
+
+        u = key_details_map.get(k["key_id"])
+        target_uuid = (u.get("uuid") if u else None) or k.get("remnawave_user_uuid")
+        host = k.get("host_name")
+        if target_uuid and host:
+            device_tasks.append(
+                (k, remnawave_api.get_connected_devices_count(target_uuid, host_name=host))
+            )
+
+    if device_tasks:
+        device_results = await asyncio.gather(
+            *(task for _, task in device_tasks),
+            return_exceptions=True,
+        )
+        for (k, _), devs in zip(device_tasks, device_results):
+            if isinstance(devs, Exception) or not devs:
+                continue
+            if "total" in devs:
+                k["used_ips"] = int(devs["total"])
+
+
 async def _render_main_page(user_id: int):
     webapp_settings = get_webapp_settings()
     
@@ -1201,100 +1303,7 @@ async def _render_main_page(user_id: int):
             except Exception: log_suppressed()
 
         if active_keys:
-            try:
-                # --- 1. Fetch Key Details (User info from Host) ---
-                details_tasks = []
-                for k in active_keys:
-                    details_tasks.append(remnawave_api.get_key_details_from_host(k))
-                
-                details_results = await asyncio.gather(*details_tasks, return_exceptions=True)
-                
-                # --- 2. Fetch Subscription Info (Traffic Stats) using UUID from Details ---
-                sub_tasks = []
-                # Map results to keys to keep order
-                key_details_map = {}
-                
-                for k, res in zip(active_keys, details_results):
-                    if isinstance(res, Exception) or not res or not res.get('user'):
-                        sub_tasks.append(asyncio.sleep(0, None)) # Skip
-                        continue
-                        
-                    u = res['user']
-                    key_details_map[k['key_id']] = u
-                    
-                    # Update limits from user object immediately
-                    if u.get('trafficLimitBytes') is not None:
-                        k['limit_bytes'] = u.get('trafficLimitBytes')
-                    if u.get('hwidDeviceLimit') is not None:
-                        k['limit_ips'] = u.get('hwidDeviceLimit')
-
-                    if not k.get('email') and not k.get('key_email'):
-                        api_email = u.get('username') or u.get('email') or ''
-                        if api_email:
-                            k['email'] = api_email
-                            k['key_email'] = api_email
-                        
-                    # Determine UUID for subscription check
-                    # BOT PRIORITY: Use DB UUID first, then API response
-                    target_uuid = k.get('remnawave_user_uuid') or u.get('uuid')
-                    host = k.get('host_name')
-                    
-                    if target_uuid:
-                        sub_tasks.append(remnawave_api.get_subscription_info(str(target_uuid), host_name=host))
-                    else:
-                        sub_tasks.append(asyncio.sleep(0, None))
-
-                sub_results = await asyncio.gather(*sub_tasks, return_exceptions=True)
-                
-                # --- 3. Process Subscription Results ---
-                for k, sub_res in zip(active_keys, sub_results):
-                    # Try to find traffic in subscription response
-                    found_traffic = None
-                    if not isinstance(sub_res, Exception) and sub_res and isinstance(sub_res, dict):
-                        # check common keys
-                        for key_name in ['trafficUsed', 'traffic', 'used_traffic']:
-                            val = sub_res.get(key_name)
-                            if val is not None:
-                                found_traffic = val
-                                break
-                    
-                    if found_traffic is not None:
-                        k['used_bytes'] = found_traffic
-                    
-                    # Fallback: check User Details (u)
-                    if 'used_bytes' not in k:
-                        u = key_details_map.get(k['key_id'])
-                        if u:
-                             # Check keys in user object
-                             for key_name in ['traffic', 'trafficUsed', 'used_traffic']:
-                                 if u.get(key_name) is not None:
-                                     try: k['used_bytes'] = int(u.get(key_name)); break
-                                     except Exception: log_suppressed()
-                             
-                             # Final fallback: sum upload + download
-                             if 'used_bytes' not in k:
-                                 uploaded = int(u.get('upload') or 0)
-                                 downloaded = int(u.get('download') or 0)
-                                 k['used_bytes'] = uploaded + downloaded
-
-                    # HWID Usage
-                    u = key_details_map.get(k['key_id'])
-                    target_uuid = None
-                    if u:
-                         target_uuid = u.get('uuid')
-                    if not target_uuid:
-                         target_uuid = k.get('remnawave_user_uuid')
-                         
-                    host = k.get('host_name')
-
-                    if target_uuid and host:
-                         try:
-                              devs = await remnawave_api.get_connected_devices_count(target_uuid, host_name=host)
-                              if devs and 'total' in devs:
-                                   k['used_ips'] = int(devs['total'])
-                         except Exception: log_suppressed()
-            except Exception as e:
-                logger.error(f"[WEBAPP] - Ошибка получения живой статистики для {user_id}: {e}")
+            await _enrich_active_keys_live_stats(active_keys)
 
         # --- CALCULATE MIN PRICE ---
         min_price_val = 0.0
@@ -1446,14 +1455,22 @@ async def studio_preview(
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request, user_id: int | None = None, token: str | None = None):
     try:
+        from shop_bot.data_manager import database
+        from shop_bot.webapp.auth import extract_auth_token, resolve_user_from_token
+
         # 1. Authorize by Token (query param)
         if token:
-            from shop_bot.data_manager import database
             user = database.get_user_by_auth_token(token)
             if user:
                 user_id = user['telegram_id']
+
+        # 2. Authorize by persistent cookie (skip login.html on repeat opens)
+        if user_id is None:
+            cookie_user = resolve_user_from_token(extract_auth_token(request))
+            if cookie_user:
+                user_id = cookie_user['telegram_id']
         
-        # 2. If no user_id (and no valid token), serve login.html
+        # 3. If no user_id (and no valid token), serve login.html
         if user_id is None:
             p = os.path.join(os.path.dirname(__file__), "login.html")
             if os.path.exists(p):
