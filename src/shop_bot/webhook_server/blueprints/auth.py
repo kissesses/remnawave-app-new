@@ -30,6 +30,7 @@ from shop_bot.webhook_server.context import panel_ctx
 from shop_bot.webhook_server.modules import login_accounts
 from shop_bot.webhook_server.modules import security
 from shop_bot.webhook_server.modules import stealth_login
+from shop_bot.webhook_server.modules.update import get_current_version
 from shop_bot.webhook_server.services.auth import panel_landing_url, capture_login_next, resolve_post_login_target
 
 logger = logging.getLogger(__name__)
@@ -549,6 +550,7 @@ def totp_setup_page():
         passkey_available=panel_webauthn.is_available(),
         telegram_bot_username=bot_username,
         telegram_linked=bool(panel_access.get_admin(int(admin_id)).get('telegram_user_id')) if admin_id else False,
+        app_version=get_current_version(),
         **panel_ctx.get_common_template_data(),
     )
 

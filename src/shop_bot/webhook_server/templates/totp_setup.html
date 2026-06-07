@@ -1,116 +1,95 @@
 <!DOCTYPE html>
-<html lang="ru" data-design="classic" class="dark">
+<html lang="ru" class="dark">
 
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Настройка защиты аккаунта</title>
+    <title>Защита аккаунта — Remnawave App</title>
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='img/favicon-32x32.png') }}" />
-    <meta name="theme-color" content="#0a0a0c" />
+    <meta name="theme-color" content="#050508" />
     <meta name="csrf-token" content="{{ csrf_token() }}" />
 
-    {% set auth_security_setup_page = true %}
-    {% include 'partials/auth_security_head.html' %}
+    {% set av = app_version or '' %}
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/access-panel.css') }}{% if av %}?v={{ av }}{% endif %}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/security-setup-page.css') }}{% if av %}?v={{ av }}{% endif %}" rel="stylesheet" />
+    <script>
+        (function () {
+            const accents = {
+                blue: { c: '#0a84ff', r: '10, 132, 255' },
+                violet: { c: '#8b5cf6', r: '139, 92, 246' },
+                rose: { c: '#f43f5e', r: '244, 63, 94' },
+                emerald: { c: '#10b981', r: '16, 185, 129' },
+                cyan: { c: '#06b6d4', r: '6, 182, 212' },
+                amber: { c: '#f59e0b', r: '245, 158, 11' },
+                red: { c: '#ef4444', r: '239, 68, 68' },
+            };
+            const key = localStorage.getItem('panel-accent') || 'blue';
+            const a = accents[key] || accents.blue;
+            document.documentElement.style.setProperty('--primary', a.c);
+            document.documentElement.style.setProperty('--primary-rgb', a.r);
+        })();
+    </script>
 </head>
 
-<body class="auth-ios auth-security-setup" data-auth-page="true">
-    <div class="auth-macos-chrome" aria-hidden="true">
-        <div id="auth-macos-wallpaper" class="auth-macos-wallpaper"></div>
-        <div class="auth-macos-vignette"></div>
-        <header class="auth-macos-menubar">
-            <div class="auth-macos-menubar__left">
-                <img src="{{ url_for('static', filename='img/app-icon-32.png') }}" alt=""
-                    class="auth-macos-menubar__icon" onerror="this.style.display='none'" />
-                <span class="auth-macos-menubar__menu">Remnawave App</span>
-            </div>
-            <div class="auth-macos-menubar__right">
-                <span class="auth-macos-menubar__status" aria-hidden="true">
-                    <span class="material-symbols-outlined">wifi</span>
-                    <span class="material-symbols-outlined">battery_full</span>
-                </span>
-                <time id="auth-macos-clock" class="auth-macos-menubar__clock"></time>
-            </div>
-        </header>
-    </div>
-
-    <div class="auth-glass-chrome" aria-hidden="true">
-        <div class="auth-glass-chrome__ambient"></div>
-        <div class="auth-glass-chrome__grid"></div>
-    </div>
-
-    <main class="auth-page auth-page--setup">
-        <div class="auth-card auth-card--single auth-card--setup">
-            <section class="auth-form-panel">
-                <div class="auth-form-wrap auth-form-wrap--compact">
-                    {% include 'partials/auth_security_hero.html' %}
-
-                    <p class="auth-account-note">
+<body class="sec-setup-body">
+    <div class="sec-setup acc-panel">
+        <header class="sec-setup-header">
+            <div class="sec-setup-header__main">
+                <div class="sec-setup-header__icon" aria-hidden="true">
+                    <span class="material-symbols-outlined">verified_user</span>
+                </div>
+                <div>
+                    <h1 class="sec-setup-header__title">Защита аккаунта</h1>
+                    <p class="sec-setup-header__sub">Завершите настройку: {{ security_info.label }}</p>
+                    <p class="sec-setup-header__account">
                         Аккаунт: <strong>{{ panel_login or session.panel_login or 'administrator' }}</strong>
                     </p>
-
-                    {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                    <div class="auth-flash-list">
-                        {% for category, message in messages %}
-                        <div
-                            class="auth-alert {% if category == 'danger' %}auth-alert--danger{% elif category == 'success' %}auth-alert--success{% else %}auth-alert--info{% endif %}">
-                            <span class="material-symbols-outlined">{% if category == 'danger' %}error{% elif category == 'success' %}check_circle{% else %}info{% endif %}</span>
-                            <span>{{ message }}</span>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-                    {% endwith %}
-
-                    {% include 'partials/auth_security_setup_body.html' %}
-
-                    <form method="post" action="{{ url_for('logout_page') }}" class="auth-inline-form auth-setup-logout">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                        <button type="submit" class="auth-secondary-btn">Выйти</button>
-                    </form>
-
-                    <p class="auth-version">Remnawave App v.{{ project_info.version if project_info is mapping else '—' }}</p>
                 </div>
-            </section>
+            </div>
+            <div class="sec-setup-header__brand">
+                <img src="{{ url_for('static', filename='img/app-icon-32.png') }}" alt="" onerror="this.style.display='none'" />
+                <span>Remnawave App</span>
+            </div>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="sec-setup-flash">
+            {% for category, message in messages %}
+            <div class="acc-info{% if category == 'success' %} acc-info--ok{% endif %}">{{ message }}</div>
+            {% endfor %}
         </div>
-    </main>
+        {% endif %}
+        {% endwith %}
 
-    {% include 'partials/theme_menu_auth.html' %}
-    <div id="toast-container" class="auth-toast-container"></div>
+        {% include 'partials/security_setup_standalone.html' %}
 
-    {% set av = (project_info.version if project_info is mapping and project_info.get('version') else '') or '' %}
+        <footer class="sec-setup-footer">
+            <form method="post" action="{{ url_for('logout_page') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <button type="submit" class="acc-btn acc-btn--ghost">Выйти</button>
+            </form>
+            <p class="sec-setup-footer__version">Remnawave App v.{{ app_version }}</p>
+        </footer>
+    </div>
+
+    <div id="toast-container" class="sec-setup-toast-container"></div>
+
     <script>
-        window.openModal = function (modalId) {
-            const modal = document.getElementById(modalId);
-            if (modal) modal.classList.add('open');
-        };
-        window.closeModal = function (modalId) {
-            const modal = document.getElementById(modalId);
-            if (modal) modal.classList.remove('open');
-        };
         window.showToast = function (type, message, duration) {
             duration = duration || 4000;
             var mapped = type === 'error' ? 'danger' : type;
             var container = document.getElementById('toast-container');
             if (!container) return;
             var toast = document.createElement('div');
-            toast.className = 'auth-toast auth-toast--' + mapped;
-            toast.innerHTML = '<span>' + message + '</span><button type="button" aria-label="Закрыть">×</button>';
-            toast.querySelector('button').addEventListener('click', function () { toast.remove(); });
+            toast.className = 'sec-setup-toast sec-setup-toast--' + mapped;
+            toast.textContent = message;
             container.appendChild(toast);
-            setTimeout(function () {
-                toast.classList.add('auth-toast--hide');
-                setTimeout(function () { toast.remove(); }, 300);
-            }, duration);
+            setTimeout(function () { toast.remove(); }, duration);
         };
-    </script>
-    <script src="{{ url_for('static', filename='js/auth-macos.js') }}{% if av %}?v={{ av }}{% endif %}"></script>
-    <script src="{{ url_for('static', filename='js/auth-glass.js') }}{% if av %}?v={{ av }}{% endif %}"></script>
-    <script src="{{ url_for('static', filename='js/auth-classic.js') }}{% if av %}?v={{ av }}{% endif %}"></script>
-    <script src="{{ url_for('static', filename='js/theme-manager.js') }}{% if av %}?v={{ av }}{% endif %}"></script>
-
-    {% set active_method = security_method or security_info.effective_method %}
-    <script>
         window.ACCESS_AUTH = {
             csrfToken: {{ csrf_token() | tojson }},
             telegramBotUsername: {{ telegram_bot_username | tojson }},

@@ -99,6 +99,7 @@
         </a>
         {% else %}
         <div class="acc-info acc-info--ok">TOTP активен — запрашивается при входе.</div>
+        <a href="{{ url_for('dashboard_page') }}" class="acc-btn acc-btn--primary">Перейти в панель</a>
         {% endif %}
     {% else %}
         {% if ui == 'auth' %}

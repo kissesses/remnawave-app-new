@@ -17,12 +17,30 @@ def _read_os_json() -> dict:
         return json.load(f)
 
 
-def get_project_config() -> dict:
-    return dict(_read_os_json().get('project', {}))
-
-
-def get_current_version():
+def get_current_version() -> str:
+    try:
+        from importlib.metadata import version as pkg_version
+        return pkg_version('remnawave-app')
+    except Exception:
+        pass
+    try:
+        import re
+        from pathlib import Path
+        pyproject = Path(__file__).resolve().parents[4] / 'pyproject.toml'
+        if pyproject.is_file():
+            text = pyproject.read_text(encoding='utf-8')
+            m = re.search(r'^version\s*=\s*["\']([^"\']+)["\']', text, re.MULTILINE)
+            if m:
+                return m.group(1)
+    except Exception:
+        pass
     return _read_os_json().get('project', {}).get('version') or '0.0.0'
+
+
+def get_project_config() -> dict:
+    cfg = dict(_read_os_json().get('project', {}))
+    cfg['version'] = get_current_version()
+    return cfg
 
 
 def get_image_tag_label() -> str:

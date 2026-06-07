@@ -156,17 +156,24 @@
         const section = document.getElementById('auth-setup-method-section');
         const toggle = document.getElementById('auth-setup-method-toggle');
         if (!section || !toggle) return;
+        const collapsedClass = document.body.classList.contains('sec-setup-body')
+            ? 'sec-setup-section--collapsed'
+            : 'auth-setup-section--collapsed';
         toggle.addEventListener('click', function () {
-            const collapsed = section.classList.toggle('auth-setup-section--collapsed');
+            const collapsed = section.classList.toggle(collapsedClass);
             toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
-            toggle.textContent = collapsed ? 'Изменить способ' : 'Свернуть';
+            toggle.textContent = collapsed ? 'Изменить' : 'Свернуть';
         });
     }
 
     function scrollToConfigureIfNeeded() {
         const configure = document.getElementById('auth-setup-configure-section');
-        if (!configure || !document.body.classList.contains('auth-security-setup')) return;
-        const hasActive = document.querySelector('.auth-setup-step.is-active:nth-child(2)');
+        const onSetupPage = document.body.classList.contains('sec-setup-body')
+            || document.body.classList.contains('auth-security-setup');
+        if (!configure || !onSetupPage) return;
+        const hasActive = document.querySelector(
+            '.sec-setup-step.is-active:nth-child(2), .auth-setup-step.is-active:nth-child(2)'
+        );
         if (hasActive && window.matchMedia('(max-width: 480px)').matches) {
             configure.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }

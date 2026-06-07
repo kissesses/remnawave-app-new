@@ -29,9 +29,11 @@ def get_common_template_data() -> dict:
         all_tickets_count = 0
 
     project_info = None
+    app_version = '0.0.0'
     try:
-        from shop_bot.webhook_server.modules.update import get_project_config
+        from shop_bot.webhook_server.modules.update import get_project_config, get_current_version
         project_info = get_project_config()
+        app_version = get_current_version()
     except Exception as e:
         logger.error(f"Failed to read project config: {e}")
         project_info = {}
@@ -50,5 +52,6 @@ def get_common_template_data() -> dict:
         "all_tickets_count": all_tickets_count,
         "brand_title": settings.get('panel_brand_title') or 'Remnawave App',
         "project_info": project_info,
+        "app_version": app_version,
         "other_settings": get_all_other_settings(),
     }

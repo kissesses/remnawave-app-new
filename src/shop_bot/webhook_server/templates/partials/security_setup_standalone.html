@@ -1,0 +1,39 @@
+{# Mandatory 2FA setup — standalone page body (panel UI) #}
+{% set active_method = security_method or security_info.effective_method %}
+{% set step2_active = active_method != 'none' %}
+{% set security_ui = 'panel' %}
+
+<nav class="sec-setup-steps" aria-label="Шаги настройки">
+    <span class="sec-setup-step{% if active_method == 'none' %} is-active{% else %} is-done{% endif %}">1. Способ защиты</span>
+    <span class="sec-setup-step{% if step2_active %} is-active{% endif %}">2. Настройка</span>
+</nav>
+
+{% if security_info.forced_totp %}
+<div class="acc-info">Администратор сервера требует двухфакторную защиту. Выберите TOTP, Passkey или Telegram.</div>
+{% endif %}
+
+<div class="sec-setup-grid">
+    <section class="acc-card sec-setup-section{% if step2_active %} sec-setup-section--collapsed{% endif %}"
+        id="auth-setup-method-section" aria-labelledby="sec-setup-method-title">
+        <div class="sec-setup-section__head">
+            <h2 class="acc-card__title" id="sec-setup-method-title">
+                <span class="material-symbols-outlined">tune</span> Способ защиты
+            </h2>
+            {% if step2_active %}
+            <button type="button" class="sec-setup-section__toggle" id="auth-setup-method-toggle" aria-expanded="false">
+                Изменить
+            </button>
+            {% endif %}
+        </div>
+        <div class="sec-setup-section__body">
+            {% include 'partials/security_method_form.html' %}
+        </div>
+    </section>
+
+    <section class="acc-card sec-setup-section" id="auth-setup-configure-section" aria-labelledby="sec-setup-configure-title">
+        <h2 class="acc-card__title" id="sec-setup-configure-title">
+            <span class="material-symbols-outlined">build</span> Настройка
+        </h2>
+        {% include 'partials/security_configure.html' %}
+    </section>
+</div>

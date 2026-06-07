@@ -1,7 +1,7 @@
 {
     "_comment": "Конфигурация проекта.",
     "project": {
-        "version": "1.0.2",
+        "version": "1.0.3",
         "name": "Remnawave App",
         "brand": "ReSTEAL v3 RW",
         "tagline": "Telegram VPN shop с современной веб-панелью",
