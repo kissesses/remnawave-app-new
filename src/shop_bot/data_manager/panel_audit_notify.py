@@ -68,7 +68,7 @@ def format_audit_telegram_message(
     who = html.escape(str(admin_login or "—"))
     lines = [f"{emoji} <b>{label}</b>", f"👤 {who}"]
     if ip:
-        lines.append(f"🌐 <code>{html.escape(str(ip))}</code>")
+        lines.append(f"🌐 {html.escape(str(ip))}")
     summary = (entry.get("summary") or "").strip()
     if summary and summary != entry.get("action_label"):
         lines.append(f"📝 {html.escape(summary)}")
@@ -85,6 +85,7 @@ def notify_audit_action(
     details: dict[str, Any] | str | None = None,
     ip: str | None = None,
 ) -> None:
+    _ = admin_id
     if not should_notify_action(action):
         return
     try:

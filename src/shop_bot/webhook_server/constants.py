@@ -45,8 +45,7 @@ ALL_SETTINGS_KEYS = [
     "notifications_topic_crm", "notifications_topic_backup", "notifications_topic_secrets",
     "notifications_topic_auth", "notifications_topic_nodes", "notifications_topic_payments",
     "notifications_topic_sql", "notifications_topic_trial", "notifications_topic_tickets",
-    "notifications_topic_admin",
-    "notifications_admin_audit_enabled", "notifications_admin_audit_include_sql",
+    "notifications_topic_admin", "notifications_admin_audit_enabled", "notifications_admin_audit_include_sql",
     "backup_remnawave_mode", "backup_remnawave_compose_dir", "backup_remnawave_ssh_target",
     "backup_remnawave_pg_service", "backup_remnawave_database_url", "backup_remnawave_compose_cmd",
 
@@ -85,17 +84,14 @@ SETTINGS_NAV_GROUPS: dict[str, dict[str, str]] = {
     "system": {
         "label": "Система",
         "desc": "Панель, боты и доступ",
-        "icon": "settings",
     },
     "services": {
         "label": "Сервисы",
         "desc": "Платежи, хосты и контент",
-        "icon": "hub",
     },
     "tools": {
         "label": "Инструменты",
         "desc": "Рассылка, логи и интеграции",
-        "icon": "handyman",
     },
 }
 
@@ -176,10 +172,6 @@ SETTINGS_TAB_CHECKBOXES: dict[str, dict[str, str]] = {
         "enable_fixed_referral_bonus": "false",
         "referral_notify_bonus": "true",
     },
-    "bot": {
-        "notifications_admin_audit_enabled": "true",
-        "notifications_admin_audit_include_sql": "false",
-    },
     "content": {
         "force_subscription": "false",
     },
@@ -213,6 +205,13 @@ SETTINGS_TAB_TEXT_KEYS: dict[str, list[str]] = {
     "bot": [
         "telegram_bot_token", "telegram_bot_username", "admin_telegram_id",
         "support_bot_token", "support_bot_username", "support_forum_chat_id",
+        "notifications_chat_id",
+        "notifications_topic_crm", "notifications_topic_backup", "notifications_topic_secrets",
+        "notifications_topic_auth", "notifications_topic_nodes", "notifications_topic_payments",
+        "notifications_topic_sql", "notifications_topic_trial", "notifications_topic_tickets",
+        "notifications_topic_admin", "notifications_admin_audit_enabled", "notifications_admin_audit_include_sql",
+        "backup_telegram_chat_id", "backup_telegram_topic_id",
+        "backup_secrets_chat_id", "backup_secrets_topic_id",
     ],
     "payments": [
         "receipt_email", "yookassa_shop_id", "yookassa_secret_key",

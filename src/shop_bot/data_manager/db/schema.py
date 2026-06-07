@@ -122,7 +122,7 @@ def get_bot_default_settings() -> dict:
         "telegram_bot_username": None,
         "trial_enabled": "true",
         "trial_duration_days": "3",
-        "enable_referrals": "true",
+        "enable_referrals": "false",
         "referral_percentage": "10",
         "referral_discount": "5",
         "minimum_withdrawal": "100",
@@ -176,8 +176,8 @@ def get_bot_default_settings() -> dict:
         "notifications_topic_trial": "",
         "notifications_topic_tickets": "",
         "notifications_topic_admin": "",
-        "notifications_admin_audit_enabled": "true",
-        "notifications_admin_audit_include_sql": "false",
+        "notifications_admin_audit_enabled": "1",
+        "notifications_admin_audit_include_sql": "0",
         "monitoring_enabled": "true",
         "monitoring_interval_sec": "300",
         "monitoring_cpu_threshold": "90",
@@ -602,7 +602,7 @@ def _ensure_webapp_settings_table(cursor: sqlite3.Cursor):
             cursor.execute("ALTER TABLE webapp_settings ADD COLUMN webapp_default_design TEXT DEFAULT 'classic'")
         if "webapp_enabled_designs" not in columns:
             cursor.execute(
-                "ALTER TABLE webapp_settings ADD COLUMN webapp_enabled_designs TEXT DEFAULT 'classic,ios,desktop,stealth,stealth-glass'"
+                "ALTER TABLE webapp_settings ADD COLUMN webapp_enabled_designs TEXT DEFAULT 'classic,ios,desktop,stealth,stealth-glass,glass-hub'"
             )
         if "webapp_theme_picker" not in columns:
             cursor.execute("ALTER TABLE webapp_settings ADD COLUMN webapp_theme_picker INTEGER DEFAULT 1")
@@ -622,7 +622,7 @@ def _ensure_webapp_design_columns(cursor) -> None:
         cursor,
         "webapp_settings",
         "webapp_enabled_designs",
-        "TEXT DEFAULT 'classic,ios,desktop,stealth,stealth-glass'",
+        "TEXT DEFAULT 'classic,ios,desktop,stealth,stealth-glass,glass-hub'",
     )
     _ensure_table_column(cursor, "webapp_settings", "webapp_theme_picker", "INTEGER DEFAULT 1")
 

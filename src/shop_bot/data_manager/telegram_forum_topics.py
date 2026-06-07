@@ -11,7 +11,6 @@ from shop_bot.data_manager import telegram_notify as tg
 
 logger = logging.getLogger(__name__)
 
-# Telegram Bot API: допустимые icon_color для createForumTopic
 ICON_BLUE = 7322096
 ICON_YELLOW = 16766590
 ICON_VIOLET = 13338331
@@ -19,7 +18,6 @@ ICON_GREEN = 9367192
 ICON_ORANGE = 16749490
 ICON_CYAN = 16478047
 
-# Эмодзи из набора https://t.me/addemoji/tgmacicons — подбираются через getForumTopicIconStickers
 TGMACICONS_PACK_URL = "https://t.me/addemoji/tgmacicons"
 
 
@@ -57,7 +55,6 @@ def _sticker_emoji(sticker: Any) -> str:
 
 
 def _pick_forum_icon_id(stickers: list[Any], emoji_candidates: tuple[str, ...]) -> str | None:
-    """Иконка топика из getForumTopicIconStickers (часто SF Symbols / tgmacicons)."""
     if not stickers:
         return None
     allowed: dict[str, str] = {}
@@ -95,11 +92,8 @@ async def create_notification_forum_topics(
     skip_filled: bool = True,
     persist: bool = True,
 ) -> dict[str, Any]:
-    """
-    Создать топики для пустых notifications_topic_* (стратегия B).
-
-    Возвращает created / skipped / errors и topics {setting_key: topic_id}.
-    """
+    """Создать топики для пустых notifications_topic_*."""
+    _ = skip_filled
     stickers = await _load_forum_icon_stickers(bot)
     created: list[dict[str, Any]] = []
     skipped: list[dict[str, Any]] = []
@@ -143,11 +137,7 @@ async def create_notification_forum_topics(
                         "label": tg.CATEGORY_LABELS.get(spec.category, spec.category),
                         "error": str(retry_exc),
                     })
-                    logger.warning(
-                        "createForumTopic %s failed (icon retry): %s",
-                        spec.category,
-                        retry_exc,
-                    )
+                    logger.warning("createForumTopic %s failed (icon retry): %s", spec.category, retry_exc)
                     continue
             else:
                 errors.append({

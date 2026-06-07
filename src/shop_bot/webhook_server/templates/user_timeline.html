@@ -16,16 +16,9 @@
                     Пользователи
                 </a>
                 <div class="ut-hero__actions">
-                    <button type="button" class="ut-btn ut-btn--ghost" id="ut-copy-link" title="Скопировать ссылку">
-                        <span class="material-symbols-outlined">link</span>
-                    </button>
-                    <button type="button" class="ut-btn ut-btn--ghost" id="ut-export-csv" title="Экспорт CSV">
-                        <span class="material-symbols-outlined">table</span>
-                        CSV
-                    </button>
                     <button type="button" class="ut-btn ut-btn--ghost" id="ut-export" title="Экспорт JSON">
                         <span class="material-symbols-outlined">download</span>
-                        JSON
+                        Экспорт
                     </button>
                     <button type="button" class="ut-btn ut-btn--primary" id="ut-open-modal" data-uid="{{ user_id }}">
                         <span class="material-symbols-outlined">person</span>
@@ -42,7 +35,7 @@
                     {% endif %}
                 </div>
                 <div class="ut-profile__main">
-                    <p class="ut-profile__eyebrow">Bot Conversation Viewer</p>
+                    <p class="ut-profile__eyebrow">Лента активности клиента</p>
                     <h1 class="ut-profile__title">
                         {% if user.username %}@{{ user.username }}{% else %}Клиент{% endif %}
                         <span class="ut-profile__id">#{{ user_id }}</span>
@@ -66,27 +59,7 @@
     <div class="ut-layout">
         <aside class="ut-sidebar">
             <div class="ut-panel">
-                <h2 class="ut-panel__title">Insights</h2>
-                <ul class="ut-insights" id="ut-insights">
-                    <li class="ut-insights__item ut-insights__item--skeleton"></li>
-                    <li class="ut-insights__item ut-insights__item--skeleton"></li>
-                    <li class="ut-insights__item ut-insights__item--skeleton"></li>
-                </ul>
-            </div>
-
-            <div class="ut-panel">
-                <h2 class="ut-panel__title">Активность · 30 дней</h2>
-                <div class="ut-sparkline" id="ut-sparkline" aria-hidden="true"></div>
-            </div>
-
-            <div class="ut-panel">
                 <h2 class="ut-panel__title">Фильтры</h2>
-                <div class="ut-presets" id="ut-presets">
-                    <button type="button" class="ut-preset" data-preset="7">7д</button>
-                    <button type="button" class="ut-preset" data-preset="30">30д</button>
-                    <button type="button" class="ut-preset" data-preset="90">90д</button>
-                    <button type="button" class="ut-preset is-active" data-preset="all">Всё</button>
-                </div>
                 <div class="ut-search">
                     <span class="material-symbols-outlined">search</span>
                     <input type="search" id="ut-search" placeholder="Поиск по событиям..." autocomplete="off" />
@@ -120,7 +93,7 @@
         <main class="ut-main">
             <div class="ut-main__head">
                 <div>
-                    <h2 class="ut-main__title">Timeline активности</h2>
+                    <h2 class="ut-main__title">Лента активности</h2>
                     <p class="ut-main__sub" id="ut-result-count">Загрузка...</p>
                 </div>
                 <label class="ut-toggle">

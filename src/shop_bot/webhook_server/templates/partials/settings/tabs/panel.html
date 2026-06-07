@@ -44,6 +44,16 @@
                             <span class="material-symbols-outlined settings-macos-row__chevron">chevron_right</span>
                         </a>
                         {% endif %}
+                        {% if dev_support_hub_enabled and can('dev_support_hub') %}
+                        <a href="{{ url_for('developer_page') }}" class="settings-macos-row settings-macos-row--link">
+                            <span class="settings-macos-row__glyph material-symbols-outlined">inbox</span>
+                            <span class="settings-macos-row__body">
+                                <span class="settings-macos-row__title">Support Hub Inbox</span>
+                                <span class="settings-macos-row__sub">Входящие тикеты с клиентских панелей</span>
+                            </span>
+                            <span class="material-symbols-outlined settings-macos-row__chevron">chevron_right</span>
+                        </a>
+                        {% endif %}
                         <button type="button" class="settings-macos-row settings-macos-row--link" id="settings-open-admins-online">
                             <span class="settings-macos-row__glyph material-symbols-outlined">groups</span>
                             <span class="settings-macos-row__body">
@@ -312,7 +322,7 @@
                         <div class="settings-macos-row settings-macos-row--field">
                             <label class="settings-macos-row__field-label" for="smtp-from-name">Имя отправителя</label>
                             <div class="settings-macos-row__field-input settings-macos-row__field-input--stretch">
-                                <input type="text" id="smtp-from-name" name="smtp_from_name" value="{{ settings.smtp_from_name or '' }}" placeholder="Remnawave App" class="settings-macos-input settings-macos-input--stretch" />
+                                <input type="text" id="smtp-from-name" name="smtp_from_name" value="{{ settings.smtp_from_name or '' }}" placeholder="Remnawave ShopBot" class="settings-macos-input settings-macos-input--stretch" />
                             </div>
                         </div>
                         <div class="settings-macos-row settings-macos-row--field">
@@ -442,46 +452,26 @@
                     </div>
                 </div>
                 <div class="settings-macos-group">
-                    <p class="settings-macos-group__caption">Параметры</p>
+                    <p class="settings-macos-group__caption">Автобэкап</p>
                     <div class="settings-macos-list">
-                        <div class="settings-macos-row settings-macos-row--field">
-                            <label class="settings-macos-row__field-label" for="backup-interval-days">Автобэкап (дни)</label>
-                            <div class="settings-macos-row__field-input">
-                                <input type="number" id="backup-interval-days" name="backup_interval_days"
-                                    value="{{ settings.backup_interval_days or '1' }}" min="0" class="settings-macos-input" />
-                                <span class="settings-macos-row__field-hint">0 — выключить</span>
-                            </div>
+                        <div class="settings-macos-row settings-macos-row--info">
+                            <span class="settings-macos-row__glyph material-symbols-outlined">info</span>
+                            <span class="settings-macos-row__body">
+                                <span class="settings-macos-row__title">Настройки автобэкапа — в Центре бэкапов</span>
+                                <span class="settings-macos-row__sub">
+                                    Интервал:
+                                    {% if (settings.backup_interval_days or '0') == '0' %}выключен{% else %}каждые {{ settings.backup_interval_days }} д.{% endif %}
+                                    · хранить {{ settings.backup_keep_count or '7' }} арх.
+                                    · Telegram {% if settings.backup_autobackup_telegram != '0' %}вкл{% else %}выкл{% endif %}
+                                </span>
+                            </span>
+                            <a href="{{ url_for('backups_page') }}" class="settings-macos-row__link">Открыть</a>
                         </div>
-                        <div class="settings-macos-row settings-macos-row--field">
-                            <label class="settings-macos-row__field-label" for="backup-keep-count">Хранить архивов</label>
-                            <div class="settings-macos-row__field-input">
-                                <input type="number" id="backup-keep-count" name="backup_keep_count"
-                                    value="{{ settings.backup_keep_count or '7' }}" min="1" max="100" class="settings-macos-input" />
-                                <span class="settings-macos-row__field-hint">db / files / full / remnawave</span>
-                            </div>
-                        </div>
-                        <div class="settings-macos-row settings-macos-row--field">
-                            <label class="settings-macos-row__field-label" for="backup-autobackup-scope">Автобэкап — состав</label>
-                            <div class="settings-macos-row__field-input settings-macos-row__field-input--stretch">
-                                <select id="backup-autobackup-scope" name="backup_autobackup_scope" class="settings-macos-input settings-macos-input--stretch">
-                                    <option value="database" {% if (settings.backup_autobackup_scope or 'database') == 'database' %}selected{% endif %}>Только БД</option>
-                                    <option value="files" {% if settings.backup_autobackup_scope == 'files' %}selected{% endif %}>Весь проект</option>
-                                    <option value="full" {% if settings.backup_autobackup_scope == 'full' %}selected{% endif %}>БД + проект</option>
-                                    <option value="remnawave" {% if settings.backup_autobackup_scope == 'remnawave' %}selected{% endif %}>Remnawave Panel</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="settings-macos-row settings-macos-row--toggle">
-                            <div class="settings-macos-row__body">
-                                <span class="settings-macos-row__title">Telegram при автобэкапе</span>
-                                <span class="settings-macos-row__sub">Отправка архива админам бота</span>
-                            </div>
-                            <input type="hidden" name="backup_autobackup_telegram" value="0" />
-                            <label class="settings-macos-switch">
-                                <input type="checkbox" name="backup_autobackup_telegram" value="1" {% if settings.backup_autobackup_telegram != '0' %}checked{% endif %} />
-                                <span class="settings-macos-switch__track"></span>
-                            </label>
-                        </div>
+                    </div>
+                </div>
+                <div class="settings-macos-group">
+                    <p class="settings-macos-group__caption">Параметры архива</p>
+                    <div class="settings-macos-list">
                         <div class="settings-macos-row settings-macos-row--toggle">
                             <div class="settings-macos-row__body">
                                 <span class="settings-macos-row__title">Включать .env в бэкап проекта</span>

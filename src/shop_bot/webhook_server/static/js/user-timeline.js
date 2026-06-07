@@ -54,9 +54,6 @@
         dateFrom: document.getElementById('ut-date-from'),
         dateTo: document.getElementById('ut-date-to'),
         groupDays: document.getElementById('ut-group-days'),
-        insights: document.getElementById('ut-insights'),
-        sparkline: document.getElementById('ut-sparkline'),
-        presets: document.getElementById('ut-presets'),
     };
 
     function formatMoney(amount, signed) {
@@ -252,72 +249,6 @@
         els.chips.innerHTML = chips.join('');
     }
 
-    function renderInsights(stats) {
-        if (!els.insights || !stats?.insights) return;
-        const ins = stats.insights;
-        const items = [];
-        if (ins.days_since_registration != null) {
-            items.push({ icon: 'calendar_month', label: 'С нами', value: `${ins.days_since_registration} дн.` });
-        }
-        if (ins.ltv != null) {
-            items.push({ icon: 'payments', label: 'LTV', value: `${Number(ins.ltv).toLocaleString('ru-RU')} ₽` });
-        }
-        if (ins.avg_payment > 0) {
-            items.push({ icon: 'avg_pace', label: 'Средний чек', value: `${Number(ins.avg_payment).toLocaleString('ru-RU')} ₽` });
-        }
-        if (ins.first_payment_at) {
-            items.push({ icon: 'first_page', label: 'Первый платёж', value: formatTime(ins.first_payment_at) });
-        }
-        if (ins.last_payment_at) {
-            items.push({ icon: 'schedule', label: 'Последний платёж', value: formatTime(ins.last_payment_at) });
-        }
-        if (stats.last_activity_ms) {
-            items.push({ icon: 'bolt', label: 'Последняя активность', value: formatTime(new Date(stats.last_activity_ms).toISOString().slice(0, 19).replace('T', ' ')) });
-        }
-        els.insights.innerHTML = items.slice(0, 6).map((it) => `
-            <li class="ut-insights__item">
-                <span class="material-symbols-outlined">${escapeHtml(it.icon)}</span>
-                <div>
-                    <span class="ut-insights__label">${escapeHtml(it.label)}</span>
-                    <span class="ut-insights__value">${escapeHtml(it.value)}</span>
-                </div>
-            </li>`).join('') || '<li class="ut-insights__empty">Нет данных</li>';
-    }
-
-    function renderSparkline(sparkline) {
-        if (!els.sparkline || !sparkline?.length) return;
-        const max = Math.max(...sparkline.map((d) => d.count || 0), 1);
-        els.sparkline.innerHTML = sparkline.map((d) => {
-            const h = Math.round(((d.count || 0) / max) * 100);
-            const title = `${d.day}: ${d.count} событ.`;
-            return `<span class="ut-sparkline__bar" style="height:${Math.max(h, 4)}%" title="${escapeHtml(title)}"></span>`;
-        }).join('');
-    }
-
-    function applyDatePreset(days) {
-        document.querySelectorAll('.ut-preset').forEach((b) => {
-            b.classList.toggle('is-active', b.dataset.preset === String(days));
-        });
-        if (days === 'all') {
-            state.from = '';
-            state.to = '';
-            if (els.dateFrom) els.dateFrom.value = '';
-            if (els.dateTo) els.dateTo.value = '';
-            resetAndLoad();
-            return;
-        }
-        const n = parseInt(days, 10);
-        const to = new Date();
-        const from = new Date();
-        from.setDate(to.getDate() - (n - 1));
-        const fmt = (d) => d.toISOString().slice(0, 10);
-        state.from = fmt(from);
-        state.to = fmt(to);
-        if (els.dateFrom) els.dateFrom.value = state.from;
-        if (els.dateTo) els.dateTo.value = state.to;
-        resetAndLoad();
-    }
-
     function renderCategories(categories, counts) {
         if (!categories?.length) return;
         els.categories.innerHTML = categories.map((cat) => {
@@ -385,8 +316,6 @@
             state.categoryCounts = data.category_counts || {};
 
             renderStats(data.stats, data.user);
-            renderInsights(data.stats);
-            renderSparkline(data.stats?.activity_sparkline);
             renderCategories(state.categories, state.categoryCounts);
             renderTimeline(append, data.days, data.events);
 
@@ -462,44 +391,7 @@
         if (els.search) els.search.value = '';
         if (els.dateFrom) els.dateFrom.value = '';
         if (els.dateTo) els.dateTo.value = '';
-        document.querySelectorAll('.ut-preset').forEach((b) => {
-            b.classList.toggle('is-active', b.dataset.preset === 'all');
-        });
         resetAndLoad();
-    });
-
-    els.presets?.addEventListener('click', (e) => {
-        const btn = e.target.closest('[data-preset]');
-        if (!btn) return;
-        applyDatePreset(btn.dataset.preset || 'all');
-    });
-
-    document.getElementById('ut-export-csv')?.addEventListener('click', () => {
-        window.location.href = `/users/${userId}/timeline/export.csv`;
-        if (typeof window.showToast === 'function') {
-            window.showToast('success', 'CSV загружается…');
-        }
-    });
-
-    document.getElementById('ut-copy-link')?.addEventListener('click', async () => {
-        const url = window.location.href;
-        try {
-            await navigator.clipboard.writeText(url);
-            if (typeof window.showToast === 'function') {
-                window.showToast('success', 'Ссылка скопирована');
-            }
-        } catch (_) {
-            if (typeof window.showToast === 'function') {
-                window.showToast('warning', 'Не удалось скопировать');
-            }
-        }
-    });
-
-    document.addEventListener('keydown', (e) => {
-        if (e.key === '/' && !/input|textarea|select/i.test(document.activeElement?.tagName || '')) {
-            e.preventDefault();
-            els.search?.focus();
-        }
     });
 
     document.getElementById('ut-empty-reset')?.addEventListener('click', () => {
@@ -528,7 +420,13 @@
 
     document.getElementById('ut-export')?.addEventListener('click', async () => {
         try {
-            const res = await fetch(`/users/${userId}/timeline/export.json`, { credentials: 'same-origin' });
+            const params = new URLSearchParams({
+                category: state.category,
+            });
+            if (state.q) params.set('q', state.q);
+            if (state.from) params.set('from', state.from);
+            if (state.to) params.set('to', state.to);
+            const res = await fetch(`/users/${userId}/timeline/export.json?${params}`, { credentials: 'same-origin' });
             const data = await res.json();
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
             const a = document.createElement('a');

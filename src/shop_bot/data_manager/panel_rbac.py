@@ -50,6 +50,7 @@ PERMISSION_GROUPS: list[dict] = [
             ("other_remnawave", "Remnawave"),
             ("settings_mail_templates", "Шаблоны почты (Mail Studio)"),
             ("dev_support", "Поддержка разработчика"),
+            ("dev_support_hub", "Support Hub Inbox"),
         ],
     },
     {
@@ -106,7 +107,6 @@ ENDPOINT_PERMISSIONS: dict[str, str] = {
     "user_timeline_page": "users",
     "user_timeline_json": "users",
     "user_timeline_export": "users",
-    "user_timeline_export_csv": "users",
     "toggle_trial_used_route": "users",
     "ban_user_route": "users",
     "toggle_block_user_route": "users",
@@ -214,7 +214,7 @@ ENDPOINT_PERMISSIONS: dict[str, str] = {
     "backup_download_route": "db_manage",
     "backup_delete_route": "db_manage",
     "backup_send_telegram_route": "db_manage",
-    "backup_test_channel_route": "settings_bot",
+    "backup_test_channel_route": "db_manage",
     "create_notification_topics_route": "settings_bot",
     "backup_settings_json": "db_manage",
     "backup_settings_save": "db_manage",
@@ -374,6 +374,14 @@ ENDPOINT_PERMISSIONS: dict[str, str] = {
     "developer_support_ticket_json": "dev_support",
     "developer_support_ticket_reply": "dev_support",
     "developer_support_ticket_attachment": "dev_support",
+    "developer_page": "dev_support_hub",
+    "developer_ticket_page": "dev_support_hub",
+    "developer_ticket_reply": "dev_support_hub",
+    "developer_attachment": "dev_support_hub",
+    "developer_support_inbox_page": "dev_support_hub",
+    "developer_support_inbox_detail": "dev_support_hub",
+    "developer_support_inbox_reply": "dev_support_hub",
+    "developer_support_inbox_attachment": "dev_support_hub",
 }
 
 SETTINGS_TAB_PERMISSIONS: dict[str, str] = {
@@ -429,6 +437,7 @@ PERMISSION_RISK: dict[str, str] = {
     "system_upgrade": "critical",
     "node_power": "critical",
     "dev_support": "medium",
+    "dev_support_hub": "high",
 }
 
 DOCK_COVERAGE: list[tuple[str, str]] = [
@@ -487,6 +496,16 @@ ROLE_PRESETS: list[dict] = [
         "icon": "engineering",
         "desc": "Стандартный оператор (как раньше)",
         "levels": {k: "edit" for k in DEFAULT_OPERATOR_PERMISSIONS},
+    },
+    {
+        "id": "hub_inbox",
+        "label": "Support Hub",
+        "icon": "inbox",
+        "desc": "Inbox тикетов с клиентских панелей (maintainer)",
+        "levels": {
+            "dashboard": "view",
+            "dev_support_hub": "edit",
+        },
     },
     {
         "id": "content",
@@ -575,6 +594,7 @@ LANDING_ROUTES: list[tuple[str, str, dict[str, str]]] = [
     ("button_constructor", "button_constructor_page", {}),
     ("node", "node_page", {}),
     ("db_manage", "backups_page", {}),
+    ("dev_support_hub", "developer_page", {}),
     ("dev_support", "developer_support_page", {}),
     ("settings_audit", "settings_tab_page", {"tab": "audit"}),
     ("settings", "settings_tab_page", {"tab": "panel"}),

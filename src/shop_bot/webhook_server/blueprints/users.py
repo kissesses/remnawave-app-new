@@ -208,12 +208,6 @@ def adjust_balance_route(user_id: int):
     old_balance = get_balance(user_id)
     ok = adjust_user_balance(user_id, delta)
     if ok:
-        panel_ctx.audit('user.balance_adjust', {
-            'user_id': user_id,
-            'delta': float(delta),
-            'old_balance': float(old_balance or 0),
-            'new_balance': float(get_balance(user_id) or 0),
-        })
         try:
             new_balance = get_balance(user_id)
             target_user = get_user(user_id) or {}
@@ -300,7 +294,6 @@ def clear_balance_history_route(user_id: int):
             conn.commit()
         
         logger.info(f"Cleared {deleted_count} balance transactions for user {user_id}")
-        panel_ctx.audit('user.balance_history_clear', {'user_id': user_id, 'rows': deleted_count})
         return jsonify({"ok": True, "message": f"История очищена ({deleted_count} зап.)"})
     except Exception as e:
         logger.error(f"Failed to clear balance history for user {user_id}: {e}")
@@ -325,7 +318,6 @@ def clear_payment_history_route(user_id: int):
             conn.commit()
         
         logger.info(f"Cleared {deleted_count} payment transactions for user {user_id}")
-        panel_ctx.audit('user.payment_history_clear', {'user_id': user_id, 'rows': deleted_count})
         return jsonify({"ok": True, "message": f"История очищена ({deleted_count} зап.)"})
     except Exception as e:
         logger.error(f"Failed to clear payment history for user {user_id}: {e}")
@@ -668,7 +660,6 @@ def user_timeline_page(user_id: int):
         user_id=user_id,
         user=user,
         avatar_url=avatar_url,
-        **panel_ctx.get_common_template_data(),
     )
 
 
@@ -710,65 +701,37 @@ def user_timeline_json(user_id: int):
 @bp.route('/users/<int:user_id>/timeline/export.json')
 @panel_ctx.login_required
 def user_timeline_export(user_id: int):
-    from shop_bot.webhook_server.services.user_timeline import collect_all_events, _compute_stats
+    from shop_bot.webhook_server.services.user_timeline import export_user_timeline
 
-    user, events = collect_all_events(user_id)
-    if not user:
-        return jsonify({'ok': False, 'error': 'user_not_found'}), 404
+    category = (request.args.get('category') or 'all').strip().lower()
+    q = (request.args.get('q') or '').strip()
+    date_from = (request.args.get('from') or '').strip()
+    date_to = (request.args.get('to') or '').strip()
+
+    payload = export_user_timeline(
+        user_id,
+        category=category,
+        q=q,
+        date_from=date_from,
+        date_to=date_to,
+    )
+    if not payload.get('ok'):
+        return jsonify(payload), 404
     return jsonify({
         'ok': True,
         'user_id': user_id,
         'exported_at': get_msk_time().strftime('%Y-%m-%d %H:%M:%S'),
-        'events': events,
-        'stats': _compute_stats(events, user),
+        'filters': {
+            'category': category,
+            'q': q,
+            'from': date_from,
+            'to': date_to,
+        },
+        'events': payload.get('events') or [],
+        'stats': payload.get('stats') or {},
+        'total': payload.get('total'),
+        'exported_count': payload.get('exported_count') or len(payload.get('events') or []),
     })
-
-
-@bp.route('/users/<int:user_id>/timeline/export.csv')
-@panel_ctx.login_required
-def user_timeline_export_csv(user_id: int):
-    import csv
-    import io
-
-    from flask import Response
-
-    from shop_bot.webhook_server.services.user_timeline import collect_all_events, _compute_stats
-
-    user, events = collect_all_events(user_id)
-    if not user:
-        return jsonify({'ok': False, 'error': 'user_not_found'}), 404
-
-    buf = io.StringIO()
-    writer = csv.writer(buf)
-    writer.writerow([
-        'datetime', 'category', 'kind', 'title', 'subtitle', 'description',
-        'amount', 'status', 'status_label',
-    ])
-    for evt in events:
-        writer.writerow([
-            evt.get('ts') or '',
-            evt.get('category') or '',
-            evt.get('kind') or '',
-            evt.get('title') or '',
-            evt.get('subtitle') or '',
-            evt.get('description') or '',
-            evt.get('amount') if evt.get('amount') is not None else '',
-            evt.get('status') or '',
-            evt.get('status_label') or '',
-        ])
-
-    stats = _compute_stats(events, user)
-    filename = f"client-{user_id}-timeline.csv"
-    panel_ctx.audit('user.timeline_export_csv', {
-        'user_id': user_id,
-        'events': len(events),
-        'payments_sum': stats.get('payments_sum'),
-    })
-    return Response(
-        buf.getvalue(),
-        mimetype='text/csv; charset=utf-8',
-        headers={'Content-Disposition': f'attachment; filename="{filename}"'},
-    )
 
 
 @bp.route('/users/<int:user_id>/trial/toggle', methods=['POST'])
@@ -792,7 +755,6 @@ def toggle_trial_used_route(user_id: int):
             )
             conn.commit()
         
-        panel_ctx.audit('user.trial_toggle', {'user_id': user_id, 'trial_used': new_status})
         return jsonify({
             "ok": True,
             "trial_used": new_status,
@@ -864,12 +826,10 @@ def toggle_block_user_route(user_id):
     is_banned = bool(user.get('is_banned', False))
     if is_banned:
         unban_user(user_id)
-        panel_ctx.audit('user.unban', {'user_id': user_id})
         msg = f"Пользователь {user_id} разблокирован."
         res_ok = True
     else:
         ban_user(user_id)
-        panel_ctx.audit('user.ban', {'user_id': user_id})
         msg = f"Пользователь {user_id} заблокирован."
         res_ok = True
     

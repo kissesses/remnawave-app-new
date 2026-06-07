@@ -201,6 +201,7 @@ def dashboard_page():
     common_data = panel_ctx.get_common_template_data()
     admin_id = session.get('panel_admin_id')
     layout = dash_layout.get_admin_layout(admin_id)
+    from shop_bot.webhook_server.services.onboarding_checklist import build_onboarding_checklist
 
     return render_template(
         'dashboard.html',
@@ -215,6 +216,7 @@ def dashboard_page():
         current_page=1,
         total_pages=1,
         dashboard_layout=layout,
+        onboarding_checklist=build_onboarding_checklist(),
         **common_data
     )
 

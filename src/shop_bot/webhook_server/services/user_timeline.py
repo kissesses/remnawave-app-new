@@ -1,10 +1,10 @@
-"""Сборка единой ленты активности клиента для Bot Conversation Viewer."""
+"""Сборка CRM-ленты активности клиента (платежи, ключи, тикеты, audit)."""
 
 from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any
 
 from shop_bot.data_manager import panel_audit
@@ -481,6 +481,24 @@ def _admin_events(user_id: int) -> list[dict[str, Any]]:
     return events
 
 
+def _trial_activation_ts(user_id: int) -> str | None:
+    try:
+        with get_db_connection() as conn:
+            row = conn.execute(
+                """
+                SELECT MIN(created_at) AS ts
+                FROM vpn_keys
+                WHERE user_id = ? AND COALESCE(key_email, '') LIKE 'trial_%'
+                """,
+                (user_id,),
+            ).fetchone()
+        if row and row["ts"]:
+            return str(row["ts"])
+    except Exception as exc:
+        logger.debug("timeline trial ts for %s: %s", user_id, exc)
+    return None
+
+
 def _referral_events(user_id: int, user: dict) -> list[dict[str, Any]]:
     events: list[dict[str, Any]] = []
     referred_by = user.get("referred_by")
@@ -538,27 +556,16 @@ def _system_events(user: dict) -> list[dict[str, Any]]:
             )
         )
     if user.get("trial_used"):
+        trial_ts = _trial_activation_ts(int(uid)) if uid else None
         events.append(
             _event(
                 eid=f"trial-{uid}",
                 kind="trial",
-                ts=user.get("registration_date"),
+                ts=trial_ts or user.get("registration_date"),
                 title="Пробный период использован",
                 subtitle="Trial активирован",
                 status="used",
                 status_label="Trial",
-            )
-        )
-    if user.get("is_banned"):
-        events.append(
-            _event(
-                eid=f"banned-{uid}",
-                kind="ban",
-                ts=user.get("registration_date"),
-                title="Аккаунт заблокирован",
-                subtitle="Текущий статус",
-                status="banned",
-                status_label="Ban",
             )
         )
     return events
@@ -570,25 +577,6 @@ def _compute_stats(events: list[dict[str, Any]], user: dict) -> dict[str, Any]:
     broadcasts = [e for e in events if e["kind"] == "broadcast"]
     admin = [e for e in events if e["category"] == CATEGORY_ADMIN]
     last_ts = max((e.get("ts_ms") or 0 for e in events), default=0)
-
-    now = get_msk_time().replace(tzinfo=None)
-    reg_dt = _parse_dt(user.get("registration_date"))
-    days_since_reg = (now.date() - reg_dt.date()).days if reg_dt else None
-
-    first_pay = min(payments, key=lambda e: e.get("ts_ms") or 0) if payments else None
-    last_pay = max(payments, key=lambda e: e.get("ts_ms") or 0) if payments else None
-    avg_payment = round(sum(_safe_float(e.get("amount")) for e in payments) / len(payments), 2) if payments else 0.0
-
-    day_counts: dict[str, int] = {}
-    for evt in events:
-        day = evt.get("day") or ""
-        if day:
-            day_counts[day] = day_counts.get(day, 0) + 1
-    sparkline: list[dict[str, Any]] = []
-    for offset in range(29, -1, -1):
-        d = (now - timedelta(days=offset)).strftime("%Y-%m-%d")
-        sparkline.append({"day": d, "count": day_counts.get(d, 0)})
-
     return {
         "total_events": len(events),
         "payments_count": len(payments),
@@ -600,14 +588,6 @@ def _compute_stats(events: list[dict[str, Any]], user: dict) -> dict[str, Any]:
         "total_spent": _safe_float(user.get("total_spent")),
         "referral_count": int(user.get("referral_count") or 0) if user.get("referral_count") is not None else 0,
         "last_activity_ms": last_ts,
-        "insights": {
-            "days_since_registration": days_since_reg,
-            "avg_payment": avg_payment,
-            "first_payment_at": first_pay.get("ts") if first_pay else None,
-            "last_payment_at": last_pay.get("ts") if last_pay else None,
-            "ltv": round(_safe_float(user.get("total_spent")), 2),
-        },
-        "activity_sparkline": sparkline,
     }
 
 
@@ -693,18 +673,7 @@ def build_user_timeline(
 
     return {
         "ok": True,
-        "user": {
-            "telegram_id": user.get("telegram_id"),
-            "username": user.get("username"),
-            "registration_date": user.get("registration_date"),
-            "balance": _safe_float(user.get("balance")),
-            "total_spent": _safe_float(user.get("total_spent")),
-            "total_months": int(user.get("total_months") or 0),
-            "trial_used": bool(user.get("trial_used")),
-            "is_banned": bool(user.get("is_banned")),
-            "is_pinned": bool(user.get("is_pinned")),
-            "referral_count": user.get("referral_count") or 0,
-        },
+        "user": _serialize_user(user),
         "stats": stats,
         "category_counts": category_counts,
         "events": page,
@@ -713,6 +682,80 @@ def build_user_timeline(
         "offset": offset,
         "limit": limit,
         "has_more": offset + len(page) < total,
+    }
+
+
+def _serialize_user(user: dict) -> dict[str, Any]:
+    return {
+        "telegram_id": user.get("telegram_id"),
+        "username": user.get("username"),
+        "registration_date": user.get("registration_date"),
+        "balance": _safe_float(user.get("balance")),
+        "total_spent": _safe_float(user.get("total_spent")),
+        "total_months": int(user.get("total_months") or 0),
+        "trial_used": bool(user.get("trial_used")),
+        "is_banned": bool(user.get("is_banned")),
+        "is_pinned": bool(user.get("is_pinned")),
+        "referral_count": user.get("referral_count") or 0,
+    }
+
+
+def export_user_timeline(
+    user_id: int,
+    *,
+    category: str = CATEGORY_ALL,
+    q: str = "",
+    date_from: str = "",
+    date_to: str = "",
+    max_events: int = 5000,
+) -> dict[str, Any]:
+    """Экспорт с учётом фильтров (до max_events событий)."""
+    payload = build_user_timeline(
+        user_id,
+        category=category,
+        q=q,
+        date_from=date_from,
+        date_to=date_to,
+        limit=max(1, min(max_events, 5000)),
+        offset=0,
+    )
+    if not payload.get("ok"):
+        return payload
+
+    if not payload.get("has_more"):
+        return payload
+
+    all_events = list(payload.get("events") or [])
+    offset = len(all_events)
+    cap = max(1, min(max_events, 5000))
+    while payload.get("has_more") and len(all_events) < cap:
+        chunk = build_user_timeline(
+            user_id,
+            category=category,
+            q=q,
+            date_from=date_from,
+            date_to=date_to,
+            limit=min(200, cap - len(all_events)),
+            offset=offset,
+        )
+        if not chunk.get("ok"):
+            break
+        batch = chunk.get("events") or []
+        if not batch:
+            break
+        all_events.extend(batch)
+        offset += len(batch)
+        if not chunk.get("has_more"):
+            break
+
+    return {
+        **payload,
+        "events": all_events[:cap],
+        "total": payload.get("total"),
+        "offset": 0,
+        "limit": len(all_events[:cap]),
+        "has_more": len(all_events) < int(payload.get("total") or len(all_events)),
+        "exported_count": len(all_events[:cap]),
     }
 
 
@@ -749,22 +792,3 @@ def compact_activity(events: list[dict[str, Any]], limit: int = 120) -> list[dic
             "ticket_id": meta.get("ticket_id"),
         })
     return out
-
-
-def collect_all_events(user_id: int, user: dict | None = None) -> tuple[dict | None, list[dict[str, Any]]]:
-    """Все события без пагинации (для экспорта)."""
-    user = user or get_user(user_id)
-    if not user:
-        return None, []
-    user = dict(user)
-    user["referral_count"] = len(get_referrals_for_user(user_id) or [])
-    events: list[dict[str, Any]] = []
-    events.extend(_system_events(user))
-    events.extend(_referral_events(user_id, user))
-    events.extend(_tx_events(user_id))
-    events.extend(_key_events(user_id))
-    events.extend(_support_events(user_id))
-    events.extend(_broadcast_events(user_id))
-    events.extend(_admin_events(user_id))
-    events.sort(key=lambda e: (e.get("ts_ms") or 0, e.get("id") or ""), reverse=True)
-    return user, events

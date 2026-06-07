@@ -3,7 +3,6 @@
 
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/settings-ios.css') }}" />
-<link rel="stylesheet" href="{{ url_for('static', filename='css/settings-icons.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/webapp-panel-designs.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/settings-macos.css') }}" />
 {% if active_tab == 'broadcast' %}
@@ -30,7 +29,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/database-panel.css') }}" />
 {% endif %}
 {% if active_tab == 'payments' %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/payments-panel.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/payments-panel.css') }}" />
 {% endif %}
 {% if active_tab == 'stealth-login' %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/stealth-login-panel.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
@@ -49,6 +48,12 @@
 {% if active_tab == 'hosts' %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/hosts-panel.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" />
 {% endif %}
+<style>
+    .swatch-default { background: #55555520; color: #555; }
+    .swatch-danger  { background: #ef535020; color: #ef5350; }
+    .swatch-success { background: #66bb6a20; color: #66bb6a; }
+    .swatch-primary { background: #42a5f520; color: #42a5f5; }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -113,27 +118,16 @@
     {% if ns.last_group != '' %}</div>{% endif %}
     <div class="settings-macos-nav-group" data-group="{{ item.group }}">
     {% set group_meta = settings_nav_groups.get(item.group, {}) %}
-    <p class="settings-macos-nav-group__title">
-        {% if group_meta.icon %}
-        {% set settings_icon = group_meta.icon %}
-        {% set settings_icon_variant = 'nav-group' %}
-        {% set settings_icon_id = '' %}
-        {% set settings_icon_class = '' %}
-        {% include 'partials/settings/icon.html' %}
-        {% endif %}
-        <span>{{ group_meta.label or item.group }}</span>
-    </p>
+    <p class="settings-macos-nav-group__title">{{ group_meta.label or item.group }}</p>
     {% set ns.last_group = item.group %}
     {% endif %}
     <a href="{{ url_for('settings_tab_page', tab=item.id) }}"
        class="tab-link{% if item.id == active_tab %} settings-tab-active{% endif %}"
        data-settings-label="{{ item.label | lower }}"
        title="{{ item.label }}">
-        {% set settings_icon = item.icon %}
-        {% set settings_icon_variant = 'nav' %}
-        {% set settings_icon_id = item.id %}
-        {% set settings_icon_class = '' %}
-        {% include 'partials/settings/icon.html' %}
+        <span class="settings-nav-icon settings-nav-icon--{{ item.id }}" aria-hidden="true">
+            <span class="material-symbols-outlined">{{ item.icon }}</span>
+        </span>
         <span class="settings-nav-label">{{ item.label }}</span>
     </a>
     {% endif %}
@@ -148,11 +142,9 @@
     <div class="settings-macos-hero__row">
         <div class="settings-macos-hero__main">
             {% if active_nav %}
-            {% set settings_icon = active_nav.icon %}
-            {% set settings_icon_variant = 'nav' %}
-            {% set settings_icon_id = active_nav.id %}
-            {% set settings_icon_class = 'settings-macos-hero__icon' %}
-            {% include 'partials/settings/icon.html' %}
+            <span class="settings-nav-icon settings-macos-hero__icon settings-nav-icon--{{ active_nav.id }}" aria-hidden="true">
+                <span class="material-symbols-outlined">{{ active_nav.icon }}</span>
+            </span>
             {% endif %}
             <div>
                 <h1 class="settings-macos-hero__title">{{ page_title }}</h1>
@@ -363,9 +355,67 @@ window.REF_PANEL_BOOT = {
 <script src="{{ url_for('static', filename='js/hosts-panel.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
 {% endif %}
 {% if active_tab == 'bot' %}
-<div id="bot-notify-panel" hidden
-    data-test-url="{{ url_for('backup_test_channel_route') }}"
-    data-create-topics-url="{{ url_for('create_notification_topics_route') }}"></div>
-<script src="{{ url_for('static', filename='js/bot-notify-panel.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
+<script>
+(function () {
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+    document.querySelectorAll('[data-notify-test]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+            const category = btn.getAttribute('data-notify-test');
+            btn.disabled = true;
+            try {
+                const resp = await fetch('{{ url_for("backup_test_channel_route") }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf, 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ category }),
+                });
+                const data = await resp.json();
+                if (typeof window.showToast === 'function') {
+                    window.showToast(data.ok ? 'success' : 'danger', data.message || data.error || 'Ошибка');
+                }
+            } catch (_) {
+                if (typeof window.showToast === 'function') window.showToast('danger', 'Ошибка сети');
+            } finally {
+                btn.disabled = false;
+            }
+        });
+    });
+
+    document.getElementById('bot-notify-create-topics')?.addEventListener('click', async () => {
+        const btn = document.getElementById('bot-notify-create-topics');
+        if (!btn) return;
+        const chatInput = document.querySelector('input[name="notifications_chat_id"]');
+        const chatId = chatInput?.value?.trim() || '';
+        btn.disabled = true;
+        try {
+            const resp = await fetch('{{ url_for("create_notification_topics_route") }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf, 'X-Requested-With': 'XMLHttpRequest' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ chat_id: chatId }),
+            });
+            const data = await resp.json();
+            if (data.ok && data.topics) {
+                Object.entries(data.topics).forEach(([field, topicId]) => {
+                    const input = document.querySelector(`input[name="${field}"]`);
+                    if (input && topicId) input.value = topicId;
+                });
+            }
+            const created = (data.created || []).length;
+            const skipped = (data.skipped || []).length;
+            const msg = data.ok
+                ? `Топики: создано ${created}, пропущено ${skipped}`
+                : (data.error || 'Ошибка создания топиков');
+            if (typeof window.showToast === 'function') {
+                window.showToast(data.ok ? 'success' : 'danger', msg);
+            }
+        } catch (_) {
+            if (typeof window.showToast === 'function') window.showToast('danger', 'Ошибка сети');
+        } finally {
+            btn.disabled = false;
+        }
+    });
+})();
+</script>
 {% endif %}
 {% endblock %}

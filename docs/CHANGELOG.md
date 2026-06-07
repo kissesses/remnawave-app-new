@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.0.4] — 2026-06-07
+
+### Added
+
+- **Dashboard:** чеклист первого запуска (бот → хосты → платежи → тарифы → старт).
+- **WebApp auth:** временные токены авторизации в Redis (fallback in-memory).
+- **CI:** smoke-тесты (`tests/`) и workflow `.github/workflows/tests.yml`.
+
+### Changed
+
+- **User Timeline:** переименование UI в «Лента активности»; экспорт с учётом фильтров; timestamp trial из `vpn_keys`.
+- **Уведомления:** audit → Telegram (`panel_audit_notify`), toggles SQL/db.query, RBAC create-topics.
+- **Настройки:** единый default `enable_referrals=false`, подпись «СБП» для YooKassa, autobackup только в `/backups`, `glass-hub` в default WebApp designs.
+
+### Docs
+
+- `docs/INSTALL.md`: секция Advanced (Stealth, SQL, Node, RePanel).
+- `docs/RE-PANEL-INSTALL.md`: пометка «не для shop-установки».
+
+---
+
 ## [1.0.3] — 2026-06-07
 
 ### Security

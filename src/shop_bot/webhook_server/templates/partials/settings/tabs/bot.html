@@ -44,13 +44,11 @@
             <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
                 <!-- Main Bot Card -->
                 <div class="bg-white/5 border border-white/10 rounded-2xl p-5 shadow-xl backdrop-blur-md flex flex-col">
-                    <div class="settings-subgroup-head">
-                        {% set settings_icon = 'robot_2' %}
-                        {% set settings_icon_variant = 'subgroup' %}
-                        {% set settings_icon_id = '' %}
-                        {% set settings_icon_class = '' %}
-                        {% include 'partials/settings/icon.html' %}
-                        <h4 class="settings-subgroup-head__title">Основной бот</h4>
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                            <span class="material-symbols-outlined text-lg">robot_2</span>
+                        </div>
+                        <h4 class="text-white font-bold text-sm">Основной бот</h4>
                     </div>
 
                     <div class="space-y-4">
@@ -102,13 +100,11 @@
 
                 <!-- Support Bot Card -->
                 <div class="bg-white/5 border border-white/10 rounded-2xl p-5 shadow-xl backdrop-blur-md flex flex-col">
-                    <div class="settings-subgroup-head">
-                        {% set settings_icon = 'support_agent' %}
-                        {% set settings_icon_variant = 'subgroup' %}
-                        {% set settings_icon_id = '' %}
-                        {% set settings_icon_class = '' %}
-                        {% include 'partials/settings/icon.html' %}
-                        <h4 class="settings-subgroup-head__title">Support-бот</h4>
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                            <span class="material-symbols-outlined text-lg">support_agent</span>
+                        </div>
+                        <h4 class="text-white font-bold text-sm">Support-бот</h4>
                     </div>
 
                     <div class="space-y-4">
@@ -187,102 +183,39 @@
 
                     <div class="bot-notify-global">
                         <label class="block text-white/60 text-[10px] uppercase font-bold tracking-wider mb-1.5 ml-1">Chat ID (группа / форум)</label>
-                        <input type="text" name="notifications_chat_id" id="notifications_chat_id"
+                        <input type="text" name="notifications_chat_id"
                             value="{{ settings.notifications_chat_id or '' }}"
                             placeholder="-1001234567890"
                             class="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm focus:ring-1 focus:ring-primary/40 outline-none" />
-                        <p class="bot-notify-global__hint">Группа должна быть супергруппой с включёнными <strong>Topics (форум)</strong>. Бот — админ с правом писать в топики. Topic ID <code>1</code> (General) не указывайте — оставьте поле пустым.</p>
-                    </div>
-
-                    <div class="bot-notify-link-tool" id="bot-notify-link-tool">
-                        <div class="bot-notify-link-tool__head">
-                            <span class="material-symbols-outlined" aria-hidden="true">link</span>
-                            <div>
-                                <strong class="bot-notify-link-tool__title">Chat ID из ссылки Telegram</strong>
-                                <p class="bot-notify-link-tool__desc">
-                                    Ссылка <code>https://t.me/c/3907207135/1</code> → Chat ID <code>-1003907207135</code>.
-                                    Число после chat — Topic ID; для топика <strong>General</strong> поле Topic ID оставьте <strong>пустым</strong>
-                                    (Bot API не принимает <code>1</code>). Для других топиков копируйте ссылку изнутри каждого топика.
-                                </p>
-                            </div>
-                        </div>
-                        <div class="bot-notify-link-tool__row">
-                            <input type="text" id="bot-notify-link-input" class="bot-notify-link-tool__input"
-                                placeholder="Вставьте ссылку t.me/c/… или скопируйте из Telegram"
-                                autocomplete="off" spellcheck="false" />
-                            <button type="button" class="bot-notify-link-tool__btn" id="bot-notify-link-parse">
-                                <span class="material-symbols-outlined">conversion_path</span> Разобрать
+                        <p class="bot-notify-global__hint">Бот должен быть админом с правом писать в топики. Без Chat ID уведомления уходят админам в личку (fallback).</p>
+                        <div class="bot-notify-global__actions">
+                            <button type="button" class="bot-notify-create-topics" id="bot-notify-create-topics" title="Создать пустые топики в форуме">
+                                <span class="material-symbols-outlined">forum</span>
+                                Создать все топики
                             </button>
-                        </div>
-                        <div class="bot-notify-link-tool__result" id="bot-notify-link-result" hidden>
-                            <div class="bot-notify-link-tool__kv">
-                                <span class="bot-notify-link-tool__kv-label">Chat ID</span>
-                                <code class="bot-notify-link-tool__kv-value" id="bot-notify-parsed-chat"></code>
-                                <button type="button" class="bot-notify-link-tool__fill" data-notify-fill="chat">Подставить</button>
-                                <button type="button" class="bot-notify-link-tool__copy" data-notify-copy="chat" title="Копировать">
-                                    <span class="material-symbols-outlined">content_copy</span>
-                                </button>
-                            </div>
-                            <div class="bot-notify-link-tool__kv" id="bot-notify-parsed-topic-wrap" hidden>
-                                <span class="bot-notify-link-tool__kv-label">Topic ID</span>
-                                <code class="bot-notify-link-tool__kv-value" id="bot-notify-parsed-topic"></code>
-                                <button type="button" class="bot-notify-link-tool__fill" data-notify-fill="topic-select">Подставить в топик…</button>
-                                <button type="button" class="bot-notify-link-tool__copy" data-notify-copy="topic" title="Копировать">
-                                    <span class="material-symbols-outlined">content_copy</span>
-                                </button>
-                            </div>
-                            <p class="bot-notify-link-tool__note" id="bot-notify-link-note"></p>
-                        </div>
-                        <div class="bot-notify-topics-create">
-                            <button type="button" class="bot-notify-link-tool__btn bot-notify-topics-create__btn" id="bot-notify-create-topics">
-                                <span class="material-symbols-outlined">forum</span> Создать все топики
-                            </button>
-                            <p class="bot-notify-topics-create__hint">
-                                Пустые Topic ID → <code>createForumTopic</code>; уже заполненные пропускаются.
-                                Иконки — из <a href="https://t.me/addemoji/tgmacicons" target="_blank" rel="noopener noreferrer">TG iOS &amp; macOS Icons</a>
-                                (если Telegram отдаёт их в <code>getForumTopicIconStickers</code>).
-                            </p>
                         </div>
                     </div>
 
-                    <div class="bot-notify-admin-audit">
-                        <div class="bot-notify-admin-audit__row">
-                            <span class="bot-notify-admin-audit__copy">
-                                <strong>Журнал действий админов</strong>
-                                <span>Каждая запись audit → топик «Действия админов» (или DM админам)</span>
-                            </span>
-                            <input type="hidden" name="notifications_admin_audit_enabled" value="false" />
-                            <label class="settings-macos-switch">
-                                <input type="checkbox" name="notifications_admin_audit_enabled"
-                                    value="true" id="notifications_admin_audit_enabled"
-                                    {% if settings.get('notifications_admin_audit_enabled', 'true') == 'true' %}checked{% endif %} />
-                                <span class="settings-macos-switch__track" aria-hidden="true"></span>
-                            </label>
-                        </div>
-                        <div class="bot-notify-admin-audit__row">
-                            <span class="bot-notify-admin-audit__copy">
-                                <strong>SQL-запросы в журнал</strong>
-                                <span>Иначе <code>db.query</code> не дублируется в Telegram (шумно)</span>
-                            </span>
-                            <input type="hidden" name="notifications_admin_audit_include_sql" value="false" />
-                            <label class="settings-macos-switch">
-                                <input type="checkbox" name="notifications_admin_audit_include_sql"
-                                    value="true" id="notifications_admin_audit_include_sql"
-                                    {% if settings.get('notifications_admin_audit_include_sql') == 'true' %}checked{% endif %} />
-                                <span class="settings-macos-switch__track" aria-hidden="true"></span>
-                            </label>
-                        </div>
+                    <div class="bot-notify-audit-toggles">
+                        <label class="bot-notify-audit-toggle">
+                            <input type="hidden" name="notifications_admin_audit_enabled" value="0" />
+                            <input type="checkbox" name="notifications_admin_audit_enabled" value="1"
+                                {% if settings.get('notifications_admin_audit_enabled', '1') != '0' %}checked{% endif %} />
+                            <span>Журнал действий админов в Telegram</span>
+                        </label>
+                        <label class="bot-notify-audit-toggle">
+                            <input type="hidden" name="notifications_admin_audit_include_sql" value="0" />
+                            <input type="checkbox" name="notifications_admin_audit_include_sql" value="1"
+                                {% if settings.get('notifications_admin_audit_include_sql') == '1' %}checked{% endif %} />
+                            <span>SQL-запросы в журнал (db.query)</span>
+                        </label>
                     </div>
 
                     <div class="bot-notify-topics">
                         {% for cat in notification_categories %}
                         <div class="bot-notify-topic-row">
                             <div class="bot-notify-topic-row__label">
-                                {% set settings_icon = cat.icon %}
-                                {% set settings_icon_variant = 'subgroup' %}
-                                {% set settings_icon_id = '' %}
-                                {% set settings_icon_class = '' %}
-                                {% include 'partials/settings/icon.html' %}
+                                <span class="material-symbols-outlined">{{ cat.icon }}</span>
                                 <div>
                                     <strong>{{ cat.label }}</strong>
                                 </div>
@@ -291,12 +224,9 @@
                                 <label class="sr-only">Topic ID — {{ cat.label }}</label>
                                 <input type="text" name="{{ cat.field }}"
                                     value="{{ settings.get(cat.field, '') }}"
-                                    placeholder="Topic ID (опц., не 1)"
+                                    placeholder="Topic ID (опц.)"
                                     class="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm focus:ring-1 focus:ring-primary/40 outline-none" />
                             </div>
-                            <button type="button" class="bot-notify-topic-row__link" data-notify-link-topic title="Подставить Topic ID из ссылки">
-                                <span class="material-symbols-outlined">link</span>
-                            </button>
                             <button type="button" class="bot-notify-topic-row__test" data-notify-test="{{ cat.id }}" title="Тест">
                                 <span class="material-symbols-outlined">send</span>
                             </button>
@@ -306,7 +236,7 @@
 
                     <p class="bot-channels-hint">
                         <strong>Маршрутизация:</strong> CRM — баланс и промокоды; Архив / Пароли — бэкапы;
-                        Авторизация — вход в панель (с кнопками); <strong>Действия админов</strong> — полный audit-журнал;
+                        Авторизация — вход в панель; Действия админов — audit-журнал;
                         Ноды — мониторинг; Покупки — оплаты; SQL — подтверждение БД; Триал; Тикеты.
                         Legacy-поля <code>backup_telegram_*</code> по-прежнему работают, пока не задан общий Chat ID.
                     </p>

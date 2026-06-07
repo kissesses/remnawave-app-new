@@ -653,17 +653,17 @@ def get_user_router() -> Router:
             user_data = get_user(user_id)
 
         if command.args and command.args.startswith('auth_'):
-            try:
-                from shop_bot.webapp.handlers import TEMP_AUTH_TOKENS
-            except ImportError:
-                TEMP_AUTH_TOKENS = {}
-                
             auth_token = command.args.replace('auth_', '')
-            if auth_token in TEMP_AUTH_TOKENS:
-                TEMP_AUTH_TOKENS[auth_token] = user_id
-                logger.info(f"Авторизация: Пользователь {user_id} авторизован через токен в веб-приложении.")
-                await message.answer("✅ <b>Авторизация успешна!</b>\n\nМожете вернуться в браузер — страница обновится автоматически.")
-                return
+            try:
+                from shop_bot.webapp.handlers import confirm_webapp_auth_token, webapp_auth_token_pending
+
+                if webapp_auth_token_pending(auth_token):
+                    confirm_webapp_auth_token(auth_token, user_id)
+                    logger.info(f"Авторизация: Пользователь {user_id} авторизован через токен в веб-приложении.")
+                    await message.answer("✅ <b>Авторизация успешна!</b>\n\nМожете вернуться в браузер — страница обновится автоматически.")
+                    return
+            except ImportError:
+                pass
 
         if command.args and command.args.startswith('sync_'):
             sync_token = command.args.replace('sync_', '')

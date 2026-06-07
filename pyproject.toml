@@ -1,6 +1,6 @@
 [project]
 name = "remnawave-app"
-version = "1.0.3"
+version = "1.0.4"
 description = "Remnawave App — Telegram-магазин VPN с веб-панелью"
 requires-python = ">=3.11,<3.13"
 dependencies = [
@@ -30,7 +30,8 @@ dependencies = [
 dev = [
     "pip-tools",
     "pylint",
-    "black"
+    "black",
+    "pytest",
 ]
 
 [tool.setuptools.packages.find]

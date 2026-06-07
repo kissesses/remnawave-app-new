@@ -1,5 +1,9 @@
 # RePanel — форк Remnawave под свой бренд
 
+> **Advanced:** этот документ не нужен для типичной установки Remnawave App (Telegram-магазин).
+> Используйте его только если форкаете Remnawave Panel под white-label бренд.
+> Для shop установки достаточно [INSTALL.md](INSTALL.md).
+
 Руководство по развёртыванию собственного стека на базе upstream-проектов Remnawave с переименованием в **RePanel / ReFrontend / ReBackend** и интеграцией с **Remnawave App**.
 
 ---
@@ -25,7 +29,7 @@
 3. Публиковать **исходники** ваших изменений (при распространении образов/бинарников — доступ к исходникам тем же способом).
 4. Не снимать копирайты upstream; добавить свой: `Copyright (c) 2026 Your Name — modifications`.
 
-> Remnawave App (MIT) и Remnawave (AGPL-3.0) — совместимые copyleft-лицензии, но при публикации связанного стека соблюдайте требования **обеих**.
+> ShopBot (GPLv3) и Remnawave (AGPL-3.0) — совместимые copyleft-лицензии, но при публикации связанного стека соблюдайте требования **обеих**.
 
 ---
 
@@ -46,7 +50,7 @@ flowchart TB
         RD[(Valkey/Redis)]
     end
 
-    subgraph shopbot [Remnawave App /opt/remnawave-app]
+    subgraph shopbot [ShopBot /opt/remnawave-shopbot]
         SB[shopbot :1337]
     end
 
@@ -58,7 +62,7 @@ flowchart TB
     SB -->|REST API токен| BE
 ```
 
-**Remnawave App** не заменяет панель: он ходит в API панели (создание пользователей, ключи, хосты). Без работающего **ReBackend** бот не выдаёт подписки.
+**ShopBot** не заменяет панель: он ходит в API панели (создание пользователей, ключи, хосты). Без работающего **ReBackend** бот не выдаёт подписки.
 
 ---
 
@@ -95,13 +99,13 @@ git fetch upstream
 
 ### 3. Переименование (чеклист)
 
-Не меняйте слепо все вхождения `remnawave` — часть имён **должна остаться** для совместимости с Remnawave App и co-install.
+Не меняйте слепо все вхождения `remnawave` — часть имён **должна остаться** для совместимости с ShopBot и co-install.
 
 | Менять на Re* | Оставить как есть (совместимость) |
 |---------------|-----------------------------------|
-| Название продукта в UI, README, meta title | Docker-сеть `remnawave-network` (Remnawave App ждёт её) |
+| Название продукта в UI, README, meta title | Docker-сеть `remnawave-network` (ShopBot ждёт её) |
 | `META_TITLE`, логотипы, favicon | Имена volume `remnawave-db-data` (или миграция с дампом) |
-| Docker image: `ghcr.io/kissesses/re-backend:2.7.4` | Переменные API, пути `/api/...` — только если готовы патчить Remnawave App |
+| Docker image: `ghcr.io/kissesses/re-backend:2.7.4` | Переменные API, пути `/api/...` — только если готовы патчить ShopBot |
 | GitHub URLs в документации | `REMNAWAVE_PANEL_URL` в subscription-page (внутренний hostname `remnawave`) |
 
 **ReBackend** (`docker-compose-prod.yml`):
@@ -114,7 +118,7 @@ git fetch upstream
 
 # Стало (после сборки своего образа):
 image: ghcr.io/kissesses/re-backend:2.7.4
-container_name: remnawave          # можно оставить для Remnawave App/nginx
+container_name: remnawave          # можно оставить для ShopBot/nginx
 hostname: remnawave
 ```
 
@@ -124,7 +128,7 @@ hostname: remnawave
 
 ### 4. CI: сборка образов
 
-В **ReBackend** / **ReFrontend** добавьте workflow (по аналогии с Remnawave App):
+В **ReBackend** / **ReFrontend** добавьте workflow (по аналогии с ShopBot):
 
 ```yaml
 # .github/workflows/docker-publish.yml — публикует ghcr.io/kissesses/re-backend
@@ -195,7 +199,7 @@ curl -fsS http://127.0.0.1:3001/health && echo " OK: backend health"
 
 После установки: `https://panel.example.com` открывается, создаётся первый админ.
 
-### Шаг 3 — API-токен для Remnawave App
+### Шаг 3 — API-токен для ShopBot
 
 В панели: **Settings → API Tokens** → создать токен с правами на users/hosts.
 
@@ -205,14 +209,14 @@ curl -fsS http://127.0.0.1:3001/health && echo " OK: backend health"
 - API token
 - Internal URL (в Docker): `http://remnawave:3000`
 
-### Шаг 4 — Remnawave App (co-install)
+### Шаг 4 — ShopBot (co-install)
 
-Когда ReBackend поднят и сеть `remnawave-network` есть — установите Remnawave App по [INSTALL.md](./INSTALL.md#2%EF%B8%8F%E2%83%A3-shopbot) (каталог `/opt/remnawave-app`, `docker compose`).
+Когда ReBackend поднят и сеть `remnawave-network` есть — установите ShopBot по [INSTALL.md](./INSTALL.md#2%EF%B8%8F%E2%83%A3-shopbot) (каталог `/opt/remnawave-shopbot`, `docker compose`).
 
-В nginx Remnawave добавьте прокси на Remnawave App (см. [INSTALL.md — Nginx](./INSTALL.md#-nginx-remnawave)):
+В nginx Remnawave добавьте прокси на ShopBot (см. [INSTALL.md — Nginx](./INSTALL.md#-nginx-remnawave)):
 
 ```nginx
-# shop.example.com → remnawave-app:1337
+# shop.example.com → remnawave-shopbot:1337
 ```
 
 ---
@@ -221,10 +225,10 @@ curl -fsS http://127.0.0.1:3001/health && echo " OK: backend health"
 
 ```text
 /opt/repanel/                 # ReBackend compose + .env
-/opt/remnawave-app/       # Remnawave App (имя каталога можно не менять)
+/opt/remnawave-shopbot/       # ShopBot (имя каталога можно не менять)
 ```
 
-Сеть Docker: **`remnawave-network`** — общая для панели и Remnawave App.
+Сеть Docker: **`remnawave-network`** — общая для панели и ShopBot.
 
 ---
 
@@ -236,8 +240,8 @@ cd /opt/repanel
 docker compose pull    # или pull своих образов
 docker compose up -d
 
-# Remnawave App
-cd /opt/remnawave-app
+# ShopBot
+cd /opt/remnawave-shopbot
 docker compose pull && docker compose up -d
 ```
 
@@ -273,7 +277,7 @@ cp .env.sample .env
 docker compose -f docker-compose-prod.yml up -d
 \`\`\`
 
-Документация по полному стеку: [RePanel Install](https://github.com/kissesses/remnawave-app/blob/main/docs/RE-PANEL-INSTALL.md)
+Документация по полному стеку: [RePanel Install](https://github.com/kissesses/rw-shop/blob/main/docs/RE-PANEL-INSTALL.md)
 ```
 
 ### ReFrontend — README.md
@@ -292,7 +296,7 @@ npm run build
 
 Docker-образ публикуется в `ghcr.io/kissesses/re-frontend`.
 
-Установка с backend: [RE-PANEL-INSTALL.md](https://github.com/kissesses/remnawave-app/blob/main/docs/RE-PANEL-INSTALL.md)
+Установка с backend: [RE-PANEL-INSTALL.md](https://github.com/kissesses/rw-shop/blob/main/docs/RE-PANEL-INSTALL.md)
 ```
 
 ### RePanel — README.md
@@ -312,16 +316,16 @@ Runtime (API + UI): ReBackend + ReFrontend.
 
 ---
 
-## Что Remnawave App менять при глубоком ребрендинге
+## Что ShopBot менять при глубоком ребрендинге
 
-Если **не** трогаете API и сеть — **ничего** в Remnawave App.
+Если **не** трогаете API и сеть — **ничего** в ShopBot.
 
 Если переименуете внутренние hostname (`remnawave` → `repanel`):
 
-- `docker-compose.yml` Remnawave App: `remnawave-network` (лучше оставить)
+- `docker-compose.yml` ShopBot: `remnawave-network` (лучше оставить)
 - Настройки хостов в панели бота: URL API
 
-Полная замена бренда «Remnawave» в UI Remnawave App — отдельная задача (шаблоны, `os.json`, docs).
+Полная замена бренда «Remnawave» в UI ShopBot — отдельная задача (шаблоны, `os.json`, docs).
 
 ---
 
@@ -331,7 +335,7 @@ Runtime (API + UI): ReBackend + ReFrontend.
 2. **Форк:** создать `ReBackend`, `ReFrontend`, `RePanel` на GitHub, добавить upstream remote.
 3. **Бренд:** UI-строки, README, образы GHCR — без смены API.
 4. **CI:** автосборка Docker при теге `v*`.
-5. **Remnawave App:** при необходимости — пути `/opt/repanel` в `REMNAWAVE_BACKUP_COMPOSE_DIR` и nginx upstream.
+5. **ShopBot:** при необходимости — пути `/opt/repanel` в `REMNAWAVE_BACKUP_COMPOSE_DIR` и nginx upstream.
 
 ---
 
@@ -341,4 +345,4 @@ Runtime (API + UI): ReBackend + ReFrontend.
 - [Remnawave Backend](https://github.com/remnawave/backend)
 - [Remnawave Frontend](https://github.com/remnawave/frontend)
 - [Официальная установка docs.rw](https://docs.rw/docs/install/remnawave-panel)
-- [Remnawave App INSTALL](./INSTALL.md)
+- [ShopBot INSTALL](./INSTALL.md)

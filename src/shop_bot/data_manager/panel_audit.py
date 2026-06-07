@@ -56,11 +56,6 @@ ACTION_LABELS: dict[str, str] = {
     "bot.start": "Запуск бота",
     "bot.stop": "Остановка бота",
     "user.ban": "Бан пользователя",
-    "user.unban": "Разблокировка пользователя",
-    "user.balance_adjust": "Изменение баланса",
-    "user.balance_history_clear": "Очистка истории баланса",
-    "user.payment_history_clear": "Очистка истории оплат",
-    "user.trial_toggle": "Смена статуса триала",
     "user.delete": "Удаление пользователя",
     "dashboard.layout_save": "Dashboard Studio — сохранение",
     "dashboard.layout_global": "Dashboard Studio — глобально",
@@ -156,7 +151,7 @@ def log_action(
             ip=ip,
         )
     except Exception as exc:
-        logger.debug("Audit telegram notify hook failed: %s", exc)
+        logger.debug("Audit notify hook failed: %s", exc)
 
 
 def list_recent(limit: int = 80) -> list[dict[str, Any]]:
@@ -414,10 +409,6 @@ def humanize_entry(entry: dict[str, Any], *, include_details: bool = False) -> d
                     bits.append(str(details_parsed["login"]))
                 if details_parsed.get("user_id"):
                     bits.append(f"user #{details_parsed['user_id']}")
-                if details_parsed.get("delta") is not None:
-                    bits.append(f"Δ {details_parsed['delta']} RUB")
-                if details_parsed.get("old_balance") is not None and details_parsed.get("new_balance") is not None:
-                    bits.append(f"баланс {details_parsed['old_balance']} → {details_parsed['new_balance']}")
                 if details_parsed.get("admin_id"):
                     bits.append(f"admin #{details_parsed['admin_id']}")
                 if details_parsed.get("table"):

@@ -73,7 +73,44 @@ def _webapp_auth_response(payload: dict, token: str | None = None) -> JSONRespon
 
 AuthUser = Annotated[dict, Depends(require_webapp_user)]
 
-# In-memory storage for temporary auth tokens: {token: user_id}
+WEBAPP_AUTH_TOKEN_TTL = 600
+
+
+def _webapp_auth_kv_key(token: str) -> str:
+    return f"webapp:auth:{token}"
+
+
+def register_pending_webapp_auth_token(token: str) -> None:
+    from shop_bot.security.kv_store import set_pending_marker
+
+    set_pending_marker(_webapp_auth_kv_key(token), ttl=WEBAPP_AUTH_TOKEN_TTL)
+
+
+def confirm_webapp_auth_token(token: str, user_id: int) -> None:
+    from shop_bot.security.kv_store import set_confirmed_value
+
+    set_confirmed_value(_webapp_auth_kv_key(token), str(user_id), ttl=WEBAPP_AUTH_TOKEN_TTL)
+
+
+def pop_confirmed_webapp_auth_user_id(token: str) -> int | None:
+    from shop_bot.security.kv_store import pop_value
+
+    raw = pop_value(_webapp_auth_kv_key(token))
+    if not raw:
+        return None
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        return None
+
+
+def webapp_auth_token_pending(token: str) -> bool:
+    from shop_bot.security.kv_store import get_value
+
+    return get_value(_webapp_auth_kv_key(token)) is not None
+
+
+# Legacy alias for bot deep-link handler
 TEMP_AUTH_TOKENS = {}
 
 
@@ -1575,7 +1612,7 @@ def validate_telegram_data(init_data: str, bot_token: str) -> dict | None:
 @app.get("/api/auth/request-token")
 async def api_request_auth_token():
     token = str(uuid.uuid4())[:36]
-    TEMP_AUTH_TOKENS[token] = None
+    register_pending_webapp_auth_token(token)
     bot_username = get_setting("telegram_bot_username")
     auth_url = f"tg://resolve?domain={bot_username}&start=auth_{token}"
     return {"ok": True, "token": token, "auth_url": auth_url}
@@ -1583,10 +1620,8 @@ async def api_request_auth_token():
 @app.get("/api/auth/check-token/{token}")
 async def api_check_auth_token(token: str):
     from shop_bot.data_manager import database
-    # 1. Check in memory (waiting for bot confirmation)
-    if token in TEMP_AUTH_TOKENS and TEMP_AUTH_TOKENS[token] is not None:
-        user_id = TEMP_AUTH_TOKENS.pop(token)
-        
+    user_id = pop_confirmed_webapp_auth_user_id(token)
+    if user_id is not None:
         # Check existing token first
         existing_token = database.get_auth_token_by_user_id(user_id)
         if existing_token:
