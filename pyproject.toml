@@ -13,7 +13,7 @@ dependencies = [
     "qrcode[pil]==8.2",
     "yookassa==3.10.1",
     "aiosend==3.0.6",
-    "aiohttp==3.14.0",
+    "aiohttp==3.13.5",
     "pytonconnect==0.3.2",
     "paramiko==5.0.0",
     "pyzipper==0.4.0",
