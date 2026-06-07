@@ -813,6 +813,58 @@ html:not(.dark) .dh-stat__value--accent { color: #16a34a; }
     border-top: 1px solid var(--dh-border);
 }
 
+/* Resources / Monitor — spacing (Tailwind utilities not loaded on dashboard) */
+.dh-monitor {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.dh-monitor > .grid:not([data-dash-widget]) {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+@media (min-width: 1280px) {
+    .dh-monitor > .grid:not([data-dash-widget]) {
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    }
+}
+
+.dh-monitor [data-dash-widget="res_perf_chart"],
+.dh-monitor [data-dash-widget="res_local_panel"],
+.dh-monitor [data-dash-widget="res_hosts"],
+.dh-monitor [data-dash-widget="res_ssh_targets"] {
+    padding: 1.25rem;
+    border-radius: var(--dh-radius-lg);
+    border: 1px solid var(--dh-border);
+    background: var(--dh-surface);
+    backdrop-filter: var(--dh-blur);
+}
+
+.dh-monitor [data-dash-widget="res_hosts"] > .grid,
+.dh-monitor [data-dash-widget="res_ssh_targets"] > .grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+    .dh-monitor [data-dash-widget="res_hosts"] > .grid,
+    .dh-monitor [data-dash-widget="res_ssh_targets"] > .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1280px) {
+    .dh-monitor [data-dash-widget="res_hosts"] > .grid,
+    .dh-monitor [data-dash-widget="res_ssh_targets"] > .grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
 /* Monitor mini stats inside dh-page */
 .dh-page .dh-mini-stat,
 .dh-page [data-dash-widget="res_summary"] > div {
