@@ -22,6 +22,11 @@ from shop_bot.data_manager import panel_telegram_auth
 from shop_bot.data_manager import panel_totp
 from shop_bot.data_manager import panel_webauthn
 from shop_bot.data_manager import panel_stepup
+from shop_bot.data_manager.menu_images import (
+    MENU_IMAGE_SECTIONS,
+    build_menu_image_filename,
+    get_menu_images_dir,
+)
 from shop_bot.data_manager.panel_rbac import DOCK_COVERAGE, PERMISSION_GROUPS, PERMISSION_RISK, ROLE_PRESETS, allows_permission, normalize_permission_levels
 from shop_bot.data_manager.remnawave_repository import (
     add_device_tier,
@@ -2494,34 +2499,6 @@ def yoomoney_check_route():
     return redirect(url_for('settings_tab_page', tab='payments'))
 
 
-MENU_IMAGE_SECTIONS = {
-    'profile': 'profile_image',
-    'keys': 'keys_image',
-    'buy_key': 'buy_key_image',
-    'topup': 'topup_image',
-    'referral': 'referral_image',
-    'support': 'support_image',
-    'about': 'about_image',
-    'speedtest': 'speedtest_image',
-    'howto': 'howto_image',
-    'main_menu': 'main_menu_image',
-    'topup_amount': 'topup_amount_image',
-    'payment': 'payment_image',
-    'buy_server': 'buy_server_image',
-    'buy_plan': 'buy_plan_image',
-    'enter_email': 'enter_email_image',
-    'key_info': 'key_info_image',
-    'extend_plan': 'extend_plan_image',
-    'keys_list': 'keys_list_image',
-    'payment_method': 'payment_method_image',
-    'key_comments': 'key_comments_image',
-    'key_ready': 'key_ready_image',
-    'waiting_payment': 'waiting_payment_image',
-    'payment_success': 'payment_success_image',
-    'devices_list': 'devices_list_image',
-}
-
-
 @bp.route('/upload-menu-image/<section>', methods=['POST'])
 @panel_ctx.login_required
 def upload_menu_image_route(section):
@@ -2557,12 +2534,9 @@ def upload_menu_image_route(section):
             except Exception:
                 pass
 
-        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        upload_dir = os.path.join(base_dir, 'modules', 'menu_images')
-        os.makedirs(upload_dir, exist_ok=True)
-
-        filename = f"{section}_{int(time.time())}.{ext}"
-        filepath = os.path.join(upload_dir, filename)
+        upload_dir = get_menu_images_dir()
+        filename = build_menu_image_filename(section, ext)
+        filepath = str(upload_dir / filename)
 
         file.save(filepath)
         update_setting(setting_key, filepath)

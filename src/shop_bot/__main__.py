@@ -111,6 +111,12 @@ def main():
     rw_repo.initialize_db()
     logger.info("Инициализация базы данных завершена.")
 
+    from shop_bot.data_manager.menu_images import migrate_menu_images_to_data_dir
+
+    migrated = migrate_menu_images_to_data_dir()
+    if migrated:
+        logger.info("Перенесено баннеров Media Studio в data/menu_images: %s", migrated)
+
     from shop_bot.bot_controller import BotController
     from shop_bot.webhook_server.app import create_webhook_app, _support_bot_controller
     from shop_bot.data_manager.scheduler import periodic_subscription_check
