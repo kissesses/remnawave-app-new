@@ -8,7 +8,6 @@ from shop_bot.data_manager.panel_rbac import allows_permission, normalize_permis
 from shop_bot.data_manager.database import get_db_connection
 from shop_bot.data_manager.remnawave_repository import (
     get_all_hosts,
-    get_all_settings,
     get_key_by_id,
     get_paginated_trial_eligible,
     get_paginated_trials,
@@ -75,14 +74,12 @@ def _resolve_user_id(payload: dict) -> int | None:
 @bp.route('/trials')
 @panel_ctx.login_required
 def trials_page():
-    settings = get_all_settings()
     all_hosts = get_all_hosts(visible_only=False) or []
     grant_hosts = get_all_hosts(visible_only=True) or []
     stats = get_trial_stats()
     common = panel_ctx.get_common_template_data()
     return render_template(
         'trials.html',
-        settings=settings,
         hosts=all_hosts,
         grant_hosts=grant_hosts,
         stats=stats,
