@@ -14,6 +14,25 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Validate Telegram secrets
+        run: |
+          missing=0
+          if [ -z "${{ secrets.TELEGRAM_RELEASE_BOT_TOKEN }}" ]; then
+            echo "::error::Missing secret TELEGRAM_RELEASE_BOT_TOKEN"
+            missing=1
+          fi
+          if [ -z "${{ secrets.TELEGRAM_RELEASE_CHAT_ID }}" ]; then
+            echo "::error::Missing secret TELEGRAM_RELEASE_CHAT_ID"
+            missing=1
+          fi
+          if [ "$missing" -ne 0 ]; then
+            echo ""
+            echo "Create secrets here: https://github.com/${{ github.repository }}/settings/secrets/actions"
+            echo "Required names (exact): TELEGRAM_RELEASE_BOT_TOKEN, TELEGRAM_RELEASE_CHAT_ID"
+            echo "Optional: TELEGRAM_RELEASE_TOPIC_ID"
+            exit 1
+          fi
+
       - name: Notify Telegram
         env:
           TELEGRAM_RELEASE_BOT_TOKEN: ${{ secrets.TELEGRAM_RELEASE_BOT_TOKEN }}

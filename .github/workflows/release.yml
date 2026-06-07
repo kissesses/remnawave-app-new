@@ -32,6 +32,22 @@ jobs:
           draft: false
           prerelease: false
 
+      - name: Validate Telegram secrets
+        run: |
+          missing=0
+          if [ -z "${{ secrets.TELEGRAM_RELEASE_BOT_TOKEN }}" ]; then
+            echo "::error::Missing secret TELEGRAM_RELEASE_BOT_TOKEN"
+            missing=1
+          fi
+          if [ -z "${{ secrets.TELEGRAM_RELEASE_CHAT_ID }}" ]; then
+            echo "::error::Missing secret TELEGRAM_RELEASE_CHAT_ID"
+            missing=1
+          fi
+          if [ "$missing" -ne 0 ]; then
+            echo "Create secrets: https://github.com/${{ github.repository }}/settings/secrets/actions"
+            exit 1
+          fi
+
       - name: Notify Telegram
         if: success()
         env:

@@ -85,8 +85,22 @@ def main() -> int:
     topic_id = (os.environ.get('TELEGRAM_RELEASE_TOPIC_ID') or '').strip()
 
     if not token or not chat_id:
-        print('Telegram release notify skipped (secrets not configured).')
-        return 0
+        missing = []
+        if not token:
+            missing.append('TELEGRAM_RELEASE_BOT_TOKEN')
+        if not chat_id:
+            missing.append('TELEGRAM_RELEASE_CHAT_ID')
+        print(
+            'Telegram release notify failed: missing GitHub Actions secrets: '
+            + ', '.join(missing),
+            file=sys.stderr,
+        )
+        print(
+            'Add them in GitHub → Settings → Secrets and variables → Actions '
+            '(names must match exactly).',
+            file=sys.stderr,
+        )
+        return 1
 
     repo = (os.environ.get('GITHUB_REPOSITORY') or 'kissesses/remnawave-app').strip()
     image = f'ghcr.io/{repo.lower()}:{tag}'
