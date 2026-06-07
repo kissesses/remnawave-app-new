@@ -498,7 +498,7 @@
     <link href="{{ url_for('static', filename='css/panel-switches.css') }}" rel="stylesheet" />
     <link href="{{ url_for('static', filename='css/panel-workspace.css') }}" rel="stylesheet" />
     <link href="{{ url_for('static', filename='css/panel-workspace-embed.css') }}" rel="stylesheet" />
-    <link href="{{ url_for('static', filename='css/panel-about.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/panel-about.css') }}{% if app_version %}?v={{ app_version }}{% endif %}" rel="stylesheet" />
     <link href="{{ url_for('static', filename='css/panel-brand.css') }}" rel="stylesheet" />
     <link href="{{ url_for('static', filename='css/panel-glass.css') }}" rel="stylesheet" />
     <link href="{{ url_for('static', filename='css/panel-stealth-admin.css') }}" rel="stylesheet" />
@@ -1323,7 +1323,7 @@
         <script src="{{ url_for('static', filename='js/panel-command-palette.js') }}"></script>
         <script src="{{ url_for('static', filename='js/panel-presence.js') }}"></script>
         <script src="{{ url_for('static', filename='js/panel-glass.js') }}"></script>
-        <script src="{{ url_for('static', filename='js/about-modal.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/about-modal.js') }}{% if app_version %}?v={{ app_version }}{% endif %}"></script>
         <script>
             window.WORKSPACE_DOCK_ITEMS = {{ workspace_dock_items | tojson }};
             window.APP_ICON_URL = {{ url_for('static', filename='img/app-icon-512.png') | tojson }};

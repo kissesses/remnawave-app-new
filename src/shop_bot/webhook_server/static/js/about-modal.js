@@ -710,9 +710,11 @@
             copyText(cmd, 'Команда установки скопирована');
         });
 
-        document.querySelector('.about-mac-close')?.addEventListener('click', () => {
-            hideUpdateResult();
-            if (typeof closeModal === 'function') closeModal('aboutModal');
+        document.querySelectorAll('.about-mac-close').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                hideUpdateResult();
+                if (typeof closeModal === 'function') closeModal('aboutModal');
+            });
         });
     }
 
