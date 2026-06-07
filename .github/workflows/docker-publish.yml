@@ -47,6 +47,7 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push
+        id: build
         uses: docker/build-push-action@v7
         with:
           context: .
@@ -55,3 +56,47 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             INSTALL_DOCKER_CLI=1
+
+  notify:
+    needs: build
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Validate Telegram secrets
+        id: secrets
+        run: |
+          has_token=0
+          has_chat=0
+          if [ -n "${{ secrets.TELEGRAM_PUSH_BOT_TOKEN }}" ] || [ -n "${{ secrets.TELEGRAM_RELEASE_BOT_TOKEN }}" ]; then
+            has_token=1
+          fi
+          if [ -n "${{ secrets.TELEGRAM_PUSH_CHAT_ID }}" ] || [ -n "${{ secrets.TELEGRAM_RELEASE_CHAT_ID }}" ]; then
+            has_chat=1
+          fi
+          if [ "$has_token" -eq 0 ] || [ "$has_chat" -eq 0 ]; then
+            echo "::warning::Docker Telegram notify skipped — set TELEGRAM_PUSH_* or TELEGRAM_RELEASE_* secrets"
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "ok=true" >> "$GITHUB_OUTPUT"
+
+      - name: Notify Telegram
+        if: steps.secrets.outputs.ok == 'true'
+        env:
+          TELEGRAM_PUSH_BOT_TOKEN: ${{ secrets.TELEGRAM_PUSH_BOT_TOKEN }}
+          TELEGRAM_PUSH_CHAT_ID: ${{ secrets.TELEGRAM_PUSH_CHAT_ID }}
+          TELEGRAM_PUSH_TOPIC_ID: ${{ secrets.TELEGRAM_PUSH_TOPIC_ID }}
+          TELEGRAM_RELEASE_BOT_TOKEN: ${{ secrets.TELEGRAM_RELEASE_BOT_TOKEN }}
+          TELEGRAM_RELEASE_CHAT_ID: ${{ secrets.TELEGRAM_RELEASE_CHAT_ID }}
+          TELEGRAM_RELEASE_TOPIC_ID: ${{ secrets.TELEGRAM_RELEASE_TOPIC_ID }}
+          NOTIFY_STATUS: ${{ needs.build.result == 'success' && 'success' || 'failure' }}
+          NOTIFY_EVENT: docker
+          NOTIFY_ERROR: ${{ needs.build.result != 'success' && 'Docker build or push failed' || '' }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+        run: python3 .github/scripts/telegram-push-notify.py

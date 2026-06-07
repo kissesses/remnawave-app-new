@@ -15,34 +15,60 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Validate Telegram secrets
+        id: secrets
         run: |
-          missing=0
-          if [ -z "${{ secrets.TELEGRAM_RELEASE_BOT_TOKEN }}" ]; then
-            echo "::error::Missing secret TELEGRAM_RELEASE_BOT_TOKEN"
-            missing=1
+          has_token=0
+          has_chat=0
+          if [ -n "${{ secrets.TELEGRAM_PUSH_BOT_TOKEN }}" ] || [ -n "${{ secrets.TELEGRAM_RELEASE_BOT_TOKEN }}" ]; then
+            has_token=1
           fi
-          if [ -z "${{ secrets.TELEGRAM_RELEASE_CHAT_ID }}" ]; then
-            echo "::error::Missing secret TELEGRAM_RELEASE_CHAT_ID"
-            missing=1
+          if [ -n "${{ secrets.TELEGRAM_PUSH_CHAT_ID }}" ] || [ -n "${{ secrets.TELEGRAM_RELEASE_CHAT_ID }}" ]; then
+            has_chat=1
           fi
-          if [ "$missing" -ne 0 ]; then
-            echo ""
-            echo "Create secrets here: https://github.com/${{ github.repository }}/settings/secrets/actions"
-            echo "Required names (exact): TELEGRAM_RELEASE_BOT_TOKEN, TELEGRAM_RELEASE_CHAT_ID"
-            echo "Optional: TELEGRAM_RELEASE_TOPIC_ID"
-            exit 1
+          if [ "$has_token" -eq 0 ] || [ "$has_chat" -eq 0 ]; then
+            echo "::warning::Telegram push notify skipped — set TELEGRAM_PUSH_* (recommended) or TELEGRAM_RELEASE_* secrets"
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+          echo "ok=true" >> "$GITHUB_OUTPUT"
 
-      - name: Notify Telegram
+      - name: Notify Telegram (success)
+        if: success() && steps.secrets.outputs.ok == 'true'
         env:
+          TELEGRAM_PUSH_BOT_TOKEN: ${{ secrets.TELEGRAM_PUSH_BOT_TOKEN }}
+          TELEGRAM_PUSH_CHAT_ID: ${{ secrets.TELEGRAM_PUSH_CHAT_ID }}
+          TELEGRAM_PUSH_TOPIC_ID: ${{ secrets.TELEGRAM_PUSH_TOPIC_ID }}
           TELEGRAM_RELEASE_BOT_TOKEN: ${{ secrets.TELEGRAM_RELEASE_BOT_TOKEN }}
           TELEGRAM_RELEASE_CHAT_ID: ${{ secrets.TELEGRAM_RELEASE_CHAT_ID }}
           TELEGRAM_RELEASE_TOPIC_ID: ${{ secrets.TELEGRAM_RELEASE_TOPIC_ID }}
+          NOTIFY_STATUS: success
+          NOTIFY_EVENT: push
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_REF_NAME: ${{ github.ref_name }}
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_SHA: ${{ github.sha }}
           GITHUB_BEFORE: ${{ github.event.before }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
           GITHUB_COMMITS_JSON: ${{ toJSON(github.event.commits) }}
+          GITHUB_HEAD_MESSAGE: ${{ github.event.head_commit.message }}
+        run: python3 .github/scripts/telegram-push-notify.py
+
+      - name: Notify Telegram (failure)
+        if: failure() && steps.secrets.outputs.ok == 'true'
+        env:
+          TELEGRAM_PUSH_BOT_TOKEN: ${{ secrets.TELEGRAM_PUSH_BOT_TOKEN }}
+          TELEGRAM_PUSH_CHAT_ID: ${{ secrets.TELEGRAM_PUSH_CHAT_ID }}
+          TELEGRAM_PUSH_TOPIC_ID: ${{ secrets.TELEGRAM_PUSH_TOPIC_ID }}
+          TELEGRAM_RELEASE_BOT_TOKEN: ${{ secrets.TELEGRAM_RELEASE_BOT_TOKEN }}
+          TELEGRAM_RELEASE_CHAT_ID: ${{ secrets.TELEGRAM_RELEASE_CHAT_ID }}
+          TELEGRAM_RELEASE_TOPIC_ID: ${{ secrets.TELEGRAM_RELEASE_TOPIC_ID }}
+          NOTIFY_STATUS: failure
+          NOTIFY_EVENT: push
+          NOTIFY_ERROR: Push notification workflow failed
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
           GITHUB_HEAD_MESSAGE: ${{ github.event.head_commit.message }}
         run: python3 .github/scripts/telegram-push-notify.py

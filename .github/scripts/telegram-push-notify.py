@@ -1,10 +1,20 @@
 #!/usr/bin/env python3
-"""Send GitHub push-to-main notification to Telegram (GitHub Actions).
+"""Send GitHub push / CI notifications to Telegram (GitHub Actions).
 
-Uses the same secrets as release notifications:
+Preferred secrets (separate dev/deploy chat or forum topic):
+  TELEGRAM_PUSH_BOT_TOKEN
+  TELEGRAM_PUSH_CHAT_ID
+  TELEGRAM_PUSH_TOPIC_ID   (optional — forum topic id)
+
+Fallback (same as release notifications):
   TELEGRAM_RELEASE_BOT_TOKEN
   TELEGRAM_RELEASE_CHAT_ID
-  TELEGRAM_RELEASE_TOPIC_ID (optional)
+  TELEGRAM_RELEASE_TOPIC_ID
+
+Environment:
+  NOTIFY_STATUS   success | failure  (default: success)
+  NOTIFY_EVENT    push | docker      (default: push)
+  NOTIFY_ERROR    optional error snippet for failure messages
 """
 
 from __future__ import annotations
@@ -15,6 +25,31 @@ import os
 import sys
 import urllib.error
 import urllib.request
+
+
+def _resolve_secrets() -> tuple[str, str, str, list[str]]:
+    token = (
+        os.environ.get('TELEGRAM_PUSH_BOT_TOKEN')
+        or os.environ.get('TELEGRAM_RELEASE_BOT_TOKEN')
+        or ''
+    ).strip()
+    chat_id = (
+        os.environ.get('TELEGRAM_PUSH_CHAT_ID')
+        or os.environ.get('TELEGRAM_RELEASE_CHAT_ID')
+        or ''
+    ).strip()
+    topic_id = (
+        os.environ.get('TELEGRAM_PUSH_TOPIC_ID')
+        or os.environ.get('TELEGRAM_RELEASE_TOPIC_ID')
+        or ''
+    ).strip()
+
+    missing: list[str] = []
+    if not token:
+        missing.extend(['TELEGRAM_PUSH_BOT_TOKEN', 'TELEGRAM_RELEASE_BOT_TOKEN'])
+    if not chat_id:
+        missing.extend(['TELEGRAM_PUSH_CHAT_ID', 'TELEGRAM_RELEASE_CHAT_ID'])
+    return token, chat_id, topic_id, missing
 
 
 def _send_message(*, token: str, chat_id: str, topic_id: str, text: str) -> None:
@@ -124,46 +159,19 @@ def _format_commit_entry(commit: dict) -> str:
     return '\n'.join(blocks)
 
 
-def main() -> int:
-    token = (os.environ.get('TELEGRAM_RELEASE_BOT_TOKEN') or '').strip()
-    chat_id = (os.environ.get('TELEGRAM_RELEASE_CHAT_ID') or '').strip()
-    topic_id = (os.environ.get('TELEGRAM_RELEASE_TOPIC_ID') or '').strip()
+def _actions_run_url(repo: str, run_id: str) -> str:
+    if run_id:
+        return f'https://github.com/{repo}/actions/runs/{run_id}'
+    return f'https://github.com/{repo}/actions'
 
-    if not token or not chat_id:
-        missing = []
-        if not token:
-            missing.append('TELEGRAM_RELEASE_BOT_TOKEN')
-        if not chat_id:
-            missing.append('TELEGRAM_RELEASE_CHAT_ID')
-        print(
-            'Telegram push notify failed: missing GitHub Actions secrets: '
-            + ', '.join(missing),
-            file=sys.stderr,
-        )
-        print(
-            'Add them in GitHub → Settings → Secrets and variables → Actions '
-            '(names must match exactly).',
-            file=sys.stderr,
-        )
-        return 1
 
-    repo = (os.environ.get('GITHUB_REPOSITORY') or 'kissesses/remnawave-app').strip()
-    branch = (os.environ.get('GITHUB_REF_NAME') or 'main').strip()
-    actor = (os.environ.get('GITHUB_ACTOR') or 'unknown').strip()
-    sha = (os.environ.get('GITHUB_SHA') or '').strip()
-    before = (os.environ.get('GITHUB_BEFORE') or '').strip()
-
-    commits_raw = (os.environ.get('GITHUB_COMMITS_JSON') or '[]').strip()
-    try:
-        commits = json.loads(commits_raw)
-    except json.JSONDecodeError:
-        commits = []
-
-    if not isinstance(commits, list):
-        commits = []
-
+def _build_push_success_text(*, repo: str, branch: str, actor: str, sha: str, before: str, commits: list) -> str:
     short_sha = sha[:7] if sha else '???????'
-    compare_url = f'https://github.com/{repo}/compare/{before}...{sha}' if before and sha else f'https://github.com/{repo}/commits/{branch}'
+    compare_url = (
+        f'https://github.com/{repo}/compare/{before}...{sha}'
+        if before and sha
+        else f'https://github.com/{repo}/commits/{branch}'
+    )
     commit_url = f'https://github.com/{repo}/commit/{sha}' if sha else compare_url
 
     entries: list[str] = []
@@ -190,12 +198,12 @@ def main() -> int:
                 block += f'\nRU: {html.escape(_truncate(head_parsed["ru"]))}'
             entries.append(block)
 
-    commits_block = '\n\n'.join(entries)
+    commits_block = '\n\n'.join(entries) or '—'
     count = len(commits) if commits else 1
     count_label = _commit_word(count)
 
-    text = (
-        f'<b>📦 Push в {html.escape(branch)}</b>\n'
+    return (
+        f'<b>✅ Push в {html.escape(branch)} — успех</b>\n'
         f'<code>{html.escape(repo)}</code>\n\n'
         f'👤 {html.escape(actor)}\n'
         f'📝 {count} {count_label}\n\n'
@@ -203,6 +211,109 @@ def main() -> int:
         f'🔗 <a href="{html.escape(compare_url, quote=True)}">Сравнить</a> · '
         f'<a href="{html.escape(commit_url, quote=True)}">{html.escape(short_sha)}</a>'
     )
+
+
+def _build_push_failure_text(*, repo: str, branch: str, actor: str, sha: str, error: str, run_id: str) -> str:
+    short_sha = sha[:7] if sha else '???????'
+    run_url = _actions_run_url(repo, run_id)
+    head_subject = _first_line(os.environ.get('GITHUB_HEAD_MESSAGE') or '')
+
+    lines = [
+        f'<b>❌ Push в {html.escape(branch)} — ошибка</b>',
+        f'<code>{html.escape(repo)}</code>',
+        '',
+        f'👤 {html.escape(actor)}',
+    ]
+    if head_subject:
+        lines.append(f'📝 <code>{html.escape(short_sha)}</code> {html.escape(head_subject)}')
+    if error:
+        lines.extend(['', f'⚠️ {html.escape(_truncate(error, 900))}'])
+    lines.extend(['', f'🔗 <a href="{html.escape(run_url, quote=True)}">Открыть Actions</a>'])
+    return '\n'.join(lines)
+
+
+def _build_docker_text(*, repo: str, branch: str, actor: str, sha: str, status: str, error: str, run_id: str) -> str:
+    short_sha = sha[:7] if sha else '???????'
+    run_url = _actions_run_url(repo, run_id)
+    ok = status == 'success'
+    icon = '✅' if ok else '❌'
+    label = 'успех' if ok else 'ошибка'
+
+    lines = [
+        f'<b>{icon} Docker build — {label}</b>',
+        f'<code>{html.escape(repo)}</code>',
+        '',
+        f'🌿 {html.escape(branch)} · <code>{html.escape(short_sha)}</code>',
+        f'👤 {html.escape(actor)}',
+    ]
+    if not ok and error:
+        lines.extend(['', f'⚠️ {html.escape(_truncate(error, 900))}'])
+    lines.extend(['', f'🔗 <a href="{html.escape(run_url, quote=True)}">Открыть Actions</a>'])
+    return '\n'.join(lines)
+
+
+def main() -> int:
+    token, chat_id, topic_id, missing = _resolve_secrets()
+    if not token or not chat_id:
+        print(
+            'Telegram CI notify failed: set TELEGRAM_PUSH_* secrets '
+            '(or TELEGRAM_RELEASE_* as fallback). Missing one of: '
+            + ', '.join(missing),
+            file=sys.stderr,
+        )
+        print(
+            'GitHub → Settings → Secrets and variables → Actions',
+            file=sys.stderr,
+        )
+        return 1
+
+    status = (os.environ.get('NOTIFY_STATUS') or 'success').strip().lower()
+    event = (os.environ.get('NOTIFY_EVENT') or 'push').strip().lower()
+    error = (os.environ.get('NOTIFY_ERROR') or '').strip()
+
+    repo = (os.environ.get('GITHUB_REPOSITORY') or 'kissesses/remnawave-app').strip()
+    branch = (os.environ.get('GITHUB_REF_NAME') or 'main').strip()
+    actor = (os.environ.get('GITHUB_ACTOR') or 'unknown').strip()
+    sha = (os.environ.get('GITHUB_SHA') or '').strip()
+    before = (os.environ.get('GITHUB_BEFORE') or '').strip()
+    run_id = (os.environ.get('GITHUB_RUN_ID') or '').strip()
+
+    if event == 'docker':
+        text = _build_docker_text(
+            repo=repo,
+            branch=branch,
+            actor=actor,
+            sha=sha,
+            status=status,
+            error=error,
+            run_id=run_id,
+        )
+    elif status == 'failure':
+        text = _build_push_failure_text(
+            repo=repo,
+            branch=branch,
+            actor=actor,
+            sha=sha,
+            error=error or 'Workflow завершился с ошибкой',
+            run_id=run_id,
+        )
+    else:
+        commits_raw = (os.environ.get('GITHUB_COMMITS_JSON') or '[]').strip()
+        try:
+            commits = json.loads(commits_raw)
+        except json.JSONDecodeError:
+            commits = []
+        if not isinstance(commits, list):
+            commits = []
+        text = _build_push_success_text(
+            repo=repo,
+            branch=branch,
+            actor=actor,
+            sha=sha,
+            before=before,
+            commits=commits,
+        )
+
     if len(text) > 4096:
         text = text[:4090].rstrip() + '…'
 
@@ -215,7 +326,7 @@ def main() -> int:
         print(str(exc), file=sys.stderr)
         return 1
 
-    print('Telegram push notification sent.')
+    print(f'Telegram {event}/{status} notification sent.')
     return 0
 
 
