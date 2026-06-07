@@ -7,6 +7,32 @@
 
 ---
 
+## [1.0.8] — 2026-06-07 · Silk Harbor
+
+> **Silk Harbor** — единая система отступов и стилей на главной: три карточки, одинаковые заголовки секций.
+
+### EN
+
+#### ✨ Changed
+
+- **Three-zone layout** — header, KPI, and workspace each in a separate `.dash-panel-card` with consistent `1.5rem` gaps
+- **Unified section headers** — `.dash-section-head` for KPI, monitoring, and tabs (Russian copy, no mixed EN/RU)
+- **KPI groups** — «Основное / Платежи / Сегменты» with divider lines and equal spacing before each group
+- **Tabs** — full-width 3-column segmented control inside the workspace card, aligned with panel styling
+- **Analytics & Activity** — legacy cards inherit lite block surfaces (no blur orbs, flat borders)
+
+### RU
+
+#### ✨ Изменено
+
+- **Три зоны** — шапка, KPI и рабочая область в отдельных `.dash-panel-card` с отступами `1.5rem`
+- **Единые заголовки** — `.dash-section-head` для KPI, мониторинга и вкладок (только RU, без «Live metrics»)
+- **Группы KPI** — «Основное / Платежи / Сегменты» с разделителями и одинаковыми отступами
+- **Вкладки** — сегмент-контрол на всю ширину внутри карточки workspace
+- **Аналитика и Активность** — legacy-карточки приведены к lite-стилю (без blur-орбов)
+
+---
+
 ## [1.0.7] — 2026-06-07 · Amber Relay
 
 > **Amber Relay** — главная без лагов: lite-оформление, отступы между блоками, лёгкие графики.

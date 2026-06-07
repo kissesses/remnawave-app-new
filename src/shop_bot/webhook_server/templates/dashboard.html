@@ -10,36 +10,40 @@
 
 {% block content %}
 <div class="dashboard-page dashboard-page--lite" id="dashboard-page">
-    <div class="dashboard-hero">
+
+    <section class="dash-panel-card dash-panel-card--head">
         {% include 'partials/dashboard/header.html' %}
         {% include 'partials/dashboard_onboarding.html' %}
+    </section>
 
-        <div class="dashboard-kpi-shell">
-            <div class="dashboard-kpi-shell__head">
-                <div class="dashboard-kpi-shell__titles">
-                    <span class="dashboard-kpi-shell__eyebrow">Live metrics</span>
-                    <h2 class="dashboard-kpi-shell__title">Ключевые показатели</h2>
-                </div>
-                <div class="dashboard-kpi-shell__meta">
-                    <span class="dashboard-kpi-shell__pulse" aria-hidden="true"></span>
-                    <span class="dashboard-kpi-shell__live">Обновление каждые 2 мин</span>
-                </div>
+    <section class="dash-panel-card" id="dash-kpi-zone" aria-label="Ключевые показатели">
+        <header class="dash-section-head">
+            <div class="dash-section-head__main">
+                <p class="dash-section-head__eyebrow">Показатели</p>
+                <h2 class="dash-section-head__title">Ключевые метрики</h2>
             </div>
-            {% include 'partials/dashboard/kpi.html' %}
-        </div>
-    </div>
+            <p class="dash-section-head__meta">
+                <span class="dash-section-head__dot" aria-hidden="true"></span>
+                Автообновление · 2 мин
+            </p>
+        </header>
+        {% include 'partials/dashboard/kpi.html' %}
+    </section>
 
-    <div class="dashboard-shell">
+    <section class="dash-panel-card dash-panel-card--workspace">
         <nav class="dashboard-tabs" id="dash-tabs" role="tablist" aria-label="Разделы главной страницы">
             <span class="dashboard-tabs__indicator" id="dash-tab-indicator" aria-hidden="true"></span>
             <button type="button" class="dash-tab is-active" data-tab="resources" role="tab" aria-selected="true">
-                <span class="material-symbols-outlined">monitoring</span> Ресурсы
+                <span class="material-symbols-outlined" aria-hidden="true">monitoring</span>
+                <span>Ресурсы</span>
             </button>
             <button type="button" class="dash-tab" data-tab="analytics" role="tab" aria-selected="false">
-                <span class="material-symbols-outlined">analytics</span> Аналитика
+                <span class="material-symbols-outlined" aria-hidden="true">analytics</span>
+                <span>Аналитика</span>
             </button>
             <button type="button" class="dash-tab" data-tab="activity" role="tab" aria-selected="false">
-                <span class="material-symbols-outlined">bolt</span> Активность
+                <span class="material-symbols-outlined" aria-hidden="true">bolt</span>
+                <span>Активность</span>
             </button>
         </nav>
 
@@ -48,7 +52,7 @@
             {% include 'partials/dashboard/tab_analytics.html' %}
             {% include 'partials/dashboard/tab_activity.html' %}
         </div>
-    </div>
+    </section>
 
     {% include 'partials/dashboard/modals.html' %}
     {% include 'partials/dashboard_studio_modal.html' %}

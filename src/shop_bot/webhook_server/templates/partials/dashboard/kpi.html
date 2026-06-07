@@ -1,9 +1,7 @@
-<section class="dashboard-kpi" id="dash-kpi-zone" aria-label="Ключевые показатели">
-    <div id="dash-stats"
-         class="dashboard-kpi-grid dash-cols-5 dash-density-normal dash-cards-glass"
-         data-fetch-url="{{ url_for('dashboard_stats_partial') }}"
-         data-fetch-interval="120000">
-        <div class="dashboard-kpi-group-label" data-kpi-group="core">Основное</div>
-        {% set _stats_html %}{% include 'partials/dashboard_stats.html' %}{% endset %}{{ _stats_html|strip_bom }}
-    </div>
-</section>
+<div id="dash-stats"
+     class="dashboard-kpi-grid dash-cols-5 dash-density-normal dash-cards-glass"
+     data-fetch-url="{{ url_for('dashboard_stats_partial') }}"
+     data-fetch-interval="120000">
+    <div class="dashboard-kpi-group-label" data-kpi-group="core">Основное</div>
+    {% set _stats_html %}{% include 'partials/dashboard_stats.html' %}{% endset %}{{ _stats_html|strip_bom }}
+</div>
