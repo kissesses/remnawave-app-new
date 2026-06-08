@@ -1,0 +1,300 @@
+/* Login v3 — premium fintech auth */
+
+.wa-login {
+    min-height: 100dvh;
+    margin: 0;
+    background: var(--wa-v3-bg, #0c0c0e);
+    color: var(--wa-v3-text, #f4f4f6);
+    font-family: var(--wa-v3-font);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: max(env(safe-area-inset-top), 20px) 20px max(env(safe-area-inset-bottom), 20px);
+    overflow-x: hidden;
+    position: relative;
+}
+
+.wa-login::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(61, 110, 168, 0.2), transparent 55%),
+        radial-gradient(ellipse 50% 40% at 100% 80%, rgba(201, 169, 98, 0.08), transparent 50%);
+    z-index: 0;
+}
+
+.wa-login__panel {
+    position: relative;
+    z-index: 1;
+    width: min(400px, 100%);
+    padding: 28px 24px 24px;
+    border-radius: var(--wa-v3-radius, 22px);
+    border: 1px solid var(--wa-v3-glass-border);
+    background: var(--wa-v3-glass);
+    backdrop-filter: blur(28px) saturate(160%);
+    -webkit-backdrop-filter: blur(28px) saturate(160%);
+    box-shadow: var(--wa-v3-shadow);
+}
+
+.wa-login__brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.wa-login__logo {
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(145deg, rgba(16, 185, 129, 0.2), rgba(61, 110, 168, 0.15));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 16px;
+}
+
+.wa-login__logo svg,
+.wa-login__logo .material-icons-round {
+    width: 32px;
+    height: 32px;
+    font-size: 32px !important;
+    color: var(--wa-v3-accent, #10b981);
+}
+
+.wa-login__title {
+    margin: 0;
+    font-size: 1.375rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+}
+
+.wa-login__sub {
+    margin: 8px 0 0;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--wa-v3-muted);
+    max-width: 280px;
+}
+
+.wa-login__loader-ring {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: 2px solid rgba(16, 185, 129, 0.2);
+    border-top-color: var(--wa-v3-accent, #10b981);
+    animation: wa-login-spin 0.75s linear infinite;
+    margin: 0 auto 16px;
+}
+
+@keyframes wa-login-spin {
+    to { transform: rotate(360deg); }
+}
+
+.wa-login__loader-text {
+    text-align: center;
+}
+
+.wa-login__loader-text strong {
+    display: block;
+    font-size: 0.8125rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.wa-login__loader-text span {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.75rem;
+    color: var(--wa-v3-muted);
+}
+
+.wa-login__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.wa-login__btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 15px 18px;
+    border-radius: var(--wa-v3-radius-sm, 14px);
+    border: none;
+    font-size: 0.9375rem;
+    font-weight: 650;
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform 0.15s, opacity 0.15s;
+    box-sizing: border-box;
+}
+
+.wa-login__btn:active {
+    transform: scale(0.98);
+}
+
+.wa-login__btn--primary {
+    background: linear-gradient(135deg, #34d399, var(--wa-v3-accent, #10b981));
+    color: #052e1f;
+    box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+}
+
+.wa-login__btn--ghost {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--wa-v3-glass-border);
+    color: var(--wa-v3-text);
+}
+
+.wa-login__form-title {
+    margin: 0 0 16px;
+    font-size: 1rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.wa-login__field {
+    width: 100%;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    border-radius: var(--wa-v3-radius-sm);
+    border: 1px solid var(--wa-v3-glass-border);
+    background: rgba(0, 0, 0, 0.25);
+    color: var(--wa-v3-text);
+    font-size: 0.9375rem;
+    box-sizing: border-box;
+    outline: none;
+}
+
+.wa-login__field:focus {
+    border-color: rgba(16, 185, 129, 0.45);
+}
+
+.wa-login__field::placeholder {
+    color: var(--wa-v3-muted);
+}
+
+.wa-login__error {
+    color: #f87171;
+    font-size: 0.75rem;
+    text-align: center;
+    margin: 8px 0;
+}
+
+.wa-login__links {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.wa-login__link {
+    padding: 0;
+    border: none;
+    background: none;
+    font-size: 0.6875rem;
+    font-weight: 650;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--wa-v3-muted);
+    cursor: pointer;
+}
+
+.wa-login__link--accent {
+    color: var(--wa-v3-accent);
+}
+
+#loader.wa-login__state,
+#auth-container.wa-login__state,
+#email-auth-form.wa-login__state,
+#reset-password-form.wa-login__state {
+    width: min(400px, 100%);
+}
+
+#loader:not(.hidden),
+#auth-container:not(.hidden) {
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+}
+
+#email-auth-form:not(.hidden),
+#reset-password-form:not(.hidden) {
+    display: flex !important;
+}
+
+#auth-container.hidden,
+#email-auth-form.hidden,
+#reset-password-form.hidden {
+    display: none !important;
+}
+
+#loader.hidden {
+    display: none !important;
+}
+
+#reset-step-1:not(.hidden),
+#reset-step-2:not(.hidden) {
+    display: flex !important;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.wa-login__code-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+    margin: 8px 0;
+}
+
+.wa-login__code-digit {
+    flex: 1;
+    max-width: 44px;
+    height: 52px;
+    padding: 0;
+    text-align: center;
+    font-size: 1.25rem;
+    font-family: ui-monospace, monospace;
+    border-radius: 12px;
+    border: 1px solid var(--wa-v3-glass-border);
+    background: rgba(0, 0, 0, 0.25);
+    color: var(--wa-v3-text);
+    outline: none;
+}
+
+.wa-login__code-digit:focus {
+    border-color: rgba(16, 185, 129, 0.45);
+}
+
+.wa-login__status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 16px 0 0;
+    font-size: 0.6875rem;
+    font-weight: 650;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--wa-v3-muted);
+}
+
+.wa-login__status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--wa-v3-accent);
+    animation: wa-login-pulse 1.5s ease infinite;
+}
+
+@keyframes wa-login-pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+}

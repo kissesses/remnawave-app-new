@@ -2,6 +2,7 @@
     'use strict';
 
     var THEME_CSS = {
+        classic: '/static/css/webapp-prism.css',
         ios: '/static/css/webapp-ios.css',
         desktop: '/static/css/webapp-desktop.css',
         stealth: '/static/css/webapp-stealth.css',
@@ -16,6 +17,7 @@
     };
 
     var THEME_JS = {
+        classic: '/static/js/webapp-prism.js',
         'glass-hub': '/static/js/webapp-glass-hub.js',
         nova: '/static/js/webapp-nova.js',
         'pref-classic': '/static/js/webapp-pref-classic.js',

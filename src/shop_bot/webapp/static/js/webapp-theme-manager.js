@@ -3,18 +3,24 @@
 
     const STORAGE_KEY = 'webapp-design-theme';
     const DESIGNS = {
-        classic: { id: 'classic', label: 'Классический', desc: 'Текущий дизайн без изменений', icon: 'palette' },
-        ios: { id: 'ios', label: 'Mobile', desc: 'Мобильный стиль с нижней панелью', icon: 'auto_awesome' },
-        desktop: { id: 'desktop', label: 'Desktop', desc: 'Широкий макет для компьютера', icon: 'desktop_windows' },
-        stealth: { id: 'stealth', label: 'Stealth', desc: 'Неоновая мини-аппа с сеткой и 3 вкладками', icon: 'shield' },
-        'stealth-glass': { id: 'stealth-glass', label: 'Glass', desc: 'Стеклянная классика с верхним меню', icon: 'blur_on' },
-        'glass-hub': { id: 'glass-hub', label: 'Hub', desc: 'Bento-mosaic: асимметричная сетка', icon: 'dashboard' },
-        nova: { id: 'nova', label: 'Nova', desc: 'Snap-deck: полноэкранные слайды', icon: 'view_carousel' },
-        'pref-classic': { id: 'pref-classic', label: 'Ledger', desc: 'Выписка-timeline и drawer-меню', icon: 'receipt_long' },
-        'pref-macos': { id: 'pref-macos', label: 'Aqua', desc: 'Menu bar, окно и Dock', icon: 'laptop_mac' },
-        'pref-macos-v2': { id: 'pref-macos-v2', label: 'Stage', desc: 'Rail слева + snap-панели', icon: 'view_sidebar' },
-        'pref-glass-stealth': { id: 'pref-glass-stealth', label: 'Void', desc: 'Орбита и glass shards', icon: 'blur_circular' },
-        aurum: { id: 'aurum', label: 'Aurum', desc: 'Luxury fintech: gold, KPI, pass-карта', icon: 'diamond' },
+        classic: { id: 'classic', label: 'Prism', desc: 'Glass-кабинет с нижней навигацией', icon: 'diamond', accent: '#10b981', group: 'premium' },
+        aurum: { id: 'aurum', label: 'Aurum', desc: 'Luxury fintech: gold и pass-карта', icon: 'workspace_premium', accent: '#c9a962', group: 'premium' },
+        nova: { id: 'nova', label: 'Nova', desc: 'Snap-deck: полноэкранные слайды', icon: 'view_carousel', accent: '#6366f1', group: 'premium' },
+        'glass-hub': { id: 'glass-hub', label: 'Hub', desc: 'Bento-mosaic: сетка плиток', icon: 'dashboard', accent: '#3b82f6', group: 'premium' },
+        'pref-classic': { id: 'pref-classic', label: 'Ledger', desc: 'Выписка-timeline и drawer', icon: 'receipt_long', accent: '#10b981', group: 'premium' },
+        'pref-macos': { id: 'pref-macos', label: 'Aqua', desc: 'Menu bar, окно и Dock', icon: 'laptop_mac', accent: '#0a84ff', group: 'premium' },
+        'pref-macos-v2': { id: 'pref-macos-v2', label: 'Stage', desc: 'Rail слева + snap-панели', icon: 'view_sidebar', accent: '#0a84ff', group: 'premium' },
+        'pref-glass-stealth': { id: 'pref-glass-stealth', label: 'Void', desc: 'Орбита и glass shards', icon: 'blur_circular', accent: '#e4e4e7', group: 'premium' },
+        ios: { id: 'ios', label: 'Mobile', desc: 'Мобильный стиль с tab bar', icon: 'phone_iphone', accent: '#10b981', group: 'classic' },
+        desktop: { id: 'desktop', label: 'Desktop', desc: 'Широкий макет для ПК', icon: 'desktop_windows', accent: '#6366f1', group: 'classic' },
+        stealth: { id: 'stealth', label: 'Stealth', desc: 'Неоновая сетка, 3 вкладки', icon: 'shield', accent: '#ff2357', group: 'experimental' },
+        'stealth-glass': { id: 'stealth-glass', label: 'Glass', desc: 'Стеклянная классика, верхнее меню', icon: 'blur_on', accent: '#8b5cf6', group: 'experimental' },
+    };
+
+    const DESIGN_GROUPS = {
+        premium: 'Премиум',
+        classic: 'Классика',
+        experimental: 'Эксперимент',
     };
 
     const PREF_DESIGNS = ['pref-classic', 'pref-macos', 'pref-macos-v2', 'pref-glass-stealth'];
@@ -133,6 +139,7 @@
         else if (design === 'pref-macos-v2') meta.content = '#121214';
         else if (design === 'pref-glass-stealth') meta.content = '#09090b';
         else if (design === 'aurum') meta.content = '#0c0c0e';
+        else if (design === 'classic') meta.content = '#0c0c0e';
         else meta.content = '#0a0a0a';
     }
 
@@ -214,6 +221,7 @@
         window.WebAppPrefMacosV2?.destroy?.();
         window.WebAppPrefGlassStealth?.destroy?.();
         window.WebAppAurum?.destroy?.();
+        window.WebAppPrism?.destroy?.();
         unwrapDesktopHomeGrid();
         document.body.classList.remove('webapp-has-tabbar', 'webapp-has-sidebar', 'webapp-has-stealth-tabbar');
     }
@@ -361,6 +369,7 @@
         if (design === 'pref-macos-v2') window.WebAppPrefMacosV2?.init?.();
         if (design === 'pref-glass-stealth') window.WebAppPrefGlassStealth?.init?.();
         if (design === 'aurum') window.WebAppAurum?.init?.();
+        if (design === 'classic') window.WebAppPrism?.init?.();
     }
 
     function renderIosTabBar() {
@@ -550,15 +559,25 @@
         window.WebAppGlassHub?.syncNav?.(id);
         window.WebAppNova?.syncNav?.(id);
         window.WebAppAurum?.syncNav?.(id);
+        window.WebAppPrism?.syncNav?.(id);
         window.WebAppPrefClassic?.syncNav?.(id);
         window.WebAppPrefMacos?.syncNav?.(id);
         window.WebAppPrefMacosV2?.syncNav?.(id);
         window.WebAppPrefGlassStealth?.syncNav?.(id);
     }
 
-    function buildPickerOptions() {
+    function buildPickerGroups() {
         const allowed = allowedDesigns();
-        return allowed.map((id) => DESIGNS[id]).filter(Boolean);
+        const groups = { premium: [], classic: [], experimental: [] };
+        allowed.forEach((id) => {
+            const opt = DESIGNS[id];
+            if (!opt) return;
+            const g = opt.group && groups[opt.group] ? opt.group : 'classic';
+            groups[g].push(opt);
+        });
+        return Object.entries(groups)
+            .filter(([, items]) => items.length)
+            .map(([key, items]) => ({ key, title: DESIGN_GROUPS[key] || key, items }));
     }
 
     function renderPickerSheet() {
@@ -573,9 +592,9 @@
             <div class="webapp-theme-sheet__backdrop" data-close-theme-sheet></div>
             <div class="webapp-theme-sheet__panel" role="dialog" aria-modal="true" aria-labelledby="webapp-theme-sheet-title">
                 <div class="webapp-theme-sheet__handle"></div>
-                <h2 id="webapp-theme-sheet-title" class="webapp-theme-sheet__title">Оформление</h2>
-                <p class="webapp-theme-sheet__subtitle">Выберите макет личного кабинета</p>
-                <div class="webapp-theme-sheet__options" id="webapp-theme-options"></div>
+                <h2 id="webapp-theme-sheet-title" class="webapp-theme-sheet__title">Шаблон кабинета</h2>
+                <p class="webapp-theme-sheet__subtitle">Выберите оформление — настройка сохранится на этом устройстве</p>
+                <div class="webapp-theme-sheet__groups" id="webapp-theme-options"></div>
                 <button type="button" class="webapp-theme-sheet__close" data-close-theme-sheet>Готово</button>
             </div>
         `;
@@ -607,19 +626,33 @@
         document.body.appendChild(fab);
     }
 
+    function renderThemeCard(opt, current) {
+        const accent = opt.accent || '#10b981';
+        return `
+            <button type="button" class="webapp-theme-card ${opt.id === current ? 'is-active' : ''}" data-webapp-design-option="${opt.id}" style="--theme-accent:${accent}">
+                <div class="webapp-theme-card__preview" aria-hidden="true"></div>
+                <div class="webapp-theme-card__body">
+                    <span class="webapp-theme-card__icon"><span class="material-icons-round">${opt.icon}</span></span>
+                    <span class="webapp-theme-card__text">
+                        <strong>${opt.label}</strong>
+                        <small>${opt.desc}</small>
+                    </span>
+                    <span class="webapp-theme-card__check material-icons-round">check_circle</span>
+                </div>
+            </button>`;
+    }
+
     function refreshPickerOptions() {
         const container = document.getElementById('webapp-theme-options');
         if (!container) return;
         const current = getStoredDesign();
-        container.innerHTML = buildPickerOptions().map((opt) => `
-            <button type="button" class="webapp-theme-option ${opt.id === current ? 'is-active' : ''}" data-webapp-design-option="${opt.id}">
-                <span class="webapp-theme-option__icon"><span class="material-icons-round">${opt.icon}</span></span>
-                <span class="webapp-theme-option__text">
-                    <strong>${opt.label}</strong>
-                    <small>${opt.desc}</small>
-                </span>
-                <span class="webapp-theme-option__check material-icons-round">check_circle</span>
-            </button>
+        container.innerHTML = buildPickerGroups().map((group) => `
+            <section class="webapp-theme-sheet__group">
+                <h3 class="webapp-theme-sheet__group-title">${group.title}</h3>
+                <div class="webapp-theme-sheet__grid">
+                    ${group.items.map((opt) => renderThemeCard(opt, current)).join('')}
+                </div>
+            </section>
         `).join('');
     }
 

@@ -1,0 +1,18 @@
+/* WebApp UI v3 — shared design tokens */
+
+:root {
+    --wa-v3-bg: #0c0c0e;
+    --wa-v3-bg-elevated: #141416;
+    --wa-v3-graphite: #1a1a1d;
+    --wa-v3-glass: rgba(255, 255, 255, 0.06);
+    --wa-v3-glass-border: rgba(255, 255, 255, 0.1);
+    --wa-v3-text: #f4f4f6;
+    --wa-v3-muted: rgba(228, 228, 235, 0.55);
+    --wa-v3-accent: #10b981;
+    --wa-v3-gold: #c9a962;
+    --wa-v3-blue: #3d6ea8;
+    --wa-v3-radius: 22px;
+    --wa-v3-radius-sm: 14px;
+    --wa-v3-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+    --wa-v3-font: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
+}

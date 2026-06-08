@@ -22,10 +22,11 @@ WEBAPP_DESIGN_IDS = (
 WEBAPP_DESIGNS: list[dict[str, str]] = [
     {
         "id": "classic",
-        "label": "Классический",
-        "desc": "Стандартный макет без изменений",
-        "icon": "palette",
+        "label": "Prism",
+        "desc": "Современный glass-кабинет с нижней навигацией",
+        "icon": "diamond",
         "accent": "#10b981",
+        "group": "premium",
     },
     {
         "id": "ios",
@@ -109,13 +110,16 @@ WEBAPP_DESIGNS: list[dict[str, str]] = [
 DEFAULT_ENABLED_DESIGNS = ",".join(WEBAPP_DESIGN_IDS)
 
 WEBAPP_SHARED_CSS = (
+    "webapp-ui-tokens.css",
     "webapp-shell.css",
     "webapp-design-bridge.css",
     "webapp-cabinet.css",
+    "webapp-pages-v3.css",
     "webapp-modals.css",
 )
 
 WEBAPP_THEME_CSS: dict[str, str] = {
+    "classic": "webapp-prism.css",
     "ios": "webapp-ios.css",
     "desktop": "webapp-desktop.css",
     "stealth": "webapp-stealth.css",
@@ -130,6 +134,7 @@ WEBAPP_THEME_CSS: dict[str, str] = {
 }
 
 WEBAPP_THEME_JS: dict[str, str] = {
+    "classic": "webapp-prism.js",
     "glass-hub": "webapp-glass-hub.js",
     "nova": "webapp-nova.js",
     "pref-classic": "webapp-pref-classic.js",

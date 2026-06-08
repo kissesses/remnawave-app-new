@@ -1,0 +1,43 @@
+/* Sub-pages v3 — unified polish for cabinet inner pages */
+
+html[data-webapp-design="classic"] #purchase-page h2,
+html[data-webapp-design="classic"] #renew-page h2,
+html[data-webapp-design="classic"] #setup-page h2,
+html[data-webapp-design="classic"] #profile-page h2,
+html[data-webapp-design="classic"] #support-page h2,
+html[data-webapp-design="aurum"] #purchase-page h2,
+html[data-webapp-design="aurum"] #renew-page h2,
+html[data-webapp-design="aurum"] #setup-page h2,
+html[data-webapp-design="aurum"] #profile-page h2,
+html[data-webapp-design="aurum"] #support-page h2 {
+    font-size: 1.25rem !important;
+    font-weight: 750 !important;
+    letter-spacing: -0.02em !important;
+    margin-bottom: 16px !important;
+}
+
+html[data-webapp-design="classic"] .glass-card,
+html[data-webapp-design="aurum"] .glass-card {
+    border-radius: 16px !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+
+html[data-webapp-design="classic"] button.bg-primary,
+html[data-webapp-design="classic"] a.bg-primary,
+html[data-webapp-design="aurum"] button.bg-primary,
+html[data-webapp-design="aurum"] a.bg-primary {
+    border-radius: 14px !important;
+    font-weight: 650 !important;
+}
+
+html[data-webapp-design="classic"] input,
+html[data-webapp-design="classic"] textarea,
+html[data-webapp-design="classic"] select,
+html[data-webapp-design="aurum"] input,
+html[data-webapp-design="aurum"] textarea,
+html[data-webapp-design="aurum"] select {
+    border-radius: 12px !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    background: rgba(0, 0, 0, 0.2) !important;
+}
