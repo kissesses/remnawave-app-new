@@ -53,24 +53,24 @@ html[data-webapp-design] #support-page .absolute.-top-24 {
     display: none !important;
 }
 
-/* Purchase / renew — flex column + static pay footer (all themes except ios/desktop which have own rules) */
-html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]) #purchase-page,
-html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]) #renew-page {
+/* Purchase / renew — flex column + static pay footer (active page only; ios/desktop have own rules) */
+html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]) #purchase-page.webapp-page-active,
+html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]) #renew-page.webapp-page-active {
     display: flex !important;
     flex-direction: column !important;
     justify-content: flex-start !important;
 }
 
-html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]) #purchase-page footer,
-html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]) #renew-page footer {
+html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]) #purchase-page.webapp-page-active footer,
+html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]) #renew-page.webapp-page-active footer {
     position: relative !important;
     z-index: 1;
     padding: 16px 0 8px !important;
     margin-top: auto;
 }
 
-html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]) #purchase-page footer .fixed,
-html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]) #renew-page footer .fixed {
+html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]) #purchase-page.webapp-page-active footer .fixed,
+html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]) #renew-page.webapp-page-active footer .fixed {
     position: static !important;
     width: 100% !important;
     padding: 0 !important;
@@ -86,20 +86,20 @@ html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design
     min-height: var(--wa-touch-min, 44px);
 }
 
-html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]) #purchase-page footer button,
-html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]) #renew-page footer button {
+html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]) #purchase-page.webapp-page-active footer button,
+html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]) #renew-page.webapp-page-active footer button {
     min-height: var(--wa-touch-min, 44px);
     border-radius: 14px !important;
 }
 
 /* Support chat layout */
-html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]) #support-page {
+html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]) #support-page.webapp-page-active {
     display: flex !important;
     flex-direction: column !important;
     justify-content: flex-start !important;
 }
 
-html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]) #support-chat-view {
+html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]) #support-page.webapp-page-active #support-chat-view {
     height: auto !important;
     flex: 1;
     min-height: 0;
@@ -107,19 +107,19 @@ html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design
     flex-direction: column;
 }
 
-html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]) #support-messages-container {
+html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]) #support-page.webapp-page-active #support-messages-container {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
 }
 
-html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]) #support-input-area {
+html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]) #support-page.webapp-page-active #support-input-area {
     flex-shrink: 0;
     padding-bottom: 8px !important;
 }
 
-html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]) #support-message-input {
+html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]) #support-page.webapp-page-active #support-message-input {
     min-height: var(--wa-touch-min, 44px);
 }
 
@@ -127,6 +127,11 @@ html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design
 html[data-webapp-design] #profile-page button,
 html[data-webapp-design] #setup-page button[data-setup-tab] {
     min-height: var(--wa-touch-min, 44px);
+}
+
+/* Keep inactive pages hidden (must not override webapp-shell.css) */
+[id$="-page"]:not(.webapp-page-active) {
+    display: none !important;
 }
 
 /* Setup tabs scroll on narrow screens */
