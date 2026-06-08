@@ -15,4 +15,10 @@
     --wa-v3-radius-sm: 14px;
     --wa-v3-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
     --wa-v3-font: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
+    --wa-safe-top: max(env(safe-area-inset-top), 0px);
+    --wa-safe-bottom: max(env(safe-area-inset-bottom), 0px);
+    --wa-safe-left: max(env(safe-area-inset-left), 0px);
+    --wa-safe-right: max(env(safe-area-inset-right), 0px);
+    --wa-touch-min: 44px;
+    --wa-page-max: 100%;
 }

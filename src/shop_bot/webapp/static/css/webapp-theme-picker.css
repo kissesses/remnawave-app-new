@@ -260,12 +260,44 @@ button.webapp-theme-fab {
     background: rgba(255, 255, 255, 0.12);
 }
 
-html[data-webapp-design="ios"] .webapp-theme-fab {
+/* FAB offsets — single source of truth (above bottom nav + safe-area) */
+#webapp-theme-fab {
+    bottom: calc(14px + env(safe-area-inset-bottom));
+    right: max(14px, env(safe-area-inset-right));
+}
+
+html[data-webapp-design="classic"] #webapp-theme-fab,
+html[data-webapp-design="aurum"] #webapp-theme-fab,
+html[data-webapp-design="ios"] #webapp-theme-fab,
+html[data-webapp-design="stealth"] #webapp-theme-fab {
     bottom: calc(88px + env(safe-area-inset-bottom));
+}
+
+html[data-webapp-design="ios"] #webapp-theme-fab {
     border-radius: 999px;
 }
 
-html[data-webapp-design="aurum"] .webapp-theme-fab,
-html[data-webapp-design="classic"] .webapp-theme-fab {
-    bottom: calc(88px + env(safe-area-inset-bottom));
+html[data-webapp-design="nova"] #webapp-theme-fab {
+    bottom: calc(72px + env(safe-area-inset-bottom));
+}
+
+html[data-webapp-design="pref-classic"] #webapp-theme-fab,
+html[data-webapp-design="pref-macos"] #webapp-theme-fab,
+html[data-webapp-design="pref-macos-v2"] #webapp-theme-fab {
+    bottom: calc(80px + env(safe-area-inset-bottom));
+}
+
+html[data-webapp-design="pref-glass-stealth"] #webapp-theme-fab {
+    top: calc(12px + env(safe-area-inset-top));
+    bottom: auto;
+    right: max(14px, env(safe-area-inset-right));
+}
+
+html[data-webapp-design="stealth-glass"] #webapp-theme-fab,
+html[data-webapp-design="glass-hub"] #webapp-theme-fab {
+    bottom: calc(20px + env(safe-area-inset-bottom));
+}
+
+html[data-webapp-design="desktop"] #webapp-theme-fab {
+    bottom: calc(14px + env(safe-area-inset-bottom));
 }

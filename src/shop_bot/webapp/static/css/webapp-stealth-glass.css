@@ -269,3 +269,28 @@ html[data-webapp-design="stealth-glass"] .webapp-theme-option__check {
         padding-right: 24px !important;
     }
 }
+
+@media (max-width: 768px) {
+    html[data-webapp-design="stealth-glass"] #main-page,
+    html[data-webapp-design="stealth-glass"] #purchase-page,
+    html[data-webapp-design="stealth-glass"] #renew-page,
+    html[data-webapp-design="stealth-glass"] #setup-page,
+    html[data-webapp-design="stealth-glass"] #profile-page,
+    html[data-webapp-design="stealth-glass"] #support-page {
+        max-width: 100% !important;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }
+
+    .webapp-stealth-glass-topnav__btn {
+        min-height: var(--wa-touch-min, 44px);
+        flex-shrink: 0;
+    }
+
+    .webapp-stealth-glass-topnav__brand span {
+        max-width: 72px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}

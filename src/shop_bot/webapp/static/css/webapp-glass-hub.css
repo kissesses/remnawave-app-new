@@ -69,7 +69,7 @@ html[data-webapp-design="glass-hub"] body::before {
 }
 
 .webapp-glass-hub-topnav__pills {
-    display: none;
+    display: flex;
     align-items: center;
     gap: 4px;
     padding: 4px;
@@ -80,11 +80,19 @@ html[data-webapp-design="glass-hub"] body::before {
     min-width: 0;
     overflow-x: auto;
     scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
 }
 
-@media (min-width: 640px) {
-    .webapp-glass-hub-topnav__pills {
-        display: flex;
+@media (max-width: 639px) {
+    .webapp-glass-hub-topnav__pill {
+        font-size: 0;
+        padding: 8px 10px;
+        min-width: var(--wa-touch-min, 44px);
+        min-height: var(--wa-touch-min, 44px);
+    }
+
+    .webapp-glass-hub-topnav__pill .material-icons-round {
+        font-size: 20px !important;
     }
 }
 
@@ -651,6 +659,27 @@ html[data-webapp-design="glass-hub"] #renew-pay-button {
     border: none !important;
 }
 
-html[data-webapp-design="glass-hub"] #webapp-theme-fab {
-    bottom: calc(20px + env(safe-area-inset-bottom));
+@media (max-width: 480px) {
+    html[data-webapp-design="glass-hub"] #main-page,
+    html[data-webapp-design="glass-hub"] #purchase-page,
+    html[data-webapp-design="glass-hub"] #renew-page,
+    html[data-webapp-design="glass-hub"] #setup-page,
+    html[data-webapp-design="glass-hub"] #profile-page,
+    html[data-webapp-design="glass-hub"] #support-page {
+        max-width: 100% !important;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }
+
+    .webapp-gh-bento {
+        grid-template-columns: 1fr;
+    }
+
+    .webapp-gh-card--sub,
+    .webapp-gh-card--balance,
+    .webapp-gh-card--ref {
+        grid-column: 1 / -1;
+        grid-row: auto;
+        min-height: auto;
+    }
 }

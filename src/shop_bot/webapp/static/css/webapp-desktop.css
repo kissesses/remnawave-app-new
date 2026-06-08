@@ -686,11 +686,6 @@ html[data-webapp-design="desktop"] #profile-page.webapp-page-active > main > .fl
     min-height: 200px;
 }
 
-html[data-webapp-design="desktop"] .webapp-theme-fab {
-    right: 24px;
-    bottom: 24px;
-}
-
 /* Tablet */
 @media (max-width: 900px) {
     html[data-webapp-design="desktop"] .webapp-desktop-sidebar {
@@ -775,5 +770,29 @@ html[data-webapp-design="desktop"] .webapp-theme-fab {
 
     html[data-webapp-design="desktop"] #profile-page.webapp-page-active > footer button {
         max-width: none;
+    }
+}
+
+@media (max-width: 390px) {
+    html[data-webapp-design="desktop"] [id$="-page"].webapp-page-active {
+        padding: 12px 10px calc(72px + env(safe-area-inset-bottom)) !important;
+    }
+
+    html[data-webapp-design="desktop"] .webapp-desktop-sidebar__btn {
+        min-width: 52px;
+        min-height: var(--wa-touch-min, 44px);
+        padding: 6px 8px;
+    }
+
+    html[data-webapp-design="desktop"] .server-plans-container,
+    html[data-webapp-design="desktop"] #renew-plans-grid-container .server-plans-container {
+        grid-template-columns: 1fr !important;
+    }
+
+    html[data-webapp-design="desktop"] #purchase-page footer .fixed,
+    html[data-webapp-design="desktop"] #renew-page footer .fixed {
+        position: static !important;
+        width: 100% !important;
+        padding: 0 !important;
     }
 }

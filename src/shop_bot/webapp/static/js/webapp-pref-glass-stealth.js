@@ -18,6 +18,10 @@
 
     function syncNav(pageId) {
         const id = pageId || K().pageIdFromHash();
+        const isMain = id === 'main-page';
+        document.body.classList.toggle('webapp-void-subpage', !isMain);
+        const orbit = document.getElementById('webapp-void-orbit');
+        if (orbit) orbit.hidden = !isMain;
         document.querySelectorAll('#webapp-void-orbit [data-page-id]').forEach((btn) => {
             btn.classList.toggle('is-active', btn.dataset.pageId === id);
         });
@@ -98,7 +102,7 @@
     function destroy() {
         document.getElementById('webapp-void-shards')?.remove();
         document.getElementById('webapp-void-orbit')?.remove();
-        document.body.classList.remove('webapp-has-void');
+        document.body.classList.remove('webapp-has-void', 'webapp-void-subpage');
     }
 
     function init() {

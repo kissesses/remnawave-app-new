@@ -324,6 +324,7 @@
             });
             page.style.display = 'flex';
             page.classList.add('webapp-page-active');
+            page.scrollTop = 0;
 
             if (page === supportPage) {
                 document.getElementById('support-loading').classList.remove('hidden');

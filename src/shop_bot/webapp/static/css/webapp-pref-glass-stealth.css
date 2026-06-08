@@ -190,8 +190,29 @@ html[data-webapp-design="pref-glass-stealth"] #support-page > header {
     display: none !important;
 }
 
-html[data-webapp-design="pref-glass-stealth"] #webapp-theme-fab {
-    top: calc(12px + env(safe-area-inset-top));
-    bottom: auto;
-    right: 14px;
+/* Sub-pages: compact bottom clearance (orbit hidden via JS) */
+html[data-webapp-design="pref-glass-stealth"] body.webapp-void-subpage #purchase-page,
+html[data-webapp-design="pref-glass-stealth"] body.webapp-void-subpage #renew-page,
+html[data-webapp-design="pref-glass-stealth"] body.webapp-void-subpage #setup-page,
+html[data-webapp-design="pref-glass-stealth"] body.webapp-void-subpage #profile-page,
+html[data-webapp-design="pref-glass-stealth"] body.webapp-void-subpage #support-page {
+    padding-bottom: calc(24px + env(safe-area-inset-bottom)) !important;
+}
+
+@media (max-width: 390px) {
+    html[data-webapp-design="pref-glass-stealth"] {
+        --wa-void-orbit-size: 220px;
+    }
+
+    .webapp-void-orbit__core {
+        width: 56px;
+        height: 56px;
+        margin: -28px 0 0 -28px;
+    }
+
+    .webapp-void-orbit__node {
+        width: 40px;
+        height: 40px;
+        margin: -20px 0 0 -20px;
+    }
 }

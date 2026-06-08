@@ -264,6 +264,24 @@ html[data-webapp-design="pref-macos"] #support-page > header {
     display: none !important;
 }
 
-html[data-webapp-design="pref-macos"] #webapp-theme-fab {
-    bottom: calc(96px + env(safe-area-inset-bottom));
+html[data-webapp-design="pref-macos"] .glass-card,
+html[data-webapp-design="pref-macos"] .bg-black\/20,
+html[data-webapp-design="pref-macos"] .bg-black\/30 {
+    border-radius: 14px !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+
+@media (max-width: 768px) {
+    .webapp-aqua-menubar__title {
+        max-width: 120px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .webapp-aqua-dock__icon {
+        min-width: var(--wa-touch-min, 44px);
+        min-height: var(--wa-touch-min, 44px);
+    }
 }

@@ -280,7 +280,9 @@
         if (document.getElementById('webapp-stealth-tabbar')) return;
         const items = [
             { id: 'main-page', label: 'ГЛАВНАЯ', icon: 'shield' },
-            { id: 'support-page', label: 'ПОДДЕРЖКА', icon: 'help_outline' },
+            { id: 'purchase-page', label: 'КУПИТЬ', icon: 'shopping_cart' },
+            { id: 'setup-page', label: 'VPN', icon: 'vpn_key' },
+            { id: 'support-page', label: 'ЧАТ', icon: 'help_outline' },
             { id: 'profile-page', label: 'ПРОФИЛЬ', icon: 'person' },
         ];
         const nav = document.createElement('nav');
@@ -712,6 +714,16 @@
         onPageChange(pageId) {
             syncNav(pageId);
             if (pageId === 'profile-page') applyProfileAvatar();
+            if (pageId === 'main-page') {
+                window.WebAppPrism?.refresh?.();
+                window.WebAppAurum?.refresh?.();
+                window.WebAppGlassHub?.refresh?.();
+                window.WebAppNova?.refresh?.();
+                window.WebAppPrefClassic?.refresh?.();
+                window.WebAppPrefMacos?.refresh?.();
+                window.WebAppPrefMacosV2?.refresh?.();
+                window.WebAppPrefGlassStealth?.refresh?.();
+            }
         },
         applyProfileAvatar,
         isMobile: isMobileViewport,

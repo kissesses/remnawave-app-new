@@ -8,7 +8,7 @@ html[data-webapp-design="stealth"] {
     --wa-st-border: rgba(255, 255, 255, 0.06);
     --wa-st-label: rgba(161, 161, 170, 0.95);
     --wa-st-text: #ffffff;
-    --wa-st-bottom: calc(72px + env(safe-area-inset-bottom));
+    --wa-st-bottom: calc(80px + env(safe-area-inset-bottom));
 }
 
 html[data-webapp-design="stealth"] body {
@@ -250,7 +250,7 @@ html[data-webapp-design="stealth"] .shadow-\[0_0_15px_rgba\(16\,185\,129\,0\.3\)
 
 .webapp-stealth-tabbar__inner {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     max-width: 480px;
     margin: 0 auto;
 }
@@ -260,8 +260,10 @@ html[data-webapp-design="stealth"] .shadow-\[0_0_15px_rgba\(16\,185\,129\,0\.3\)
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
-    padding: 6px 4px 10px;
+    justify-content: center;
+    gap: 2px;
+    min-height: var(--wa-touch-min, 44px);
+    padding: 4px 2px 8px;
     border: none;
     background: transparent;
     color: #71717a;
@@ -274,9 +276,13 @@ html[data-webapp-design="stealth"] .shadow-\[0_0_15px_rgba\(16\,185\,129\,0\.3\)
 }
 
 .webapp-stealth-tabbar__label {
-    font-size: 0.625rem;
+    font-size: 0.5rem;
     font-weight: 700;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.06em;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .webapp-stealth-tabbar__btn.is-active {
@@ -296,9 +302,7 @@ html[data-webapp-design="stealth"] .shadow-\[0_0_15px_rgba\(16\,185\,129\,0\.3\)
     box-shadow: 0 0 8px rgba(255, 35, 87, 0.6);
 }
 
-html[data-webapp-design="stealth"] .webapp-theme-fab {
-    bottom: calc(78px + env(safe-area-inset-bottom));
-    right: 14px;
+html[data-webapp-design="stealth"] #webapp-theme-fab {
     background: rgba(24, 24, 27, 0.88);
     border-color: rgba(255, 35, 87, 0.2);
 }

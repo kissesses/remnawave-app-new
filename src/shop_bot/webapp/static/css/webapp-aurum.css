@@ -655,12 +655,14 @@ html[data-webapp-design="aurum"] .absolute.-top-24.-right-24 {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: 3px;
+    min-height: var(--wa-touch-min, 44px);
     padding: 6px 4px;
     border: none;
     background: transparent;
     color: var(--wa-aurum-muted);
-    font-size: 0.5625rem;
+    font-size: 0.625rem;
     font-weight: 600;
     letter-spacing: 0.02em;
     cursor: pointer;
@@ -711,9 +713,4 @@ html[data-webapp-design="aurum"] .bg-primary {
 
 html[data-webapp-design="aurum"] .text-primary {
     color: var(--wa-aurum-gold) !important;
-}
-
-html[data-webapp-design="aurum"] #webapp-theme-fab {
-    bottom: calc(88px + env(safe-area-inset-bottom));
-    right: max(16px, env(safe-area-inset-right));
 }

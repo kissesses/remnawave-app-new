@@ -161,6 +161,7 @@ html[data-webapp-design="nova"] body::before {
     align-items: center;
     justify-content: center;
     gap: 2px;
+    min-height: var(--wa-touch-min, 44px);
     padding: 6px 4px;
     border: none;
     background: transparent;
@@ -588,9 +589,4 @@ html[data-webapp-design="nova"] #pay-button,
 html[data-webapp-design="nova"] #renew-pay-button {
     background: var(--wa-nv-accent) !important;
     border-color: var(--wa-nv-accent) !important;
-}
-
-html[data-webapp-design="nova"] #webapp-theme-fab {
-    bottom: calc(72px + env(safe-area-inset-bottom));
-    right: max(14px, env(safe-area-inset-right));
 }

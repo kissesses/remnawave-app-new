@@ -196,8 +196,44 @@ html[data-webapp-design="pref-macos-v2"] #support-page > header {
     display: none !important;
 }
 
-html[data-webapp-design="pref-macos-v2"] #webapp-theme-fab {
-    left: calc(var(--wa-stage-rail) + 14px);
-    right: auto;
-    bottom: calc(16px + env(safe-area-inset-bottom));
+@media (max-width: 768px) {
+    html[data-webapp-design="pref-macos-v2"] {
+        --wa-stage-rail: 0px;
+        --wa-stage-bottom-nav: calc(64px + env(safe-area-inset-bottom));
+    }
+
+    .webapp-stage-rail {
+        top: auto;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: auto;
+        flex-direction: row;
+        justify-content: space-around;
+        padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+        border-right: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .webapp-stage-rail__btn {
+        min-width: var(--wa-touch-min, 44px);
+        min-height: var(--wa-touch-min, 44px);
+    }
+
+    html[data-webapp-design="pref-macos-v2"] #main-page,
+    html[data-webapp-design="pref-macos-v2"] #purchase-page,
+    html[data-webapp-design="pref-macos-v2"] #renew-page,
+    html[data-webapp-design="pref-macos-v2"] #setup-page,
+    html[data-webapp-design="pref-macos-v2"] #profile-page,
+    html[data-webapp-design="pref-macos-v2"] #support-page {
+        margin-left: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        padding-bottom: var(--wa-stage-bottom-nav) !important;
+    }
+
+    .webapp-stage-panel {
+        flex: 0 0 85%;
+    }
 }

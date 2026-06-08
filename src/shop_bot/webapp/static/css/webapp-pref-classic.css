@@ -309,6 +309,31 @@ html[data-webapp-design="pref-classic"] #support-page > header {
     font-family: 'IBM Plex Mono', ui-monospace, monospace;
 }
 
-html[data-webapp-design="pref-classic"] #webapp-theme-fab {
-    bottom: calc(56px + env(safe-area-inset-bottom));
+html[data-webapp-design="pref-classic"] .glass-card,
+html[data-webapp-design="pref-classic"] .bg-black\/20,
+html[data-webapp-design="pref-classic"] .bg-black\/30 {
+    border-radius: 4px !important;
+    border: 1px solid var(--wa-ledger-line) !important;
+    background: var(--wa-ledger-paper) !important;
+}
+
+html[data-webapp-design="pref-classic"] .webapp-ledger-nav__item {
+    min-height: var(--wa-touch-min, 44px);
+}
+
+@media (max-width: 390px) {
+    .webapp-ledger-drawer__panel {
+        max-width: 100% !important;
+        border-radius: 12px 12px 0 0;
+    }
+
+    html[data-webapp-design="pref-classic"] #main-page,
+    html[data-webapp-design="pref-classic"] #purchase-page,
+    html[data-webapp-design="pref-classic"] #renew-page,
+    html[data-webapp-design="pref-classic"] #setup-page,
+    html[data-webapp-design="pref-classic"] #profile-page,
+    html[data-webapp-design="pref-classic"] #support-page {
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }
 }
