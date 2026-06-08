@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 
 WEBAPP_DESIGN_IDS = (
+    "native",
     "vault",
     "classic",
     "ios",
@@ -21,6 +22,14 @@ WEBAPP_DESIGN_IDS = (
 )
 
 WEBAPP_DESIGNS: list[dict[str, str]] = [
+    {
+        "id": "native",
+        "label": "Native",
+        "desc": "Как Telegram: группы настроек и нижнее меню",
+        "icon": "phone_iphone",
+        "accent": "#2AABEE",
+        "group": "premium",
+    },
     {
         "id": "vault",
         "label": "Vault",
@@ -128,6 +137,7 @@ WEBAPP_SHARED_CSS = (
 )
 
 WEBAPP_THEME_CSS: dict[str, str] = {
+    "native": "webapp-native.css",
     "vault": "webapp-vault.css",
     "classic": "webapp-prism.css",
     "ios": "webapp-ios.css",
@@ -144,6 +154,7 @@ WEBAPP_THEME_CSS: dict[str, str] = {
 }
 
 WEBAPP_THEME_JS: dict[str, str] = {
+    "native": "webapp-native.js",
     "vault": "webapp-vault.js",
     "classic": "webapp-prism.js",
     "glass-hub": "webapp-glass-hub.js",

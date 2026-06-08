@@ -54,23 +54,23 @@ html[data-webapp-design] #support-page .absolute.-top-24 {
 }
 
 /* Purchase / renew — flex column + static pay footer (active page only; ios/desktop have own rules) */
-html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]):not([data-webapp-design="vault"]) #purchase-page.webapp-page-active,
-html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]):not([data-webapp-design="vault"]) #renew-page.webapp-page-active {
+html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]):not([data-webapp-design="vault"]):not([data-webapp-design="native"]) #purchase-page.webapp-page-active,
+html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]):not([data-webapp-design="vault"]):not([data-webapp-design="native"]) #renew-page.webapp-page-active {
     display: flex !important;
     flex-direction: column !important;
     justify-content: flex-start !important;
 }
 
-html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]):not([data-webapp-design="vault"]) #purchase-page.webapp-page-active footer,
-html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]):not([data-webapp-design="vault"]) #renew-page.webapp-page-active footer {
+html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]):not([data-webapp-design="vault"]):not([data-webapp-design="native"]) #purchase-page.webapp-page-active footer,
+html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]):not([data-webapp-design="vault"]):not([data-webapp-design="native"]) #renew-page.webapp-page-active footer {
     position: relative !important;
     z-index: 1;
     padding: 16px 0 8px !important;
     margin-top: auto;
 }
 
-html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]):not([data-webapp-design="vault"]) #purchase-page.webapp-page-active footer .fixed,
-html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]):not([data-webapp-design="vault"]) #renew-page.webapp-page-active footer .fixed {
+html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]):not([data-webapp-design="vault"]):not([data-webapp-design="native"]) #purchase-page.webapp-page-active footer .fixed,
+html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]):not([data-webapp-design="vault"]):not([data-webapp-design="native"]) #renew-page.webapp-page-active footer .fixed {
     position: static !important;
     width: 100% !important;
     padding: 0 !important;
@@ -79,27 +79,27 @@ html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design
     -webkit-backdrop-filter: none !important;
 }
 
-html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]):not([data-webapp-design="vault"]) #pay-button,
-html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]):not([data-webapp-design="vault"]) #renew-pay-button {
+html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]):not([data-webapp-design="vault"]):not([data-webapp-design="native"]) #pay-button,
+html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]):not([data-webapp-design="vault"]):not([data-webapp-design="native"]) #renew-pay-button {
     width: 100% !important;
     max-width: none !important;
     min-height: var(--wa-touch-min, 44px);
 }
 
-html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]):not([data-webapp-design="vault"]) #purchase-page.webapp-page-active footer button,
-html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]):not([data-webapp-design="vault"]) #renew-page.webapp-page-active footer button {
+html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]):not([data-webapp-design="vault"]):not([data-webapp-design="native"]) #purchase-page.webapp-page-active footer button,
+html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]):not([data-webapp-design="vault"]):not([data-webapp-design="native"]) #renew-page.webapp-page-active footer button {
     min-height: var(--wa-touch-min, 44px);
     border-radius: 14px !important;
 }
 
 /* Support chat layout */
-html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]):not([data-webapp-design="vault"]) #support-page.webapp-page-active {
+html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]):not([data-webapp-design="vault"]):not([data-webapp-design="native"]) #support-page.webapp-page-active {
     display: flex !important;
     flex-direction: column !important;
     justify-content: flex-start !important;
 }
 
-html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]):not([data-webapp-design="vault"]) #support-page.webapp-page-active #support-chat-view {
+html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]):not([data-webapp-design="vault"]):not([data-webapp-design="native"]) #support-page.webapp-page-active #support-chat-view {
     height: auto !important;
     flex: 1;
     min-height: 0;
@@ -107,19 +107,19 @@ html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design
     flex-direction: column;
 }
 
-html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]):not([data-webapp-design="vault"]) #support-page.webapp-page-active #support-messages-container {
+html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]):not([data-webapp-design="vault"]):not([data-webapp-design="native"]) #support-page.webapp-page-active #support-messages-container {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
 }
 
-html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]):not([data-webapp-design="vault"]) #support-page.webapp-page-active #support-input-area {
+html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]):not([data-webapp-design="vault"]):not([data-webapp-design="native"]) #support-page.webapp-page-active #support-input-area {
     flex-shrink: 0;
     padding-bottom: 8px !important;
 }
 
-html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]):not([data-webapp-design="vault"]) #support-page.webapp-page-active #support-message-input {
+html[data-webapp-design]:not([data-webapp-design="ios"]):not([data-webapp-design="desktop"]):not([data-webapp-design="vault"]):not([data-webapp-design="native"]) #support-page.webapp-page-active #support-message-input {
     min-height: var(--wa-touch-min, 44px);
 }
 

@@ -287,7 +287,8 @@ html[data-webapp-design="pref-macos-v2"] #webapp-theme-fab {
     bottom: calc(80px + env(safe-area-inset-bottom));
 }
 
-html[data-webapp-design="pref-glass-stealth"] #webapp-theme-fab {
+html[data-webapp-design="pref-glass-stealth"] #webapp-theme-fab,
+html[data-webapp-design="native"] #webapp-theme-fab {
     top: calc(12px + env(safe-area-inset-top));
     bottom: auto;
     right: max(14px, env(safe-area-inset-right));

@@ -33,6 +33,12 @@ html:not([data-webapp-design="nova"]) #webapp-nova-dashboard {
     display: none !important;
 }
 
+html:not([data-webapp-design="native"]) #webapp-native-tabbar,
+html:not([data-webapp-design="native"]) #webapp-native-home,
+html:not([data-webapp-design="native"]) #webapp-native-store-fab {
+    display: none !important;
+}
+
 html:not([data-webapp-design="vault"]) #webapp-vault-sidebar,
 html:not([data-webapp-design="vault"]) #webapp-vault-header,
 html:not([data-webapp-design="vault"]) #webapp-vault-home,

@@ -2,6 +2,7 @@
     'use strict';
 
     var THEME_CSS = {
+        native: '/static/css/webapp-native.css',
         vault: '/static/css/webapp-vault.css',
         classic: '/static/css/webapp-prism.css',
         ios: '/static/css/webapp-ios.css',
@@ -18,6 +19,7 @@
     };
 
     var THEME_JS = {
+        native: '/static/js/webapp-native.js',
         vault: '/static/js/webapp-vault.js',
         classic: '/static/js/webapp-prism.js',
         'glass-hub': '/static/js/webapp-glass-hub.js',

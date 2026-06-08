@@ -3,6 +3,7 @@
 
     const STORAGE_KEY = 'webapp-design-theme';
     const DESIGNS = {
+        native: { id: 'native', label: 'Native', desc: 'Как Telegram: списки и tab bar', icon: 'phone_iphone', accent: '#2AABEE', group: 'premium' },
         vault: { id: 'vault', label: 'Vault', desc: 'Cybersecurity SaaS dashboard', icon: 'security', accent: '#3b82f6', group: 'premium' },
         classic: { id: 'classic', label: 'Prism', desc: 'Glass-кабинет с нижней навигацией', icon: 'diamond', accent: '#10b981', group: 'premium' },
         aurum: { id: 'aurum', label: 'Aurum', desc: 'Luxury fintech: gold и pass-карта', icon: 'workspace_premium', accent: '#c9a962', group: 'premium' },
@@ -55,7 +56,7 @@
     }
 
     function normalizeDesign(value) {
-        if (value === 'vault' || value === 'ios' || value === 'desktop' || value === 'stealth' || value === 'stealth-glass' || value === 'glass-hub' || value === 'nova' || value === 'aurum') return value;
+        if (value === 'native' || value === 'vault' || value === 'ios' || value === 'desktop' || value === 'stealth' || value === 'stealth-glass' || value === 'glass-hub' || value === 'nova' || value === 'aurum') return value;
         if (isPrefDesign(value)) return value;
         return 'classic';
     }
@@ -64,9 +65,9 @@
         const enabled = getEnabledDesigns();
         let list;
         if (isMobileViewport()) {
-            list = ['vault', 'classic', 'ios', 'stealth', 'stealth-glass', 'glass-hub', 'nova', 'aurum', ...PREF_DESIGNS];
+            list = ['native', 'vault', 'classic', 'ios', 'stealth', 'stealth-glass', 'glass-hub', 'nova', 'aurum', ...PREF_DESIGNS];
         } else {
-            list = ['vault', 'classic', 'ios', 'desktop', 'stealth', 'stealth-glass', 'glass-hub', 'nova', 'aurum', ...PREF_DESIGNS];
+            list = ['native', 'vault', 'classic', 'ios', 'desktop', 'stealth', 'stealth-glass', 'glass-hub', 'nova', 'aurum', ...PREF_DESIGNS];
         }
         if (enabled) list = list.filter((id) => enabled.includes(id));
         return list.length ? list : ['classic'];
@@ -112,6 +113,7 @@
         document.body.classList.toggle('webapp-design-glass-hub', finalDesign === 'glass-hub');
         document.body.classList.toggle('webapp-design-nova', finalDesign === 'nova');
         document.body.classList.toggle('webapp-design-aurum', finalDesign === 'aurum');
+        document.body.classList.toggle('webapp-design-native', finalDesign === 'native');
         document.body.classList.toggle('webapp-design-vault', finalDesign === 'vault');
         document.body.classList.toggle('webapp-design-classic', finalDesign === 'classic');
         PREF_DESIGNS.forEach((id) => {
@@ -141,6 +143,7 @@
         else if (design === 'pref-macos-v2') meta.content = '#121214';
         else if (design === 'pref-glass-stealth') meta.content = '#09090b';
         else if (design === 'aurum') meta.content = '#0c0c0e';
+        else if (design === 'native') meta.content = '#000000';
         else if (design === 'vault') meta.content = '#0b0f1a';
         else if (design === 'classic') meta.content = '#0c0c0e';
         else meta.content = '#0a0a0a';
@@ -224,6 +227,7 @@
         window.WebAppPrefMacosV2?.destroy?.();
         window.WebAppPrefGlassStealth?.destroy?.();
         window.WebAppAurum?.destroy?.();
+        window.WebAppNative?.destroy?.();
         window.WebAppVault?.destroy?.();
         window.WebAppPrism?.destroy?.();
         unwrapDesktopHomeGrid();
@@ -375,6 +379,7 @@
         if (design === 'pref-macos-v2') window.WebAppPrefMacosV2?.init?.();
         if (design === 'pref-glass-stealth') window.WebAppPrefGlassStealth?.init?.();
         if (design === 'aurum') window.WebAppAurum?.init?.();
+        if (design === 'native') window.WebAppNative?.init?.();
         if (design === 'vault') window.WebAppVault?.init?.();
         if (design === 'classic') window.WebAppPrism?.init?.();
     }
@@ -559,13 +564,14 @@
     function syncNav(pageId) {
         const id = pageId || getCurrentPageId();
         document.querySelectorAll(
-            '#webapp-ios-tabbar [data-page-id], #webapp-desktop-sidebar [data-page-id], #webapp-vault-sidebar [data-page-id], #webapp-stealth-tabbar [data-page-id], #webapp-stealth-glass-topnav [data-page-id], #webapp-glass-hub-topnav [data-page-id], #webapp-nova-tabbar [data-page-id], #webapp-aurum-tabbar [data-page-id], #webapp-ledger-nav [data-page-id], #webapp-aqua-dock [data-page-id], #webapp-stage-rail [data-page-id], #webapp-void-orbit [data-page-id]'
+            '#webapp-ios-tabbar [data-page-id], #webapp-native-tabbar [data-page-id], #webapp-desktop-sidebar [data-page-id], #webapp-vault-sidebar [data-page-id], #webapp-stealth-tabbar [data-page-id], #webapp-stealth-glass-topnav [data-page-id], #webapp-glass-hub-topnav [data-page-id], #webapp-nova-tabbar [data-page-id], #webapp-aurum-tabbar [data-page-id], #webapp-ledger-nav [data-page-id], #webapp-aqua-dock [data-page-id], #webapp-stage-rail [data-page-id], #webapp-void-orbit [data-page-id]'
         ).forEach((btn) => {
             btn.classList.toggle('is-active', btn.dataset.pageId === id);
         });
         window.WebAppGlassHub?.syncNav?.(id);
         window.WebAppNova?.syncNav?.(id);
         window.WebAppAurum?.syncNav?.(id);
+        window.WebAppNative?.syncNav?.(id);
         window.WebAppVault?.syncNav?.(id);
         window.WebAppPrism?.syncNav?.(id);
         window.WebAppPrefClassic?.syncNav?.(id);
@@ -721,9 +727,11 @@
             syncNav(pageId);
             if (pageId === 'profile-page') applyProfileAvatar();
             window.WebAppVault?.syncHeaderAvatar?.();
+            window.WebAppNative?.syncTabAvatar?.();
             if (pageId === 'main-page') {
                 window.WebAppPrism?.refresh?.();
                 window.WebAppAurum?.refresh?.();
+                window.WebAppNative?.refresh?.();
                 window.WebAppVault?.refresh?.();
                 window.WebAppGlassHub?.refresh?.();
                 window.WebAppNova?.refresh?.();
@@ -763,6 +771,7 @@
             wrap.classList.remove('has-photo');
             syncIosTabAvatar();
             window.WebAppVault?.syncHeaderAvatar?.();
+            window.WebAppNative?.syncTabAvatar?.();
             return;
         }
 
@@ -772,6 +781,7 @@
             wrap.classList.add('has-photo');
             syncIosTabAvatar();
             window.WebAppVault?.syncHeaderAvatar?.();
+            window.WebAppNative?.syncTabAvatar?.();
         };
         img.onerror = () => {
             img.classList.add('hidden');
@@ -779,6 +789,7 @@
             wrap.classList.remove('has-photo');
             syncIosTabAvatar();
             window.WebAppVault?.syncHeaderAvatar?.();
+            window.WebAppNative?.syncTabAvatar?.();
         };
         img.src = url;
     }
