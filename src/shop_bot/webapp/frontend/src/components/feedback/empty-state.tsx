@@ -18,7 +18,7 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center px-8 py-16 text-center">
-      <div className="mb-5 flex h-24 w-24 items-center justify-center rounded-[1.35rem] premium-icon-orb">
+      <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-[14px] studio-hub__icon">
         <Icon className="h-10 w-10" />
       </div>
       <h3 className="text-xl font-bold tracking-tight">{title}</h3>

@@ -359,6 +359,159 @@
     @apply mx-auto mt-3 h-[5px] w-9 shrink-0 rounded-full;
     background: hsl(var(--muted) / 0.35);
   }
+
+  /* ── Studio (Content panel tokens) ── */
+  .studio-hub {
+    @apply rounded-[14px] border p-[0.85rem_1rem];
+    border-color: hsl(var(--border) / 0.55);
+    background: linear-gradient(
+      145deg,
+      hsl(var(--secondary) / 0.32) 0%,
+      hsl(var(--secondary) / 0.5) 100%
+    );
+  }
+
+  .studio-hub__main {
+    @apply flex flex-col gap-3;
+  }
+
+  .studio-hub__row {
+    @apply flex items-center gap-[0.65rem];
+  }
+
+  .studio-hub__icon {
+    @apply flex h-[2.35rem] w-[2.35rem] shrink-0 items-center justify-center rounded-[11px];
+    background: hsl(var(--primary) / 0.14);
+    color: hsl(var(--primary));
+  }
+
+  .studio-hub__icon--tg {
+    background: rgba(42, 171, 238, 0.12);
+    color: #2aabee;
+  }
+
+  .studio-hub__title {
+    @apply text-base font-bold tracking-tight text-foreground;
+    letter-spacing: -0.02em;
+  }
+
+  .studio-hub__desc {
+    @apply mt-0.5 text-[0.6875rem] text-muted-foreground;
+  }
+
+  .studio-hub__footer {
+    @apply flex flex-wrap items-center justify-between gap-2;
+  }
+
+  .studio-hub__stats {
+    @apply flex flex-wrap gap-[0.4rem];
+  }
+
+  .studio-hub__actions {
+    @apply flex flex-wrap gap-[0.35rem];
+  }
+
+  .studio-stat {
+    @apply inline-flex items-center gap-[0.28rem] rounded-full border px-[0.55rem] py-[0.28rem] text-[0.625rem] font-semibold text-muted-foreground;
+    border-color: hsl(var(--border) / 0.55);
+    background: hsl(var(--secondary) / 0.35);
+  }
+
+  .studio-stat--ok {
+    border-color: rgba(48, 209, 88, 0.35);
+    color: #30d158;
+    background: rgba(48, 209, 88, 0.14);
+  }
+
+  .studio-stat--warn {
+    border-color: rgba(255, 159, 10, 0.35);
+    color: #ff9f0a;
+    background: rgba(255, 159, 10, 0.14);
+  }
+
+  .studio-chip-row {
+    @apply flex gap-[0.35rem] overflow-x-auto pb-0.5;
+  }
+
+  .studio-chip {
+    @apply inline-flex shrink-0 items-center gap-[0.3rem] rounded-full border px-[0.65rem] py-[0.38rem] text-[0.6875rem] font-semibold text-muted-foreground transition-colors;
+    border-color: hsl(var(--border) / 0.55);
+    background: hsl(var(--secondary) / 0.35);
+  }
+
+  .studio-chip--active {
+    border-color: hsl(var(--primary) / 0.45);
+    background: hsl(var(--primary) / 0.14);
+    color: hsl(var(--primary));
+  }
+
+  .studio-board {
+    @apply rounded-[14px] border p-3;
+    border-color: hsl(var(--border) / 0.55);
+    background: hsl(var(--secondary) / 0.22);
+  }
+
+  .studio-board__toolbar {
+    @apply mb-2.5 flex flex-col gap-2;
+  }
+
+  .studio-card {
+    @apply rounded-[14px] border p-[0.85rem_1rem];
+    border-color: hsl(var(--border) / 0.55);
+    background: hsl(var(--secondary) / 0.22);
+  }
+
+  .studio-card + .studio-card {
+    @apply mt-2.5;
+  }
+
+  .studio-card__head {
+    @apply mb-2.5 flex items-start justify-between gap-2;
+  }
+
+  .studio-card__title {
+    @apply text-[0.8125rem] font-bold text-foreground;
+  }
+
+  .studio-card__desc {
+    @apply mt-0.5 text-[0.625rem] text-muted-foreground;
+  }
+
+  .studio-label {
+    @apply text-[0.625rem] font-bold uppercase tracking-[0.04em] text-muted-foreground;
+  }
+
+  .studio-overview-grid {
+    @apply grid grid-cols-2 gap-[0.55rem];
+  }
+
+  .studio-overview-card {
+    @apply flex flex-col items-start gap-1 rounded-xl border p-[0.75rem_0.85rem] text-left transition-all active:scale-[0.98];
+    border-color: hsl(var(--border) / 0.55);
+    background: hsl(var(--secondary) / 0.42);
+  }
+
+  .studio-overview-card:active {
+    border-color: hsl(var(--primary) / 0.35);
+  }
+
+  .studio-overview-card__icon {
+    color: hsl(var(--primary));
+  }
+
+  .studio-overview-card__title {
+    @apply text-xs font-bold text-foreground;
+  }
+
+  .studio-overview-card__meta {
+    @apply text-[0.625rem] text-muted-foreground;
+  }
+
+  .studio-icon-slot {
+    @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px];
+    background: hsl(var(--primary) / 0.14);
+    color: hsl(var(--primary));
+  }
 }
 
 @layer utilities {

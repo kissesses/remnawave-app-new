@@ -1,9 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Settings, Users, Copy, ChevronRight, Shield } from "lucide-react";
+import { Settings, Users, Copy, ChevronRight, Shield, User } from "lucide-react";
 import { toast } from "sonner";
 import { Header } from "@/components/layout/header";
 import { SectionHeader } from "@/components/premium/section-header";
+import { StudioHub, StudioStat } from "@/components/studio/studio-hub";
+import { StudioBoard } from "@/components/studio/studio-board";
 import { SubscriptionRing } from "@/components/premium/subscription-ring";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -51,38 +53,35 @@ export function ProfilePage() {
         {isLoading && !status ? (
           <PageSkeleton variant="profile" />
         ) : (
-        <div className="space-y-5 p-4">
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="premium-hero"
-          >
-            <div className="relative z-10 flex items-center gap-4">
-              {isLoading ? (
-                <Skeleton className="h-16 w-16 rounded-2xl" />
-              ) : (
-                <Avatar className="h-16 w-16 rounded-2xl border-2 border-primary/30 shadow-lg">
-                  <AvatarImage src={avatarUrl} alt="" />
-                  <AvatarFallback className="rounded-2xl text-lg">{initials}</AvatarFallback>
-                </Avatar>
-              )}
-              <div className="min-w-0 flex-1">
-                <h2 className="text-lg font-bold truncate">
-                  {displayName ?? `ID ${userId}`}
-                </h2>
-                <p className="text-sm text-muted-foreground mt-0.5">
-                  Баланс{" "}
-                  <span className="text-foreground font-semibold">
-                    {formatMoney(status?.balance ?? 0)}
-                  </span>
-                </p>
-                {config?.referrals?.enabled && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {config.referrals.count} рефералов · {formatMoney(config.referrals.earned)}
-                  </p>
+        <div className="space-y-4 p-4">
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+            <StudioHub
+              icon={User}
+              title={displayName ?? `ID ${userId}`}
+              description={`Баланс ${formatMoney(status?.balance ?? 0)}`}
+              stats={
+                config?.referrals?.enabled ? (
+                  <>
+                    <StudioStat>{config.referrals.count} рефералов</StudioStat>
+                    <StudioStat variant="ok">{formatMoney(config.referrals.earned)}</StudioStat>
+                  </>
+                ) : undefined
+              }
+            >
+              <div className="flex items-center gap-3">
+                {isLoading ? (
+                  <Skeleton className="h-14 w-14 rounded-[11px]" />
+                ) : (
+                  <Avatar className="h-14 w-14 rounded-[11px] border border-border/50">
+                    <AvatarImage src={avatarUrl} alt="" />
+                    <AvatarFallback className="rounded-[11px] text-base">{initials}</AvatarFallback>
+                  </Avatar>
                 )}
+                <p className="text-xs text-muted-foreground">
+                  Telegram ID <span className="text-foreground font-medium">{userId}</span>
+                </p>
               </div>
-            </div>
+            </StudioHub>
           </motion.div>
 
           <div>
@@ -94,56 +93,56 @@ export function ProfilePage() {
                 </span>
               }
             />
-            {(status?.keys?.length ?? 0) === 0 ? (
-              <div className="premium-glass p-6 text-center text-sm text-muted-foreground">
-                Нет активных ключей
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {status?.keys?.map((key, i) => {
-                  const percent = parseInt(key.percent_str.replace("%", ""), 10) || 0;
-                  return (
-                    <motion.button
-                      key={key.key_id}
-                      type="button"
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.05 }}
-                      whileTap={{ scale: 0.99 }}
-                      className="premium-glass flex w-full items-center gap-3 p-4 text-left"
-                      onClick={() => {
-                        haptic("selection");
-                        navigate(`/keys/${key.key_id}`);
-                      }}
-                    >
-                      <SubscriptionRing percent={percent} size={56} />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <Shield className="h-3.5 w-3.5 text-primary shrink-0" />
-                          <span className="font-semibold truncate">
-                            {key.name || key.host_name}
-                          </span>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {key.expire_date_str} · {key.days_left} дн.
-                        </p>
-                        {key.traffic_info && (
-                          <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                            {key.traffic_info}
+            <StudioBoard>
+              {(status?.keys?.length ?? 0) === 0 ? (
+                <p className="py-4 text-center text-sm text-muted-foreground">Нет активных ключей</p>
+              ) : (
+                <div className="space-y-2">
+                  {status?.keys?.map((key, i) => {
+                    const percent = parseInt(key.percent_str.replace("%", ""), 10) || 0;
+                    return (
+                      <motion.button
+                        key={key.key_id}
+                        type="button"
+                        initial={{ opacity: 0, x: -8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.05 }}
+                        whileTap={{ scale: 0.99 }}
+                        className="studio-card flex w-full items-center gap-3 text-left !p-3"
+                        onClick={() => {
+                          haptic("selection");
+                          navigate(`/keys/${key.key_id}`);
+                        }}
+                      >
+                        <SubscriptionRing percent={percent} size={56} />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <Shield className="h-3.5 w-3.5 text-primary shrink-0" />
+                            <span className="font-semibold truncate">
+                              {key.name || key.host_name}
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {key.expire_date_str} · {key.days_left} дн.
                           </p>
-                        )}
-                      </div>
-                      <div className="flex flex-col items-end gap-1 shrink-0">
-                        <Badge variant={key.days_left > 0 ? "success" : "warning"}>
-                          {key.status_text}
-                        </Badge>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                    </motion.button>
-                  );
-                })}
-              </div>
-            )}
+                          {key.traffic_info && (
+                            <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                              {key.traffic_info}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex flex-col items-end gap-1 shrink-0">
+                          <Badge variant={key.days_left > 0 ? "success" : "warning"}>
+                            {key.status_text}
+                          </Badge>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              )}
+            </StudioBoard>
           </div>
 
           {config?.referrals?.enabled && (

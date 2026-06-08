@@ -30,7 +30,7 @@ export function ListCell({
       className={cn("tg-cell w-full text-left", onClick && "cursor-pointer", className)}
     >
       {Icon && (
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
+        <div className="studio-icon-slot">
           <Icon className={cn("h-5 w-5", destructive ? "text-destructive" : "text-primary")} />
         </div>
       )}
@@ -48,7 +48,7 @@ export function ListCell({
 
 export function ListGroup({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("overflow-hidden rounded-2xl premium-glass", className)}>
+    <div className={cn("studio-board overflow-hidden p-0", className)}>
       {children}
     </div>
   );

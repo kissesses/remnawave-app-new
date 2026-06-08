@@ -1,9 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { useSpring, useMotionValueEvent } from "framer-motion";
 import { useEffect, useState } from "react";
-import { ArrowUpRight, History, TrendingUp } from "lucide-react";
+import { ArrowUpRight, History, TrendingUp, Wallet } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { SectionHeader } from "@/components/premium/section-header";
+import { StudioHub, StudioStat } from "@/components/studio/studio-hub";
+import { StudioBoard } from "@/components/studio/studio-board";
 import { Button } from "@/components/ui/button";
 import { PageSkeleton } from "@/components/feedback/page-skeleton";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -59,67 +61,55 @@ export function WalletPage() {
         {loading ? (
           <PageSkeleton variant="wallet" />
         ) : (
-        <div className="space-y-5 p-4">
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="premium-hero text-center"
-          >
-            <div className="premium-hero-shine" aria-hidden />
-            <p className="relative z-10 text-[10px] font-bold uppercase tracking-[0.14em] text-primary/70 mb-1">
-              Баланс
-            </p>
-            <div className="relative z-10">
-              {statusLoading ? (
-                <Skeleton className="mx-auto h-10 w-40" />
-              ) : (
-                <AnimatedBalance value={balance} />
-              )}
-            </div>
-            {config?.topup?.enabled && (
-              <Button
-                variant="tg"
-                className="relative z-10 mt-4 w-full max-w-xs rounded-2xl"
-                onClick={() => setTopupOpen(true)}
-              >
-                <ArrowUpRight className="h-4 w-4 mr-2" />
-                Пополнить
-              </Button>
-            )}
+        <div className="space-y-4 p-4">
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+            <StudioHub
+              icon={Wallet}
+              title="Кошелёк"
+              description="Баланс и операции"
+              stats={
+                <>
+                  <StudioStat>Пополнено {formatMoney(topped)}</StudioStat>
+                  <StudioStat>Потрачено {formatMoney(spent)}</StudioStat>
+                  {referral > 0 && <StudioStat variant="ok">Реф. {formatMoney(referral)}</StudioStat>}
+                </>
+              }
+            >
+              <div className="text-center py-1">
+                <p className="studio-label mb-1">Текущий баланс</p>
+                {statusLoading ? (
+                  <Skeleton className="mx-auto h-10 w-40" />
+                ) : (
+                  <AnimatedBalance value={balance} />
+                )}
+                {config?.topup?.enabled && (
+                  <Button
+                    variant="tg"
+                    className="mt-4 w-full max-w-xs rounded-xl"
+                    onClick={() => setTopupOpen(true)}
+                  >
+                    <ArrowUpRight className="h-4 w-4 mr-2" />
+                    Пополнить
+                  </Button>
+                )}
+              </div>
+            </StudioHub>
           </motion.div>
 
-          <div className="premium-glass p-4">
-            <SectionHeader
-              title="Расходы за 30 дней"
-              action={<TrendingUp className="h-4 w-4 text-primary" />}
-            />
+          <StudioBoard
+            toolbar={
+              <SectionHeader
+                title="Расходы за 30 дней"
+                action={<TrendingUp className="h-4 w-4 text-primary" />}
+              />
+            }
+          >
             {histLoading ? (
               <Skeleton className="h-40 w-full rounded-xl" />
             ) : (
               <BalanceChart transactions={allTx} />
             )}
-          </div>
-
-          <div className="grid grid-cols-3 gap-2">
-            {[
-              { label: "Пополнено", value: topped },
-              { label: "Потрачено", value: spent },
-              { label: "Рефералы", value: referral },
-            ].map((stat, i) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.05 }}
-                className="premium-stat-pill"
-              >
-                <div className="text-[10px] text-muted-foreground uppercase tracking-wide">
-                  {stat.label}
-                </div>
-                <div className="mt-1 text-sm font-bold">{formatMoney(stat.value)}</div>
-              </motion.div>
-            ))}
-          </div>
+          </StudioBoard>
 
           <ListGroup>
             <ListCell

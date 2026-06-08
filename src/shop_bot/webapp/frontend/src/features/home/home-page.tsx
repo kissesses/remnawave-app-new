@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Activity, ChevronRight } from "lucide-react";
+import { Activity, ChevronRight, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { Header } from "@/components/layout/header";
 import { SectionHeader } from "@/components/premium/section-header";
 import { SubscriptionRing } from "@/components/premium/subscription-ring";
-import { Badge } from "@/components/ui/badge";
+import { StudioHub, StudioStat } from "@/components/studio/studio-hub";
+import { StudioBoard } from "@/components/studio/studio-board";
+import { StudioChip, StudioChipRow } from "@/components/studio/studio-chip";
+import { StudioOverviewCard, StudioOverviewGrid } from "@/components/studio/studio-overview-card";
 import { PageSkeleton } from "@/components/feedback/page-skeleton";
 import { PullRefreshIndicator } from "@/components/feedback/pull-refresh";
 import { useCabinetBootstrap, useRefreshCabinet, usePaymentHistory } from "@/hooks/use-cabinet";
@@ -86,124 +89,114 @@ export function HomePage() {
         {isLoading ? (
           <PageSkeleton variant="hero" />
         ) : (
-        <div className="space-y-5 p-4">
-            <motion.button
-              type="button"
+        <div className="space-y-4 p-4">
+            <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              whileTap={{ scale: 0.99 }}
-              className="premium-hero w-full text-left"
-              onClick={() => key && navigate(`/keys/${key.key_id}`)}
-              disabled={!key}
             >
-              <div className="premium-hero-shine" aria-hidden />
-              <div className="relative z-10">
-                {displayName && !branding.welcome_text?.includes("{name}") && (
-                  <p className="text-xs text-muted-foreground mb-2">
-                    Привет, <span className="text-foreground font-medium">{displayName}</span>
-                  </p>
-                )}
-                <div className="flex items-center gap-4">
-                  <SubscriptionRing percent={percent} />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-primary/70">
-                      Подписка VPN
-                    </p>
-                    <h2 className="mt-0.5 text-xl font-bold truncate tracking-tight">
-                      {key ? key.host_name || key.name : "Нет подписки"}
-                    </h2>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {key
-                        ? key.days_left > 0
-                          ? `Активна · ${key.days_left} дн.`
-                          : "Истекла — продлите"
-                        : heroSub || "Оформите доступ"}
-                    </p>
-                    {key && (
-                      <Badge variant={key.days_left > 0 ? "success" : "destructive"} className="mt-2">
+              <StudioHub
+                icon={Shield}
+                title={key ? key.host_name || key.name : "Нет подписки"}
+                description={
+                  key
+                    ? key.days_left > 0
+                      ? `Активна · ${key.days_left} дн.`
+                      : "Истекла — продлите"
+                    : heroSub || "Оформите доступ к VPN"
+                }
+                onClick={() => key && navigate(`/keys/${key.key_id}`)}
+                stats={
+                  key ? (
+                    <>
+                      <StudioStat variant={key.days_left > 0 ? "ok" : "warn"}>
                         {key.status_text}
-                      </Badge>
+                      </StudioStat>
+                      {key.expire_date_str && (
+                        <StudioStat>до {formatDate(key.expire_date_str)}</StudioStat>
+                      )}
+                      {key.traffic_info && <StudioStat>{key.traffic_info}</StudioStat>}
+                    </>
+                  ) : undefined
+                }
+              >
+                <div className="flex items-center gap-4">
+                  <SubscriptionRing percent={percent} size={88} />
+                  <div className="min-w-0 flex-1">
+                    <p className="studio-label">Подписка VPN</p>
+                    {displayName && !branding.welcome_text?.includes("{name}") && (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Привет, <span className="text-foreground font-medium">{displayName}</span>
+                      </p>
                     )}
                   </div>
                   {key && <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />}
                 </div>
-                {key?.expire_date_str && (
-                  <p className="mt-3 text-xs text-muted-foreground">
-                    До {formatDate(key.expire_date_str)}
-                    {key.traffic_info ? ` · ${key.traffic_info}` : ""}
-                  </p>
-                )}
-              </div>
-            </motion.button>
+              </StudioHub>
+            </motion.div>
 
           {keys.length > 1 && (
-            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
+            <StudioChipRow>
               {keys.map((k) => (
-                <button
+                <StudioChip
                   key={k.key_id}
-                  type="button"
+                  active={k.key_id === key?.key_id}
                   onClick={() => navigate(`/keys/${k.key_id}`)}
-                  className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold border transition-all active:scale-95 ${
-                    k.key_id === key?.key_id
-                      ? "border-primary/40 bg-primary/10 text-primary"
-                      : "border-border/50 bg-secondary/40 text-muted-foreground"
-                  }`}
                 >
                   {k.name || k.host_name}
-                </button>
+                </StudioChip>
               ))}
-            </div>
+            </StudioChipRow>
           )}
 
           <div>
             <SectionHeader title="Быстрые действия" />
-            <div className="grid grid-cols-2 gap-2.5">
+            <StudioOverviewGrid>
               {quickActions.map((action, i) => (
-                <motion.button
+                <motion.div
                   key={action.id}
-                  type="button"
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: i * 0.04 }}
-                  whileTap={{ scale: 0.97 }}
-                  className="premium-action-tile"
-                  onClick={() => {
-                    haptic("selection");
-                    action.onClick();
-                  }}
                 >
-                  <div className="premium-icon-orb">
-                    <action.icon className="h-5 w-5" />
-                  </div>
-                  <span className="text-sm font-semibold">{action.label}</span>
-                </motion.button>
+                  <StudioOverviewCard
+                    icon={action.icon}
+                    title={action.label}
+                    onClick={() => {
+                      haptic("selection");
+                      action.onClick();
+                    }}
+                  />
+                </motion.div>
               ))}
-            </div>
+            </StudioOverviewGrid>
           </div>
 
-          <div className="premium-glass overflow-hidden">
-            <div className="flex items-center justify-between px-4 pt-4 pb-2">
-              <div className="flex items-center gap-2 font-semibold text-sm">
-                <Activity className="h-4 w-4 text-primary" />
-                Активность
+          <StudioBoard
+            toolbar={
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                  <Activity className="h-4 w-4 text-primary" />
+                  Активность
+                </div>
+                <button
+                  type="button"
+                  className="text-xs font-semibold text-primary"
+                  onClick={() => navigate("/history")}
+                >
+                  Все →
+                </button>
               </div>
-              <button
-                type="button"
-                className="text-xs text-primary font-medium"
-                onClick={() => navigate("/history")}
-              >
-                Все →
-              </button>
-            </div>
-            <div className="px-4 pb-4 space-y-3">
-              {recent.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-2">Пока нет операций</p>
-              ) : (
-                recent.map((item, i) => (
+            }
+          >
+            {recent.length === 0 ? (
+              <p className="py-2 text-sm text-muted-foreground">Пока нет операций</p>
+            ) : (
+              <div className="space-y-0">
+                {recent.map((item, i) => (
                   <button
                     key={String(item.id)}
                     type="button"
-                    className={`flex w-full items-center justify-between text-sm text-left py-2 active:opacity-70 ${
+                    className={`flex w-full items-center justify-between py-2.5 text-left text-sm active:opacity-70 ${
                       i > 0 ? "border-t border-border/30" : ""
                     }`}
                     onClick={() => navigate("/history")}
@@ -214,16 +207,16 @@ export function HomePage() {
                     </div>
                     <span
                       className={
-                        item.success ? "text-emerald-500 font-semibold" : "text-muted-foreground"
+                        item.success ? "font-semibold text-emerald-500" : "text-muted-foreground"
                       }
                     >
                       {formatMoney(item.amount)}
                     </span>
                   </button>
-                ))
-              )}
-            </div>
-          </div>
+                ))}
+              </div>
+            )}
+          </StudioBoard>
         </div>
         )}
       </div>

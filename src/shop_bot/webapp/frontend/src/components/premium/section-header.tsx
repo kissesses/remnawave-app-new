@@ -11,7 +11,7 @@ export function SectionHeader({
 }) {
   return (
     <div className={cn("mb-2 flex items-center justify-between", className)}>
-      <h2 className="premium-section-title">{title}</h2>
+      <h2 className="studio-label">{title}</h2>
       {action}
     </div>
   );
