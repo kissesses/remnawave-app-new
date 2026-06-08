@@ -2,6 +2,7 @@
     'use strict';
 
     var THEME_CSS = {
+        vault: '/static/css/webapp-vault.css',
         classic: '/static/css/webapp-prism.css',
         ios: '/static/css/webapp-ios.css',
         desktop: '/static/css/webapp-desktop.css',
@@ -17,6 +18,7 @@
     };
 
     var THEME_JS = {
+        vault: '/static/js/webapp-vault.js',
         classic: '/static/js/webapp-prism.js',
         'glass-hub': '/static/js/webapp-glass-hub.js',
         nova: '/static/js/webapp-nova.js',
@@ -36,7 +38,7 @@
     } catch (e) { /* ignore */ }
 
     function activeDesign() {
-        return document.documentElement.dataset.webappDesign || 'classic';
+        return document.documentElement.dataset.webappDesign || 'vault';
     }
 
     function ensureStylesheet(href) {

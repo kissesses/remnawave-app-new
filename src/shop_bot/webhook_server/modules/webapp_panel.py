@@ -270,9 +270,9 @@ def build_webapp_meta(
     webapp = dict(webapp or {})
     settings = settings or {}
     enabled_designs = parse_enabled_designs(webapp.get("webapp_enabled_designs"))
-    default_design = (webapp.get("webapp_default_design") or "classic").strip()
+    default_design = (webapp.get("webapp_default_design") or "vault").strip()
     if default_design not in WEBAPP_DESIGN_IDS:
-        default_design = enabled_designs[0] if enabled_designs else "classic"
+        default_design = enabled_designs[0] if enabled_designs else "vault"
     health = check_health(webapp)
     enabled = _truthy(webapp.get("webapp_enable"))
     domain = normalize_domain(webapp.get("webapp_domen"))

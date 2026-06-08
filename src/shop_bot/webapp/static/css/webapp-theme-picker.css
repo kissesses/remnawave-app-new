@@ -298,6 +298,7 @@ html[data-webapp-design="glass-hub"] #webapp-theme-fab {
     bottom: calc(20px + env(safe-area-inset-bottom));
 }
 
-html[data-webapp-design="desktop"] #webapp-theme-fab {
+html[data-webapp-design="desktop"] #webapp-theme-fab,
+html[data-webapp-design="vault"] #webapp-theme-fab {
     bottom: calc(14px + env(safe-area-inset-bottom));
 }

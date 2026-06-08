@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 
 WEBAPP_DESIGN_IDS = (
+    "vault",
     "classic",
     "ios",
     "desktop",
@@ -20,6 +21,14 @@ WEBAPP_DESIGN_IDS = (
 )
 
 WEBAPP_DESIGNS: list[dict[str, str]] = [
+    {
+        "id": "vault",
+        "label": "Vault",
+        "desc": "Cybersecurity SaaS dashboard",
+        "icon": "security",
+        "accent": "#3b82f6",
+        "group": "premium",
+    },
     {
         "id": "classic",
         "label": "Prism",
@@ -119,6 +128,7 @@ WEBAPP_SHARED_CSS = (
 )
 
 WEBAPP_THEME_CSS: dict[str, str] = {
+    "vault": "webapp-vault.css",
     "classic": "webapp-prism.css",
     "ios": "webapp-ios.css",
     "desktop": "webapp-desktop.css",
@@ -134,6 +144,7 @@ WEBAPP_THEME_CSS: dict[str, str] = {
 }
 
 WEBAPP_THEME_JS: dict[str, str] = {
+    "vault": "webapp-vault.js",
     "classic": "webapp-prism.js",
     "glass-hub": "webapp-glass-hub.js",
     "nova": "webapp-nova.js",
@@ -155,15 +166,15 @@ def parse_enabled_designs(raw: str | None) -> list[str]:
         if design_id in WEBAPP_DESIGN_IDS and design_id not in seen:
             seen.add(design_id)
             result.append(design_id)
-    return result or ["classic"]
+    return result or ["vault"]
 
 
 def build_design_config(settings: dict | None, user_id: int | None = None) -> dict:
     settings = settings or {}
     enabled = parse_enabled_designs(settings.get("webapp_enabled_designs"))
-    default = (settings.get("webapp_default_design") or "classic").strip()
+    default = (settings.get("webapp_default_design") or "vault").strip()
     if default not in WEBAPP_DESIGN_IDS:
-        default = "classic"
+        default = "vault"
     if default not in enabled:
         default = enabled[0]
     ab_b = (settings.get("webapp_ab_design_b") or "").strip()

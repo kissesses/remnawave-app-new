@@ -601,10 +601,10 @@ def _ensure_webapp_settings_table(cursor: sqlite3.Cursor):
         if "tg_fullscreen" not in columns:
             cursor.execute("ALTER TABLE webapp_settings ADD COLUMN tg_fullscreen INTEGER DEFAULT 0")
         if "webapp_default_design" not in columns:
-            cursor.execute("ALTER TABLE webapp_settings ADD COLUMN webapp_default_design TEXT DEFAULT 'classic'")
+            cursor.execute("ALTER TABLE webapp_settings ADD COLUMN webapp_default_design TEXT DEFAULT 'vault'")
         if "webapp_enabled_designs" not in columns:
             cursor.execute(
-                "ALTER TABLE webapp_settings ADD COLUMN webapp_enabled_designs TEXT DEFAULT 'classic,ios,desktop,stealth,stealth-glass,glass-hub,nova,pref-classic,pref-macos,pref-macos-v2,pref-glass-stealth,aurum'"
+                "ALTER TABLE webapp_settings ADD COLUMN webapp_enabled_designs TEXT DEFAULT 'vault,classic,ios,desktop,stealth,stealth-glass,glass-hub,nova,pref-classic,pref-macos,pref-macos-v2,pref-glass-stealth,aurum'"
             )
         if "webapp_theme_picker" not in columns:
             cursor.execute("ALTER TABLE webapp_settings ADD COLUMN webapp_theme_picker INTEGER DEFAULT 1")
@@ -619,12 +619,12 @@ def _ensure_webapp_settings_table(cursor: sqlite3.Cursor):
 
 
 def _ensure_webapp_design_columns(cursor) -> None:
-    _ensure_table_column(cursor, "webapp_settings", "webapp_default_design", "TEXT DEFAULT 'classic'")
+    _ensure_table_column(cursor, "webapp_settings", "webapp_default_design", "TEXT DEFAULT 'vault'")
     _ensure_table_column(
         cursor,
         "webapp_settings",
         "webapp_enabled_designs",
-        "TEXT DEFAULT 'classic,ios,desktop,stealth,stealth-glass,glass-hub,nova,pref-classic,pref-macos,pref-macos-v2,pref-glass-stealth,aurum'",
+        "TEXT DEFAULT 'vault,classic,ios,desktop,stealth,stealth-glass,glass-hub,nova,pref-classic,pref-macos,pref-macos-v2,pref-glass-stealth,aurum'",
     )
     _ensure_table_column(cursor, "webapp_settings", "webapp_theme_picker", "INTEGER DEFAULT 1")
 

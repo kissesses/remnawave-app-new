@@ -53,7 +53,7 @@
     }
 
     function syncTiles() {
-        let defaultId = $('webapp_default_design')?.value || 'classic';
+        let defaultId = $('webapp_default_design')?.value || 'vault';
         document.querySelectorAll('.wapp-tile').forEach((tile) => {
             const enableCb = tile.querySelector('.wapp-tile__enable');
             const defaultRb = tile.querySelector('.wapp-tile__default');
@@ -597,7 +597,7 @@
         formData.append('domen', $('webapp_domen')?.value || '');
         formData.append('logo', $('webapp_logo')?.value || '');
         formData.append('icon', $('webapp_icon')?.value || '');
-        formData.append('default_design', $('webapp_default_design')?.value || 'classic');
+        formData.append('default_design', $('webapp_default_design')?.value || 'vault');
         formData.append('maintenance_text', $('webapp_maintenance_text')?.value || '');
         formData.append('welcome_text', $('webapp_welcome_text')?.value || '');
         formData.append('accent_color', $('webapp_accent_color')?.value || '');

@@ -33,6 +33,13 @@ html:not([data-webapp-design="nova"]) #webapp-nova-dashboard {
     display: none !important;
 }
 
+html:not([data-webapp-design="vault"]) #webapp-vault-sidebar,
+html:not([data-webapp-design="vault"]) #webapp-vault-header,
+html:not([data-webapp-design="vault"]) #webapp-vault-home,
+html:not([data-webapp-design="vault"]) #webapp-vault-backdrop {
+    display: none !important;
+}
+
 html:not([data-webapp-design="aurum"]) #webapp-aurum-tabbar,
 html:not([data-webapp-design="aurum"]) #webapp-aurum-home,
 html:not([data-webapp-design="pref-classic"]) #webapp-ledger-drawer,
