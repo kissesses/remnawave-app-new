@@ -196,6 +196,34 @@
                         </label>
                     </div>
                 </article>
+                <article class="wapp-card wapp-card--span2">
+                    <header class="wapp-card__head">
+                        <span class="wapp-card__glyph material-symbols-outlined">campaign</span>
+                        <div><h3>Акция в уведомлениях</h3><p>Сезонное promo-сообщение в кабинете WebApp</p></div>
+                    </header>
+                    <div class="wapp-card__body wapp-card__grid">
+                        <label class="wapp-field">
+                            <span>Заголовок</span>
+                            <input type="text" id="webapp_promo_alert_title" value="{{ (meta.content_overrides or {}).get('promo_alert_title', '') }}" placeholder="Летняя акция −20%" maxlength="80" />
+                        </label>
+                        <label class="wapp-field">
+                            <span>ID кампании</span>
+                            <input type="text" id="webapp_promo_alert_id" value="{{ (meta.content_overrides or {}).get('promo_alert_id', '') }}" placeholder="summer-2026" maxlength="48" />
+                        </label>
+                        <label class="wapp-field wapp-field--span2">
+                            <span>Текст уведомления</span>
+                            <input type="text" id="webapp_promo_alert_body" value="{{ (meta.content_overrides or {}).get('promo_alert_body', '') }}" placeholder="Скидка на все тарифы до конца месяца" maxlength="200" />
+                        </label>
+                        <label class="wapp-field">
+                            <span>Ссылка в кабинете</span>
+                            <input type="text" id="webapp_promo_alert_href" value="{{ (meta.content_overrides or {}).get('promo_alert_href', '') }}" placeholder="/wallet" maxlength="80" />
+                        </label>
+                        <label class="wapp-field">
+                            <span>Действует до</span>
+                            <input type="datetime-local" id="webapp_promo_alert_until" value="{{ (meta.content_overrides or {}).get('promo_alert_until', '') }}" />
+                        </label>
+                    </div>
+                </article>
                 <article class="wapp-card">
                     <header class="wapp-card__head">
                         <span class="wapp-card__glyph material-symbols-outlined">image</span>

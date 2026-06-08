@@ -5,6 +5,7 @@ import { useThemeStore } from "@/stores/theme-store";
 import { useNotifications } from "@/hooks/use-cabinet";
 import { useBranding } from "@/hooks/use-branding";
 import { useUiStore } from "@/stores/ui-store";
+import { UnreadNotificationsToast } from "@/components/feedback/unread-notifications-toast";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -48,6 +49,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <ThemeSync />
         <BrandingSync />
         <NotificationBadgeSync />
+        <UnreadNotificationsToast />
         {children}
       </ThemeProvider>
     </QueryClientProvider>

@@ -234,8 +234,18 @@
 
     function getContentOverridesJson() {
         const heroSub = ($('webapp_content_hero_sub')?.value || '').trim();
+        const promoTitle = ($('webapp_promo_alert_title')?.value || '').trim();
+        const promoBody = ($('webapp_promo_alert_body')?.value || '').trim();
+        const promoHref = ($('webapp_promo_alert_href')?.value || '').trim();
+        const promoId = ($('webapp_promo_alert_id')?.value || '').trim();
+        const promoUntil = ($('webapp_promo_alert_until')?.value || '').trim();
         const payload = {};
         if (heroSub) payload.hero_sub = heroSub;
+        if (promoTitle) payload.promo_alert_title = promoTitle;
+        if (promoBody) payload.promo_alert_body = promoBody;
+        if (promoHref) payload.promo_alert_href = promoHref;
+        if (promoId) payload.promo_alert_id = promoId;
+        if (promoUntil) payload.promo_alert_until = promoUntil;
         return JSON.stringify(payload);
     }
 

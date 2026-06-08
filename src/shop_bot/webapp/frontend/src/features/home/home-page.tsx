@@ -22,6 +22,7 @@ import { buildQuickActions } from "@/lib/quick-actions";
 import { PurchaseSheet } from "@/features/shop/purchase-sheet";
 import { RenewSheet } from "@/features/shop/renew-sheet";
 import { TrialSheet } from "@/features/shop/trial-sheet";
+import { TrialHomeCard } from "@/components/premium/trial-home-card";
 import { api, getUserId } from "@/lib/api";
 
 export function HomePage() {
@@ -133,6 +134,17 @@ export function HomePage() {
                 </div>
               </StudioHub>
             </motion.div>
+
+          {config?.modules?.trial && config?.trial?.enabled && (
+            <TrialHomeCard
+              days={config.trial.duration_days}
+              available={config.trial.available}
+              used={config.trial.used}
+              hostCount={config.trial.hosts?.length ?? 0}
+              onActivate={openTrial}
+              onBuy={() => setPurchaseOpen(true)}
+            />
+          )}
 
           {keys.length > 1 && (
             <StudioChipRow>

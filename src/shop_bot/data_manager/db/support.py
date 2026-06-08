@@ -3,6 +3,8 @@ from __future__ import annotations
 import sqlite3
 import time
 from datetime import datetime, timezone, timedelta
+
+SUPPORT_REOPEN_HOURS = 24
 import logging
 from pathlib import Path
 import json
@@ -169,15 +171,80 @@ def get_ticket_messages(ticket_id: int) -> list[dict]:
 # ===============================
 
 
+# ===== _PARSE_DB_TIMESTAMP =====
+def _parse_db_timestamp(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M:%S.%f"):
+        try:
+            return datetime.strptime(text[:26], fmt).replace(tzinfo=timezone.utc)
+        except ValueError:
+            continue
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            return parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone.utc)
+    except ValueError:
+        return None
+
+
+# ===== GET_TICKET_CLOSED_AT =====
+def get_ticket_closed_at(ticket: dict | None) -> datetime | None:
+    if not ticket or ticket.get("status") != "closed":
+        return None
+    return _parse_db_timestamp(ticket.get("closed_at") or ticket.get("updated_at"))
+
+
+# ===== CAN_REOPEN_SUPPORT_TICKET =====
+def can_reopen_support_ticket(ticket: dict | None) -> tuple[bool, str | None]:
+    if not ticket:
+        return False, "Тикет не найден"
+    if ticket.get("status") == "open":
+        return False, "Обращение уже открыто"
+    closed_at = get_ticket_closed_at(ticket)
+    if not closed_at:
+        return True, None
+    deadline = closed_at + timedelta(hours=SUPPORT_REOPEN_HOURS)
+    if datetime.now(timezone.utc) > deadline:
+        return (
+            False,
+            "Переоткрыть обращение можно только в течение 24 часов после закрытия. Создайте новое.",
+        )
+    return True, None
+
+
+# ===== GET_TICKET_REOPEN_DEADLINE =====
+def get_ticket_reopen_deadline(ticket: dict | None) -> str | None:
+    closed_at = get_ticket_closed_at(ticket)
+    if not closed_at:
+        return None
+    return (closed_at + timedelta(hours=SUPPORT_REOPEN_HOURS)).strftime("%Y-%m-%d %H:%M:%S")
+
+
 # ===== SET_TICKET_STATUS =====
 def set_ticket_status(ticket_id: int, status: str) -> bool:
-    cursor = _exec(
-        "UPDATE support_tickets SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE ticket_id = ?",
-        (status, ticket_id),
-        f"Не удалось установить статус '{status}' для тикета {ticket_id}"
-    )
-    return cursor is not None and cursor.rowcount > 0
-
+    if status == "closed":
+        cursor = _exec(
+            "UPDATE support_tickets SET status = ?, closed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE ticket_id = ?",
+            (status, ticket_id),
+            f"Не удалось установить статус '{status}' для тикета {ticket_id}",
+        )
+    elif status == "open":
+        cursor = _exec(
+            "UPDATE support_tickets SET status = ?, closed_at = NULL, updated_at = CURRENT_TIMESTAMP WHERE ticket_id = ?",
+            (status, ticket_id),
+            f"Не удалось установить статус '{status}' для тикета {ticket_id}",
+        )
+    else:
+        cursor = _exec(
+            "UPDATE support_tickets SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE ticket_id = ?",
+            (status, ticket_id),
+            f"Не удалось установить статус '{status}' для тикета {ticket_id}",
+        )
     return cursor is not None and cursor.rowcount > 0
 
 # ===========================

@@ -374,6 +374,33 @@
     @apply flex min-h-[2.5rem] w-full items-center justify-center text-xs font-semibold leading-snug text-foreground;
   }
 
+  .profile-hero {
+    position: relative;
+  }
+
+  .profile-hero__glow {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      ellipse 80% 60% at 100% 0%,
+      rgba(var(--lb-blue), 0.22),
+      transparent 70%
+    );
+    pointer-events: none;
+  }
+
+  .profile-stat-pill {
+    @apply rounded-xl border border-white/10 bg-black/20 px-2 py-2.5 text-center;
+  }
+
+  .profile-stat-pill__value {
+    @apply text-sm font-bold tabular-nums text-foreground;
+  }
+
+  .profile-stat-pill__label {
+    @apply mt-0.5 text-[10px] font-medium text-muted-foreground;
+  }
+
   .studio-overview-card__meta {
     @apply text-[0.625rem] text-muted-foreground;
   }

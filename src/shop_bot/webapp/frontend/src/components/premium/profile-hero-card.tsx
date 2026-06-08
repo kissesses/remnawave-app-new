@@ -1,0 +1,93 @@
+import { motion } from "framer-motion";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { formatMoney } from "@/lib/utils";
+
+interface ProfileHeroCardProps {
+  displayName: string;
+  username?: string;
+  userId: number;
+  avatarUrl?: string;
+  initials: string;
+  balance: number;
+  activeKeys: number;
+  totalKeys: number;
+  referralCount?: number;
+  trialUsed?: boolean;
+  trialAvailable?: boolean;
+}
+
+export function ProfileHeroCard({
+  displayName,
+  username,
+  userId,
+  avatarUrl,
+  initials,
+  balance,
+  activeKeys,
+  totalKeys,
+  referralCount = 0,
+  trialUsed,
+  trialAvailable,
+}: ProfileHeroCardProps) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="profile-hero surface-elevated overflow-hidden rounded-xl"
+    >
+      <div className="profile-hero__glow" />
+      <div className="relative p-4">
+        <div className="flex items-start gap-3">
+          <Avatar className="h-16 w-16 shrink-0 rounded-2xl border-2 border-white/15 shadow-lg">
+            <AvatarImage src={avatarUrl} alt="" />
+            <AvatarFallback className="rounded-2xl text-lg font-bold">{initials}</AvatarFallback>
+          </Avatar>
+          <div className="min-w-0 flex-1 pt-0.5">
+            <h2 className="truncate text-lg font-bold tracking-tight">{displayName}</h2>
+            {username && (
+              <p className="mt-0.5 truncate text-sm text-primary">@{username}</p>
+            )}
+            <p className="mt-1 text-xs text-muted-foreground">
+              ID <span className="font-medium text-foreground">{userId}</span>
+            </p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {trialAvailable && (
+                <Badge variant="success" className="text-[10px]">
+                  Триал доступен
+                </Badge>
+              )}
+              {trialUsed && !trialAvailable && (
+                <Badge variant="secondary" className="text-[10px]">
+                  Триал использован
+                </Badge>
+              )}
+              {activeKeys > 0 && (
+                <Badge variant="success" className="text-[10px]">
+                  {activeKeys} активн.
+                </Badge>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          <div className="profile-stat-pill">
+            <p className="profile-stat-pill__value">{formatMoney(balance)}</p>
+            <p className="profile-stat-pill__label">Баланс</p>
+          </div>
+          <div className="profile-stat-pill">
+            <p className="profile-stat-pill__value">
+              {activeKeys}/{totalKeys}
+            </p>
+            <p className="profile-stat-pill__label">Ключи</p>
+          </div>
+          <div className="profile-stat-pill">
+            <p className="profile-stat-pill__value">{referralCount}</p>
+            <p className="profile-stat-pill__label">Рефералы</p>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}

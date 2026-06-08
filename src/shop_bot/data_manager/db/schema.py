@@ -409,6 +409,7 @@ def _ensure_support_tickets_columns(cursor: sqlite3.Cursor) -> None:
     extras = {
         "forum_chat_id": "TEXT",
         "message_thread_id": "INTEGER",
+        "closed_at": "TEXT",
     }
     for column, definition in extras.items():
         _ensure_table_column(cursor, "support_tickets", column, definition)

@@ -5,7 +5,18 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse
 from starlette.middleware.gzip import GZipMiddleware
 import aiohttp
-from shop_bot.data_manager.remnawave_repository import get_setting, get_user_keys, get_msk_time, get_webapp_settings, get_user, get_referral_count, get_all_hosts, list_squads, get_plans_for_host
+from shop_bot.data_manager.remnawave_repository import (
+    get_setting,
+    get_user_keys,
+    get_msk_time,
+    get_webapp_settings,
+    get_user,
+    get_referral_count,
+    get_referrals_for_user,
+    get_all_hosts,
+    list_squads,
+    get_plans_for_host,
+)
 import os
 from datetime import datetime, timedelta, timezone
 from pydantic import BaseModel
@@ -1216,98 +1227,392 @@ def _save_user_preferences(user_id: int, patch: dict) -> dict:
     return prefs
 
 
-def _build_notifications(user_id: int) -> list[dict]:
-    notifications: list[dict] = []
-    read_raw = None
+def _notification_read_ids(user_id: int) -> set[str]:
     try:
         from shop_bot.security.kv_store import get_value
         read_raw = get_value(f"webapp:notif-read:{user_id}")
-    except Exception:
-        log_suppressed()
-    read_ids: set[str] = set()
-    if read_raw:
-        try:
+        if read_raw:
             parsed = json.loads(read_raw)
             if isinstance(parsed, list):
-                read_ids = {str(x) for x in parsed}
+                return {str(x) for x in parsed}
+    except Exception:
+        log_suppressed()
+    return set()
+
+
+def _notification_item(
+    *,
+    nid: str,
+    ntype: str,
+    category: str,
+    title: str,
+    body: str,
+    date: str,
+    read_ids: set[str],
+    severity: str = "info",
+    href: str | None = None,
+    amount: float | None = None,
+    cta_label: str | None = None,
+) -> dict:
+    item = {
+        "id": nid,
+        "type": ntype,
+        "category": category,
+        "severity": severity,
+        "title": title,
+        "body": body,
+        "date": date or datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "read": nid in read_ids,
+    }
+    if href:
+        item["href"] = href
+    if amount is not None:
+        item["amount"] = amount
+    if cta_label:
+        item["cta_label"] = cta_label
+    return item
+
+
+def _parse_notification_datetime(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%dT%H:%M:%S"):
+        try:
+            return datetime.strptime(text[:26], fmt)
+        except ValueError:
+            continue
+    try:
+        return datetime.fromisoformat(text.replace("Z", "+00:00").replace("+00:00", ""))
+    except ValueError:
+        return None
+
+
+def _is_recent_notification_date(value: str | None, *, days: int) -> bool:
+    parsed = _parse_notification_datetime(value)
+    if not parsed:
+        return False
+    return (datetime.now() - parsed).total_seconds() <= days * 86400
+
+
+def _build_promo_campaign_notifications(user_id: int, read_ids: set[str]) -> list[dict]:
+    webapp_settings = get_webapp_settings() or {}
+    overrides = parse_content_overrides(webapp_settings.get("webapp_content_overrides"))
+    title = (overrides.get("promo_alert_title") or "").strip()
+    body = (overrides.get("promo_alert_body") or "").strip()
+    if not title or not body:
+        return []
+
+    until_raw = (overrides.get("promo_alert_until") or "").strip()
+    if until_raw:
+        until_dt = _parse_notification_datetime(until_raw.replace("T", " "))
+        if until_dt and datetime.now() > until_dt:
+            return []
+
+    campaign_id = (overrides.get("promo_alert_id") or title)[:48]
+    href = (overrides.get("promo_alert_href") or "/wallet").strip() or "/wallet"
+    if not href.startswith("/"):
+        href = f"/{href}"
+
+    return [_notification_item(
+        nid=f"promo-campaign-{campaign_id}",
+        ntype="promo_campaign",
+        category="promo",
+        title=title,
+        body=body,
+        date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        read_ids=read_ids,
+        severity="info",
+        href=href,
+        cta_label="Подробнее",
+    )]
+
+
+def _transaction_notification_type(action: str, payment_method: str, meta: dict) -> tuple[str, str, str, str]:
+    action_norm = (action or "").strip().lower()
+    method_norm = (payment_method or "").strip().lower()
+    promo_code = (meta.get("promo_code") or "").strip()
+
+    if promo_code:
+        return "promo", "promo", "success", f"Промокод {promo_code} применён"
+    if action_norm in ("topup", "top_up"):
+        return "topup", "payments", "success", "Баланс пополнен"
+    if action_norm in ("referral_bonus", "referral_start_bonus"):
+        return "referral", "system", "success", "Реферальное начисление"
+    if method_norm == "balance":
+        if action_norm == "extend":
+            return "renew", "payments", "success", "Ключ продлён"
+        if action_norm == "new":
+            return "purchase", "payments", "success", "Покупка ключа"
+        return "balance_pay", "payments", "info", "Оплата с баланса"
+    if action_norm == "extend":
+        return "renew", "payments", "success", "Ключ продлён"
+    if action_norm == "new":
+        return "purchase", "payments", "success", "Покупка ключа"
+    return "payment", "payments", "info", "Операция по оплате"
+
+
+def _build_notifications(user_id: int) -> list[dict]:
+    notifications: list[dict] = []
+    read_ids = _notification_read_ids(user_id)
+    prefs = _get_user_preferences(user_id)
+
+    keys = get_user_keys(user_id) or []
+    user = get_user(user_id)
+    trial_days = int(get_setting("trial_duration_days") or 3)
+
+    if prefs.get("notify_subscription", True):
+        for key in keys:
+            data = _process_key_data(key)
+            kid = key["key_id"]
+            days = int(data.get("days_left") or 0)
+            key_href = f"/keys/{kid}"
+            key_name = data.get("name", "Ключ")
+
+            if days <= 0:
+                notifications.append(_notification_item(
+                    nid=f"sub-expired-{kid}",
+                    ntype="subscription_expired",
+                    category="subscription",
+                    title="Подписка истекла",
+                    body=f"{key_name} — продлите для доступа к VPN",
+                    date=key.get("expiry_date") or datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    read_ids=read_ids,
+                    severity="warning",
+                    href=key_href,
+                ))
+            elif days <= 3:
+                notifications.append(_notification_item(
+                    nid=f"sub-expiring-{kid}",
+                    ntype="subscription_expiring",
+                    category="subscription",
+                    title="Ключ скоро истекает",
+                    body=f"Осталось {days} дн. · {key_name}",
+                    date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    read_ids=read_ids,
+                    severity="warning",
+                    href=key_href,
+                ))
+            elif days <= 7:
+                notifications.append(_notification_item(
+                    nid=f"sub-remind-{kid}",
+                    ntype="subscription_expiring",
+                    category="subscription",
+                    title="Напоминание о подписке",
+                    body=f"До окончания {days} дн. · {key_name}",
+                    date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    read_ids=read_ids,
+                    severity="info",
+                    href=key_href,
+                ))
+
+            hwid_limit = key.get("limit_ips")
+            hwid_usage = int(key.get("used_ips") or 0)
+            try:
+                limit_val = int(hwid_limit) if hwid_limit is not None else 0
+            except (TypeError, ValueError):
+                limit_val = 0
+            if limit_val > 0 and hwid_usage >= max(1, limit_val - 1):
+                notifications.append(_notification_item(
+                    nid=f"device-limit-{kid}",
+                    ntype="device_limit",
+                    category="subscription",
+                    title="Лимит устройств",
+                    body=f"{hwid_usage}/{limit_val} устройств · {key_name}",
+                    date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    read_ids=read_ids,
+                    severity="warning",
+                    href=key_href,
+                ))
+
+            traffic_limit = key.get("limit_bytes")
+            traffic_used = float(key.get("used_bytes") or 0)
+            try:
+                t_limit = float(traffic_limit) if traffic_limit else 0
+            except (TypeError, ValueError):
+                t_limit = 0
+            if t_limit > 0:
+                traffic_pct = (traffic_used / t_limit) * 100
+                if traffic_pct >= 80:
+                    notifications.append(_notification_item(
+                        nid=f"traffic-warning-{kid}",
+                        ntype="traffic_warning",
+                        category="subscription",
+                        title="Трафик почти исчерпан",
+                        body=f"Использовано {traffic_pct:.0f}% · {data.get('traffic_info', key_name)}",
+                        date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        read_ids=read_ids,
+                        severity="warning",
+                        href=key_href,
+                    ))
+
+            created_raw = key.get("created_at") or ""
+            if _is_recent_notification_date(created_raw, days=14):
+                notifications.append(_notification_item(
+                    nid=f"key-issued-{kid}",
+                    ntype="key_issued",
+                    category="subscription",
+                    title="Новый ключ выдан",
+                    body=f"{key_name} готов · настройте VPN за пару минут",
+                    date=created_raw or datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    read_ids=read_ids,
+                    severity="success",
+                    href="/vpn/setup",
+                    cta_label="Настроить VPN",
+                ))
+
+        if user and user.get("trial_used"):
+            notifications.append(_notification_item(
+                nid="trial-activated",
+                ntype="trial",
+                category="subscription",
+                title="Пробный период активирован",
+                body=f"Вы использовали бесплатный доступ на {trial_days} дн.",
+                date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                read_ids=read_ids,
+                severity="success",
+                href="/",
+            ))
+
+    if prefs.get("notify_payments", True):
+        payments, balance_ops = _get_user_transactions(user_id, 15)
+        for row in (payments + balance_ops)[:12]:
+            action = (row.get("action") or "").strip()
+            payment_method = row.get("payment_method_raw") or ""
+            status_norm = (row.get("status") or "").strip().lower()
+            key_id = row.get("key_id")
+            href = f"/keys/{key_id}" if key_id else ("/wallet" if action.lower() in ("topup", "top_up") else "/history")
+            nid = f"tx-{row.get('payment_id') or row.get('id')}"
+
+            if not row.get("success"):
+                if status_norm in ("failed", "cancelled", "canceled", "rejected"):
+                    notifications.append(_notification_item(
+                        nid=f"{nid}-failed",
+                        ntype="payment_failed",
+                        category="payments",
+                        title="Оплата не прошла",
+                        body=f"{row.get('label', 'Платёж')} · проверьте способ оплаты",
+                        date=row.get("date") or "",
+                        read_ids=read_ids,
+                        severity="warning",
+                        href="/wallet",
+                        amount=row.get("amount"),
+                    ))
+                continue
+
+            meta = {
+                "promo_code": row.get("promo_code") or "",
+                "promo_discount": row.get("promo_discount") or 0,
+            }
+            ntype, category, severity, title = _transaction_notification_type(
+                action, payment_method, meta,
+            )
+            promo_code = (row.get("promo_code") or "").strip()
+            body = f"{row.get('amount', 0):.0f} ₽ · {row.get('method', '')}"
+            if promo_code and ntype == "promo":
+                discount = float(row.get("promo_discount") or 0)
+                if discount > 0:
+                    body = f"Скидка {discount:.0f} ₽ · {row.get('method', '')}"
+                else:
+                    body = f"Код {promo_code} · {row.get('method', '')}"
+
+            purchase_cta = None
+            purchase_href = href
+            if ntype == "purchase" and key_id:
+                purchase_href = "/vpn/setup"
+                purchase_cta = "Настроить VPN"
+
+            notifications.append(_notification_item(
+                nid=nid,
+                ntype=ntype,
+                category=category,
+                title=title,
+                body=body,
+                date=row.get("date") or "",
+                read_ids=read_ids,
+                severity=severity,
+                href=purchase_href,
+                amount=row.get("amount"),
+                cta_label=purchase_cta,
+            ))
+
+    if prefs.get("notify_support", True):
+        try:
+            from shop_bot.data_manager.remnawave_repository import get_user_tickets, get_ticket_messages
+            tickets = get_user_tickets(user_id) or []
+            for ticket in tickets:
+                if ticket.get("status") != "open":
+                    continue
+                messages = get_ticket_messages(ticket["ticket_id"]) or []
+                for msg in reversed(messages):
+                    if msg.get("sender") != "admin":
+                        continue
+                    nid = f"support-{ticket['ticket_id']}-{msg.get('created_at')}"
+                    notifications.append(_notification_item(
+                        nid=nid,
+                        ntype="support",
+                        category="support",
+                        title="Ответ поддержки",
+                        body=(msg.get("content") or "")[:120],
+                        date=msg.get("created_at") or "",
+                        read_ids=read_ids,
+                        severity="info",
+                        href="/support",
+                    ))
+                    break
         except Exception:
             log_suppressed()
 
-    keys = get_user_keys(user_id) or []
-    for key in keys:
-        data = _process_key_data(key)
-        days = int(data.get("days_left") or 0)
-        if days <= 0:
-            notifications.append({
-                "id": f"sub-expired-{key['key_id']}",
-                "type": "subscription",
-                "title": "Подписка истекла",
-                "body": f"{data.get('name', 'Ключ')} — продлите для доступа к VPN",
-                "date": key.get("expiry_date") or datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "read": f"sub-expired-{key['key_id']}" in read_ids,
-            })
-        elif days <= 3:
-            notifications.append({
-                "id": f"sub-expiring-{key['key_id']}",
-                "type": "subscription",
-                "title": "Подписка скоро истечёт",
-                "body": f"Осталось {days} дн. — {data.get('name', 'ключ')}",
-                "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "read": f"sub-expiring-{key['key_id']}" in read_ids,
-            })
-
-    payments, balance_ops = _get_user_transactions(user_id, 10)
-    for item in (payments + balance_ops)[:5]:
-        if not item.get("success"):
-            continue
-        nid = f"tx-{item.get('payment_id') or item.get('id')}"
-        notifications.append({
-            "id": nid,
-            "type": "payment",
-            "title": item.get("label") or "Операция",
-            "body": f"{item.get('amount', 0):.0f} ₽ · {item.get('method', '')}",
-            "date": item.get("date") or "",
-            "read": nid in read_ids,
-        })
-
-    try:
-        from shop_bot.data_manager.remnawave_repository import get_user_tickets, get_ticket_messages
-        tickets = get_user_tickets(user_id) or []
-        for ticket in tickets:
-            if ticket.get("status") != "open":
-                continue
-            messages = get_ticket_messages(ticket["ticket_id"]) or []
-            for msg in reversed(messages):
-                if msg.get("sender") != "admin":
+    if prefs.get("notify_referral", True):
+        try:
+            referrals = get_referrals_for_user(user_id) or []
+            for ref in referrals[:10]:
+                ref_id = ref.get("telegram_id")
+                if not ref_id:
                     continue
-                nid = f"support-{ticket['ticket_id']}-{msg.get('created_at')}"
-                notifications.append({
-                    "id": nid,
-                    "type": "support",
-                    "title": "Ответ поддержки",
-                    "body": (msg.get("content") or "")[:120],
-                    "date": msg.get("created_at") or "",
-                    "read": nid in read_ids,
-                })
-                break
-    except Exception:
-        log_suppressed()
+                reg_date = ref.get("registration_date")
+                if not _is_recent_notification_date(
+                    str(reg_date) if reg_date else None,
+                    days=30,
+                ):
+                    continue
+                username = (ref.get("username") or "").strip()
+                who = f"@{username}" if username else f"ID {ref_id}"
+                notifications.append(_notification_item(
+                    nid=f"referral-signup-{ref_id}",
+                    ntype="referral_signup",
+                    category="system",
+                    title="+1 реферал",
+                    body=f"{who} зарегистрировался · ожидается бонус",
+                    date=str(reg_date or datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+                    read_ids=read_ids,
+                    severity="success",
+                    href="/profile",
+                ))
+        except Exception:
+            log_suppressed()
 
-    user = get_user(user_id)
-    ref_earned = float(get_referral_balance_all(user_id) or 0) if user else 0
-    if ref_earned > 0:
-        nid = "referral-summary"
-        notifications.append({
-            "id": nid,
-            "type": "referral",
-            "title": "Реферальный доход",
-            "body": f"Всего заработано: {ref_earned:.0f} ₽",
-            "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "read": nid in read_ids,
-        })
+        ref_earned = float(get_referral_balance_all(user_id) or 0) if user else 0
+        ref_count = get_referral_count(user_id) if user else 0
+        if ref_earned > 0 or ref_count > 0:
+            notifications.append(_notification_item(
+                nid="referral-summary",
+                ntype="referral",
+                category="system",
+                title="Реферальная программа",
+                body=f"Приглашено: {ref_count} · заработано {ref_earned:.0f} ₽",
+                date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                read_ids=read_ids,
+                severity="success",
+                href="/profile",
+            ))
+
+    notifications.extend(_build_promo_campaign_notifications(user_id, read_ids))
 
     notifications.sort(key=lambda n: n.get("date") or "", reverse=True)
-    return notifications[:30]
+    return notifications[:50]
 
 
 def _spa_index_path() -> str:
@@ -1746,11 +2051,51 @@ class SupportStatusRequest(BaseModel):
 class SupportTicketCreateRequest(BaseModel):
     user_id: int
     subject: str
+    message: str | None = None
+    category: str | None = None
 
 class SupportMessageSendRequest(BaseModel):
     user_id: int
     ticket_id: int
     message: str
+
+class SupportTicketActionRequest(BaseModel):
+    user_id: int
+    ticket_id: int
+
+_SUPPORT_CATEGORIES = {
+    "payment": "Оплата",
+    "vpn": "VPN не работает",
+    "key": "Ключ / подписка",
+    "other": "Другое",
+}
+
+_DEFAULT_SUPPORT_FAQ = [
+    {
+        "id": "vpn",
+        "question": "VPN не подключается",
+        "answer": (
+            "Проверьте срок действия ключа, обновите подписку в приложении "
+            "и убедитесь, что интернет работает без VPN. Затем перезапустите приложение VPN."
+        ),
+    },
+    {
+        "id": "payment",
+        "question": "Оплата не прошла",
+        "answer": (
+            "Подождите 2–5 минут и обновите баланс. Если средства списались, "
+            "но баланс не изменился — создайте обращение с категорией «Оплата»."
+        ),
+    },
+    {
+        "id": "key",
+        "question": "Где взять ссылку подключения?",
+        "answer": (
+            "Откройте «Профиль» → выберите ключ → скопируйте ссылку подписки. "
+            "Или перейдите в «Настройка VPN» для пошаговой инструкции."
+        ),
+    },
+]
 
 class PaymentMethodsRequest(BaseModel):
     user_id: int
@@ -1924,6 +2269,11 @@ def _get_user_transactions(user_id: int, limit: int = 50) -> tuple[list[dict], l
             "success": is_success,
             "label": _transaction_action_label(action, row["payment_method"] or ""),
             "method": _transaction_method_label(row["payment_method"]),
+            "action": action,
+            "payment_method_raw": row["payment_method"] or "",
+            "promo_code": (meta.get("promo_code") or "").strip(),
+            "promo_discount": float(meta.get("promo_discount") or 0),
+            "key_id": meta.get("key_id"),
         }
 
         is_topup = action_norm in ("topup", "top_up")
@@ -2930,6 +3280,37 @@ async def api_key_comment(req: CommentRequest, auth_user: AuthUser):
         logger.error(f"[WEBAPP] - Ошибка обновления комментария для ключа {req.key_id}: {e}")
         return {"ok": False, "error": str(e)}
 
+def _support_ticket_summary(ticket: dict) -> dict:
+    from shop_bot.data_manager.remnawave_repository import (
+        get_ticket_messages,
+        can_reopen_support_ticket,
+        get_ticket_reopen_deadline,
+    )
+
+    tid = int(ticket["ticket_id"])
+    msgs = get_ticket_messages(tid) or []
+    visible = [m for m in msgs if m.get("sender") != "note"]
+    last_sender = ticket.get("last_sender") or (visible[-1].get("sender") if visible else None)
+    has_unread = (
+        ticket.get("status") == "open"
+        and last_sender == "admin"
+    )
+    can_reopen, _ = can_reopen_support_ticket(ticket)
+    return {
+        "ticket_id": tid,
+        "subject": ticket.get("subject") or "Обращение без темы",
+        "status": ticket.get("status") or "open",
+        "created_at": ticket.get("created_at") or "",
+        "updated_at": ticket.get("updated_at") or ticket.get("created_at") or "",
+        "closed_at": ticket.get("closed_at") or "",
+        "message_count": len(visible),
+        "last_sender": last_sender,
+        "has_unread": has_unread,
+        "can_reopen": can_reopen,
+        "reopen_deadline_at": get_ticket_reopen_deadline(ticket) or "",
+    }
+
+
 @app.post("/api/support/status")
 async def api_support_status(req: SupportStatusRequest, auth_user: AuthUser):
     try:
@@ -2946,20 +3327,10 @@ async def api_support_status(req: SupportStatusRequest, auth_user: AuthUser):
 
         tickets = get_user_tickets(user_id) or []
         if not tickets:
-            return {"ok": True, "has_ticket": False, "tickets": [], "messages": []}
+            return {"ok": True, "has_ticket": False, "tickets": [], "messages": [], "unread_count": 0}
 
-        ticket_summaries = []
-        for t in tickets:
-            tid = int(t["ticket_id"])
-            msgs = get_ticket_messages(tid) or []
-            visible = [m for m in msgs if m.get("sender") != "note"]
-            ticket_summaries.append({
-                "ticket_id": tid,
-                "subject": t.get("subject") or "Обращение без темы",
-                "status": t.get("status") or "open",
-                "updated_at": t.get("updated_at") or t.get("created_at") or "",
-                "message_count": len(visible),
-            })
+        ticket_summaries = [_support_ticket_summary(t) for t in tickets]
+        unread_count = sum(1 for t in ticket_summaries if t.get("has_unread"))
 
         active = None
         if req.ticket_id:
@@ -2984,6 +3355,7 @@ async def api_support_status(req: SupportStatusRequest, auth_user: AuthUser):
                 "created_at": m.get("created_at"),
             })
 
+        active_summary = _support_ticket_summary(active)
         return {
             "ok": True,
             "has_ticket": True,
@@ -2991,6 +3363,10 @@ async def api_support_status(req: SupportStatusRequest, auth_user: AuthUser):
             "subject": active.get("subject", "Обращение без темы"),
             "status": active.get("status"),
             "can_send": active.get("status") == "open",
+            "can_reopen": active_summary.get("can_reopen", False),
+            "reopen_deadline_at": active_summary.get("reopen_deadline_at", ""),
+            "has_unread": active_summary.get("has_unread", False),
+            "unread_count": unread_count,
             "tickets": ticket_summaries,
             "messages": formatted_messages,
         }
@@ -3011,8 +3387,12 @@ async def api_support_create(req: SupportTicketCreateRequest, auth_user: AuthUse
         subject_text = req.subject.strip()[:64]
         if not subject_text:
             return {"ok": False, "error": "Тема обращения не может быть пустой"}
-            
-        ticket_id, created_new = get_or_create_open_ticket(user_id, subject_text)
+
+        category_key = (req.category or "").strip().lower()
+        category_label = _SUPPORT_CATEGORIES.get(category_key)
+        full_subject = f"[{category_label}] {subject_text}" if category_label else subject_text
+
+        ticket_id, created_new = get_or_create_open_ticket(user_id, full_subject[:64])
 
         if not ticket_id:
             return {"ok": False, "error": "Не удалось создать тикет"}
@@ -3023,8 +3403,11 @@ async def api_support_create(req: SupportTicketCreateRequest, auth_user: AuthUse
         add_support_message(
             ticket_id,
             sender="user",
-            content=f"Тема: {subject_text}",
+            content=f"Тема: {full_subject}",
         )
+        first_message = (req.message or "").strip()
+        if first_message:
+            add_support_message(ticket_id, sender="user", content=first_message[:2000])
 
         from aiogram import Bot
         token = get_setting("support_bot_token")
@@ -3043,9 +3426,9 @@ async def api_support_create(req: SupportTicketCreateRequest, auth_user: AuthUse
                     f"🆕 <b>Новое обращение (WebApp)!</b>\n\n"
                     f"👤 <b>USER:</b> (<code>{user_id}</code> - {html.escape(username_display)})\n"
                     f"📝 <b>ID тикета:</b> <code>#{ticket_id}</code>\n"
-                    f"💬 <b>Тема:</b> <i>{html.escape(subject_text)}</i>\n\n"
+                    f"💬 <b>Тема:</b> <i>{html.escape(full_subject)}</i>\n\n"
                     f"💌 Сообщения:\n"
-                    f"<blockquote>Тикет открыт через веб-приложение.</blockquote>"
+                    f"<blockquote>{html.escape(first_message or 'Тикет открыт через веб-приложение.')}</blockquote>"
                 )
                 
                 photo_url = "https://github.com/kissesses/remnawave-app/blob/main/docs/screenshots/suppshor.png?raw=true"
@@ -3142,6 +3525,76 @@ async def api_support_send(req: SupportMessageSendRequest, auth_user: AuthUser):
         return {"ok": True}
     except Exception as e:
         logger.error(f"[WEBAPP] - Ошибка отправки сообщения в поддержку для {req.user_id}: {e}")
+        return {"ok": False, "error": str(e)}
+
+@app.post("/api/support/close")
+async def api_support_close(req: SupportTicketActionRequest, auth_user: AuthUser):
+    try:
+        user_id = authorized_user_id(auth_user, req.user_id)
+        user = get_user(user_id)
+        if not user or user.get("is_banned"):
+            return {"ok": False, "error": "Access denied"}
+
+        from shop_bot.data_manager.remnawave_repository import (
+            get_ticket,
+            set_ticket_status,
+            add_support_message,
+        )
+
+        ticket = get_ticket(req.ticket_id)
+        if not ticket or ticket.get("user_id") != user_id:
+            return {"ok": False, "error": "Тикет не найден"}
+        if ticket.get("status") != "open":
+            return {"ok": False, "error": "Обращение уже закрыто"}
+
+        set_ticket_status(req.ticket_id, "closed")
+        add_support_message(
+            req.ticket_id,
+            sender="note",
+            content="Обращение закрыто пользователем через WebApp.",
+        )
+        return {"ok": True}
+    except Exception as e:
+        logger.error(f"[WEBAPP] - Ошибка закрытия тикета для {req.user_id}: {e}")
+        return {"ok": False, "error": str(e)}
+
+@app.post("/api/support/reopen")
+async def api_support_reopen(req: SupportTicketActionRequest, auth_user: AuthUser):
+    try:
+        user_id = authorized_user_id(auth_user, req.user_id)
+        user = get_user(user_id)
+        if not user or user.get("is_banned"):
+            return {"ok": False, "error": "Access denied"}
+
+        from shop_bot.data_manager.remnawave_repository import (
+            get_ticket,
+            get_user_tickets,
+            set_ticket_status,
+            add_support_message,
+            can_reopen_support_ticket,
+        )
+
+        ticket = get_ticket(req.ticket_id)
+        if not ticket or ticket.get("user_id") != user_id:
+            return {"ok": False, "error": "Тикет не найден"}
+
+        allowed, deny_reason = can_reopen_support_ticket(ticket)
+        if not allowed:
+            return {"ok": False, "error": deny_reason or "Нельзя переоткрыть обращение"}
+
+        open_tickets = [t for t in (get_user_tickets(user_id) or []) if t.get("status") == "open"]
+        if open_tickets:
+            return {"ok": False, "error": "У вас уже есть открытое обращение"}
+
+        set_ticket_status(req.ticket_id, "open")
+        add_support_message(
+            req.ticket_id,
+            sender="note",
+            content="Обращение переоткрыто пользователем через WebApp.",
+        )
+        return {"ok": True, "ticket_id": req.ticket_id}
+    except Exception as e:
+        logger.error(f"[WEBAPP] - Ошибка переоткрытия тикета для {req.user_id}: {e}")
         return {"ok": False, "error": str(e)}
 
 async def _get_telegram_user_photo_url(user_id: int) -> str | None:
@@ -3255,6 +3708,20 @@ async def api_cabinet_config(user_id: int, auth_user: AuthUser):
             },
             "topup": {"min": 10, "max": 100000, "enabled": show_topup},
             "balance": float(user.get("balance") or 0),
+            "support_info": {
+                "enabled": show_support,
+                "bot_username": (get_setting("support_bot_username") or "").strip().lstrip("@"),
+                "intro": (
+                    content_overrides.get("support_intro")
+                    or "Задайте вопрос — ответим в ближайшее время. Перед обращением загляните в частые вопросы."
+                ).strip(),
+                "hours": (content_overrides.get("support_hours") or "Онлайн · ответ в течение дня").strip(),
+                "categories": [
+                    {"id": key, "label": label}
+                    for key, label in _SUPPORT_CATEGORIES.items()
+                ],
+                "faq": _DEFAULT_SUPPORT_FAQ,
+            },
         }
     except Exception as e:
         logger.error(f"[WEBAPP] - Ошибка cabinet/config для {user_id}: {e}")
@@ -3462,6 +3929,12 @@ async def api_user_status(user_id: int, auth_user: AuthUser):
         bot_username_raw = (get_setting("telegram_bot_username") or "bot").strip().lstrip("@")
         bot_username = re.sub(r"[^A-Za-z0-9_]", "", bot_username_raw) or "bot"
         
+        active_keys = sum(1 for k in formatted_keys if int(k.get("days_left") or 0) > 0)
+        reg_date = user.get("registration_date")
+        reg_str = ""
+        if reg_date:
+            reg_str = str(reg_date).split(".")[0][:19]
+
         return {
             "ok": True,
             "keys": formatted_keys,
@@ -3471,6 +3944,13 @@ async def api_user_status(user_id: int, auth_user: AuthUser):
             "referral_count": get_referral_count(user_id),
             "referral_earned": float(get_referral_balance_all(user_id) or 0),
             "referral_link": f"https://t.me/{bot_username}?start=ref_{user_id}",
+            "profile": {
+                "username": (user.get("username") or "").strip(),
+                "registration_date": reg_str,
+                "total_spent": float(user.get("total_spent") or 0),
+                "active_keys": active_keys,
+                "total_keys": len(formatted_keys),
+            },
         }
     except Exception as e:
         logger.error(f"[WEBAPP] - Ошибка статуса пользователя {user_id}: {e}")

@@ -164,7 +164,8 @@ CREATE TABLE IF NOT EXISTS support_tickets (
     forum_chat_id TEXT,
     message_thread_id INTEGER,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    closed_at TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS support_messages (
@@ -576,6 +577,16 @@ def run_migration_postgres() -> None:
                 _ensure_default_button_configs(cursor)
                 from shop_bot.data_manager.db.schema import _ensure_webapp_design_columns, _ensure_webapp_studio_columns, _ensure_webapp_platform_columns
 
+                from shop_bot.data_manager.db.schema import _ensure_support_tickets_columns
+
+                _ensure_support_tickets_columns(cursor)
+                cursor.execute(
+                    """
+                    UPDATE support_tickets
+                    SET closed_at = updated_at
+                    WHERE status = 'closed' AND closed_at IS NULL
+                    """
+                )
                 _ensure_webapp_design_columns(cursor)
                 _ensure_webapp_studio_columns(cursor)
                 _ensure_webapp_platform_columns(cursor)

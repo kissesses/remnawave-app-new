@@ -3,6 +3,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useTelegram } from "@/hooks/use-telegram";
+import { useSupportUnread } from "@/hooks/use-cabinet";
 
 const tabs = [
   { to: "/", label: "Главная", icon: Home },
@@ -16,6 +17,7 @@ const HIDDEN_PREFIXES = ["/history", "/notifications", "/settings", "/vpn", "/ke
 export function BottomNav() {
   const location = useLocation();
   const { haptic } = useTelegram();
+  const { data: supportUnread = 0 } = useSupportUnread();
   const hidden = HIDDEN_PREFIXES.some((p) => location.pathname.startsWith(p));
 
   if (hidden) return null;
@@ -53,6 +55,11 @@ export function BottomNav() {
                 />
                 <div className="relative z-10 flex h-7 w-7 items-center justify-center">
                   <Icon className="h-[21px] w-[21px]" strokeWidth={active ? 2.25 : 1.75} />
+                  {to === "/support" && supportUnread > 0 && !active && (
+                    <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-destructive-foreground">
+                      {supportUnread > 9 ? "9+" : supportUnread}
+                    </span>
+                  )}
                 </div>
                 <span className="relative z-10">{label}</span>
               </NavLink>

@@ -230,18 +230,27 @@ export const api = {
     });
   },
 
-  createSupportTicket(userId: number, subject: string) {
+  createSupportTicket(
+    userId: number,
+    subject: string,
+    options?: { message?: string; category?: string },
+  ) {
     return request<{ ok: boolean; ticket_id?: number; error?: string }>(
       "/api/support/create",
       {
         method: "POST",
-        body: JSON.stringify({ user_id: userId, subject }),
+        body: JSON.stringify({
+          user_id: userId,
+          subject,
+          message: options?.message,
+          category: options?.category,
+        }),
       },
     );
   },
 
   sendSupportMessage(userId: number, ticketId: number, message: string) {
-    return request<{ ok: boolean }>("/api/support/send", {
+    return request<{ ok: boolean; error?: string }>("/api/support/send", {
       method: "POST",
       body: JSON.stringify({
         user_id: userId,
@@ -249,6 +258,23 @@ export const api = {
         message,
       }),
     });
+  },
+
+  closeSupportTicket(userId: number, ticketId: number) {
+    return request<{ ok: boolean; error?: string }>("/api/support/close", {
+      method: "POST",
+      body: JSON.stringify({ user_id: userId, ticket_id: ticketId }),
+    });
+  },
+
+  reopenSupportTicket(userId: number, ticketId: number) {
+    return request<{ ok: boolean; ticket_id?: number; error?: string }>(
+      "/api/support/reopen",
+      {
+        method: "POST",
+        body: JSON.stringify({ user_id: userId, ticket_id: ticketId }),
+      },
+    );
   },
 
   activateTrial(userId: number, hostName?: string) {

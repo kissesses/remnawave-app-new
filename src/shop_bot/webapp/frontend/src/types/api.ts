@@ -29,6 +29,14 @@ export interface VpnKey {
   host_name: string;
 }
 
+export interface UserProfileSummary {
+  username: string;
+  registration_date: string;
+  total_spent: number;
+  active_keys: number;
+  total_keys: number;
+}
+
 export interface UserStatus {
   ok: boolean;
   keys: VpnKey[];
@@ -38,6 +46,7 @@ export interface UserStatus {
   referral_count: number;
   referral_earned: number;
   referral_link: string;
+  profile?: UserProfileSummary;
   error?: string;
 }
 
@@ -76,6 +85,7 @@ export interface CabinetConfig {
   };
   topup: { min: number; max: number; enabled: boolean };
   balance: number;
+  support_info?: SupportInfo;
   error?: string;
 }
 
@@ -97,13 +107,48 @@ export interface PaymentHistory {
   error?: string;
 }
 
+export type NotificationType =
+  | "purchase"
+  | "renew"
+  | "topup"
+  | "balance_pay"
+  | "subscription_expiring"
+  | "subscription_expired"
+  | "promo"
+  | "promo_campaign"
+  | "trial"
+  | "support"
+  | "referral"
+  | "referral_signup"
+  | "key_issued"
+  | "traffic_warning"
+  | "device_limit"
+  | "payment_failed"
+  | "payment"
+  | "subscription"
+  | "system";
+
+export type NotificationCategory =
+  | "payments"
+  | "subscription"
+  | "promo"
+  | "support"
+  | "system";
+
+export type NotificationSeverity = "success" | "warning" | "info";
+
 export interface Notification {
   id: string;
-  type: "subscription" | "payment" | "support" | "referral" | "system";
+  type: NotificationType;
+  category: NotificationCategory;
+  severity?: NotificationSeverity;
   title: string;
   body: string;
   date: string;
   read: boolean;
+  href?: string;
+  amount?: number;
+  cta_label?: string;
 }
 
 export interface UserPreferences {
@@ -150,8 +195,34 @@ export interface SupportTicketSummary {
   ticket_id: number;
   subject: string;
   status: string;
+  created_at?: string;
   updated_at: string;
+  closed_at?: string;
   message_count: number;
+  last_sender?: string;
+  has_unread?: boolean;
+  can_reopen?: boolean;
+  reopen_deadline_at?: string;
+}
+
+export interface SupportFaqItem {
+  id: string;
+  question: string;
+  answer: string;
+}
+
+export interface SupportCategory {
+  id: string;
+  label: string;
+}
+
+export interface SupportInfo {
+  enabled: boolean;
+  bot_username: string;
+  intro: string;
+  hours: string;
+  categories: SupportCategory[];
+  faq: SupportFaqItem[];
 }
 
 export interface SupportStatus {
@@ -161,6 +232,10 @@ export interface SupportStatus {
   subject?: string;
   status?: string;
   can_send?: boolean;
+  can_reopen?: boolean;
+  reopen_deadline_at?: string;
+  has_unread?: boolean;
+  unread_count?: number;
   tickets?: SupportTicketSummary[];
   messages?: SupportMessage[];
   error?: string;

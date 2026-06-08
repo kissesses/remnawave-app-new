@@ -35,6 +35,18 @@ export function usePaymentHistory(limit = 50) {
   });
 }
 
+export function useSupportUnread() {
+  const userId = getUserId();
+  return useQuery({
+    queryKey: ["support", "ticket", userId],
+    queryFn: () => api.getSupportStatus(userId),
+    enabled: userId > 0,
+    staleTime: 15_000,
+    refetchInterval: 30_000,
+    select: (data) => data.unread_count ?? 0,
+  });
+}
+
 export function useNotifications() {
   const userId = getUserId();
   return useQuery({
