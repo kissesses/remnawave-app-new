@@ -94,35 +94,37 @@
         })();
     </script>
     <script>
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        primary: "#10b981",
-                        "background-light": "#f3f4f6",
-                        "background-dark": "#0a0a0a",
-                        "surface-light": "#ffffff",
-                        "surface-dark": "#171717",
-                        "surface-highlight-dark": "#262626",
-                    },
-                    fontFamily: {
-                        display: ["Inter", "sans-serif"],
-                    },
-                    borderRadius: {
-                        DEFAULT: "0.75rem",
-                        'xl': "1rem",
-                        '2xl': "1.5rem",
+        if (typeof tailwind !== 'undefined') {
+            tailwind.config = {
+                darkMode: "class",
+                theme: {
+                    extend: {
+                        colors: {
+                            primary: "#10b981",
+                            "background-light": "#f3f4f6",
+                            "background-dark": "#0a0a0a",
+                            "surface-light": "#ffffff",
+                            "surface-dark": "#171717",
+                            "surface-highlight-dark": "#262626",
+                        },
+                        fontFamily: {
+                            display: ["Inter", "sans-serif"],
+                        },
+                        borderRadius: {
+                            DEFAULT: "0.75rem",
+                            'xl': "1rem",
+                            '2xl': "1.5rem",
+                        },
                     },
                 },
-            },
-        };
+            };
+        }
     </script>
     {{ webapp_tailwind_assets }}
+    <link rel="stylesheet" href="/static/css/webapp-theme-picker.css" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Syncopate:wght@700&amp;display=swap" media="print" onload="this.media='all'" />
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Syncopate:wght@700&amp;display=swap" /></noscript>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" media="print" onload="this.media='all'" />
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" /></noscript>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" />
     {{ tg_fullscreen_css }}
     <style>
         html,

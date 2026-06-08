@@ -99,6 +99,11 @@ html[data-webapp-design="pref-macos-v2"] #webapp-theme-fab {
     bottom: calc(80px + env(safe-area-inset-bottom));
 }
 
+html[data-webapp-design="aurum"] #webapp-theme-fab {
+    bottom: calc(88px + env(safe-area-inset-bottom));
+    right: max(16px, env(safe-area-inset-right));
+}
+
 html[data-webapp-design="desktop"] #webapp-theme-fab {
     bottom: calc(14px + env(safe-area-inset-bottom));
     right: max(14px, env(safe-area-inset-right));

@@ -112,7 +112,6 @@ WEBAPP_SHARED_CSS = (
     "webapp-shell.css",
     "webapp-design-bridge.css",
     "webapp-cabinet.css",
-    "webapp-theme-picker.css",
     "webapp-modals.css",
 )
 
@@ -217,8 +216,10 @@ def build_design_scripts(default_design: str) -> str:
         '<script defer src="/static/js/webapp-shop.js"></script>',
         '<script defer src="/static/js/webapp-cabinet.js"></script>',
     ]
-    theme_js = WEBAPP_THEME_JS.get(default_design)
-    if theme_js:
-        lines.append(f'<script defer src="/static/js/{theme_js}"></script>')
+    seen_js: set[str] = set()
+    for theme_js in WEBAPP_THEME_JS.values():
+        if theme_js not in seen_js:
+            seen_js.add(theme_js)
+            lines.append(f'<script defer src="/static/js/{theme_js}"></script>')
     lines.append('<script defer src="/static/js/webapp-theme-manager.js"></script>')
     return "\n    ".join(lines)

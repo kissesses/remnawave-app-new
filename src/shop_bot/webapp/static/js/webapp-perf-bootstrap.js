@@ -38,11 +38,17 @@
     }
 
     function ensureStylesheet(href) {
-        if (!href || document.querySelector('link[rel="stylesheet"][href="' + href + '"]')) return;
-        var link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = href;
-        document.head.appendChild(link);
+        if (!href) return Promise.resolve();
+        var existing = document.querySelector('link[rel="stylesheet"][href="' + href + '"]');
+        if (existing) return Promise.resolve();
+        return new Promise(function (resolve) {
+            var link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = href;
+            link.onload = resolve;
+            link.onerror = resolve;
+            document.head.appendChild(link);
+        });
     }
 
     function ensureScript(src) {
@@ -58,15 +64,21 @@
         });
     }
 
+    function ensureThemeAssets(design) {
+        var href = THEME_CSS[design];
+        var js = THEME_JS[design];
+        return Promise.all([
+            ensureStylesheet(href),
+            ensureScript(js),
+        ]);
+    }
+
     function syncThemeAssets() {
         var design = activeDesign();
-        var serverDefault = ((window.WEBAPP_DESIGN_CONFIG || {}).default) || 'classic';
-        var href = THEME_CSS[design];
-        if (href && design !== serverDefault) ensureStylesheet(href);
-        var js = THEME_JS[design];
-        var serverJs = THEME_JS[serverDefault];
-        if (js && js !== serverJs) ensureScript(js);
+        ensureThemeAssets(design);
     }
+
+    window.__webappEnsureThemeAssets = ensureThemeAssets;
 
     window.__webappFetchCabinetConfig = function () {
         if (window.__webappCabinetConfigPromise) return window.__webappCabinetConfigPromise;

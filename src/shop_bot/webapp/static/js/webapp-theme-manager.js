@@ -85,7 +85,7 @@
         return img && !img.hidden ? img.src : '';
     }
 
-    function applyDesign(design, persist) {
+    async function applyDesign(design, persist) {
         const value = normalizeDesign(design);
         const allowed = allowedDesigns();
         const finalDesign = allowed.includes(value) ? value : 'classic';
@@ -111,6 +111,9 @@
         });
         document.body.classList.toggle('webapp-design-pref', isPrefDesign(finalDesign));
         updateMetaThemeColor(finalDesign);
+        if (typeof window.__webappEnsureThemeAssets === 'function') {
+            await window.__webappEnsureThemeAssets(finalDesign);
+        }
         renderChrome(finalDesign);
         syncPickerState(finalDesign);
         syncNav(getCurrentPageId());
@@ -638,8 +641,8 @@
         setTimeout(() => { if (!sheetOpen) sheet.hidden = true; }, 260);
     }
 
-    function init() {
-        applyDesign(getStoredDesign(), false);
+    async function init() {
+        await applyDesign(getStoredDesign(), false);
         if (isPickerEnabled()) {
             renderFab();
             renderPickerSheet();
@@ -649,10 +652,15 @@
         }
 
         window.addEventListener('hashchange', () => syncNav(getCurrentPageId()));
-        window.addEventListener('resize', () => {
+        window.addEventListener('resize', async () => {
             const design = getStoredDesign();
-            if (!allowedDesigns().includes(design)) applyDesign('classic', true);
-            else renderChrome(design);
+            if (!allowedDesigns().includes(design)) await applyDesign('classic', true);
+            else {
+                if (typeof window.__webappEnsureThemeAssets === 'function') {
+                    await window.__webappEnsureThemeAssets(design);
+                }
+                renderChrome(design);
+            }
             refreshPickerOptions();
         });
     }

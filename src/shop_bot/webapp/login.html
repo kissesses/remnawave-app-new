@@ -76,23 +76,25 @@
         })();
     </script>
     {{ webapp_tailwind_assets }}
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" media="print" onload="this.media='all'" />
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: "#10b981",
-                        "background-dark": "#0a0a0a",
-                    },
-                    animation: {
-                        'spin-slow': 'spin 3s linear infinite',
-                        'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        if (typeof tailwind !== 'undefined') {
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        colors: {
+                            primary: "#10b981",
+                            "background-dark": "#0a0a0a",
+                        },
+                        animation: {
+                            'spin-slow': 'spin 3s linear infinite',
+                            'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        }
                     }
                 }
-            }
+            };
         }
     </script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" />
     <style>
         body {
             background-color: #0a0a0a;

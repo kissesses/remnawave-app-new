@@ -1,4 +1,13 @@
-/* Floating theme picker — subtle, non-intrusive */
+/* Floating theme picker — load after Tailwind preflight */
+
+button.webapp-theme-fab {
+    appearance: none;
+    -webkit-appearance: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    line-height: 1;
+}
 
 .webapp-theme-fab {
     position: fixed;
