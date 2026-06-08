@@ -3,17 +3,9 @@ export function SubscriptionRing({ percent, size = 96 }: { percent: number; size
   const r = 42;
   const c = 2 * Math.PI * r;
   const offset = c - (p / 100) * c;
-  const gradId = `ring-grad-${size}`;
-
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }}>
       <svg className="-rotate-90" width={size} height={size} viewBox="0 0 100 100">
-        <defs>
-          <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="hsl(var(--primary))" />
-            <stop offset="100%" stopColor="hsl(var(--accent))" />
-          </linearGradient>
-        </defs>
         <circle
           cx="50"
           cy="50"
@@ -27,7 +19,7 @@ export function SubscriptionRing({ percent, size = 96 }: { percent: number; size
           cy="50"
           r={r}
           fill="none"
-          stroke={`url(#${gradId})`}
+          stroke="hsl(var(--primary))"
           strokeWidth="5"
           strokeLinecap="round"
           strokeDasharray={c}

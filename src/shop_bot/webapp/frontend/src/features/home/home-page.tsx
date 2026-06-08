@@ -207,7 +207,7 @@ export function HomePage() {
                     </div>
                     <span
                       className={
-                        item.success ? "font-semibold text-emerald-500" : "text-muted-foreground"
+                        item.success ? "font-semibold text-success" : "text-muted-foreground"
                       }
                     >
                       {formatMoney(item.amount)}

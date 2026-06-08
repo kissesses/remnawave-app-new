@@ -37,7 +37,12 @@ export function useBranding() {
     if (!accent) return;
     const hsl = hexToHsl(accent.startsWith("#") ? accent : `#${accent}`);
     if (!hsl) return;
-    document.documentElement.style.setProperty("--brand-accent", hsl);
+    const root = document.documentElement;
+    if (root.dataset.appTheme !== "light-blue") {
+      root.style.setProperty("--primary", hsl);
+      root.style.setProperty("--ring", hsl);
+    }
+    root.style.setProperty("--brand-accent", hsl);
   }, [branding.accent_color]);
 
   return branding;

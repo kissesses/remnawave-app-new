@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Moon, Bell, LogOut, Shield } from "lucide-react";
+import { Palette, Bell, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { Header } from "@/components/layout/header";
 import { SectionHeader } from "@/components/premium/section-header";
@@ -56,15 +56,14 @@ export function SettingsPage() {
             <StudioCard>
               <div className="flex items-center gap-3">
                 <div className="studio-hub__icon h-10 w-10">
-                  <Moon className="h-5 w-5" />
+                  <Palette className="h-5 w-5" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-foreground">Cyber Dark</p>
+                  <p className="font-semibold text-foreground">Light Blue</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Премиальная тёмная тема с glass-эффектами
+                    Прозрачные виджеты на синем градиенте
                   </p>
                 </div>
-                <Shield className="h-4 w-4 text-primary shrink-0" />
               </div>
             </StudioCard>
           </div>
