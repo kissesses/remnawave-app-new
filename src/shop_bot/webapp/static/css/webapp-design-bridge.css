@@ -1,6 +1,0 @@
-/* WebApp design bridge — Aurum chrome isolation */
-
-html:not([data-webapp-design="aurum"]) #webapp-aurum-tabbar,
-html:not([data-webapp-design="aurum"]) #webapp-aurum-home {
-    display: none !important;
-}

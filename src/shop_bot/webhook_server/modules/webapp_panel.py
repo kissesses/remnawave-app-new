@@ -18,7 +18,7 @@ DESIGN_GROUPS: list[dict[str, str]] = [
 ]
 
 DESIGN_GROUP_MAP: dict[str, str] = {
-    "aurum": "all",
+    "telegram-premium": "all",
 }
 
 DESIGN_LABELS: dict[str, str] = {d["id"]: d["label"] for d in WEBAPP_DESIGNS}
@@ -259,9 +259,9 @@ def build_webapp_meta(
     webapp = dict(webapp or {})
     settings = settings or {}
     enabled_designs = parse_enabled_designs(webapp.get("webapp_enabled_designs"))
-    default_design = (webapp.get("webapp_default_design") or "aurum").strip()
+    default_design = (webapp.get("webapp_default_design") or "telegram-premium").strip()
     if default_design not in WEBAPP_DESIGN_IDS:
-        default_design = enabled_designs[0] if enabled_designs else "aurum"
+        default_design = enabled_designs[0] if enabled_designs else "telegram-premium"
     health = check_health(webapp)
     enabled = _truthy(webapp.get("webapp_enable"))
     domain = normalize_domain(webapp.get("webapp_domen"))
@@ -381,7 +381,7 @@ def render_preview_html(
     accent: str = "",
 ) -> str:
     if design_id not in WEBAPP_DESIGN_IDS:
-        design_id = "aurum"
+        design_id = "telegram-premium"
     device = "desktop" if device == "desktop" else "mobile"
     accent = normalize_accent(accent) or DESIGN_ACCENTS.get(design_id, "#0a84ff")
     label = DESIGN_LABELS.get(design_id, design_id)
@@ -393,9 +393,9 @@ def render_preview_html(
     frame_h = "520px" if device == "desktop" else "680px"
 
     bg_styles = {
-        "aurum": "background:linear-gradient(180deg,#14120f,#0c0c0e);padding-bottom:52px",
+        "telegram-premium": "background:linear-gradient(180deg,#232E3C,#17212B);padding-bottom:52px",
     }
-    body_style = bg_styles.get(design_id, bg_styles["aurum"])
+    body_style = bg_styles.get(design_id, bg_styles["telegram-premium"])
 
     logo_html = (
         f'<img src="{logo_e}" alt="" style="width:28px;height:28px;object-fit:contain;border-radius:8px">'

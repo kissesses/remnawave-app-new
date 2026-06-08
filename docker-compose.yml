@@ -6,8 +6,8 @@
 #
 # Быстрая установка:
 #   mkdir /opt/remnawave-app && cd /opt/remnawave-app
-#   curl -o docker-compose.yml https://raw.githubusercontent.com/kissesses/remnawave-app/main/docker-compose.yml
-#   curl -o .env https://raw.githubusercontent.com/kissesses/remnawave-app/main/.env.example
+#   curl -o docker-compose.yml https://raw.githubusercontent.com/kissesses/remnawave-app-new/main/docker-compose.yml
+#   curl -o .env https://raw.githubusercontent.com/kissesses/remnawave-app-new/main/.env.example
 #   Секреты: docs/INSTALL.md (openssl + sed)
 #   docker compose pull && docker compose up -d
 #
@@ -51,8 +51,8 @@ x-hardening-redis: &hardening-redis
 
 services:
   remnawave-app:
-    image: ghcr.io/kissesses/remnawave-app:${SHOPBOT_IMAGE_TAG:-latest}
-    container_name: remnawave-app
+    image: ghcr.io/kissesses/remnawave-app-new:${SHOPBOT_IMAGE_TAG:-latest}
+    container_name: remnawave-app-new
     <<: [*common, *logging, *env-shopbot, *coinstall-network, *hardening]
     stop_grace_period: 30s
     mem_limit: 768m

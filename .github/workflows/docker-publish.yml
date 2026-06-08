@@ -13,7 +13,7 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: kissesses/remnawave-app
+  IMAGE_NAME: kissesses/remnawave-app-new
 
 jobs:
   build:
@@ -32,7 +32,7 @@ jobs:
         id: image
         run: |
           if [[ "${{ github.repository }}" == *remnawave-app* ]]; then
-            echo "name=kissesses/remnawave-app" >> "$GITHUB_OUTPUT"
+            echo "name=kissesses/remnawave-app-new" >> "$GITHUB_OUTPUT"
           else
             echo "name=kissesses/rw-shop" >> "$GITHUB_OUTPUT"
           fi

@@ -368,6 +368,20 @@ static_dir = os.path.join(os.path.dirname(__file__), "static")
 if os.path.exists(static_dir):
     app.mount("/static", StaticFiles(directory=static_dir), name="webapp_static")
 
+_dist_assets = os.path.join(static_dir, "dist", "assets")
+if os.path.isdir(_dist_assets):
+    app.mount("/assets", StaticFiles(directory=_dist_assets), name="webapp_assets")
+
+SPA_CLIENT_PATHS = frozenset({
+    "wallet",
+    "profile",
+    "support",
+    "history",
+    "notifications",
+    "settings",
+    "vpn",
+})
+
 def _format_remaining_details(remaining: timedelta) -> str:
     total_seconds = int(remaining.total_seconds())
     if total_seconds <= 0:
@@ -1098,6 +1112,245 @@ def _build_plans_grid_html(host_name: str, user_id: int | None, container_id: st
     return desc, html
 
 
+def _plans_for_host_json(host_name: str, user_id: int | None) -> list[dict]:
+    plans_out: list[dict] = []
+    try:
+        plans = get_plans_for_host(host_name)
+    except Exception:
+        plans = []
+    for plan in [p for p in (plans or []) if p.get("is_active")]:
+        try:
+            raw_price = float(plan.get("price", 0))
+            final_price = int(calculate_webapp_price(raw_price, user_id))
+            months = int(plan.get("months") or 1)
+            duration_days = int(plan.get("duration_days") or 0) or (months * 30)
+            month_label = "месяц" if months == 1 else ("месяца" if 1 < months < 5 else "месяцев")
+            plans_out.append({
+                "plan_id": int(plan["plan_id"]),
+                "months": months,
+                "duration_days": duration_days,
+                "price": final_price,
+                "label": plan.get("plan_name") or f"{months} {month_label}",
+                "description": (plan.get("description") or "").strip() or None,
+            })
+        except (TypeError, ValueError, KeyError):
+            continue
+    return plans_out
+
+
+def _get_purchase_catalog_json(user_id: int) -> dict:
+    hosts_out: list[dict] = []
+    try:
+        hosts = get_all_hosts(visible_only=True) or []
+    except Exception:
+        hosts = []
+    for host in hosts:
+        host_name = host.get("host_name")
+        if not host_name:
+            continue
+        hosts_out.append({
+            "host_name": host_name,
+            "description": (host.get("description") or "").strip() or None,
+            "plans": _plans_for_host_json(host_name, user_id),
+        })
+    return {"ok": True, "hosts": hosts_out}
+
+
+def _get_renew_catalog_json(user_id: int) -> dict:
+    keys = get_user_keys(user_id) or []
+    keys_out: list[dict] = []
+    plans_by_key: dict[str, list[dict]] = {}
+    for key in keys:
+        data = _process_key_data(key)
+        kid = int(key["key_id"])
+        host_name = key.get("host_name") or ""
+        keys_out.append({
+            "key_id": kid,
+            "name": data.get("name") or f"Ключ #{kid}",
+            "host_name": host_name,
+            "expire_date_str": data.get("expire_date_str") or "",
+        })
+        if host_name:
+            plans_by_key[str(kid)] = _plans_for_host_json(host_name, user_id)
+    return {"ok": True, "keys": keys_out, "plans_by_key": plans_by_key}
+
+
+def _prefs_key(user_id: int) -> str:
+    return f"webapp:prefs:{user_id}"
+
+
+def _default_user_preferences() -> dict:
+    return {
+        "theme": "system",
+        "notify_payments": True,
+        "notify_subscription": True,
+        "notify_support": True,
+        "notify_referral": True,
+    }
+
+
+def _get_user_preferences(user_id: int) -> dict:
+    from shop_bot.security.kv_store import get_value
+
+    raw = get_value(_prefs_key(user_id))
+    prefs = _default_user_preferences()
+    if raw:
+        try:
+            parsed = json.loads(raw)
+            if isinstance(parsed, dict):
+                prefs.update({k: parsed[k] for k in prefs if k in parsed})
+        except Exception:
+            log_suppressed()
+    return prefs
+
+
+def _save_user_preferences(user_id: int, patch: dict) -> dict:
+    from shop_bot.security.kv_store import set_value
+
+    prefs = _get_user_preferences(user_id)
+    for key in _default_user_preferences():
+        if key in patch and patch[key] is not None:
+            prefs[key] = patch[key]
+    set_value(_prefs_key(user_id), json.dumps(prefs, ensure_ascii=False))
+    return prefs
+
+
+def _build_notifications(user_id: int) -> list[dict]:
+    notifications: list[dict] = []
+    read_raw = None
+    try:
+        from shop_bot.security.kv_store import get_value
+        read_raw = get_value(f"webapp:notif-read:{user_id}")
+    except Exception:
+        log_suppressed()
+    read_ids: set[str] = set()
+    if read_raw:
+        try:
+            parsed = json.loads(read_raw)
+            if isinstance(parsed, list):
+                read_ids = {str(x) for x in parsed}
+        except Exception:
+            log_suppressed()
+
+    keys = get_user_keys(user_id) or []
+    for key in keys:
+        data = _process_key_data(key)
+        days = int(data.get("days_left") or 0)
+        if days <= 0:
+            notifications.append({
+                "id": f"sub-expired-{key['key_id']}",
+                "type": "subscription",
+                "title": "Подписка истекла",
+                "body": f"{data.get('name', 'Ключ')} — продлите для доступа к VPN",
+                "date": key.get("expiry_date") or datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "read": f"sub-expired-{key['key_id']}" in read_ids,
+            })
+        elif days <= 3:
+            notifications.append({
+                "id": f"sub-expiring-{key['key_id']}",
+                "type": "subscription",
+                "title": "Подписка скоро истечёт",
+                "body": f"Осталось {days} дн. — {data.get('name', 'ключ')}",
+                "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "read": f"sub-expiring-{key['key_id']}" in read_ids,
+            })
+
+    payments, balance_ops = _get_user_transactions(user_id, 10)
+    for item in (payments + balance_ops)[:5]:
+        if not item.get("success"):
+            continue
+        nid = f"tx-{item.get('payment_id') or item.get('id')}"
+        notifications.append({
+            "id": nid,
+            "type": "payment",
+            "title": item.get("label") or "Операция",
+            "body": f"{item.get('amount', 0):.0f} ₽ · {item.get('method', '')}",
+            "date": item.get("date") or "",
+            "read": nid in read_ids,
+        })
+
+    try:
+        from shop_bot.data_manager.remnawave_repository import get_user_tickets, get_ticket_messages
+        tickets = get_user_tickets(user_id) or []
+        for ticket in tickets:
+            if ticket.get("status") != "open":
+                continue
+            messages = get_ticket_messages(ticket["ticket_id"]) or []
+            for msg in reversed(messages):
+                if msg.get("sender") != "admin":
+                    continue
+                nid = f"support-{ticket['ticket_id']}-{msg.get('created_at')}"
+                notifications.append({
+                    "id": nid,
+                    "type": "support",
+                    "title": "Ответ поддержки",
+                    "body": (msg.get("content") or "")[:120],
+                    "date": msg.get("created_at") or "",
+                    "read": nid in read_ids,
+                })
+                break
+    except Exception:
+        log_suppressed()
+
+    user = get_user(user_id)
+    ref_earned = float(get_referral_balance_all(user_id) or 0) if user else 0
+    if ref_earned > 0:
+        nid = "referral-summary"
+        notifications.append({
+            "id": nid,
+            "type": "referral",
+            "title": "Реферальный доход",
+            "body": f"Всего заработано: {ref_earned:.0f} ₽",
+            "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "read": nid in read_ids,
+        })
+
+    notifications.sort(key=lambda n: n.get("date") or "", reverse=True)
+    return notifications[:30]
+
+
+def _spa_index_path() -> str:
+    return os.path.join(os.path.dirname(__file__), "static", "dist", "index.html")
+
+
+def _render_spa_shell(user_id: int, webapp_settings: dict | None = None) -> HTMLResponse:
+    index_path = _spa_index_path()
+    if not os.path.isfile(index_path):
+        return HTMLResponse(
+            content=(
+                "<h1>WebApp не собран</h1>"
+                "<p>Выполните: <code>cd src/shop_bot/webapp/frontend && npm install && npm run build</code></p>"
+            ),
+            status_code=503,
+        )
+    webapp_settings = webapp_settings or get_webapp_settings() or {}
+    with open(index_path, "r", encoding="utf-8") as f:
+        content = f.read()
+    accent = (webapp_settings.get("webapp_accent_color") or "#3390EC").strip()
+    if accent and not accent.startswith("#"):
+        accent = f"#{accent}"
+    bootstrap = {
+        "userId": user_id,
+        "branding": {
+            "welcome_text": (webapp_settings.get("webapp_welcome_text") or "").strip(),
+            "accent_color": accent,
+            "logo": webapp_settings.get("webapp_logo") or "",
+            "icon": webapp_settings.get("webapp_icon") or "",
+            "title": webapp_settings.get("webapp_title") or get_setting("panel_brand_title") or "VPN",
+        },
+        "design": "telegram-premium",
+    }
+    bootstrap_html = (
+        f'<script id="webapp-bootstrap" type="application/json">{html.escape(json.dumps(bootstrap, ensure_ascii=False))}</script>\n'
+        f'    <script>window.__WEBAPP_BOOTSTRAP__=JSON.parse(document.getElementById("webapp-bootstrap").textContent);</script>'
+    )
+    content = content.replace("<!-- WEBAPP_BOOTSTRAP -->", bootstrap_html)
+    icon = webapp_settings.get("webapp_icon") or ""
+    if icon:
+        content = content.replace('href="/static/js/telegram-web-app.js"', f'href="/static/js/telegram-web-app.js" />\n    <link rel="icon" href="{html.escape(icon)}"')
+    return HTMLResponse(content=content)
+
+
 def _get_servers_and_plans_html(user_id: int | None = None):
     try:
         hosts = get_all_hosts(visible_only=True)
@@ -1329,118 +1582,21 @@ async def _enrich_active_keys_live_stats_inner(active_keys: list) -> None:
 
 async def _render_main_page(user_id: int):
     webapp_settings = get_webapp_settings()
-    
+
     if _is_scheduled_maintenance(webapp_settings):
         return _maintenance_response(webapp_settings)
-    
-    # 1. Check if Webapp is enabled
+
     if not webapp_settings.get("webapp_enable"):
         maintenance = (webapp_settings.get("webapp_maintenance_text") or "").strip()
         if maintenance:
             return _maintenance_response(webapp_settings)
         return HTMLResponse(content="<h1>Webapp is disabled</h1>", status_code=403)
-         
-    # 2. Check if user is banned
+
     user = get_user(user_id)
     if user and user.get('is_banned'):
-         return _render_banned_page(webapp_settings)
-         
-    # Можно использовать webapp_domen для проверок или редиректов если нужно
-    # current_domain = webapp_settings.get("webapp_domen")
+        return _render_banned_page(webapp_settings)
 
-    key_section = _get_no_key_html()
-    profile_card = ""
-    profile_keys_list = _get_no_key_html()
-    setup_keys_list = _get_no_key_html()
-    renew_keys_options = ""
-    renew_selected_key = "Нет активных ключей"
-    renew_plans_html_data = _get_no_key_html()
-    keys = []
-    
-    if user_id:
-        keys = get_user_keys(user_id)
-        # Sort all keys by expiry, soonest first
-        try:
-            keys.sort(key=lambda k: datetime.strptime(k['expiry_date'], "%Y-%m-%d %H:%M:%S"))
-        except Exception:
-            log_suppressed()
-            
-        now = get_msk_time().replace(tzinfo=None)
-        
-        # --- FETCH LIVE DATA ONLY FOR ACTIVE KEYS ---
-        active_keys = []
-        for k in keys:
-            try:
-                exp = datetime.strptime(k['expiry_date'], "%Y-%m-%d %H:%M:%S")
-                if exp > now:
-                    active_keys.append(k)
-            except Exception: log_suppressed()
-
-        if active_keys and WEBAPP_SSR_LIVE_STATS:
-            await _enrich_active_keys_live_stats(active_keys)
-
-        # --- CALCULATE MIN PRICE ---
-        min_price_val = 0.0
-        try:
-            all_hosts = get_all_hosts(visible_only=True)
-            prices = []
-            for h in all_hosts:
-                plans = get_plans_for_host(h['host_name'])
-                for p in plans:
-                    if p.get('is_active'):
-                        try:
-                            raw_p = float(p.get('price', 0))
-                            final_p = calculate_webapp_price(raw_p, user_id)
-                            prices.append(final_p)
-                        except: continue
-            if prices:
-                min_price_val = min(prices)
-        except Exception as e:
-            logger.error(f"[WEBAPP] - Ошибка расчета мин. цены для {user_id}: {e}")
-
-        # --- GENERATE SECTIONS ---
-        if keys:
-            # For the main monitoring section, show only the soonest active key
-            if active_keys:
-                key_section = _get_key_html(active_keys[0])
-            
-            # Renew, Profile and Setup sections get the full list of keys
-            # (Setup will filter internally, Profile shows all, Renew now shows all)
-            renew_keys_options, renew_selected_key, renew_plans_html_data = _get_renew_keys_html(
-                keys, user_id, include_plans=not WEBAPP_LAZY_SHOP_CATALOG
-            )
-            if WEBAPP_LAZY_SHOP_CATALOG and keys:
-                renew_plans_html_data = _shop_renew_plans_placeholder()
-            renew_selected_display = renew_selected_key
-            
-            profile_keys_list = _get_profile_keys_html(keys)
-            setup_keys_list = _get_setup_keys_html(keys)
-            
-        # Profile Stats
-        user = get_user(user_id)
-        ref_count = get_referral_count(user_id)
-        ref_earned = user.get("referral_balance_all") or 0.0
-        profile_card = _get_profile_card_html(user, ref_count, len(keys), ref_earned)
-    
-    p = os.path.join(os.path.dirname(__file__), "app.html")
-    with open(p, "r", encoding="utf-8") as f:
-        content = f.read()
-    
-    context = {
-        "profile_card": profile_card,
-        "key_section": key_section,
-        "profile_keys_list": profile_keys_list,
-        "setup_keys_list": setup_keys_list,
-        "renew_keys_options": renew_keys_options,
-        "renew_plans_html_data": renew_plans_html_data,
-        "renew_selected_display": renew_selected_display if 'renew_selected_display' in locals() else renew_selected_key,
-        "min_price": f"{int(min_price_val)} ₽" if min_price_val > 0 else "0 ₽",
-        "webapp_logo": webapp_settings.get("webapp_logo") or "",
-        "webapp_icon": webapp_settings.get("webapp_icon") or ""
-    }
-    
-    content = _process_template_placeholders(content, user_id, webapp_settings, context)
-    return HTMLResponse(content=content)
+    return _render_spa_shell(user_id, webapp_settings)
 
 
 async def _render_studio_preview(
@@ -1460,37 +1616,39 @@ async def _render_studio_preview(
     if accent:
         settings["webapp_accent_color"] = accent
     if design_id not in WEBAPP_DESIGN_IDS:
-        design_id = "aurum"
+        design_id = "telegram-premium"
 
-    p = os.path.join(os.path.dirname(__file__), "app.html")
-    with open(p, "r", encoding="utf-8") as f:
+    index_path = _spa_index_path()
+    if not os.path.isfile(index_path):
+        return HTMLResponse(
+            content="<h1>WebApp не собран</h1><p>npm run build в frontend/</p>",
+            status_code=503,
+        )
+    with open(index_path, "r", encoding="utf-8") as f:
         content = f.read()
 
-    context = {
-        "profile_card": "",
-        "key_section": _get_no_key_html(),
-        "profile_keys_list": _get_no_key_html(),
-        "setup_keys_list": _get_no_key_html(),
-        "renew_keys_options": "",
-        "renew_plans_html_data": _get_no_key_html(),
-        "renew_selected_display": "Нет активных ключей",
-        "min_price": "0 ₽",
-        "webapp_logo": settings.get("webapp_logo") or "",
-        "webapp_icon": settings.get("webapp_icon") or "",
+    accent_val = (settings.get("webapp_accent_color") or "#3390EC").strip()
+    if accent_val and not accent_val.startswith("#"):
+        accent_val = f"#{accent_val}"
+    bootstrap = {
+        "userId": 0,
+        "branding": {
+            "welcome_text": (settings.get("webapp_welcome_text") or title or "").strip(),
+            "accent_color": accent_val,
+            "logo": settings.get("webapp_logo") or logo or "",
+            "icon": settings.get("webapp_icon") or "",
+            "title": title or settings.get("webapp_title") or "Preview",
+        },
+        "design": design_id,
+        "studioPreview": True,
+        "studioDevice": device,
     }
-    content = _process_template_placeholders(content, 0, settings, context, design_override=design_id)
-    preview_script = (
-        f'<script>window.WEBAPP_DESIGN_CONFIG={build_preview_design_config_json(settings, design_id)};'
-        f'window.STUDIO_PREVIEW=true;window.RENDERED_USER_ID=0;'
-        f'document.documentElement.dataset.webappDesign="{design_id}";'
-        f'document.documentElement.dataset.studioDevice="{device}";</script>'
+    bootstrap_html = (
+        f'<script id="webapp-bootstrap" type="application/json">{html.escape(json.dumps(bootstrap, ensure_ascii=False))}</script>\n'
+        f'    <script>window.__WEBAPP_BOOTSTRAP__=JSON.parse(document.getElementById("webapp-bootstrap").textContent);'
+        f'window.STUDIO_PREVIEW=true;window.RENDERED_USER_ID=0;</script>'
     )
-    content = re.sub(
-        r'<script>window\.WEBAPP_DESIGN_CONFIG=.*?</script>',
-        preview_script,
-        content,
-        count=1,
-    )
+    content = content.replace("<!-- WEBAPP_BOOTSTRAP -->", bootstrap_html)
     badge = (
         '<div style="position:fixed;top:8px;right:8px;z-index:99999;font:600 10px/1 system-ui;'
         'padding:6px 10px;border-radius:999px;background:rgba(0,0,0,.72);color:#fff;border:1px solid rgba(255,255,255,.15)">'
@@ -1509,7 +1667,7 @@ async def webapp_health():
 @app.get("/studio-preview", response_class=HTMLResponse)
 async def studio_preview(
     token: str,
-    design: str = "aurum",
+    design: str = "telegram-premium",
     device: str = "mobile",
     title: str = "",
     logo: str = "",
@@ -1645,6 +1803,18 @@ class TrialActivateRequest(BaseModel):
 
 class DesignPickRequest(BaseModel):
     design_id: str
+
+class UserPreferencesRequest(BaseModel):
+    user_id: int
+    theme: str | None = None
+    notify_payments: bool | None = None
+    notify_subscription: bool | None = None
+    notify_support: bool | None = None
+    notify_referral: bool | None = None
+
+class NotificationsReadRequest(BaseModel):
+    user_id: int
+    ids: list[str] = []
 
 class ApplyPromoRequest(BaseModel):
     user_id: int
@@ -3130,6 +3300,19 @@ async def api_shop_purchase_catalog(user_id: int, auth_user: AuthUser):
         return {"ok": False, "error": str(e)}
 
 
+@app.get("/api/shop/purchase-catalog.json")
+async def api_shop_purchase_catalog_json(user_id: int, auth_user: AuthUser):
+    try:
+        user_id = authorized_user_id(auth_user, user_id)
+        user = get_user(user_id)
+        if not user or user.get("is_banned"):
+            return {"ok": False, "error": "Access denied"}
+        return _get_purchase_catalog_json(user_id)
+    except Exception as e:
+        logger.error(f"[WEBAPP] purchase-catalog.json {user_id}: {e}")
+        return {"ok": False, "error": str(e)}
+
+
 @app.get("/api/shop/renew-catalog")
 async def api_shop_renew_catalog(user_id: int, auth_user: AuthUser):
     try:
@@ -3139,6 +3322,88 @@ async def api_shop_renew_catalog(user_id: int, auth_user: AuthUser):
         return {"ok": True, "plans_html": plans}
     except Exception as e:
         logger.error(f"[WEBAPP] renew-catalog {user_id}: {e}")
+        return {"ok": False, "error": str(e)}
+
+
+@app.get("/api/shop/renew-catalog.json")
+async def api_shop_renew_catalog_json(user_id: int, auth_user: AuthUser):
+    try:
+        user_id = authorized_user_id(auth_user, user_id)
+        user = get_user(user_id)
+        if not user or user.get("is_banned"):
+            return {"ok": False, "error": "Access denied"}
+        return _get_renew_catalog_json(user_id)
+    except Exception as e:
+        logger.error(f"[WEBAPP] renew-catalog.json {user_id}: {e}")
+        return {"ok": False, "error": str(e)}
+
+
+@app.get("/api/notifications")
+async def api_notifications(user_id: int, auth_user: AuthUser):
+    try:
+        user_id = authorized_user_id(auth_user, user_id)
+        user = get_user(user_id)
+        if not user or user.get("is_banned"):
+            return {"ok": False, "error": "Access denied"}
+        return {"ok": True, "notifications": _build_notifications(user_id)}
+    except Exception as e:
+        logger.error(f"[WEBAPP] notifications {user_id}: {e}")
+        return {"ok": False, "error": str(e)}
+
+
+@app.post("/api/notifications/read")
+async def api_notifications_read(req: NotificationsReadRequest, auth_user: AuthUser):
+    try:
+        from shop_bot.security.kv_store import get_value, set_value
+
+        user_id = authorized_user_id(auth_user, req.user_id)
+        key = f"webapp:notif-read:{user_id}"
+        read_ids: set[str] = set()
+        raw = get_value(key)
+        if raw:
+            try:
+                parsed = json.loads(raw)
+                if isinstance(parsed, list):
+                    read_ids = {str(x) for x in parsed}
+            except Exception:
+                log_suppressed()
+        for nid in req.ids or []:
+            if nid:
+                read_ids.add(str(nid))
+        set_value(key, json.dumps(sorted(read_ids), ensure_ascii=False))
+        return {"ok": True}
+    except Exception as e:
+        logger.error(f"[WEBAPP] notifications/read {req.user_id}: {e}")
+        return {"ok": False, "error": str(e)}
+
+
+@app.get("/api/user/preferences")
+async def api_user_preferences_get(user_id: int, auth_user: AuthUser):
+    try:
+        user_id = authorized_user_id(auth_user, user_id)
+        user = get_user(user_id)
+        if not user or user.get("is_banned"):
+            return {"ok": False, "error": "Access denied"}
+        return {"ok": True, "preferences": _get_user_preferences(user_id)}
+    except Exception as e:
+        logger.error(f"[WEBAPP] preferences get {user_id}: {e}")
+        return {"ok": False, "error": str(e)}
+
+
+@app.post("/api/user/preferences")
+async def api_user_preferences_save(req: UserPreferencesRequest, auth_user: AuthUser):
+    try:
+        user_id = authorized_user_id(auth_user, req.user_id)
+        user = get_user(user_id)
+        if not user or user.get("is_banned"):
+            return {"ok": False, "error": "Access denied"}
+        patch = req.model_dump(exclude={"user_id"}, exclude_none=True)
+        if patch.get("theme") and patch["theme"] not in ("system", "light", "dark"):
+            return {"ok": False, "error": "invalid theme"}
+        prefs = _save_user_preferences(user_id, patch)
+        return {"ok": True, "preferences": prefs}
+    except Exception as e:
+        logger.error(f"[WEBAPP] preferences save {req.user_id}: {e}")
         return {"ok": False, "error": str(e)}
 
 
@@ -3202,7 +3467,15 @@ async def dynamic_route(request: Request, path_param: str):
                  else:
                      return HTMLResponse(content="<h1>Login page not found</h1>", status_code=404)
         
-        # Pass through to 404 naturally or handle other dynamic routes
+        if path_param in SPA_CLIENT_PATHS or path_param.startswith("vpn/"):
+            from shop_bot.webapp.auth import extract_auth_token, resolve_user_from_token
+            cookie_user = resolve_user_from_token(extract_auth_token(request))
+            if cookie_user:
+                webapp_settings = get_webapp_settings()
+                if cookie_user.get('is_banned'):
+                    return _render_banned_page(webapp_settings)
+                return await _render_main_page(cookie_user['telegram_id'])
+
         return HTMLResponse(content="<h1>404 Not Found</h1>", status_code=404)
     except Exception as e:
         logger.error(f"[WEBAPP] - Ошибка динамического маршрута: {e}")

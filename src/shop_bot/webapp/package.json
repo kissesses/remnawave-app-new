@@ -1,8 +1,10 @@
 {
-  "name": "remnawave-webapp-css",
+  "name": "remnawave-webapp",
   "private": true,
   "scripts": {
-    "build:css": "tailwindcss -i ./static/css/webapp-tailwind-src.css -o ./static/css/webapp-tailwind.css --minify"
+    "build": "cd frontend && npm install && npm run build",
+    "build:css": "tailwindcss -i ./static/css/webapp-tailwind-src.css -o ./static/css/webapp-tailwind.css --minify",
+    "dev:frontend": "cd frontend && npm run dev"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.10",

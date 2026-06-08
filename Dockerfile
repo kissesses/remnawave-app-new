@@ -1,18 +1,25 @@
 # syntax=docker/dockerfile:1
-# Remnawave App — multi-stage: без build-essential в финальном образе (меньше pull).
+# Remnawave App — multi-stage: WebApp (React) и login CSS собираются в образе, на сервере Node/npm не нужны.
 
 ARG INSTALL_DOCKER_CLI=1
 
-FROM node:22-alpine AS webapp_css
-WORKDIR /css
+# --- WebApp: login Tailwind + React SPA (telegram-premium) ---
+FROM node:22-alpine AS webapp_build
+WORKDIR /app/webapp
+
+# Login page: precompiled Tailwind (fallback вместо CDN)
 COPY src/shop_bot/webapp/package.json src/shop_bot/webapp/tailwind.config.js ./
-COPY src/shop_bot/webapp/static/css/webapp-tailwind-src.css ./static/css/
-COPY src/shop_bot/webapp/app.html src/shop_bot/webapp/login.html ./
+COPY src/shop_bot/webapp/login.html ./
 COPY src/shop_bot/webapp/module/load.html ./module/
-COPY src/shop_bot/webapp/static/js ./static/js
-COPY src/shop_bot/webapp/static/css/webapp-cabinet.css ./static/css/
-COPY src/shop_bot/webapp/static/css/webapp-shell.css ./static/css/
+COPY src/shop_bot/webapp/static/css/webapp-tailwind-src.css ./static/css/
 RUN npm install && npm run build:css
+
+# React cabinet SPA → static/dist
+WORKDIR /app/webapp/frontend
+COPY src/shop_bot/webapp/frontend/package.json src/shop_bot/webapp/frontend/package-lock.json ./
+RUN npm ci
+COPY src/shop_bot/webapp/frontend/ ./
+RUN npm run build
 
 FROM python:3.12-slim AS builder
 
@@ -32,7 +39,8 @@ ENV PATH="/app/.venv/bin:$PATH"
 
 COPY pyproject.toml /app/project/pyproject.toml
 COPY src /app/project/src
-COPY --from=webapp_css /css/static/css/webapp-tailwind.css /app/project/src/shop_bot/webapp/static/css/webapp-tailwind.css
+COPY --from=webapp_build /app/webapp/static/css/webapp-tailwind.css /app/project/src/shop_bot/webapp/static/css/webapp-tailwind.css
+COPY --from=webapp_build /app/webapp/static/dist /app/project/src/shop_bot/webapp/static/dist
 WORKDIR /app/project
 
 RUN pip install --no-cache-dir -U pip wheel \
@@ -69,10 +77,10 @@ RUN apt-get update \
 COPY --from=builder /app/.venv /app/.venv
 ENV PATH="/app/.venv/bin:$PATH"
 
-# editable install (-e): код и шаблоны Flask читаются из src, не только из site-packages
 COPY pyproject.toml /app/project/pyproject.toml
 COPY src /app/project/src
-COPY --from=webapp_css /css/static/css/webapp-tailwind.css /app/project/src/shop_bot/webapp/static/css/webapp-tailwind.css
+COPY --from=webapp_build /app/webapp/static/css/webapp-tailwind.css /app/project/src/shop_bot/webapp/static/css/webapp-tailwind.css
+COPY --from=webapp_build /app/webapp/static/dist /app/project/src/shop_bot/webapp/static/dist
 COPY scripts /app/project/scripts
 WORKDIR /app/project
 

@@ -5,20 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
-    <meta name="theme-color" id="dynamic-theme-color" content="#0c0c0e">
+    <meta name="theme-color" id="dynamic-theme-color" content="#17212B">
     {{ webapp_design_config_script }}
     <script>
         (function () {
-            var key = 'webapp-design-theme';
-            var cfg = window.WEBAPP_DESIGN_CONFIG || {};
-            var enabled = Array.isArray(cfg.enabled) && cfg.enabled.length ? cfg.enabled : null;
-            var mobile = window.matchMedia('(max-width: 768px)').matches ||
-                /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent || '');
-            var design = localStorage.getItem(key) || cfg.default || 'aurum';
-            if (design !== 'aurum') design = 'aurum';
-            if (enabled && enabled.indexOf(design) === -1) design = cfg.default || enabled[0] || 'aurum';
-            if (enabled && enabled.indexOf(design) === -1) design = enabled[0] || 'aurum';
-            document.documentElement.dataset.webappDesign = design;
+            document.documentElement.classList.add('dark');
+            document.documentElement.dataset.webappDesign = 'telegram-premium';
         })();
     </script>
     <link rel="stylesheet" href="/static/css/webapp-ui-tokens.css" />

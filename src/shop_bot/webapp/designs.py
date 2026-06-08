@@ -4,36 +4,25 @@ from __future__ import annotations
 
 import json
 
-WEBAPP_DESIGN_IDS = ("aurum",)
+WEBAPP_DESIGN_IDS = ("telegram-premium",)
 
 WEBAPP_DESIGNS: list[dict[str, str]] = [
     {
-        "id": "aurum",
-        "label": "Aurum",
-        "desc": "Luxury fintech: gold, glass KPI и pass-карта подписки",
-        "icon": "diamond",
-        "accent": "#c9a962",
+        "id": "telegram-premium",
+        "label": "Telegram Premium",
+        "desc": "Минималистичный кабинет в стиле Telegram Premium",
+        "icon": "verified",
+        "accent": "#3390EC",
     },
 ]
 
-DEFAULT_ENABLED_DESIGNS = "aurum"
+DEFAULT_ENABLED_DESIGNS = "telegram-premium"
 
-WEBAPP_SHARED_CSS = (
-    "webapp-ui-tokens.css",
-    "webapp-shell.css",
-    "webapp-design-bridge.css",
-    "webapp-cabinet.css",
-    "webapp-pages-v3.css",
-    "webapp-modals.css",
-)
+WEBAPP_SHARED_CSS: tuple[str, ...] = ()
 
-WEBAPP_THEME_CSS: dict[str, str] = {
-    "aurum": "webapp-aurum.css",
-}
+WEBAPP_THEME_CSS: dict[str, str] = {}
 
-WEBAPP_THEME_JS: dict[str, str] = {
-    "aurum": "webapp-aurum.js",
-}
+WEBAPP_THEME_JS: dict[str, str] = {}
 
 
 def parse_enabled_designs(raw: str | None) -> list[str]:
@@ -43,18 +32,25 @@ def parse_enabled_designs(raw: str | None) -> list[str]:
     result: list[str] = []
     for part in str(raw).split(","):
         design_id = part.strip()
+        if design_id == "aurum":
+            design_id = "telegram-premium"
         if design_id in WEBAPP_DESIGN_IDS and design_id not in seen:
             seen.add(design_id)
             result.append(design_id)
-    return result or ["aurum"]
+    if not result:
+        for legacy in ("aurum", "telegram-premium"):
+            if legacy in WEBAPP_DESIGN_IDS:
+                return [legacy]
+        return ["telegram-premium"]
+    return result
 
 
 def build_design_config(settings: dict | None, user_id: int | None = None) -> dict:
     settings = settings or {}
     enabled = parse_enabled_designs(settings.get("webapp_enabled_designs"))
-    default = (settings.get("webapp_default_design") or "aurum").strip()
+    default = (settings.get("webapp_default_design") or "telegram-premium").strip()
     if default not in WEBAPP_DESIGN_IDS:
-        default = "aurum"
+        default = "telegram-premium"
     if default not in enabled:
         default = enabled[0]
     ab_b = (settings.get("webapp_ab_design_b") or "").strip()
@@ -97,23 +93,8 @@ def resolve_default_design(settings: dict | None, user_id: int | None = None) ->
 
 
 def build_design_stylesheets(default_design: str) -> str:
-    lines = [f'<link rel="stylesheet" href="/static/css/{name}" />' for name in WEBAPP_SHARED_CSS]
-    theme_file = WEBAPP_THEME_CSS.get(default_design)
-    if theme_file:
-        lines.append(f'<link rel="stylesheet" href="/static/css/{theme_file}" />')
-    return "\n    ".join(lines)
+    return ""
 
 
 def build_design_scripts(default_design: str) -> str:
-    lines = [
-        '<script defer src="/static/js/webapp-perf-bootstrap.js"></script>',
-        '<script defer src="/static/js/webapp-theme-kit.js"></script>',
-        '<script defer src="/static/js/webapp-core.js"></script>',
-        '<script defer src="/static/js/webapp-shop.js"></script>',
-        '<script defer src="/static/js/webapp-cabinet.js"></script>',
-    ]
-    theme_js = WEBAPP_THEME_JS.get(default_design)
-    if theme_js:
-        lines.append(f'<script defer src="/static/js/{theme_js}"></script>')
-    lines.append('<script defer src="/static/js/webapp-theme-manager.js"></script>')
-    return "\n    ".join(lines)
+    return '<script defer src="/static/js/telegram-web-app.js"></script>'

@@ -12,3 +12,8 @@ __pycache__/
 .env
 .venv/
 venv/
+
+# WebApp build artifacts (собираются в Docker CI / scripts/build-webapp.sh)
+src/shop_bot/webapp/frontend/node_modules/
+src/shop_bot/webapp/node_modules/
+src/shop_bot/webapp/static/dist/

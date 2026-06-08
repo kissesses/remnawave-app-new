@@ -15,3 +15,8 @@ users-*.db
 *.md
 docs/
 .cursor
+
+# WebApp: собирается внутри Docker, не копировать артефакты с хоста
+src/shop_bot/webapp/frontend/node_modules
+src/shop_bot/webapp/node_modules
+src/shop_bot/webapp/static/dist
