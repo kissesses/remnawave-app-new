@@ -250,8 +250,31 @@ docker inspect ghcr.io/kissesses/remnawave-app-new:latest --format '{{.Created}}
 | 502 Bad Gateway | Upstream в nginx: `remnawave-app-new:1337`, не `127.0.0.1` |
 | Панель не открывается | `docker compose ps`, `curl http://127.0.0.1:1337/login` |
 | WebApp «не собран» | Образ устарел — `docker compose pull` |
+| `ghcr.io` timeout при pull | Сеть/DNS до GHCR — см. ниже или локальная сборка |
 | Бот не отвечает | Панель → Telegram, «Запустить бота» |
 | Нет ключей | Remnawave API token и хосты в настройках |
+
+**Таймаут `ghcr.io` при `docker compose pull`**
+
+```bash
+# Проверка доступности
+curl -v --connect-timeout 15 --max-time 60 https://ghcr.io/v2/
+
+# Повтор с увеличенным таймаутом
+export DOCKER_CLIENT_TIMEOUT=300 COMPOSE_HTTP_TIMEOUT=300
+docker compose pull remnawave-app
+```
+
+Если GHCR недоступен — соберите образ на сервере (без pull):
+
+```bash
+git clone https://github.com/kissesses/remnawave-app-new.git /tmp/remnawave-app-build
+cd /tmp/remnawave-app-build && docker build -t ghcr.io/kissesses/remnawave-app-new:local .
+cd /opt/remnawave-app-new
+echo 'SHOPBOT_IMAGE_TAG=local' >> .env
+docker compose pull postgres redis
+docker compose up -d --force-recreate
+```
 
 Диагностика:
 
