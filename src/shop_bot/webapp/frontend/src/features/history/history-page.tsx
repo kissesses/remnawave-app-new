@@ -1,17 +1,17 @@
-import { useMemo, useState } from "react";
-import { Receipt } from "lucide-react";
+import { useMemo, useState, useRef } from "react";
+import { Receipt, ArrowDownLeft, ArrowUpRight, Wallet } from "lucide-react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { useRef } from "react";
+import { motion } from "framer-motion";
 import { Header } from "@/components/layout/header";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Skeleton } from "@/components/ui/skeleton";
+import { PageSkeleton } from "@/components/feedback/page-skeleton";
 import { EmptyState } from "@/components/feedback/empty-state";
 import { PullRefreshIndicator } from "@/components/feedback/pull-refresh";
+import { Badge } from "@/components/ui/badge";
 import { usePaymentHistory, useRefreshCabinet } from "@/hooks/use-cabinet";
 import { usePullRefresh } from "@/hooks/use-pull-refresh";
 import { formatMoney, formatDateGroup, formatTime } from "@/lib/utils";
 import type { Transaction } from "@/types/api";
-import { Badge } from "@/components/ui/badge";
 
 type Filter = "all" | "payments" | "balance";
 
@@ -27,6 +27,13 @@ function groupTransactions(items: Transaction[]) {
     groups[groups.length - 1].items.push(item);
   }
   return groups;
+}
+
+function txIcon(item: Transaction) {
+  const label = item.label.toLowerCase();
+  if (label.includes("пополн") || label.includes("top")) return ArrowDownLeft;
+  if (label.includes("баланс")) return Wallet;
+  return ArrowUpRight;
 }
 
 export function HistoryPage() {
@@ -45,6 +52,16 @@ export function HistoryPage() {
     );
   }, [data, filter]);
 
+  const stats = useMemo(() => {
+    const payments = data?.payments ?? [];
+    const balance = data?.balance ?? [];
+    const spent = payments.filter((t) => t.success).reduce((s, t) => s + t.amount, 0);
+    const topped = balance
+      .filter((t) => t.success && t.label.toLowerCase().includes("пополн"))
+      .reduce((s, t) => s + t.amount, 0);
+    return { spent, topped, count: items.length };
+  }, [data, items.length]);
+
   const flatRows = useMemo(() => {
     const groups = groupTransactions(items);
     const rows: ({ type: "header"; date: string } | { type: "item"; item: Transaction })[] = [];
@@ -60,30 +77,54 @@ export function HistoryPage() {
   const virtualizer = useVirtualizer({
     count: flatRows.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: (i) => (flatRows[i]?.type === "header" ? 36 : 64),
+    estimateSize: (i) => (flatRows[i]?.type === "header" ? 36 : 72),
     overscan: 8,
   });
 
   return (
     <>
       <Header title="История" showBack />
-      <div className="px-4 pb-2">
+      <div className="px-4 pb-3 space-y-3">
+        {!isLoading && items.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="grid grid-cols-3 gap-2"
+          >
+            {[
+              { label: "Операций", value: String(stats.count) },
+              { label: "Пополнено", value: formatMoney(stats.topped) },
+              { label: "Потрачено", value: formatMoney(stats.spent) },
+            ].map((s) => (
+              <div key={s.label} className="premium-stat-pill">
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wide">
+                  {s.label}
+                </span>
+                <span className="mt-1 text-sm font-bold truncate w-full">{s.value}</span>
+              </div>
+            ))}
+          </motion.div>
+        )}
+
         <Tabs value={filter} onValueChange={(v) => setFilter(v as Filter)}>
-          <TabsList>
-            <TabsTrigger value="all">Все</TabsTrigger>
-            <TabsTrigger value="payments">Покупки</TabsTrigger>
-            <TabsTrigger value="balance">Баланс</TabsTrigger>
+          <TabsList className="premium-glass h-11 p-1 border-0">
+            <TabsTrigger value="all" className="rounded-xl text-xs">
+              Все
+            </TabsTrigger>
+            <TabsTrigger value="payments" className="rounded-xl text-xs">
+              Покупки
+            </TabsTrigger>
+            <TabsTrigger value="balance" className="rounded-xl text-xs">
+              Баланс
+            </TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
+
       <div className="page-scroll pb-8" {...pullProps} ref={parentRef}>
         <PullRefreshIndicator offset={pullOffset} />
         {isLoading ? (
-          <div className="space-y-2 p-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-14 w-full" />
-            ))}
-          </div>
+          <PageSkeleton variant="list" rows={6} />
         ) : items.length === 0 ? (
           <EmptyState
             icon={Receipt}
@@ -110,19 +151,33 @@ export function HistoryPage() {
                   }}
                 >
                   {row.type === "header" ? (
-                    <div className="py-2 text-xs font-semibold uppercase text-muted-foreground">
+                    <div className="py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                       {row.date}
                     </div>
                   ) : (
-                    <div className="flex items-center justify-between rounded-xl border border-border/50 bg-card px-4 py-3 mb-2">
-                      <div className="min-w-0">
+                    <div className="flex items-center gap-3 premium-glass px-4 py-3 mb-2">
+                      {(() => {
+                        const Icon = txIcon(row.item);
+                        return (
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                            <Icon className="h-4 w-4 text-primary" />
+                          </div>
+                        );
+                      })()}
+                      <div className="min-w-0 flex-1">
                         <div className="font-medium text-sm truncate">{row.item.label}</div>
                         <div className="text-xs text-muted-foreground">
                           {formatTime(row.item.date)} · {row.item.method}
                         </div>
                       </div>
-                      <div className="text-right shrink-0 ml-2">
-                        <div className="font-semibold text-sm">{formatMoney(row.item.amount)}</div>
+                      <div className="text-right shrink-0">
+                        <div
+                          className={`font-semibold text-sm ${
+                            row.item.success ? "text-foreground" : "text-muted-foreground"
+                          }`}
+                        >
+                          {formatMoney(row.item.amount)}
+                        </div>
                         <Badge
                           variant={row.item.success ? "success" : "secondary"}
                           className="mt-0.5 text-[10px]"

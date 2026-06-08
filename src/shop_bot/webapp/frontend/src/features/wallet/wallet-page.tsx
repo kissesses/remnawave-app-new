@@ -1,10 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { useSpring, useMotionValueEvent } from "framer-motion";
 import { useEffect, useState } from "react";
-import { ArrowUpRight, History } from "lucide-react";
+import { ArrowUpRight, History, TrendingUp } from "lucide-react";
 import { Header } from "@/components/layout/header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SectionHeader } from "@/components/premium/section-header";
 import { Button } from "@/components/ui/button";
+import { PageSkeleton } from "@/components/feedback/page-skeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PullRefreshIndicator } from "@/components/feedback/pull-refresh";
 import { BalanceChart } from "@/components/charts/balance-chart";
@@ -18,7 +19,7 @@ import {
 import { usePullRefresh } from "@/hooks/use-pull-refresh";
 import { formatMoney } from "@/lib/utils";
 import { TopUpSheet } from "@/features/shop/topup-sheet";
-import { useState } from "react";
+import { motion } from "framer-motion";
 
 function AnimatedBalance({ value }: { value: number }) {
   const spring = useSpring(0, { stiffness: 80, damping: 20 });
@@ -27,7 +28,7 @@ function AnimatedBalance({ value }: { value: number }) {
   useEffect(() => {
     spring.set(value);
   }, [value, spring]);
-  return <span className="text-4xl font-bold tracking-tight">{display}</span>;
+  return <span className="text-4xl font-bold tracking-tight text-gradient-primary">{display}</span>;
 }
 
 export function WalletPage() {
@@ -40,6 +41,7 @@ export function WalletPage() {
   const [topupOpen, setTopupOpen] = useState(false);
 
   const balance = status?.balance ?? config?.balance ?? 0;
+  const loading = statusLoading && histLoading;
   const allTx = [...(history?.payments ?? []), ...(history?.balance ?? [])];
   const spent = (history?.payments ?? [])
     .filter((t) => t.success)
@@ -54,51 +56,65 @@ export function WalletPage() {
       <Header title="Кошелёк" />
       <div className="page-scroll pb-24" {...pullProps}>
         <PullRefreshIndicator offset={pullOffset} />
-        <div className="space-y-4 p-4">
-          <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
-            <CardContent className="pt-6 pb-6 text-center">
-              <p className="text-sm text-muted-foreground mb-1">Баланс</p>
+        {loading ? (
+          <PageSkeleton variant="wallet" />
+        ) : (
+        <div className="space-y-5 p-4">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="premium-hero text-center"
+          >
+            <p className="relative z-10 text-sm text-muted-foreground mb-1">Баланс</p>
+            <div className="relative z-10">
               {statusLoading ? (
                 <Skeleton className="mx-auto h-10 w-40" />
               ) : (
                 <AnimatedBalance value={balance} />
               )}
-              {config?.topup?.enabled && (
-                <Button
-                  variant="tg"
-                  className="mt-4 w-full max-w-xs"
-                  onClick={() => setTopupOpen(true)}
-                >
-                  <ArrowUpRight className="h-4 w-4 mr-2" />
-                  Пополнить
-                </Button>
-              )}
-            </CardContent>
-          </Card>
+            </div>
+            {config?.topup?.enabled && (
+              <Button
+                variant="tg"
+                className="relative z-10 mt-4 w-full max-w-xs rounded-2xl"
+                onClick={() => setTopupOpen(true)}
+              >
+                <ArrowUpRight className="h-4 w-4 mr-2" />
+                Пополнить
+              </Button>
+            )}
+          </motion.div>
 
-          <Card>
-            <CardHeader className="pb-0">
-              <CardTitle className="text-base">Расходы за 30 дней</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {histLoading ? (
-                <Skeleton className="h-40 w-full" />
-              ) : (
-                <BalanceChart transactions={allTx} />
-              )}
-            </CardContent>
-          </Card>
+          <div className="premium-glass p-4">
+            <SectionHeader
+              title="Расходы за 30 дней"
+              action={<TrendingUp className="h-4 w-4 text-primary" />}
+            />
+            {histLoading ? (
+              <Skeleton className="h-40 w-full rounded-xl" />
+            ) : (
+              <BalanceChart transactions={allTx} />
+            )}
+          </div>
 
           <div className="grid grid-cols-3 gap-2">
             {[
               { label: "Пополнено", value: topped },
               { label: "Потрачено", value: spent },
               { label: "Рефералы", value: referral },
-            ].map((stat) => (
-              <Card key={stat.label} className="text-center p-3">
-                <div className="text-xs text-muted-foreground">{stat.label}</div>
-                <div className="mt-1 text-sm font-semibold">{formatMoney(stat.value)}</div>
-              </Card>
+            ].map((stat, i) => (
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: i * 0.05 }}
+                className="premium-stat-pill"
+              >
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wide">
+                  {stat.label}
+                </div>
+                <div className="mt-1 text-sm font-bold">{formatMoney(stat.value)}</div>
+              </motion.div>
             ))}
           </div>
 
@@ -111,6 +127,7 @@ export function WalletPage() {
             />
           </ListGroup>
         </div>
+        )}
       </div>
       <TopUpSheet open={topupOpen} onOpenChange={setTopupOpen} />
     </>

@@ -1,7 +1,7 @@
 import { lazy, Suspense, type ComponentType } from "react";
 import { createBrowserRouter } from "react-router-dom";
 import { AppShell } from "@/components/layout/app-shell";
-import { Skeleton } from "@/components/ui/skeleton";
+import { PageSkeleton } from "@/components/feedback/page-skeleton";
 
 const HomePage = lazy(() =>
   import("@/features/home/home-page").then((m) => ({ default: m.HomePage })),
@@ -29,15 +29,12 @@ const SettingsPage = lazy(() =>
 const VpnSetupPage = lazy(() =>
   import("@/features/vpn-setup/vpn-setup-page").then((m) => ({ default: m.VpnSetupPage })),
 );
+const KeyDetailPage = lazy(() =>
+  import("@/features/keys/key-detail-page").then((m) => ({ default: m.KeyDetailPage })),
+);
 
 function PageFallback() {
-  return (
-    <div className="p-4 space-y-3">
-      <Skeleton className="h-8 w-40" />
-      <Skeleton className="h-32 w-full rounded-2xl" />
-      <Skeleton className="h-24 w-full rounded-2xl" />
-    </div>
-  );
+  return <PageSkeleton variant="hero" />;
 }
 
 function withSuspense(Component: ComponentType) {
@@ -61,6 +58,7 @@ export const router = createBrowserRouter([
       { path: "notifications", element: withSuspense(NotificationsPage) },
       { path: "settings", element: withSuspense(SettingsPage) },
       { path: "vpn/setup", element: withSuspense(VpnSetupPage) },
+      { path: "keys/:keyId", element: withSuspense(KeyDetailPage) },
     ],
   },
 ]);

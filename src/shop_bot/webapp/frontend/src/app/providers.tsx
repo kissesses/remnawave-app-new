@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useThemeStore } from "@/stores/theme-store";
 import { useNotifications } from "@/hooks/use-cabinet";
+import { useBranding } from "@/hooks/use-branding";
 import { useUiStore } from "@/stores/ui-store";
 
 const queryClient = new QueryClient({
@@ -25,6 +26,11 @@ function ThemeSync() {
   return null;
 }
 
+function BrandingSync() {
+  useBranding();
+  return null;
+}
+
 function NotificationBadgeSync() {
   const { data } = useNotifications();
   const setUnread = useUiStore((s) => s.setUnreadNotifications);
@@ -38,6 +44,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeSync />
+      <BrandingSync />
       <NotificationBadgeSync />
       {children}
     </QueryClientProvider>

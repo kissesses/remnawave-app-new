@@ -28,8 +28,32 @@ declare global {
           selectionChanged: () => void;
         };
         initData?: string;
-        initDataUnsafe?: { user?: { id: number } };
+        initDataUnsafe?: {
+          user?: {
+            id: number;
+            first_name?: string;
+            last_name?: string;
+            username?: string;
+            photo_url?: string;
+          };
+        };
         close: () => void;
+        openLink?: (url: string) => void;
+        setHeaderColor?: (color: string) => void;
+        setBackgroundColor?: (color: string) => void;
+        MainButton?: {
+          setText: (t: string) => void;
+          show: () => void;
+          hide: () => void;
+          onClick: (cb: () => void) => void;
+          offClick: (cb: () => void) => void;
+        };
+        BackButton?: {
+          show: () => void;
+          hide: () => void;
+          onClick: (cb: () => void) => void;
+          offClick: (cb: () => void) => void;
+        };
       };
     };
   }
@@ -258,14 +282,57 @@ export const api = {
     );
   },
 
-  applyPromo(userId: number, code: string) {
+  applyPromo(userId: number, code: string, planId?: number) {
     return request<{ ok: boolean; message?: string; error?: string }>(
       "/api/apply-promo",
       {
         method: "POST",
-        body: JSON.stringify({ user_id: userId, promo_code: code }),
+        body: JSON.stringify({ user_id: userId, promo_code: code, plan_id: planId }),
       },
     );
+  },
+
+  getKeyDevices(userId: number, keyId: number, hostName?: string) {
+    return request<{ ok: boolean; devices: { id?: string; name?: string; platform?: string }[] }>(
+      "/api/key/devices",
+      {
+        method: "POST",
+        body: JSON.stringify({ user_id: userId, key_id: keyId, host_name: hostName }),
+      },
+    );
+  },
+
+  deleteKeyDevice(userId: number, keyId: number, deviceId: string, hostName?: string) {
+    return request<{ ok: boolean; error?: string }>("/api/key/device/delete", {
+      method: "POST",
+      body: JSON.stringify({
+        user_id: userId,
+        key_id: keyId,
+        device_id: deviceId,
+        host_name: hostName,
+      }),
+    });
+  },
+
+  saveKeyComment(userId: number, keyId: number, comment: string) {
+    return request<{ ok: boolean }>("/api/key/comment", {
+      method: "POST",
+      body: JSON.stringify({ user_id: userId, key_id: keyId, comment }),
+    });
+  },
+
+  getDeviceTiers(userId: number, hostName: string) {
+    return request<{
+      ok: boolean;
+      device_mode?: string;
+      tiers?: { tier_id: number; device_count: number; price: number }[];
+      tier_lock_extend?: number;
+      base_device_count?: number;
+      error?: string;
+    }>("/api/device-tiers", {
+      method: "POST",
+      body: JSON.stringify({ user_id: userId, host_name: hostName }),
+    });
   },
 };
 

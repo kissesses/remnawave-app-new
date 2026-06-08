@@ -380,6 +380,7 @@ SPA_CLIENT_PATHS = frozenset({
     "notifications",
     "settings",
     "vpn",
+    "keys",
 })
 
 def _format_remaining_details(remaining: timedelta) -> str:
@@ -3467,7 +3468,11 @@ async def dynamic_route(request: Request, path_param: str):
                  else:
                      return HTMLResponse(content="<h1>Login page not found</h1>", status_code=404)
         
-        if path_param in SPA_CLIENT_PATHS or path_param.startswith("vpn/"):
+        if (
+            path_param in SPA_CLIENT_PATHS
+            or path_param.startswith("vpn/")
+            or path_param.startswith("keys/")
+        ):
             from shop_bot.webapp.auth import extract_auth_token, resolve_user_from_token
             cookie_user = resolve_user_from_token(extract_auth_token(request))
             if cookie_user:

@@ -48,7 +48,7 @@ export function ListCell({
 
 export function ListGroup({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("overflow-hidden rounded-2xl border border-border/60 bg-card", className)}>
+    <div className={cn("overflow-hidden rounded-2xl premium-glass", className)}>
       {children}
     </div>
   );
