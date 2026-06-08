@@ -37,7 +37,7 @@ export function UnreadNotificationsToast() {
     });
 
     if (unread.length > 1) {
-      toast.message(`Ещё ${unread.length - 1} непрочитанных`, {
+      toast(`Ещё ${unread.length - 1} непрочитанных`, {
         duration: 7000,
         action: {
           label: "Все",

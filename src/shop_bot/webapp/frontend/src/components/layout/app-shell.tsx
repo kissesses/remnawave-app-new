@@ -6,6 +6,7 @@ import { AmbientBackground } from "@/components/premium/ambient-background";
 import { useNavigationDirection } from "@/hooks/use-navigation-direction";
 import { useTelegramShell } from "@/hooks/use-telegram-shell";
 import { cn } from "@/lib/utils";
+import { UnreadNotificationsToast } from "@/components/feedback/unread-notifications-toast";
 
 const STACK_PREFIXES = ["/history", "/notifications", "/settings", "/vpn", "/keys"];
 
@@ -33,6 +34,7 @@ export function AppShell() {
       )}
     >
       <AmbientBackground />
+      <UnreadNotificationsToast />
       {isStack ? (
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.div
