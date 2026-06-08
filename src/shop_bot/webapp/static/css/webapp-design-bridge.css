@@ -35,7 +35,12 @@ html:not([data-webapp-design="nova"]) #webapp-nova-dashboard {
 
 html:not([data-webapp-design^="pref-"]) #webapp-pf-header,
 html:not([data-webapp-design^="pref-"]) #webapp-pf-tabbar,
-html:not([data-webapp-design^="pref-"]) #webapp-pf-dashboard {
+html:not([data-webapp-design^="pref-"]) #webapp-pf-dashboard,
+html:not([data-webapp-design="pref-classic"]) #webapp-ledger-drawer,
+html:not([data-webapp-design="pref-macos"]) #webapp-aqua-menubar,
+html:not([data-webapp-design="pref-macos"]) #webapp-aqua-dock,
+html:not([data-webapp-design="pref-macos-v2"]) #webapp-stage-rail,
+html:not([data-webapp-design="pref-glass-stealth"]) #webapp-void-orbit {
     display: none !important;
 }
 

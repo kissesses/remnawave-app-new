@@ -8,12 +8,12 @@
         desktop: { id: 'desktop', label: 'Desktop', desc: 'Широкий макет для компьютера', icon: 'desktop_windows' },
         stealth: { id: 'stealth', label: 'Stealth', desc: 'Неоновая мини-аппа с сеткой и 3 вкладками', icon: 'shield' },
         'stealth-glass': { id: 'stealth-glass', label: 'Glass', desc: 'Стеклянная классика с верхним меню', icon: 'blur_on' },
-        'glass-hub': { id: 'glass-hub', label: 'Hub', desc: 'Дашборд: подписка, баланс и рефералы', icon: 'dashboard' },
-        nova: { id: 'nova', label: 'Nova', desc: 'Премиум-кабинет с нижней навигацией', icon: 'auto_awesome' },
-        'pref-classic': { id: 'pref-classic', label: 'Classic Premium', desc: 'Сдержанный тёмный кабинет для мобильных', icon: 'palette' },
-        'pref-macos': { id: 'pref-macos', label: 'macOS', desc: 'Apple-style: frosted glass и синий акцент', icon: 'laptop_mac' },
-        'pref-macos-v2': { id: 'pref-macos-v2', label: 'macOS v2', desc: 'Компактный workspace с сегмент-навигацией', icon: 'dashboard' },
-        'pref-glass-stealth': { id: 'pref-glass-stealth', label: 'Glass Stealth', desc: 'Матовое стекло без неоновых теней', icon: 'blur_on' },
+        'glass-hub': { id: 'glass-hub', label: 'Hub', desc: 'Bento-mosaic: асимметричная сетка', icon: 'dashboard' },
+        nova: { id: 'nova', label: 'Nova', desc: 'Snap-deck: полноэкранные слайды', icon: 'view_carousel' },
+        'pref-classic': { id: 'pref-classic', label: 'Ledger', desc: 'Выписка-timeline и drawer-меню', icon: 'receipt_long' },
+        'pref-macos': { id: 'pref-macos', label: 'Aqua', desc: 'Menu bar, окно и Dock', icon: 'laptop_mac' },
+        'pref-macos-v2': { id: 'pref-macos-v2', label: 'Stage', desc: 'Rail слева + snap-панели', icon: 'view_sidebar' },
+        'pref-glass-stealth': { id: 'pref-glass-stealth', label: 'Void', desc: 'Орбита и glass shards', icon: 'blur_circular' },
     };
 
     const PREF_DESIGNS = ['pref-classic', 'pref-macos', 'pref-macos-v2', 'pref-glass-stealth'];
@@ -199,7 +199,10 @@
         document.getElementById('webapp-stealth-glass-topnav')?.remove();
         window.WebAppGlassHub?.destroy?.();
         window.WebAppNova?.destroy?.();
-        window.WebAppPref?.destroy?.();
+        window.WebAppPrefClassic?.destroy?.();
+        window.WebAppPrefMacos?.destroy?.();
+        window.WebAppPrefMacosV2?.destroy?.();
+        window.WebAppPrefGlassStealth?.destroy?.();
         unwrapDesktopHomeGrid();
         document.body.classList.remove('webapp-has-tabbar', 'webapp-has-sidebar', 'webapp-has-stealth-tabbar');
     }
@@ -342,7 +345,10 @@
         if (design === 'stealth-glass') renderStealthGlassTopNav();
         if (design === 'glass-hub') window.WebAppGlassHub?.init?.();
         if (design === 'nova') window.WebAppNova?.init?.();
-        if (isPrefDesign(design)) window.WebAppPref?.init?.();
+        if (design === 'pref-classic') window.WebAppPrefClassic?.init?.();
+        if (design === 'pref-macos') window.WebAppPrefMacos?.init?.();
+        if (design === 'pref-macos-v2') window.WebAppPrefMacosV2?.init?.();
+        if (design === 'pref-glass-stealth') window.WebAppPrefGlassStealth?.init?.();
     }
 
     function renderIosTabBar() {
@@ -525,13 +531,16 @@
     function syncNav(pageId) {
         const id = pageId || getCurrentPageId();
         document.querySelectorAll(
-            '#webapp-ios-tabbar [data-page-id], #webapp-desktop-sidebar [data-page-id], #webapp-stealth-tabbar [data-page-id], #webapp-stealth-glass-topnav [data-page-id], #webapp-glass-hub-topnav [data-page-id], #webapp-nova-tabbar [data-page-id], #webapp-pf-tabbar [data-page-id]'
+            '#webapp-ios-tabbar [data-page-id], #webapp-desktop-sidebar [data-page-id], #webapp-stealth-tabbar [data-page-id], #webapp-stealth-glass-topnav [data-page-id], #webapp-glass-hub-topnav [data-page-id], #webapp-nova-tabbar [data-page-id], #webapp-ledger-nav [data-page-id], #webapp-aqua-dock [data-page-id], #webapp-stage-rail [data-page-id], #webapp-void-orbit [data-page-id]'
         ).forEach((btn) => {
             btn.classList.toggle('is-active', btn.dataset.pageId === id);
         });
         window.WebAppGlassHub?.syncNav?.(id);
         window.WebAppNova?.syncNav?.(id);
-        window.WebAppPref?.syncNav?.(id);
+        window.WebAppPrefClassic?.syncNav?.(id);
+        window.WebAppPrefMacos?.syncNav?.(id);
+        window.WebAppPrefMacosV2?.syncNav?.(id);
+        window.WebAppPrefGlassStealth?.syncNav?.(id);
     }
 
     function buildPickerOptions() {

@@ -302,7 +302,56 @@ html[data-webapp-design="nova"] .absolute.-top-24.-right-24 {
     line-height: 1.2;
 }
 
-/* Cards */
+/* Cards — full-width snap deck (Nova signature layout) */
+.webapp-nv-deck {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding: 4px 2px 12px;
+    margin: 0 -4px;
+    scrollbar-width: none;
+}
+
+.webapp-nv-deck::-webkit-scrollbar { display: none; }
+
+.webapp-nv-slide {
+    flex: 0 0 92%;
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+}
+
+.webapp-nv-slide--intro {
+    flex-basis: 100%;
+}
+
+.webapp-nv-slide--card .webapp-nv-card {
+    height: 100%;
+    min-height: 220px;
+}
+
+.webapp-nv-deck-dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.webapp-nv-deck-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transition: width 0.2s, background 0.2s;
+}
+
+.webapp-nv-deck-dot.is-active {
+    width: 18px;
+    border-radius: 3px;
+    background: var(--wa-nv-accent);
+}
+
 .webapp-nv-cards {
     display: grid;
     gap: 12px;

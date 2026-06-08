@@ -305,8 +305,8 @@
         updateTopBarBalance(balance);
 
         root.innerHTML = `
-            ${renderHero(key, data.status, data.cfg)}
-            <div class="webapp-gh-cards">
+            <div class="webapp-gh-bento">
+                <div class="webapp-gh-bento__hero">${renderHero(key, data.status, data.cfg)}</div>
                 ${renderSubscriptionCard(key)}
                 ${renderBalanceCard(balance, data.cfg)}
                 ${renderReferralCard(data.cfg, data.status)}

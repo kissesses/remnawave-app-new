@@ -57,43 +57,43 @@ WEBAPP_DESIGNS: list[dict[str, str]] = [
     {
         "id": "glass-hub",
         "label": "Hub",
-        "desc": "Дашборд: приветствие, подписка, баланс и рефералы",
+        "desc": "Bento-mosaic: асимметричная сетка плиток",
         "icon": "dashboard",
         "accent": "#3b82f6",
     },
     {
         "id": "nova",
         "label": "Nova",
-        "desc": "Премиум-кабинет с нижней навигацией и быстрыми действиями",
-        "icon": "auto_awesome",
+        "desc": "Snap-deck: листайте полноэкранные слайды",
+        "icon": "view_carousel",
         "accent": "#6366f1",
     },
     {
         "id": "pref-classic",
-        "label": "Classic Premium",
-        "desc": "Сдержанный тёмный кабинет без неона — для мобильных",
-        "icon": "palette",
+        "label": "Ledger",
+        "desc": "Выписка-тimeline: чек подписки и drawer-меню",
+        "icon": "receipt_long",
         "accent": "#10b981",
     },
     {
         "id": "pref-macos",
-        "label": "macOS",
-        "desc": "Стиль Apple: frosted glass, синий акцент, нижняя навигация",
+        "label": "Aqua",
+        "desc": "Menu bar + окно Subscription.app и Dock",
         "icon": "laptop_mac",
         "accent": "#0a84ff",
     },
     {
         "id": "pref-macos-v2",
-        "label": "macOS v2",
-        "desc": "Компактный workspace-кабинет с сегментированной навигацией",
-        "icon": "dashboard",
+        "label": "Stage",
+        "desc": "Левый rail + горизонтальные snap-панели",
+        "icon": "view_sidebar",
         "accent": "#0a84ff",
     },
     {
         "id": "pref-glass-stealth",
-        "label": "Glass Stealth",
-        "desc": "Матовое стекло, нейтральные тона — без неоновых теней",
-        "icon": "blur_on",
+        "label": "Void",
+        "desc": "Орбитальное меню и стеклянные shards",
+        "icon": "blur_circular",
         "accent": "#e4e4e7",
     },
 ]
@@ -115,19 +115,19 @@ WEBAPP_THEME_CSS: dict[str, str] = {
     "stealth-glass": "webapp-stealth-glass.css",
     "glass-hub": "webapp-glass-hub.css",
     "nova": "webapp-nova.css",
-    "pref-classic": "webapp-pref-shell.css",
-    "pref-macos": "webapp-pref-shell.css",
-    "pref-macos-v2": "webapp-pref-shell.css",
-    "pref-glass-stealth": "webapp-pref-shell.css",
+    "pref-classic": "webapp-pref-classic.css",
+    "pref-macos": "webapp-pref-macos.css",
+    "pref-macos-v2": "webapp-pref-macos-v2.css",
+    "pref-glass-stealth": "webapp-pref-glass-stealth.css",
 }
 
 WEBAPP_THEME_JS: dict[str, str] = {
     "glass-hub": "webapp-glass-hub.js",
     "nova": "webapp-nova.js",
-    "pref-classic": "webapp-pref-shell.js",
-    "pref-macos": "webapp-pref-shell.js",
-    "pref-macos-v2": "webapp-pref-shell.js",
-    "pref-glass-stealth": "webapp-pref-shell.js",
+    "pref-classic": "webapp-pref-classic.js",
+    "pref-macos": "webapp-pref-macos.js",
+    "pref-macos-v2": "webapp-pref-macos-v2.js",
+    "pref-glass-stealth": "webapp-pref-glass-stealth.js",
 }
 
 
@@ -202,6 +202,7 @@ def build_design_stylesheets(default_design: str) -> str:
 def build_design_scripts(default_design: str) -> str:
     lines = [
         '<script defer src="/static/js/webapp-perf-bootstrap.js"></script>',
+        '<script defer src="/static/js/webapp-theme-kit.js"></script>',
         '<script defer src="/static/js/webapp-core.js"></script>',
         '<script defer src="/static/js/webapp-shop.js"></script>',
         '<script defer src="/static/js/webapp-cabinet.js"></script>',

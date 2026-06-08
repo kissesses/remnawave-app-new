@@ -1,0 +1,203 @@
+/* pref-macos-v2 — Stage: left icon rail + horizontal snap panels */
+
+html[data-webapp-design="pref-macos-v2"] {
+    --wa-stage-accent: #0a84ff;
+    --wa-stage-bg: #121214;
+    --wa-stage-panel: rgba(255, 255, 255, 0.05);
+    --wa-stage-text: #f4f4f5;
+    --wa-stage-muted: #a1a1aa;
+    --wa-stage-rail: 56px;
+    --wa-stage-top: max(env(safe-area-inset-top), 8px);
+}
+
+html[data-webapp-design="pref-macos-v2"] body {
+    background: var(--wa-stage-bg) !important;
+    color: var(--wa-stage-text) !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif !important;
+}
+
+.webapp-stage-rail {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 99975;
+    width: var(--wa-stage-rail);
+    padding-top: calc(var(--wa-stage-top) + 8px);
+    padding-bottom: env(safe-area-inset-bottom);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0, 0, 0, 0.35);
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.webapp-stage-rail__btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--wa-stage-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, color 0.15s;
+}
+
+.webapp-stage-rail__btn.is-active {
+    background: rgba(10, 132, 255, 0.18);
+    color: var(--wa-stage-accent);
+}
+
+.webapp-stage-search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    font-size: 0.8125rem;
+    color: var(--wa-stage-muted);
+}
+
+.webapp-stage-search__text strong {
+    color: var(--wa-stage-text);
+}
+
+.webapp-stage-search__action {
+    margin-left: auto;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 8px;
+    background: var(--wa-stage-accent);
+    color: #fff;
+    font-size: 1.125rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.webapp-stage-deck {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 8px;
+    margin: 0 -4px;
+    scrollbar-width: none;
+}
+
+.webapp-stage-deck::-webkit-scrollbar { display: none; }
+
+.webapp-stage-panel {
+    flex: 0 0 78%;
+    scroll-snap-align: start;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: var(--wa-stage-panel);
+    padding: 20px 18px;
+    min-height: 160px;
+}
+
+.webapp-stage-panel--hero {
+    flex-basis: 88%;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    background: linear-gradient(145deg, rgba(10, 132, 255, 0.15), rgba(255, 255, 255, 0.04));
+}
+
+.webapp-stage-panel--hero h2 {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+}
+
+.webapp-stage-eyebrow {
+    margin: 0 0 auto;
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--wa-stage-accent);
+}
+
+.webapp-stage-sub {
+    margin: 6px 0 0;
+    color: var(--wa-stage-muted);
+    font-size: 0.875rem;
+}
+
+.webapp-stage-stat__label {
+    display: block;
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--wa-stage-muted);
+    margin-bottom: 8px;
+}
+
+.webapp-stage-stat__value {
+    font-size: 1.375rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.webapp-stage-panel--cta {
+    flex-basis: 70%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    justify-content: center;
+}
+
+.webapp-stage-panel--cta button {
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--wa-stage-text);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+html[data-webapp-design="pref-macos-v2"] #main-page,
+html[data-webapp-design="pref-macos-v2"] #purchase-page,
+html[data-webapp-design="pref-macos-v2"] #renew-page,
+html[data-webapp-design="pref-macos-v2"] #setup-page,
+html[data-webapp-design="pref-macos-v2"] #profile-page,
+html[data-webapp-design="pref-macos-v2"] #support-page {
+    margin-left: var(--wa-stage-rail) !important;
+    max-width: none !important;
+    width: calc(100% - var(--wa-stage-rail)) !important;
+    padding: var(--wa-stage-top) 14px calc(20px + env(safe-area-inset-bottom)) !important;
+    min-height: 100dvh;
+    box-sizing: border-box;
+}
+
+html[data-webapp-design="pref-macos-v2"] #main-page > header,
+html[data-webapp-design="pref-macos-v2"] #main-page > nav,
+html[data-webapp-design="pref-macos-v2"] #main-page > .grid,
+html[data-webapp-design="pref-macos-v2"] #main-page > footer,
+html[data-webapp-design="pref-macos-v2"] #key-info-section-container,
+html[data-webapp-design="pref-macos-v2"] #webapp-cabinet-quick,
+html[data-webapp-design="pref-macos-v2"] #purchase-page > header,
+html[data-webapp-design="pref-macos-v2"] #renew-page > header,
+html[data-webapp-design="pref-macos-v2"] #setup-page > header,
+html[data-webapp-design="pref-macos-v2"] #profile-page > header,
+html[data-webapp-design="pref-macos-v2"] #support-page > header {
+    display: none !important;
+}
+
+html[data-webapp-design="pref-macos-v2"] #webapp-theme-fab {
+    left: calc(var(--wa-stage-rail) + 14px);
+    right: auto;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+}

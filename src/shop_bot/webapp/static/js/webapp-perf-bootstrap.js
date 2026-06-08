@@ -8,19 +8,19 @@
         'stealth-glass': '/static/css/webapp-stealth-glass.css',
         'glass-hub': '/static/css/webapp-glass-hub.css',
         nova: '/static/css/webapp-nova.css',
-        'pref-classic': '/static/css/webapp-pref-shell.css',
-        'pref-macos': '/static/css/webapp-pref-shell.css',
-        'pref-macos-v2': '/static/css/webapp-pref-shell.css',
-        'pref-glass-stealth': '/static/css/webapp-pref-shell.css',
+        'pref-classic': '/static/css/webapp-pref-classic.css',
+        'pref-macos': '/static/css/webapp-pref-macos.css',
+        'pref-macos-v2': '/static/css/webapp-pref-macos-v2.css',
+        'pref-glass-stealth': '/static/css/webapp-pref-glass-stealth.css',
     };
 
     var THEME_JS = {
         'glass-hub': '/static/js/webapp-glass-hub.js',
         nova: '/static/js/webapp-nova.js',
-        'pref-classic': '/static/js/webapp-pref-shell.js',
-        'pref-macos': '/static/js/webapp-pref-shell.js',
-        'pref-macos-v2': '/static/js/webapp-pref-shell.js',
-        'pref-glass-stealth': '/static/js/webapp-pref-shell.js',
+        'pref-classic': '/static/js/webapp-pref-classic.js',
+        'pref-macos': '/static/js/webapp-pref-macos.js',
+        'pref-macos-v2': '/static/js/webapp-pref-macos-v2.js',
+        'pref-glass-stealth': '/static/js/webapp-pref-glass-stealth.js',
     };
 
     try {

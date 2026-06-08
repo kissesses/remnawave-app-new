@@ -294,13 +294,35 @@
         updateHeaderBalance(balance);
 
         root.innerHTML = `
-            ${renderHero(key, data.status, data.cfg)}
-            ${renderQuickActions(data.cfg)}
-            <div class="webapp-nv-cards">
-                ${renderSubscriptionCard(key)}
-                ${renderBalanceCard(balance, data.cfg)}
-                ${renderReferralCard(data.cfg, data.status)}
-            </div>`;
+            <div class="webapp-nv-deck" id="webapp-nv-deck">
+                <section class="webapp-nv-slide webapp-nv-slide--intro">
+                    ${renderHero(key, data.status, data.cfg)}
+                    ${renderQuickActions(data.cfg)}
+                </section>
+                <section class="webapp-nv-slide webapp-nv-slide--card">
+                    ${renderSubscriptionCard(key)}
+                </section>
+                <section class="webapp-nv-slide webapp-nv-slide--card">
+                    ${renderBalanceCard(balance, data.cfg)}
+                </section>
+                <section class="webapp-nv-slide webapp-nv-slide--card">
+                    ${renderReferralCard(data.cfg, data.status)}
+                </section>
+            </div>
+            <div class="webapp-nv-deck-dots" id="webapp-nv-deck-dots"></div>`;
+
+        const deck = root.querySelector('#webapp-nv-deck');
+        const dots = root.querySelector('#webapp-nv-deck-dots');
+        const slides = deck ? deck.querySelectorAll('.webapp-nv-slide').length : 0;
+        if (dots && slides) {
+            dots.innerHTML = Array.from({ length: slides }, (_, i) =>
+                `<span class="webapp-nv-deck-dot${i === 0 ? ' is-active' : ''}"></span>`
+            ).join('');
+            deck.addEventListener('scroll', () => {
+                const idx = Math.round(deck.scrollLeft / (deck.offsetWidth * 0.85));
+                dots.querySelectorAll('.webapp-nv-deck-dot').forEach((d, i) => d.classList.toggle('is-active', i === idx));
+            }, { passive: true });
+        }
 
         bindDashboardActions(root, data);
     }
