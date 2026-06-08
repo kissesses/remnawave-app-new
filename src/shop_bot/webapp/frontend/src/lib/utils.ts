@@ -10,31 +10,38 @@ export function formatMoney(amount: number, currency = "₽"): string {
   return `${n.toLocaleString("ru-RU", { maximumFractionDigits: 0 })} ${currency}`;
 }
 
-export function formatDate(dateStr: string): string {
-  try {
-    const d = new Date(dateStr.replace(" ", "T"));
-    return d.toLocaleDateString("ru-RU", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-  } catch {
-    return dateStr;
+function parseAppDate(dateStr: string): Date | null {
+  const raw = dateStr?.trim();
+  if (!raw) return null;
+
+  const candidates = [raw.replace(" ", "T"), raw];
+  for (const value of candidates) {
+    const d = new Date(value);
+    if (!Number.isNaN(d.getTime())) return d;
   }
+  return null;
+}
+
+export function formatDate(dateStr: string): string {
+  const d = parseAppDate(dateStr);
+  if (!d) return dateStr || "";
+  return d.toLocaleDateString("ru-RU", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 export function formatTime(dateStr: string): string {
-  try {
-    const d = new Date(dateStr.replace(" ", "T"));
-    return d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
-  } catch {
-    return "";
-  }
+  const d = parseAppDate(dateStr);
+  if (!d) return "";
+  return d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
 }
 
 export function formatDateGroup(dateStr: string): string {
   try {
-    const d = new Date(dateStr.replace(" ", "T"));
+    const d = parseAppDate(dateStr);
+    if (!d) return dateStr;
     const today = new Date();
     const yesterday = new Date();
     yesterday.setDate(today.getDate() - 1);
@@ -42,6 +49,6 @@ export function formatDateGroup(dateStr: string): string {
     if (d.toDateString() === yesterday.toDateString()) return "Вчера";
     return d.toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
   } catch {
-    return dateStr;
+    return dateStr || "";
   }
 }

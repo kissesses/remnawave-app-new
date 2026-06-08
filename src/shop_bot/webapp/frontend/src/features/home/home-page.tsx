@@ -73,12 +73,12 @@ export function HomePage() {
     onBuy: () => setPurchaseOpen(true),
     onRenew: () => setRenewOpen(true),
     onTrial: openTrial,
-    onReferrals: () => navigate("/profile"),
+    onReferrals: () => navigate("/profile#referrals"),
     onHowto: () => navigate("/vpn/setup"),
     onTopup: () => navigate("/wallet"),
     onPromo: () => setPurchaseOpen(true),
     onSupport: () => navigate("/support"),
-  });
+  }).filter((action) => !["topup", "support"].includes(action.id));
 
   const headerTitle = formatWelcomeText(branding.welcome_text, displayName);
 

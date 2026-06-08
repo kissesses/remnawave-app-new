@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { formatMoney } from "@/lib/utils";
+import { formatMoney, cn } from "@/lib/utils";
 
 interface ProfileHeroCardProps {
   displayName: string;
@@ -15,6 +15,40 @@ interface ProfileHeroCardProps {
   referralCount?: number;
   trialUsed?: boolean;
   trialAvailable?: boolean;
+  onBalanceClick?: () => void;
+  onKeysClick?: () => void;
+  onReferralsClick?: () => void;
+}
+
+function StatPill({
+  value,
+  label,
+  onClick,
+}: {
+  value: React.ReactNode;
+  label: string;
+  onClick?: () => void;
+}) {
+  const className = cn(
+    "profile-stat-pill w-full transition-transform active:scale-[0.98]",
+    onClick && "cursor-pointer hover:bg-black/30",
+  );
+
+  if (onClick) {
+    return (
+      <button type="button" className={className} onClick={onClick}>
+        <p className="profile-stat-pill__value">{value}</p>
+        <p className="profile-stat-pill__label">{label}</p>
+      </button>
+    );
+  }
+
+  return (
+    <div className={className}>
+      <p className="profile-stat-pill__value">{value}</p>
+      <p className="profile-stat-pill__label">{label}</p>
+    </div>
+  );
 }
 
 export function ProfileHeroCard({
@@ -29,6 +63,9 @@ export function ProfileHeroCard({
   referralCount = 0,
   trialUsed,
   trialAvailable,
+  onBalanceClick,
+  onKeysClick,
+  onReferralsClick,
 }: ProfileHeroCardProps) {
   return (
     <motion.div
@@ -72,20 +109,13 @@ export function ProfileHeroCard({
         </div>
 
         <div className="mt-4 grid grid-cols-3 gap-2">
-          <div className="profile-stat-pill">
-            <p className="profile-stat-pill__value">{formatMoney(balance)}</p>
-            <p className="profile-stat-pill__label">Баланс</p>
-          </div>
-          <div className="profile-stat-pill">
-            <p className="profile-stat-pill__value">
-              {activeKeys}/{totalKeys}
-            </p>
-            <p className="profile-stat-pill__label">Ключи</p>
-          </div>
-          <div className="profile-stat-pill">
-            <p className="profile-stat-pill__value">{referralCount}</p>
-            <p className="profile-stat-pill__label">Рефералы</p>
-          </div>
+          <StatPill value={formatMoney(balance)} label="Баланс" onClick={onBalanceClick} />
+          <StatPill
+            value={`${activeKeys}/${totalKeys}`}
+            label="Ключи"
+            onClick={onKeysClick}
+          />
+          <StatPill value={referralCount} label="Рефералы" onClick={onReferralsClick} />
         </div>
       </div>
     </motion.div>

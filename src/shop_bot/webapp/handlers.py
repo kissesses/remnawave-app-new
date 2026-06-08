@@ -3281,6 +3281,7 @@ async def api_key_comment(req: CommentRequest, auth_user: AuthUser):
         return {"ok": False, "error": str(e)}
 
 def _support_ticket_summary(ticket: dict) -> dict:
+    from shop_bot.data_manager.db.support import get_ticket_closed_at
     from shop_bot.data_manager.remnawave_repository import (
         get_ticket_messages,
         can_reopen_support_ticket,
@@ -3296,13 +3297,15 @@ def _support_ticket_summary(ticket: dict) -> dict:
         and last_sender == "admin"
     )
     can_reopen, _ = can_reopen_support_ticket(ticket)
+    closed_dt = get_ticket_closed_at(ticket)
+    closed_at = closed_dt.strftime("%Y-%m-%d %H:%M:%S") if closed_dt else ""
     return {
         "ticket_id": tid,
         "subject": ticket.get("subject") or "Обращение без темы",
         "status": ticket.get("status") or "open",
         "created_at": ticket.get("created_at") or "",
         "updated_at": ticket.get("updated_at") or ticket.get("created_at") or "",
-        "closed_at": ticket.get("closed_at") or "",
+        "closed_at": closed_at,
         "message_count": len(visible),
         "last_sender": last_sender,
         "has_unread": has_unread,

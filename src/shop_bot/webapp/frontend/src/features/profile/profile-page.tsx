@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Settings,
@@ -7,9 +7,7 @@ import {
   Copy,
   ChevronRight,
   Shield,
-  Wallet,
   History,
-  Headphones,
   Wrench,
   Share2,
   Calendar,
@@ -22,10 +20,6 @@ import { SectionHeader } from "@/components/premium/section-header";
 import { ProfileHeroCard } from "@/components/premium/profile-hero-card";
 import { StudioBoard } from "@/components/studio/studio-board";
 import { StudioChip, StudioChipRow } from "@/components/studio/studio-chip";
-import {
-  StudioOverviewCard,
-  StudioOverviewGrid,
-} from "@/components/studio/studio-overview-card";
 import { SubscriptionRing } from "@/components/premium/subscription-ring";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -39,9 +33,11 @@ import {
 } from "@/hooks/use-cabinet";
 import { usePullRefresh } from "@/hooks/use-pull-refresh";
 import { useTelegram } from "@/hooks/use-telegram";
+import { useUiStore } from "@/stores/ui-store";
 import { api } from "@/lib/api";
 import { formatMoney, formatDate, cn } from "@/lib/utils";
 import type { VpnKey } from "@/types/api";
+import type { LucideIcon } from "lucide-react";
 
 type KeyFilter = "all" | "active" | "expired";
 
@@ -51,15 +47,55 @@ function filterKeys(keys: VpnKey[], filter: KeyFilter) {
   return keys;
 }
 
+function ProfileMenuRow({
+  icon: Icon,
+  label,
+  meta,
+  badge,
+  onClick,
+}: {
+  icon: LucideIcon;
+  label: string;
+  meta?: string;
+  badge?: number;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className="flex w-full items-center gap-3 py-3 text-left transition-opacity active:opacity-70"
+      onClick={onClick}
+    >
+      <div className="studio-hub__icon flex h-9 w-9 shrink-0 items-center justify-center">
+        <Icon className="h-4 w-4 text-primary" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium">{label}</p>
+        {meta && <p className="text-xs text-muted-foreground">{meta}</p>}
+      </div>
+      {badge != null && badge > 0 && (
+        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-bold text-destructive-foreground">
+          {badge > 9 ? "9+" : badge}
+        </span>
+      )}
+      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+    </button>
+  );
+}
+
 export function ProfilePage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const userId = useUserId();
   const refresh = useRefreshCabinet();
   const { pullProps, pullOffset } = usePullRefresh(refresh);
   const { data: status, isLoading } = useUserStatus();
   const { data: config } = useCabinetConfig();
   const { displayName, user: tgUser, haptic, openLink } = useTelegram();
+  const unreadNotifications = useUiStore((s) => s.unreadNotifications);
   const [keyFilter, setKeyFilter] = useState<KeyFilter>("all");
+  const keysRef = useRef<HTMLDivElement>(null);
+  const referralsRef = useRef<HTMLDivElement>(null);
 
   const avatarUrl = tgUser?.photo_url || api.getAvatarUrl(userId);
   const initials = displayName?.slice(0, 2).toUpperCase() || String(userId).slice(-2);
@@ -68,11 +104,16 @@ export function ProfilePage() {
   const referralLink = status?.referral_link ?? config?.referrals?.link;
   const referralCount = status?.referral_count ?? config?.referrals?.count ?? 0;
   const referralEarned = status?.referral_earned ?? config?.referrals?.earned ?? 0;
+  const referralsEnabled = config?.referrals?.enabled;
 
   const keys = status?.keys ?? [];
   const filteredKeys = useMemo(() => filterKeys(keys, keyFilter), [keys, keyFilter]);
   const activeCount = profile?.active_keys ?? keys.filter((k) => k.days_left > 0).length;
   const totalCount = profile?.total_keys ?? keys.length;
+
+  const scrollTo = (ref: React.RefObject<HTMLDivElement | null>) => {
+    ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   const copyReferral = async () => {
     if (!referralLink) return;
@@ -89,42 +130,37 @@ export function ProfilePage() {
     openLink?.(`https://t.me/share/url?url=${url}&text=${text}`);
   };
 
-  const quickActions = [
-    {
-      id: "wallet",
-      icon: Wallet,
-      label: "Кошелёк",
-      meta: formatMoney(status?.balance ?? 0),
-      onClick: () => navigate("/wallet"),
-      show: true,
-    },
+  const menuLinks: {
+    id: string;
+    icon: LucideIcon;
+    label: string;
+    meta?: string;
+    badge?: number;
+    onClick: () => void;
+    show: boolean;
+  }[] = [
     {
       id: "history",
       icon: History,
-      label: "История",
+      label: "История операций",
       onClick: () => navigate("/history"),
+      show: true,
+    },
+    {
+      id: "notifications",
+      icon: Bell,
+      label: "Уведомления",
+      badge: unreadNotifications,
+      onClick: () => navigate("/notifications"),
       show: true,
     },
     {
       id: "vpn",
       icon: Wrench,
       label: "Настройка VPN",
+      meta: "Инструкции для устройств",
       onClick: () => navigate("/vpn/setup"),
       show: config?.modules?.howto !== false,
-    },
-    {
-      id: "support",
-      icon: Headphones,
-      label: "Поддержка",
-      onClick: () => navigate("/support"),
-      show: config?.modules?.support,
-    },
-    {
-      id: "notifications",
-      icon: Bell,
-      label: "Уведомления",
-      onClick: () => navigate("/notifications"),
-      show: true,
     },
     {
       id: "settings",
@@ -133,7 +169,13 @@ export function ProfilePage() {
       onClick: () => navigate("/settings"),
       show: true,
     },
-  ].filter((a) => a.show);
+  ].filter((item) => item.show);
+
+  useEffect(() => {
+    if (location.hash !== "#referrals" || !referralsEnabled) return;
+    const timer = window.setTimeout(() => scrollTo(referralsRef), 120);
+    return () => window.clearTimeout(timer);
+  }, [location.hash, referralsEnabled, status]);
 
   return (
     <>
@@ -156,46 +198,23 @@ export function ProfilePage() {
               referralCount={referralCount}
               trialUsed={status?.trial_used}
               trialAvailable={status?.trial_available}
+              onBalanceClick={() => {
+                haptic("selection");
+                navigate("/wallet");
+              }}
+              onKeysClick={() => {
+                haptic("selection");
+                scrollTo(keysRef);
+              }}
+              onReferralsClick={() => {
+                if (!referralsEnabled) return;
+                haptic("selection");
+                scrollTo(referralsRef);
+              }}
             />
 
-            <div>
-              <SectionHeader title="Быстрые действия" />
-              <StudioOverviewGrid>
-                {quickActions.map((action, i) => (
-                  <motion.div
-                    key={action.id}
-                    className="h-full"
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: i * 0.04 }}
-                  >
-                    <StudioOverviewCard
-                      icon={action.icon}
-                      title={action.label}
-                      meta={action.meta}
-                      onClick={() => {
-                        haptic("selection");
-                        action.onClick();
-                      }}
-                    />
-                  </motion.div>
-                ))}
-              </StudioOverviewGrid>
-            </div>
-
-            <div>
-              <SectionHeader
-                title="Мои подписки"
-                action={
-                  <button
-                    type="button"
-                    className="text-xs font-semibold text-primary"
-                    onClick={() => navigate("/")}
-                  >
-                    Главная →
-                  </button>
-                }
-              />
+            <div ref={keysRef}>
+              <SectionHeader title="Мои подписки" />
               <StudioChipRow className="mb-2">
                 {(
                   [
@@ -273,45 +292,47 @@ export function ProfilePage() {
               </StudioBoard>
             </div>
 
-            {config?.referrals?.enabled && (
-              <StudioBoard className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="studio-hub__icon flex items-center justify-center">
-                    <Users className="h-5 w-5 text-primary" />
+            {referralsEnabled && (
+              <div id="referrals" ref={referralsRef}>
+                <StudioBoard className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="studio-hub__icon flex items-center justify-center">
+                      <Users className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold">Реферальная программа</p>
+                      <p className="text-xs text-muted-foreground">
+                        {referralCount} приглашено · {formatMoney(referralEarned)} заработано
+                      </p>
+                    </div>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold">Реферальная программа</p>
-                    <p className="text-xs text-muted-foreground">
-                      {referralCount} приглашено · {formatMoney(referralEarned)} заработано
-                    </p>
+                  {referralLink && (
+                    <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-2.5">
+                      <p className="truncate font-mono text-[11px] text-muted-foreground">
+                        {referralLink}
+                      </p>
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <Button
+                      variant="tg"
+                      className="h-10 flex-1 rounded-xl text-sm"
+                      onClick={copyReferral}
+                    >
+                      <Copy className="mr-2 h-4 w-4" />
+                      Копировать
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="h-10 flex-1 rounded-xl border-white/15 text-sm"
+                      onClick={shareReferral}
+                    >
+                      <Share2 className="mr-2 h-4 w-4" />
+                      Поделиться
+                    </Button>
                   </div>
-                </div>
-                {referralLink && (
-                  <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-2.5">
-                    <p className="truncate font-mono text-[11px] text-muted-foreground">
-                      {referralLink}
-                    </p>
-                  </div>
-                )}
-                <div className="flex gap-2">
-                  <Button
-                    variant="tg"
-                    className="h-10 flex-1 rounded-xl text-sm"
-                    onClick={copyReferral}
-                  >
-                    <Copy className="mr-2 h-4 w-4" />
-                    Копировать
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="h-10 flex-1 rounded-xl border-white/15 text-sm"
-                    onClick={shareReferral}
-                  >
-                    <Share2 className="mr-2 h-4 w-4" />
-                    Поделиться
-                  </Button>
-                </div>
-              </StudioBoard>
+                </StudioBoard>
+              </div>
             )}
 
             <StudioBoard>
@@ -354,6 +375,25 @@ export function ProfilePage() {
                 </div>
               </div>
             </StudioBoard>
+
+            <div>
+              <SectionHeader title="Разделы" />
+              <StudioBoard className="divide-y divide-border/30">
+                {menuLinks.map((item) => (
+                  <ProfileMenuRow
+                    key={item.id}
+                    icon={item.icon}
+                    label={item.label}
+                    meta={item.meta}
+                    badge={item.badge}
+                    onClick={() => {
+                      haptic("selection");
+                      item.onClick();
+                    }}
+                  />
+                ))}
+              </StudioBoard>
+            </div>
           </div>
         )}
       </div>
