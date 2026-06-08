@@ -35,7 +35,13 @@ html:not([data-webapp-design="nova"]) #webapp-nova-dashboard {
 
 html:not([data-webapp-design="native"]) #webapp-native-tabbar,
 html:not([data-webapp-design="native"]) #webapp-native-home,
-html:not([data-webapp-design="native"]) #webapp-native-store-fab {
+html:not([data-webapp-design="native"]) #webapp-native-search-fab,
+html:not([data-webapp-design="native"]) #webapp-native-subnav,
+html:not([data-webapp-design="native"]) #webapp-native-sheet,
+html:not([data-webapp-design="native"]) #webapp-native-sheet-backdrop,
+html:not([data-webapp-design="native"]) #webapp-native-search,
+html:not([data-webapp-design="native"]) #webapp-native-search-backdrop,
+html:not([data-webapp-design="native"]) #webapp-native-ptr {
     display: none !important;
 }
 

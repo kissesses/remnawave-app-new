@@ -177,15 +177,15 @@ def parse_enabled_designs(raw: str | None) -> list[str]:
         if design_id in WEBAPP_DESIGN_IDS and design_id not in seen:
             seen.add(design_id)
             result.append(design_id)
-    return result or ["vault"]
+    return result or ["native"]
 
 
 def build_design_config(settings: dict | None, user_id: int | None = None) -> dict:
     settings = settings or {}
     enabled = parse_enabled_designs(settings.get("webapp_enabled_designs"))
-    default = (settings.get("webapp_default_design") or "vault").strip()
+    default = (settings.get("webapp_default_design") or "native").strip()
     if default not in WEBAPP_DESIGN_IDS:
-        default = "vault"
+        default = "native"
     if default not in enabled:
         default = enabled[0]
     ab_b = (settings.get("webapp_ab_design_b") or "").strip()

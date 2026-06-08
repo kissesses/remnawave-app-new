@@ -12,6 +12,11 @@ html[data-webapp-design="native"] {
     --wa-n-inset: 16px;
     --wa-n-radius: 12px;
     --wa-n-bottom: calc(56px + env(safe-area-inset-bottom));
+    --wa-n-top: max(env(safe-area-inset-top), 8px);
+}
+
+html[data-webapp-design="native"].webapp-native-has-subnav {
+    --wa-n-top: calc(44px + max(env(safe-area-inset-top), 8px));
 }
 
 html[data-webapp-design="native"] body {
@@ -31,7 +36,7 @@ html[data-webapp-design="native"] [id$="-page"].webapp-page-active {
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 !important;
-    padding: max(env(safe-area-inset-top), 8px) var(--wa-n-inset) var(--wa-n-bottom) !important;
+    padding: var(--wa-n-top) var(--wa-n-inset) var(--wa-n-bottom) !important;
     min-height: 100dvh;
     box-sizing: border-box;
     justify-content: flex-start !important;
@@ -67,17 +72,12 @@ html[data-webapp-design="native"] #setup-page::before { content: 'VPN'; }
 html[data-webapp-design="native"] #profile-page::before { content: 'Профиль'; }
 html[data-webapp-design="native"] #support-page::before { content: 'Чаты'; }
 
-html[data-webapp-design="native"] #purchase-page::before,
-html[data-webapp-design="native"] #renew-page::before,
-html[data-webapp-design="native"] #setup-page::before,
-html[data-webapp-design="native"] #profile-page::before,
-html[data-webapp-design="native"] #support-page::before {
-    display: block;
-    font-size: 1.0625rem;
-    font-weight: 600;
-    text-align: center;
-    padding: 10px 48px 14px;
-    color: var(--wa-n-text);
+html[data-webapp-design="native"].webapp-native-has-subnav #purchase-page::before,
+html[data-webapp-design="native"].webapp-native-has-subnav #renew-page::before,
+html[data-webapp-design="native"].webapp-native-has-subnav #setup-page::before,
+html[data-webapp-design="native"].webapp-native-has-subnav #profile-page::before,
+html[data-webapp-design="native"].webapp-native-has-subnav #support-page::before {
+    display: none !important;
 }
 
 /* Surfaces */
@@ -146,11 +146,43 @@ html[data-webapp-design="native"] #renew-pay-button {
     outline-offset: 2px;
 }
 
+.webapp-native-section-label {
+    margin: 0 0 6px 16px;
+    font-size: 0.8125rem;
+    font-weight: 400;
+    color: var(--wa-n-label);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
 .webapp-native-status {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    text-align: left;
+    border: none;
+    cursor: pointer;
     background: var(--wa-n-elevated);
     border-radius: var(--wa-n-radius);
-    padding: 14px 16px;
+    padding: 14px 40px 14px 16px;
     margin-bottom: 22px;
+    position: relative;
+    color: inherit;
+}
+
+.webapp-native-status__chev {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--wa-n-label);
+    font-size: 20px !important;
+    opacity: 0.45;
+}
+
+.webapp-native-status.is-warn .webapp-native-status__label {
+    color: #FF9500;
 }
 
 .webapp-native-status__label {
@@ -256,9 +288,17 @@ html[data-webapp-design="native"] #renew-pay-button {
     flex-shrink: 0;
 }
 
+.webapp-native-cell:active:not(.webapp-native-cell--info) {
+    background: rgba(255, 255, 255, 0.06);
+}
+
 .webapp-native-cell:focus-visible {
     outline: none;
     background: rgba(255, 255, 255, 0.06);
+}
+
+.webapp-native-cell--info {
+    cursor: default;
 }
 
 .webapp-native-loading {
@@ -365,8 +405,8 @@ html[data-webapp-design="native"] #renew-pay-button {
     position: relative;
 }
 
-/* Search / store FAB — like Telegram */
-.webapp-native-store-fab {
+/* Search FAB — like Telegram */
+.webapp-native-search-fab {
     position: fixed;
     right: 10px;
     bottom: calc(10px + env(safe-area-inset-bottom));
@@ -384,13 +424,140 @@ html[data-webapp-design="native"] #renew-pay-button {
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
 }
 
-.webapp-native-store-fab .material-icons-round {
+.webapp-native-search-fab .material-icons-round {
     font-size: 24px !important;
 }
 
-.webapp-native-store-fab:focus-visible {
+.webapp-native-search-fab.is-active {
+    background: var(--wa-n-accent);
+    color: #fff;
+}
+
+.webapp-native-search-fab:focus-visible {
     outline: 2px solid var(--wa-n-accent);
     outline-offset: 2px;
+}
+
+/* Sub-page navigation */
+.webapp-native-subnav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 99965;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    height: calc(44px + max(env(safe-area-inset-top), 8px));
+    padding: max(env(safe-area-inset-top), 8px) 8px 0;
+    background: rgba(0, 0, 0, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.08);
+}
+
+.webapp-native-subnav__back,
+.webapp-native-subnav__action {
+    width: 44px;
+    height: 44px;
+    border: none;
+    background: transparent;
+    color: var(--wa-n-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 8px;
+}
+
+.webapp-native-subnav__action {
+    color: var(--wa-n-text);
+}
+
+.webapp-native-subnav__title {
+    flex: 1;
+    margin: 0;
+    font-size: 1.0625rem;
+    font-weight: 600;
+    text-align: center;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Action sheet */
+.webapp-native-sheet-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 99980;
+    background: rgba(0, 0, 0, 0.45);
+}
+
+.webapp-native-sheet {
+    position: fixed;
+    left: 8px;
+    right: 8px;
+    bottom: calc(8px + env(safe-area-inset-bottom));
+    z-index: 99981;
+    background: var(--wa-n-elevated);
+    border-radius: 14px;
+    overflow: hidden;
+    transform: translateY(110%);
+    transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.webapp-native-sheet.is-open {
+    transform: translateY(0);
+}
+
+.webapp-native-sheet__handle {
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.2);
+    margin: 8px auto 4px;
+}
+
+.webapp-native-sheet__item,
+.webapp-native-sheet__cancel {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 48px;
+    padding: 0 18px;
+    border: none;
+    background: transparent;
+    color: var(--wa-n-text);
+    font-size: 1.0625rem;
+    text-align: left;
+    cursor: pointer;
+    border-top: 0.5px solid var(--wa-n-separator);
+}
+
+.webapp-native-sheet__item .material-icons-round {
+    font-size: 22px !important;
+    color: var(--wa-n-accent);
+}
+
+.webapp-native-sheet__item--danger {
+    color: #FF453A;
+}
+
+.webapp-native-sheet__item--danger .material-icons-round {
+    color: #FF453A;
+}
+
+.webapp-native-sheet__cancel {
+    justify-content: center;
+    font-weight: 600;
+    color: var(--wa-n-accent);
+    margin-top: 8px;
+    border-radius: 14px;
+    background: var(--wa-n-secondary);
+    border: none;
 }
 
 /* Sub-pages */
@@ -454,4 +621,410 @@ html[data-webapp-design="native"] #user-profile-card-container > div {
 html[data-webapp-design="native"] .text-gray-500,
 html[data-webapp-design="native"] .text-gray-400 {
     color: var(--wa-n-label) !important;
+}
+
+/* Profile — grouped list feel */
+html[data-webapp-design="native"] #profile-page > main > .flex.flex-col.gap-3 > .text-\[10px\] {
+    margin: 0 0 6px 16px !important;
+    padding: 0 !important;
+    font-size: 0.8125rem !important;
+    font-weight: 400 !important;
+    color: var(--wa-n-label) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.02em !important;
+}
+
+html[data-webapp-design="native"] #profile-keys-list-container > div,
+html[data-webapp-design="native"] #setup-keys-list-container > div {
+    border-radius: var(--wa-n-radius) !important;
+    border: none !important;
+    background: var(--wa-n-elevated) !important;
+}
+
+html[data-webapp-design="native"] #profile-page > footer button {
+    border-radius: var(--wa-n-radius) !important;
+    min-height: 48px;
+    background: var(--wa-n-secondary) !important;
+    border: none !important;
+}
+
+/* Light appearance */
+html[data-webapp-design="native"].webapp-native-light {
+    --wa-n-bg: #F2F2F7;
+    --wa-n-elevated: #FFFFFF;
+    --wa-n-secondary: #E5E5EA;
+    --wa-n-label: rgba(60, 60, 67, 0.6);
+    --wa-n-text: #000000;
+    --wa-n-separator: rgba(60, 60, 67, 0.29);
+    --wa-n-tabbar: rgba(249, 249, 249, 0.94);
+}
+
+html[data-webapp-design="native"].webapp-native-light .webapp-native-subnav {
+    background: rgba(249, 249, 249, 0.94);
+    border-bottom-color: var(--wa-n-separator);
+}
+
+html[data-webapp-design="native"].webapp-native-light .webapp-native-cell:active:not(.webapp-native-cell--info),
+html[data-webapp-design="native"].webapp-native-light .webapp-native-cell:focus-visible {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+html[data-webapp-design="native"].webapp-native-light .webapp-native-tabbar {
+    border-top-color: var(--wa-n-separator);
+}
+
+html[data-webapp-design="native"].webapp-native-light .webapp-native-tabbar__btn.is-active .webapp-native-tabbar__icon {
+    background: rgba(0, 0, 0, 0.06);
+}
+
+/* Page transitions */
+html[data-webapp-design="native"] [id$="-page"].webapp-page-active {
+    transition: transform 0.26s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.26s ease;
+}
+
+html[data-webapp-design="native"] [id$="-page"].webapp-native-enter {
+    animation: webapp-native-slide-in 0.28s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+html[data-webapp-design="native"] [id$="-page"].webapp-native-leave {
+    animation: webapp-native-slide-out 0.28s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+@keyframes webapp-native-slide-in {
+    from { transform: translateX(18px); opacity: 0.92; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes webapp-native-slide-out {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(-12px); opacity: 0.88; }
+}
+
+/* Pull to refresh */
+.webapp-native-ptr {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 0;
+    margin-bottom: 0;
+    overflow: hidden;
+    color: var(--wa-n-label);
+    font-size: 0.8125rem;
+    transform: translateY(var(--ptr-offset, 0));
+    transition: height 0.2s ease;
+}
+
+.webapp-native-ptr.is-pulling,
+.webapp-native-ptr.is-refreshing {
+    height: 36px;
+    margin-bottom: 4px;
+}
+
+.webapp-native-ptr.is-refreshing .material-icons-round {
+    animation: webapp-native-spin 0.8s linear infinite;
+}
+
+@keyframes webapp-native-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Search overlay */
+.webapp-native-search-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 99982;
+    background: rgba(0, 0, 0, 0.35);
+}
+
+.webapp-native-search {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    z-index: 99983;
+    max-height: 85dvh;
+    padding: max(env(safe-area-inset-top), 8px) 12px 12px;
+    background: var(--wa-n-bg);
+    border-radius: 0 0 16px 16px;
+    transform: translateY(-8px);
+    opacity: 0;
+    transition: transform 0.25s ease, opacity 0.25s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.webapp-native-search.is-open {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.webapp-native-search__bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--wa-n-elevated);
+    border-radius: 12px;
+}
+
+.webapp-native-search__bar input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--wa-n-text);
+    font-size: 1.0625rem;
+    outline: none;
+}
+
+.webapp-native-search__bar button {
+    border: none;
+    background: transparent;
+    color: var(--wa-n-label);
+    display: flex;
+    padding: 4px;
+}
+
+.webapp-native-search__results {
+    overflow-y: auto;
+    max-height: 60dvh;
+}
+
+.webapp-native-search__item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 48px;
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    color: var(--wa-n-text);
+    font-size: 1.0625rem;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 10px;
+}
+
+.webapp-native-search__item:active {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.webapp-native-search__empty {
+    text-align: center;
+    color: var(--wa-n-label);
+    padding: 24px;
+}
+
+/* Status badge dot */
+.webapp-native-status.has-badge::before {
+    content: "";
+    position: absolute;
+    top: 14px;
+    right: 36px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #FF3B30;
+}
+
+.webapp-native-footer-brand {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--wa-n-label);
+    margin: 8px 0 4px;
+    opacity: 0.6;
+}
+
+/* Phase 2 — Purchase / Renew as TG Premium radio list */
+html[data-webapp-design="native"] #purchase-page .webapp-shop-toolbar,
+html[data-webapp-design="native"] #renew-page .webapp-shop-toolbar {
+    margin-bottom: 8px;
+}
+
+html[data-webapp-design="native"] #purchase-page .webapp-shop-info > div,
+html[data-webapp-design="native"] #renew-page .webapp-shop-info > div {
+    background: var(--wa-n-elevated) !important;
+    border: none !important;
+    border-radius: var(--wa-n-radius) !important;
+    box-shadow: none !important;
+    padding: 14px 16px !important;
+}
+
+html[data-webapp-design="native"] #purchase-page .webapp-shop-info .absolute,
+html[data-webapp-design="native"] #renew-page .webapp-shop-info .absolute {
+    display: none !important;
+}
+
+html[data-webapp-design="native"] .server-plans-container {
+    display: flex !important;
+    flex-direction: column !important;
+    grid-template-columns: 1fr !important;
+    gap: 0 !important;
+    margin-top: 8px !important;
+    background: var(--wa-n-elevated);
+    border-radius: var(--wa-n-radius);
+    overflow: hidden;
+}
+
+html[data-webapp-design="native"] .server-plans-container .plan-btn {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    min-height: 48px !important;
+    padding: 12px 44px 12px 16px !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    text-align: left !important;
+    position: relative;
+    box-shadow: none !important;
+}
+
+html[data-webapp-design="native"] .server-plans-container .plan-btn::after {
+    content: "";
+    position: absolute;
+    left: 16px;
+    right: 0;
+    bottom: 0;
+    height: 0.5px;
+    background: var(--wa-n-separator);
+}
+
+html[data-webapp-design="native"] .server-plans-container .plan-btn:last-child::after {
+    display: none;
+}
+
+html[data-webapp-design="native"] .server-plans-container .plan-btn .plan-label {
+    font-size: 1.0625rem !important;
+    font-weight: 400 !important;
+    text-transform: none !important;
+    letter-spacing: -0.01em !important;
+    color: var(--wa-n-text) !important;
+    margin: 0 !important;
+}
+
+html[data-webapp-design="native"] .server-plans-container .plan-btn > .flex {
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+html[data-webapp-design="native"] .server-plans-container .plan-btn .plan-price {
+    font-size: 1.0625rem !important;
+    font-weight: 400 !important;
+    color: var(--wa-n-label) !important;
+}
+
+html[data-webapp-design="native"] .server-plans-container .plan-btn .text-xs {
+    font-size: 1.0625rem !important;
+    color: var(--wa-n-label) !important;
+}
+
+html[data-webapp-design="native"] .server-plans-container .plan-btn.bg-primary\/10,
+html[data-webapp-design="native"] .server-plans-container .plan-btn.border-primary {
+    background: rgba(42, 171, 238, 0.08) !important;
+    border: none !important;
+}
+
+html[data-webapp-design="native"] .server-plans-container .plan-btn.border-primary::after {
+    content: "";
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--wa-n-accent);
+    background: var(--wa-n-accent);
+    box-shadow: inset 0 0 0 4px var(--wa-n-elevated);
+}
+
+html[data-webapp-design="native"] .server-plans-container .plan-btn.border-primary > .flex {
+    margin-right: 32px;
+}
+
+html[data-webapp-design="native"] #server-dropdown-trigger,
+html[data-webapp-design="native"] #renew-server-dropdown-trigger {
+    background: var(--wa-n-elevated) !important;
+    border: none !important;
+    border-radius: var(--wa-n-radius) !important;
+    min-height: 48px;
+}
+
+html[data-webapp-design="native"] #device-tier-slider {
+    background: var(--wa-n-elevated) !important;
+    border: none !important;
+    border-radius: var(--wa-n-radius) !important;
+}
+
+html[data-webapp-design="native"] #pay-button:not(:disabled),
+html[data-webapp-design="native"] #renew-pay-button:not(:disabled) {
+    box-shadow: none !important;
+}
+
+/* Setup — segmented OS control */
+html[data-webapp-design="native"] #setup-page .webapp-setup-os-tabs {
+    display: flex;
+    gap: 0;
+    padding: 3px;
+    background: var(--wa-n-secondary);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+html[data-webapp-design="native"] #setup-page .webapp-setup-os-tab {
+    flex: 1;
+    min-height: 32px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--wa-n-label);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+html[data-webapp-design="native"] #setup-page .webapp-setup-os-tab.is-active {
+    background: var(--wa-n-elevated);
+    color: var(--wa-n-text);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+html[data-webapp-design="native"] #setup-page .webapp-setup-os-content {
+    margin-top: 12px;
+    padding: 14px 16px;
+    background: var(--wa-n-elevated);
+    border-radius: var(--wa-n-radius);
+    font-size: 0.9375rem;
+    line-height: 1.45;
+    color: var(--wa-n-text);
+    white-space: pre-wrap;
+}
+
+html[data-webapp-design="native"] #setup-page > main > .px-1.mb-2 > div {
+    background: var(--wa-n-elevated) !important;
+    border: none !important;
+    border-radius: var(--wa-n-radius) !important;
+    box-shadow: none !important;
+}
+
+html[data-webapp-design="native"] #setup-page > main > .px-1.mb-2 .absolute {
+    display: none !important;
+}
+
+/* Profile extras */
+.webapp-native-profile-extras {
+    margin-bottom: 8px;
+}
+
+html[data-webapp-design="native"] #webapp-native-profile-extras + #user-profile-card-container {
+    margin-top: 4px;
+}
+
+html[data-webapp-design="native"] #user-profile-card-container .grid {
+    gap: 0 !important;
 }

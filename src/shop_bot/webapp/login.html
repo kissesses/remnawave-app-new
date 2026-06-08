@@ -14,11 +14,11 @@
             var enabled = Array.isArray(cfg.enabled) && cfg.enabled.length ? cfg.enabled : null;
             var mobile = window.matchMedia('(max-width: 768px)').matches ||
                 /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent || '');
-            var design = localStorage.getItem(key) || cfg.default || 'vault';
-            if (['native', 'vault', 'ios', 'desktop', 'stealth', 'stealth-glass', 'glass-hub', 'nova', 'pref-classic', 'pref-macos', 'pref-macos-v2', 'pref-glass-stealth', 'aurum'].indexOf(design) === -1) design = 'vault';
-            if (enabled && enabled.indexOf(design) === -1) design = cfg.default || enabled[0] || 'vault';
-            if (mobile && design === 'desktop') design = enabled && enabled.indexOf('vault') !== -1 ? 'vault' : (enabled && enabled.indexOf('classic') !== -1 ? 'classic' : (cfg.default || 'vault'));
-            if (enabled && enabled.indexOf(design) === -1) design = enabled[0] || 'vault';
+            var design = localStorage.getItem(key) || cfg.default || 'native';
+            if (['native', 'vault', 'ios', 'desktop', 'stealth', 'stealth-glass', 'glass-hub', 'nova', 'pref-classic', 'pref-macos', 'pref-macos-v2', 'pref-glass-stealth', 'aurum'].indexOf(design) === -1) design = 'native';
+            if (enabled && enabled.indexOf(design) === -1) design = cfg.default || enabled[0] || 'native';
+            if (mobile && design === 'desktop') design = enabled && enabled.indexOf('native') !== -1 ? 'native' : (enabled && enabled.indexOf('classic') !== -1 ? 'classic' : (cfg.default || 'native'));
+            if (enabled && enabled.indexOf(design) === -1) design = enabled[0] || 'native';
             document.documentElement.dataset.webappDesign = design;
         })();
     </script>
