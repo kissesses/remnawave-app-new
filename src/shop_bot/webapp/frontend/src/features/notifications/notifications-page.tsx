@@ -68,7 +68,7 @@ export function NotificationsPage() {
           ) : undefined
         }
       />
-      <div className="page-scroll pb-8" {...pullProps}>
+      <div className="page-scroll" {...pullProps}>
         <PullRefreshIndicator offset={pullOffset} />
         {isLoading ? (
           <PageSkeleton variant="list" rows={5} />

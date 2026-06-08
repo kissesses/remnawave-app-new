@@ -15,7 +15,7 @@ const SheetOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-50 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "fixed inset-0 z-50 bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className,
     )}
     {...props}
@@ -32,15 +32,15 @@ const SheetContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed inset-x-0 bottom-0 z-50 flex max-h-[92vh] flex-col rounded-t-3xl border border-border bg-background p-0 shadow-2xl duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
+        "premium-sheet fixed inset-x-0 bottom-0 z-50 flex max-h-[92vh] flex-col rounded-t-[1.5rem] p-0 duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
         className,
       )}
       {...props}
     >
-      <div className="mx-auto mt-3 h-1 w-10 shrink-0 rounded-full bg-muted/40" />
+      <div className="premium-sheet-handle" />
       {children}
-      <SheetClose className="absolute right-4 top-4 rounded-full p-2 opacity-70 hover:opacity-100">
-        <X className="h-5 w-5" />
+      <SheetClose className="absolute right-4 top-5 rounded-full p-2 bg-secondary/50 opacity-80 hover:opacity-100 transition-opacity">
+        <X className="h-4 w-4" />
         <span className="sr-only">Закрыть</span>
       </SheetClose>
     </DialogPrimitive.Content>
@@ -56,7 +56,11 @@ const SheetTitle = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Title>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>
 >(({ className, ...props }, ref) => (
-  <DialogPrimitive.Title ref={ref} className={cn("text-lg font-semibold", className)} {...props} />
+  <DialogPrimitive.Title
+    ref={ref}
+    className={cn("text-lg font-bold tracking-tight", className)}
+    {...props}
+  />
 ));
 SheetTitle.displayName = DialogPrimitive.Title.displayName;
 

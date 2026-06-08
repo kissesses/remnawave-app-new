@@ -1,5 +1,6 @@
 export interface BootstrapData {
   userId: number;
+  tgFullscreen?: boolean;
   branding: {
     welcome_text?: string;
     accent_color?: string;

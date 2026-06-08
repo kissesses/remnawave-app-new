@@ -54,6 +54,12 @@ declare global {
           onClick: (cb: () => void) => void;
           offClick: (cb: () => void) => void;
         };
+        viewportHeight?: number;
+        viewportStableHeight?: number;
+        requestFullscreen?: () => void;
+        disableVerticalSwipes?: () => void;
+        onEvent?: (event: string, cb: () => void) => void;
+        offEvent?: (event: string, cb: () => void) => void;
       };
     };
   }
@@ -65,6 +71,7 @@ export function getBootstrap(): BootstrapData {
   return (
     window.__WEBAPP_BOOTSTRAP__ ?? {
       userId: 0,
+      tgFullscreen: false,
       branding: {},
     }
   );

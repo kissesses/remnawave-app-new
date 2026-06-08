@@ -42,6 +42,11 @@ export function useBranding() {
     root.style.setProperty("--accent", hsl);
     root.style.setProperty("--ring", hsl);
     root.style.setProperty("--premium-glow", hsl);
+    const parts = hsl.match(/(\d+)\s+(\d+)%\s+(\d+)%/);
+    if (parts) {
+      const h = (parseInt(parts[1], 10) + 42) % 360;
+      root.style.setProperty("--premium-glow-2", `${h} ${parts[2]}% ${parts[3]}%`);
+    }
   }, [branding.accent_color]);
 
   return branding;

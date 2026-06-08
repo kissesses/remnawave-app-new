@@ -46,7 +46,7 @@ export function ProfilePage() {
   return (
     <>
       <Header title="Профиль" />
-      <div className="page-scroll pb-24" {...pullProps}>
+      <div className="page-scroll" {...pullProps}>
         <PullRefreshIndicator offset={pullOffset} />
         {isLoading && !status ? (
           <PageSkeleton variant="profile" />

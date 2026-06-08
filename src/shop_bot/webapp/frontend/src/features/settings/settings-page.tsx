@@ -56,7 +56,7 @@ export function SettingsPage() {
   return (
     <>
       <Header title="Настройки" showBack />
-      <div className="page-scroll pb-8">
+      <div className="page-scroll">
         <div className="space-y-6 p-4">
           <div>
             <SectionHeader title="Тема оформления" />

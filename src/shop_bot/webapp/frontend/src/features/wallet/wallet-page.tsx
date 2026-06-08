@@ -54,7 +54,7 @@ export function WalletPage() {
   return (
     <>
       <Header title="Кошелёк" />
-      <div className="page-scroll pb-24" {...pullProps}>
+      <div className="page-scroll" {...pullProps}>
         <PullRefreshIndicator offset={pullOffset} />
         {loading ? (
           <PageSkeleton variant="wallet" />
@@ -65,7 +65,10 @@ export function WalletPage() {
             animate={{ opacity: 1, y: 0 }}
             className="premium-hero text-center"
           >
-            <p className="relative z-10 text-sm text-muted-foreground mb-1">Баланс</p>
+            <div className="premium-hero-shine" aria-hidden />
+            <p className="relative z-10 text-[10px] font-bold uppercase tracking-[0.14em] text-primary/70 mb-1">
+              Баланс
+            </p>
             <div className="relative z-10">
               {statusLoading ? (
                 <Skeleton className="mx-auto h-10 w-40" />

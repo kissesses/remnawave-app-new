@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useUiStore } from "@/stores/ui-store";
 import { useTelegram } from "@/hooks/use-telegram";
+import { cn } from "@/lib/utils";
 
 interface HeaderProps {
   title: string;
@@ -17,7 +18,7 @@ interface HeaderProps {
 export function Header({ title, showBack, showNotifications, logo, action }: HeaderProps) {
   const navigate = useNavigate();
   const unread = useUiStore((s) => s.unreadNotifications);
-  const { haptic, showBackButton } = useTelegram();
+  const { haptic, showBackButton, isTelegram } = useTelegram();
 
   const goBack = useCallback(() => {
     haptic("selection");
@@ -29,9 +30,15 @@ export function Header({ title, showBack, showNotifications, logo, action }: Hea
     return showBackButton(goBack);
   }, [showBack, showBackButton, goBack]);
 
+  const useNativeBack = showBack && isTelegram;
+
   return (
-    <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-2 border-b border-border/40 bg-background/80 px-4 backdrop-blur-xl">
-      {showBack ? (
+    <header
+      className={cn(
+        "app-header sticky top-0 z-40 flex h-14 shrink-0 items-center gap-2 border-b border-border/40 bg-background/80 px-4 backdrop-blur-xl",
+      )}
+    >
+      {showBack && !useNativeBack ? (
         <Button
           variant="ghost"
           size="icon"
@@ -40,16 +47,21 @@ export function Header({ title, showBack, showNotifications, logo, action }: Hea
         >
           <ChevronLeft className="h-6 w-6" />
         </Button>
+      ) : showBack && useNativeBack ? (
+        <div className="w-2 shrink-0" />
       ) : logo ? (
-        <img
-          src={logo}
-          alt=""
-          className="h-8 w-8 rounded-xl object-cover border border-border/50 shrink-0"
-        />
+        <div className="relative shrink-0">
+          <div className="absolute inset-0 rounded-xl bg-primary/20 blur-md scale-110" />
+          <img
+            src={logo}
+            alt=""
+            className="relative h-9 w-9 rounded-xl object-cover border border-primary/25 shadow-md"
+          />
+        </div>
       ) : (
-        <div className="w-2" />
+        <div className="w-2 shrink-0" />
       )}
-      <h1 className="flex-1 text-[17px] font-semibold truncate tracking-tight">{title}</h1>
+      <h1 className="flex-1 text-[17px] font-bold truncate tracking-tight">{title}</h1>
       {action}
       {showNotifications && !action ? (
         <Button
@@ -69,7 +81,7 @@ export function Header({ title, showBack, showNotifications, logo, action }: Hea
           )}
         </Button>
       ) : !action ? (
-        <div className="w-10" />
+        <div className="w-10 shrink-0" />
       ) : null}
     </header>
   );

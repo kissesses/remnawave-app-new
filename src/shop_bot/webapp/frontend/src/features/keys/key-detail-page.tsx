@@ -113,7 +113,7 @@ export function KeyDetailPage() {
   return (
     <>
       <Header title={key.name || "Подписка"} showBack />
-      <div className="page-scroll pb-24">
+      <div className="page-scroll">
         <StaggerList className="space-y-4 p-4">
           <StaggerItem>
             <div className="premium-hero">

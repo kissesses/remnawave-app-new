@@ -1332,6 +1332,7 @@ def _render_spa_shell(user_id: int, webapp_settings: dict | None = None) -> HTML
         accent = f"#{accent}"
     bootstrap = {
         "userId": user_id,
+        "tgFullscreen": bool(webapp_settings.get("tg_fullscreen")),
         "branding": {
             "welcome_text": (webapp_settings.get("webapp_welcome_text") or "").strip(),
             "accent_color": accent,

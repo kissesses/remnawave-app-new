@@ -38,7 +38,7 @@ export function VpnSetupPage() {
   return (
     <>
       <Header title="Настройка VPN" showBack />
-      <div className="page-scroll pb-8 p-4 space-y-5">
+      <div className="page-scroll p-4 space-y-5">
         {howto?.intro && (
           <motion.div
             initial={{ opacity: 0, y: 8 }}

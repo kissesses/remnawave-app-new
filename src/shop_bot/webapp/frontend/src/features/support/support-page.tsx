@@ -64,7 +64,7 @@ export function SupportPage() {
   return (
     <>
       <Header title="Поддержка" />
-      <div className="flex flex-1 flex-col overflow-hidden pb-20">
+      <div className="flex flex-1 flex-col overflow-hidden">
         {isLoading ? (
           <PageSkeleton variant="chat" />
         ) : !data?.has_ticket ? (

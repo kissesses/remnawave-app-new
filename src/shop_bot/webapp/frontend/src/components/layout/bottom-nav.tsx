@@ -20,61 +20,50 @@ export function BottomNav() {
 
   if (hidden) return null;
 
+  const safeBottom =
+    "max(var(--tg-content-safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)), 10px)";
+
   return (
-    <nav
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-border/40 bg-card/90 backdrop-blur-2xl premium-nav-glow"
-      style={{ paddingBottom: "max(env(safe-area-inset-bottom), 8px)" }}
+    <div
+      className="fixed inset-x-0 z-50 px-3 pointer-events-none"
+      style={{ bottom: safeBottom }}
     >
-      <div className="mx-auto flex h-[52px] max-w-lg items-stretch justify-around px-1">
-        {tabs.map(({ to, label, icon: Icon }) => {
-          const active =
-            to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
-          return (
-            <NavLink
-              key={to}
-              to={to}
-              onClick={() => haptic("selection")}
-              className={cn(
-                "relative flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium",
-                active ? "text-primary" : "text-muted-foreground",
-              )}
-            >
-              {active && (
-                <motion.div
-                  layoutId="tab-indicator"
-                  className="absolute inset-x-3 -top-px h-[2px] rounded-full bg-primary"
-                  style={{ boxShadow: "0 0 14px hsl(var(--primary) / 0.65)" }}
-                  transition={{ type: "spring", stiffness: 520, damping: 34 }}
-                />
-              )}
-              <motion.div
-                animate={{
-                  scale: active ? 1.1 : 1,
-                  y: active ? -2 : 0,
-                }}
-                transition={{ type: "spring", stiffness: 480, damping: 26 }}
+      <nav className="premium-dock mx-auto max-w-lg pointer-events-auto">
+        <div className="flex h-[54px] items-stretch justify-around px-1">
+          {tabs.map(({ to, label, icon: Icon }) => {
+            const active =
+              to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
+            return (
+              <NavLink
+                key={to}
+                to={to}
+                onClick={() => haptic("selection")}
                 className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-xl",
-                  active ? "bg-primary/14 shadow-[0_4px_16px_hsl(var(--primary)/0.2)]" : "bg-transparent",
+                  "relative flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors",
+                  active ? "text-primary" : "text-muted-foreground",
                 )}
               >
                 <motion.div
-                  animate={{ rotate: active ? [0, -8, 8, 0] : 0 }}
-                  transition={{ duration: 0.35, ease: "easeOut" }}
+                  layoutId="dock-pill"
+                  className={cn(
+                    "absolute inset-x-1.5 inset-y-1.5 rounded-xl",
+                    active ? "premium-dock-active" : "opacity-0",
+                  )}
+                  transition={{ type: "spring", stiffness: 480, damping: 32 }}
+                />
+                <motion.div
+                  animate={{ scale: active ? 1.08 : 1, y: active ? -1 : 0 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 28 }}
+                  className="relative z-10 flex h-7 w-7 items-center justify-center"
                 >
-                  <Icon className="h-[22px] w-[22px]" strokeWidth={active ? 2.35 : 1.75} />
+                  <Icon className="h-[21px] w-[21px]" strokeWidth={active ? 2.4 : 1.8} />
                 </motion.div>
-              </motion.div>
-              <motion.span
-                animate={{ opacity: active ? 1 : 0.72, scale: active ? 1.02 : 1 }}
-                transition={{ duration: 0.2 }}
-              >
-                {label}
-              </motion.span>
-            </NavLink>
-          );
-        })}
-      </div>
-    </nav>
+                <span className="relative z-10">{label}</span>
+              </NavLink>
+            );
+          })}
+        </div>
+      </nav>
+    </div>
   );
 }

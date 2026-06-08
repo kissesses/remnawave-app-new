@@ -121,7 +121,7 @@ export function HistoryPage() {
         </Tabs>
       </div>
 
-      <div className="page-scroll pb-8" {...pullProps} ref={parentRef}>
+      <div className="page-scroll" {...pullProps} ref={parentRef}>
         <PullRefreshIndicator offset={pullOffset} />
         {isLoading ? (
           <PageSkeleton variant="list" rows={6} />

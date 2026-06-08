@@ -81,7 +81,7 @@ export function HomePage() {
   return (
     <>
       <Header title={headerTitle} showNotifications logo={branding.logo} />
-      <div className="page-scroll pb-24" {...pullProps}>
+      <div className="page-scroll" {...pullProps}>
         <PullRefreshIndicator offset={pullOffset} />
         {isLoading ? (
           <PageSkeleton variant="hero" />
@@ -96,6 +96,7 @@ export function HomePage() {
               onClick={() => key && navigate(`/keys/${key.key_id}`)}
               disabled={!key}
             >
+              <div className="premium-hero-shine" aria-hidden />
               <div className="relative z-10">
                 {displayName && !branding.welcome_text?.includes("{name}") && (
                   <p className="text-xs text-muted-foreground mb-2">
@@ -108,7 +109,7 @@ export function HomePage() {
                     <p className="text-[10px] font-semibold uppercase tracking-widest text-primary/70">
                       Подписка VPN
                     </p>
-                    <h2 className="mt-0.5 text-lg font-bold truncate">
+                    <h2 className="mt-0.5 text-xl font-bold truncate tracking-tight">
                       {key ? key.host_name || key.name : "Нет подписки"}
                     </h2>
                     <p className="mt-1 text-sm text-muted-foreground">
@@ -142,10 +143,10 @@ export function HomePage() {
                   key={k.key_id}
                   type="button"
                   onClick={() => navigate(`/keys/${k.key_id}`)}
-                  className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium border transition-colors ${
+                  className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold border transition-all active:scale-95 ${
                     k.key_id === key?.key_id
-                      ? "border-primary bg-primary/15 text-primary"
-                      : "border-border bg-card/50 text-muted-foreground"
+                      ? "border-primary/50 bg-primary/15 text-primary shadow-[0_0_20px_hsl(var(--primary)/0.15)]"
+                      : "border-border/50 bg-card/40 text-muted-foreground backdrop-blur-sm"
                   }`}
                 >
                   {k.name || k.host_name}
@@ -171,8 +172,10 @@ export function HomePage() {
                     action.onClick();
                   }}
                 >
-                  <action.icon className="h-6 w-6 text-primary" />
-                  <span className="text-sm font-medium">{action.label}</span>
+                  <div className="premium-icon-orb">
+                    <action.icon className="h-5 w-5" />
+                  </div>
+                  <span className="text-sm font-semibold">{action.label}</span>
                 </motion.button>
               ))}
             </div>
@@ -196,11 +199,13 @@ export function HomePage() {
               {recent.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-2">Пока нет операций</p>
               ) : (
-                recent.map((item) => (
+                recent.map((item, i) => (
                   <button
                     key={String(item.id)}
                     type="button"
-                    className="flex w-full items-center justify-between text-sm text-left active:opacity-70"
+                    className={`flex w-full items-center justify-between text-sm text-left py-2 active:opacity-70 ${
+                      i > 0 ? "border-t border-border/30" : ""
+                    }`}
                     onClick={() => navigate("/history")}
                   >
                     <div>

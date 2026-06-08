@@ -2,51 +2,63 @@ import { Outlet, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { BottomNav } from "./bottom-nav";
 import { Toaster } from "sonner";
+import { AmbientBackground } from "@/components/premium/ambient-background";
 import { useNavigationDirection } from "@/hooks/use-navigation-direction";
+import { useTelegramShell } from "@/hooks/use-telegram-shell";
+import { cn } from "@/lib/utils";
+
+const STACK_PREFIXES = ["/history", "/notifications", "/settings", "/vpn", "/keys"];
+
+function isStackPath(path: string) {
+  return STACK_PREFIXES.some((p) => path.startsWith(p));
+}
 
 export function AppShell() {
   const location = useLocation();
-  const { direction, isStack } = useNavigationDirection();
+  const { direction } = useNavigationDirection();
+  const isStack = isStackPath(location.pathname);
+  useTelegramShell();
 
-  const variants = isStack
-    ? {
-        initial: { x: direction > 0 ? "100%" : "30%", opacity: 0.6 },
-        animate: { x: 0, opacity: 1 },
-        exit: { x: direction < 0 ? "100%" : "-20%", opacity: 0.6 },
-      }
-    : {
-        initial: { x: direction > 0 ? "18%" : "-18%", opacity: 0.85 },
-        animate: { x: 0, opacity: 1 },
-        exit: { x: direction < 0 ? "18%" : "-18%", opacity: 0.85 },
-      };
+  const stackVariants = {
+    initial: { x: direction > 0 ? "100%" : "24%", opacity: 0.85 },
+    animate: { x: 0, opacity: 1 },
+    exit: { x: direction < 0 ? "100%" : "-12%", opacity: 0.85 },
+  };
 
   return (
-    <div className="flex h-full flex-col max-w-lg mx-auto w-full bg-background">
-      <AnimatePresence mode="wait" custom={direction}>
-        <motion.div
-          key={location.pathname}
-          custom={direction}
-          variants={variants}
-          initial="initial"
-          animate="animate"
-          exit="exit"
-          transition={{
-            type: "spring",
-            damping: isStack ? 32 : 38,
-            stiffness: isStack ? 320 : 420,
-            mass: 0.8,
-          }}
-          className="flex flex-1 flex-col overflow-hidden"
-        >
+    <div
+      className={cn(
+        "app-shell relative flex h-full flex-col max-w-lg mx-auto w-full",
+        !isStack && "has-tab-bar",
+      )}
+    >
+      <AmbientBackground />
+      {isStack ? (
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.div
+            key={location.pathname}
+            variants={stackVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={{ type: "spring", damping: 34, stiffness: 340, mass: 0.85 }}
+            className="relative z-[1] flex flex-1 flex-col overflow-hidden"
+          >
+            <Outlet />
+          </motion.div>
+        </AnimatePresence>
+      ) : (
+        <div key={location.pathname} className="relative z-[1] flex flex-1 flex-col overflow-hidden page-enter">
           <Outlet />
-        </motion.div>
-      </AnimatePresence>
+        </div>
+      )}
       <BottomNav />
       <Toaster
         position="top-center"
         toastOptions={{
           className:
-            "rounded-2xl border border-border/50 bg-card/95 text-foreground shadow-xl backdrop-blur-xl",
+            "rounded-2xl border border-border/40 bg-card/90 text-foreground shadow-2xl backdrop-blur-xl",
+          style: { marginTop: "var(--tg-content-safe-area-inset-top, 0px)" },
         }}
         richColors
         closeButton
