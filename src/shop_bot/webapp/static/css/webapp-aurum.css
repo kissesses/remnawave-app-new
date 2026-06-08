@@ -1,0 +1,719 @@
+/* Aurum — luxury fintech mobile cabinet (graphite, gold, platinum, deep blue) */
+
+html[data-webapp-design="aurum"] {
+    --wa-aurum-bg: #141416;
+    --wa-aurum-bg-deep: #0c0c0e;
+    --wa-aurum-graphite: #1c1c1f;
+    --wa-aurum-gold: #c9a962;
+    --wa-aurum-gold-soft: rgba(201, 169, 98, 0.18);
+    --wa-aurum-platinum: #e8e8ed;
+    --wa-aurum-blue: #1e3a5f;
+    --wa-aurum-blue-accent: #3d6ea8;
+    --wa-aurum-glass: rgba(255, 255, 255, 0.06);
+    --wa-aurum-glass-border: rgba(255, 255, 255, 0.1);
+    --wa-aurum-text: #f4f4f6;
+    --wa-aurum-muted: rgba(228, 228, 235, 0.55);
+    --wa-aurum-radius: 22px;
+    --wa-aurum-radius-sm: 16px;
+    --wa-aurum-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+    --wa-aurum-top: max(env(safe-area-inset-top), 8px);
+    --wa-aurum-bottom: calc(78px + env(safe-area-inset-bottom));
+}
+
+html[data-webapp-design="aurum"] body {
+    background: var(--wa-aurum-bg-deep) !important;
+    color: var(--wa-aurum-text) !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif !important;
+    -webkit-font-smoothing: antialiased;
+}
+
+html[data-webapp-design="aurum"] body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+        radial-gradient(ellipse 90% 50% at 50% -15%, rgba(61, 110, 168, 0.22), transparent 55%),
+        radial-gradient(ellipse 60% 40% at 100% 20%, rgba(201, 169, 98, 0.08), transparent 50%),
+        radial-gradient(ellipse 50% 35% at 0% 80%, rgba(30, 58, 95, 0.15), transparent 45%);
+}
+
+/* Pages */
+html[data-webapp-design="aurum"] #main-page,
+html[data-webapp-design="aurum"] #purchase-page,
+html[data-webapp-design="aurum"] #renew-page,
+html[data-webapp-design="aurum"] #setup-page,
+html[data-webapp-design="aurum"] #profile-page,
+html[data-webapp-design="aurum"] #support-page {
+    position: relative;
+    z-index: 1;
+    width: 100% !important;
+    max-width: 440px !important;
+    margin: 0 auto !important;
+    padding: var(--wa-aurum-top) 18px var(--wa-aurum-bottom) !important;
+    min-height: 100dvh;
+    box-sizing: border-box;
+}
+
+html[data-webapp-design="aurum"] #main-page > header,
+html[data-webapp-design="aurum"] #main-page > nav,
+html[data-webapp-design="aurum"] #main-page > .grid,
+html[data-webapp-design="aurum"] #main-page > footer,
+html[data-webapp-design="aurum"] #key-info-section-container,
+html[data-webapp-design="aurum"] #webapp-cabinet-quick,
+html[data-webapp-design="aurum"] #purchase-page > header,
+html[data-webapp-design="aurum"] #renew-page > header,
+html[data-webapp-design="aurum"] #setup-page > header,
+html[data-webapp-design="aurum"] #profile-page > header,
+html[data-webapp-design="aurum"] #support-page > header,
+html[data-webapp-design="aurum"] .absolute.-top-20.-left-20,
+html[data-webapp-design="aurum"] .absolute.-top-24.-right-24 {
+    display: none !important;
+}
+
+/* Hero */
+.webapp-aurum-hero {
+    position: relative;
+    margin: 0 -6px 20px;
+    padding: 8px 6px 24px;
+    overflow: hidden;
+    border-radius: var(--wa-aurum-radius);
+}
+
+.webapp-aurum-hero__mesh {
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(135deg, rgba(30, 58, 95, 0.45) 0%, transparent 50%),
+        linear-gradient(225deg, rgba(201, 169, 98, 0.12) 0%, transparent 40%);
+    border-radius: inherit;
+    animation: webapp-aurum-mesh 12s ease-in-out infinite alternate;
+}
+
+@keyframes webapp-aurum-mesh {
+    0% { opacity: 0.85; transform: scale(1); }
+    100% { opacity: 1; transform: scale(1.03); }
+}
+
+.webapp-aurum-hero__row {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.webapp-aurum-hero__eyebrow {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--wa-aurum-muted);
+    letter-spacing: 0.02em;
+    margin-bottom: 4px;
+}
+
+.webapp-aurum-hero__name {
+    margin: 0;
+    font-size: 1.625rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    color: var(--wa-aurum-platinum);
+}
+
+.webapp-aurum-avatar {
+    position: relative;
+    flex-shrink: 0;
+    width: 52px;
+    height: 52px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+}
+
+.webapp-aurum-avatar__ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--wa-aurum-gold), var(--wa-aurum-blue-accent));
+    padding: 2px;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: webapp-aurum-ring 4s linear infinite;
+}
+
+@keyframes webapp-aurum-ring {
+    to { transform: rotate(360deg); }
+}
+
+.webapp-aurum-avatar__letter {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: var(--wa-aurum-graphite);
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--wa-aurum-gold);
+}
+
+/* Membership card */
+.webapp-aurum-membership {
+    position: relative;
+    margin-bottom: 24px;
+    padding: 20px 22px;
+    border-radius: var(--wa-aurum-radius);
+    border: 1px solid var(--wa-aurum-glass-border);
+    background: var(--wa-aurum-glass);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    box-shadow: var(--wa-aurum-shadow);
+    overflow: hidden;
+    animation: webapp-aurum-rise 0.5s ease-out both;
+}
+
+.webapp-aurum-membership__shine {
+    position: absolute;
+    top: -50%;
+    right: -30%;
+    width: 60%;
+    height: 200%;
+    background: linear-gradient(105deg, transparent 40%, rgba(201, 169, 98, 0.08) 50%, transparent 60%);
+    pointer-events: none;
+}
+
+.webapp-aurum-membership__top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.webapp-aurum-membership__brand {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--wa-aurum-muted);
+}
+
+.webapp-aurum-membership__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: var(--wa-aurum-gold-soft);
+    border: 1px solid rgba(201, 169, 98, 0.35);
+    color: var(--wa-aurum-gold);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+}
+
+.webapp-aurum-membership__badge .material-icons-round {
+    font-size: 14px !important;
+}
+
+.webapp-aurum-membership__body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.webapp-aurum-membership__body small {
+    display: block;
+    font-size: 0.625rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--wa-aurum-muted);
+    margin-bottom: 4px;
+}
+
+.webapp-aurum-membership__body strong {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--wa-aurum-platinum);
+}
+
+/* Sections */
+.webapp-aurum-section {
+    margin-bottom: 22px;
+    animation: webapp-aurum-rise 0.55s ease-out both;
+}
+
+.webapp-aurum-section:nth-child(3) { animation-delay: 0.05s; }
+.webapp-aurum-section:nth-child(4) { animation-delay: 0.1s; }
+.webapp-aurum-section:nth-child(5) { animation-delay: 0.15s; }
+.webapp-aurum-section:nth-child(6) { animation-delay: 0.2s; }
+.webapp-aurum-section:nth-child(7) { animation-delay: 0.25s; }
+.webapp-aurum-section:nth-child(8) { animation-delay: 0.3s; }
+.webapp-aurum-section--last { margin-bottom: 8px; }
+
+@keyframes webapp-aurum-rise {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.webapp-aurum-section__title {
+    margin: 0 0 12px;
+    font-size: 0.6875rem;
+    font-weight: 650;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--wa-aurum-muted);
+}
+
+/* Stats scroller */
+.webapp-aurum-stats {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 2px 2px 8px;
+    margin: 0 -2px;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+.webapp-aurum-stats::-webkit-scrollbar { display: none; }
+
+.webapp-aurum-stat {
+    flex: 0 0 132px;
+    scroll-snap-align: start;
+    padding: 16px 14px;
+    border-radius: var(--wa-aurum-radius-sm);
+    border: 1px solid var(--wa-aurum-glass-border);
+    background: var(--wa-aurum-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s ease, border-color 0.2s;
+}
+
+.webapp-aurum-stat:active {
+    transform: scale(0.98);
+}
+
+.webapp-aurum-stat .material-icons-round {
+    font-size: 20px !important;
+    color: var(--wa-aurum-gold);
+    opacity: 0.9;
+    margin-bottom: 8px;
+}
+
+.webapp-aurum-stat__value {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--wa-aurum-platinum);
+    line-height: 1.2;
+}
+
+.webapp-aurum-stat__label {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.6875rem;
+    color: var(--wa-aurum-muted);
+}
+
+/* Subscription pass */
+.webapp-aurum-pass {
+    position: relative;
+    padding: 22px 20px;
+    border-radius: var(--wa-aurum-radius);
+    background: linear-gradient(145deg, var(--wa-aurum-blue) 0%, #0f1a28 55%, var(--wa-aurum-graphite) 100%);
+    border: 1px solid rgba(61, 110, 168, 0.35);
+    box-shadow: var(--wa-aurum-shadow);
+    overflow: hidden;
+}
+
+.webapp-aurum-pass.is-active {
+    border-color: rgba(201, 169, 98, 0.35);
+}
+
+.webapp-aurum-pass.is-active::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 120px;
+    height: 120px;
+    background: radial-gradient(circle, rgba(201, 169, 98, 0.15), transparent 70%);
+    pointer-events: none;
+}
+
+.webapp-aurum-pass__chip {
+    width: 36px;
+    height: 28px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #d4af6a, #8b7355);
+    margin-bottom: 18px;
+    opacity: 0.9;
+}
+
+.webapp-aurum-pass__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 16px;
+}
+
+.webapp-aurum-pass__plan {
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--wa-aurum-platinum);
+}
+
+.webapp-aurum-pass__status {
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    color: var(--wa-aurum-gold);
+}
+
+.webapp-aurum-pass__meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 18px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.webapp-aurum-pass__meta small {
+    display: block;
+    font-size: 0.625rem;
+    color: var(--wa-aurum-muted);
+    margin-bottom: 2px;
+}
+
+.webapp-aurum-pass__meta strong {
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+
+.webapp-aurum-pass__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.webapp-aurum-btn {
+    padding: 11px 18px;
+    border-radius: 14px;
+    border: none;
+    font-size: 0.8125rem;
+    font-weight: 650;
+    cursor: pointer;
+    transition: transform 0.15s, opacity 0.15s;
+}
+
+.webapp-aurum-btn:active { transform: scale(0.97); }
+
+.webapp-aurum-btn--gold {
+    background: linear-gradient(135deg, #d4b876, var(--wa-aurum-gold));
+    color: #1a1510;
+    box-shadow: 0 4px 16px rgba(201, 169, 98, 0.35);
+}
+
+.webapp-aurum-btn--ghost {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--wa-aurum-platinum);
+}
+
+/* Activity */
+.webapp-aurum-activity {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-radius: var(--wa-aurum-radius-sm);
+    border: 1px solid var(--wa-aurum-glass-border);
+    background: var(--wa-aurum-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    overflow: hidden;
+}
+
+.webapp-aurum-activity__item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.webapp-aurum-activity__item:last-child { border-bottom: none; }
+
+.webapp-aurum-activity__icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(30, 58, 95, 0.5);
+    color: var(--wa-aurum-gold);
+    flex-shrink: 0;
+}
+
+.webapp-aurum-activity__icon .material-icons-round { font-size: 20px !important; }
+
+.webapp-aurum-activity__text {
+    flex: 1;
+    min-width: 0;
+}
+
+.webapp-aurum-activity__text strong {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--wa-aurum-platinum);
+}
+
+.webapp-aurum-activity__text span {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--wa-aurum-muted);
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.webapp-aurum-activity__time {
+    font-size: 0.6875rem;
+    color: var(--wa-aurum-muted);
+    flex-shrink: 0;
+}
+
+/* Quick actions */
+.webapp-aurum-quick {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.webapp-aurum-quick__btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 8px;
+    border-radius: var(--wa-aurum-radius-sm);
+    border: 1px solid var(--wa-aurum-glass-border);
+    background: var(--wa-aurum-glass);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    color: var(--wa-aurum-platinum);
+    font-size: 0.625rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s, background 0.15s;
+}
+
+.webapp-aurum-quick__btn:active { transform: scale(0.95); }
+
+.webapp-aurum-quick__btn .material-icons-round {
+    font-size: 24px !important;
+    color: var(--wa-aurum-gold);
+}
+
+/* Settings */
+.webapp-aurum-settings {
+    border-radius: var(--wa-aurum-radius-sm);
+    border: 1px solid var(--wa-aurum-glass-border);
+    background: var(--wa-aurum-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    overflow: hidden;
+}
+
+.webapp-aurum-settings__row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 15px 16px;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    background: transparent;
+    color: var(--wa-aurum-platinum);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.webapp-aurum-settings__row:last-child { border-bottom: none; }
+
+.webapp-aurum-settings__row:active { background: rgba(255, 255, 255, 0.04); }
+
+.webapp-aurum-settings__row > .material-icons-round:first-child {
+    font-size: 22px !important;
+    color: var(--wa-aurum-gold);
+    opacity: 0.9;
+}
+
+.webapp-aurum-settings__row > span:nth-child(2) { flex: 1; }
+
+.webapp-aurum-settings__chev {
+    font-size: 20px !important;
+    color: var(--wa-aurum-muted) !important;
+}
+
+/* Support */
+.webapp-aurum-support {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 16px 18px;
+    border-radius: var(--wa-aurum-radius);
+    border: 1px solid rgba(61, 110, 168, 0.35);
+    background: linear-gradient(135deg, rgba(30, 58, 95, 0.6), rgba(20, 20, 22, 0.8));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    color: var(--wa-aurum-platinum);
+    cursor: pointer;
+    text-align: left;
+    transition: transform 0.15s;
+}
+
+.webapp-aurum-support:active { transform: scale(0.99); }
+
+.webapp-aurum-support__icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--wa-aurum-gold-soft);
+    color: var(--wa-aurum-gold);
+}
+
+.webapp-aurum-support__text { flex: 1; }
+
+.webapp-aurum-support__text strong {
+    display: block;
+    font-size: 0.9375rem;
+}
+
+.webapp-aurum-support__text small {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--wa-aurum-muted);
+    margin-top: 2px;
+}
+
+.webapp-aurum-support > .material-icons-round:last-child {
+    color: var(--wa-aurum-muted);
+}
+
+/* Bottom tab bar */
+.webapp-aurum-tabbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 99970;
+    padding: 0 16px calc(10px + env(safe-area-inset-bottom));
+    pointer-events: none;
+}
+
+.webapp-aurum-tabbar__glass {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    max-width: 440px;
+    margin: 0 auto;
+    padding: 8px 6px;
+    border-radius: 24px;
+    border: 1px solid var(--wa-aurum-glass-border);
+    background: rgba(20, 20, 22, 0.78);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.25);
+    pointer-events: auto;
+}
+
+.webapp-aurum-tabbar__btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 6px 4px;
+    border: none;
+    background: transparent;
+    color: var(--wa-aurum-muted);
+    font-size: 0.5625rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: color 0.2s;
+    min-width: 0;
+}
+
+.webapp-aurum-tabbar__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 32px;
+    border-radius: 12px;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.webapp-aurum-tabbar__btn .material-icons-round {
+    font-size: 22px !important;
+}
+
+.webapp-aurum-tabbar__btn.is-active {
+    color: var(--wa-aurum-gold);
+}
+
+.webapp-aurum-tabbar__btn.is-active .webapp-aurum-tabbar__icon {
+    background: var(--wa-aurum-gold-soft);
+    transform: translateY(-2px);
+}
+
+.webapp-aurum-tabbar__label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+.webapp-aurum-loading {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--wa-aurum-muted);
+}
+
+/* Sub-pages polish */
+html[data-webapp-design="aurum"] .bg-primary {
+    background-color: var(--wa-aurum-gold) !important;
+}
+
+html[data-webapp-design="aurum"] .text-primary {
+    color: var(--wa-aurum-gold) !important;
+}
+
+html[data-webapp-design="aurum"] #webapp-theme-fab {
+    bottom: calc(88px + env(safe-area-inset-bottom));
+    right: max(16px, env(safe-area-inset-right));
+}

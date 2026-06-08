@@ -14,6 +14,7 @@
         'pref-macos': { id: 'pref-macos', label: 'Aqua', desc: 'Menu bar, окно и Dock', icon: 'laptop_mac' },
         'pref-macos-v2': { id: 'pref-macos-v2', label: 'Stage', desc: 'Rail слева + snap-панели', icon: 'view_sidebar' },
         'pref-glass-stealth': { id: 'pref-glass-stealth', label: 'Void', desc: 'Орбита и glass shards', icon: 'blur_circular' },
+        aurum: { id: 'aurum', label: 'Aurum', desc: 'Luxury fintech: gold, KPI, pass-карта', icon: 'diamond' },
     };
 
     const PREF_DESIGNS = ['pref-classic', 'pref-macos', 'pref-macos-v2', 'pref-glass-stealth'];
@@ -47,7 +48,7 @@
     }
 
     function normalizeDesign(value) {
-        if (value === 'ios' || value === 'desktop' || value === 'stealth' || value === 'stealth-glass' || value === 'glass-hub' || value === 'nova') return value;
+        if (value === 'ios' || value === 'desktop' || value === 'stealth' || value === 'stealth-glass' || value === 'glass-hub' || value === 'nova' || value === 'aurum') return value;
         if (isPrefDesign(value)) return value;
         return 'classic';
     }
@@ -56,9 +57,9 @@
         const enabled = getEnabledDesigns();
         let list;
         if (isMobileViewport()) {
-            list = ['classic', 'ios', 'stealth', 'stealth-glass', 'glass-hub', 'nova', ...PREF_DESIGNS];
+            list = ['classic', 'ios', 'stealth', 'stealth-glass', 'glass-hub', 'nova', 'aurum', ...PREF_DESIGNS];
         } else {
-            list = ['classic', 'ios', 'desktop', 'stealth', 'stealth-glass', 'glass-hub', 'nova', ...PREF_DESIGNS];
+            list = ['classic', 'ios', 'desktop', 'stealth', 'stealth-glass', 'glass-hub', 'nova', 'aurum', ...PREF_DESIGNS];
         }
         if (enabled) list = list.filter((id) => enabled.includes(id));
         return list.length ? list : ['classic'];
@@ -103,6 +104,7 @@
         document.body.classList.toggle('webapp-design-stealth-glass', finalDesign === 'stealth-glass');
         document.body.classList.toggle('webapp-design-glass-hub', finalDesign === 'glass-hub');
         document.body.classList.toggle('webapp-design-nova', finalDesign === 'nova');
+        document.body.classList.toggle('webapp-design-aurum', finalDesign === 'aurum');
         document.body.classList.toggle('webapp-design-classic', finalDesign === 'classic');
         PREF_DESIGNS.forEach((id) => {
             document.body.classList.toggle('webapp-design-' + id, finalDesign === id);
@@ -127,6 +129,7 @@
         else if (design === 'pref-macos') meta.content = '#000000';
         else if (design === 'pref-macos-v2') meta.content = '#121214';
         else if (design === 'pref-glass-stealth') meta.content = '#09090b';
+        else if (design === 'aurum') meta.content = '#0c0c0e';
         else meta.content = '#0a0a0a';
     }
 
@@ -203,6 +206,7 @@
         window.WebAppPrefMacos?.destroy?.();
         window.WebAppPrefMacosV2?.destroy?.();
         window.WebAppPrefGlassStealth?.destroy?.();
+        window.WebAppAurum?.destroy?.();
         unwrapDesktopHomeGrid();
         document.body.classList.remove('webapp-has-tabbar', 'webapp-has-sidebar', 'webapp-has-stealth-tabbar');
     }
@@ -349,6 +353,7 @@
         if (design === 'pref-macos') window.WebAppPrefMacos?.init?.();
         if (design === 'pref-macos-v2') window.WebAppPrefMacosV2?.init?.();
         if (design === 'pref-glass-stealth') window.WebAppPrefGlassStealth?.init?.();
+        if (design === 'aurum') window.WebAppAurum?.init?.();
     }
 
     function renderIosTabBar() {
@@ -531,12 +536,13 @@
     function syncNav(pageId) {
         const id = pageId || getCurrentPageId();
         document.querySelectorAll(
-            '#webapp-ios-tabbar [data-page-id], #webapp-desktop-sidebar [data-page-id], #webapp-stealth-tabbar [data-page-id], #webapp-stealth-glass-topnav [data-page-id], #webapp-glass-hub-topnav [data-page-id], #webapp-nova-tabbar [data-page-id], #webapp-ledger-nav [data-page-id], #webapp-aqua-dock [data-page-id], #webapp-stage-rail [data-page-id], #webapp-void-orbit [data-page-id]'
+            '#webapp-ios-tabbar [data-page-id], #webapp-desktop-sidebar [data-page-id], #webapp-stealth-tabbar [data-page-id], #webapp-stealth-glass-topnav [data-page-id], #webapp-glass-hub-topnav [data-page-id], #webapp-nova-tabbar [data-page-id], #webapp-aurum-tabbar [data-page-id], #webapp-ledger-nav [data-page-id], #webapp-aqua-dock [data-page-id], #webapp-stage-rail [data-page-id], #webapp-void-orbit [data-page-id]'
         ).forEach((btn) => {
             btn.classList.toggle('is-active', btn.dataset.pageId === id);
         });
         window.WebAppGlassHub?.syncNav?.(id);
         window.WebAppNova?.syncNav?.(id);
+        window.WebAppAurum?.syncNav?.(id);
         window.WebAppPrefClassic?.syncNav?.(id);
         window.WebAppPrefMacos?.syncNav?.(id);
         window.WebAppPrefMacosV2?.syncNav?.(id);

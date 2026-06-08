@@ -12,6 +12,7 @@
         'pref-macos': '/static/css/webapp-pref-macos.css',
         'pref-macos-v2': '/static/css/webapp-pref-macos-v2.css',
         'pref-glass-stealth': '/static/css/webapp-pref-glass-stealth.css',
+        aurum: '/static/css/webapp-aurum.css',
     };
 
     var THEME_JS = {
@@ -21,6 +22,7 @@
         'pref-macos': '/static/js/webapp-pref-macos.js',
         'pref-macos-v2': '/static/js/webapp-pref-macos-v2.js',
         'pref-glass-stealth': '/static/js/webapp-pref-glass-stealth.js',
+        aurum: '/static/js/webapp-aurum.js',
     };
 
     try {

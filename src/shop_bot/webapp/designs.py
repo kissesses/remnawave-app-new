@@ -16,6 +16,7 @@ WEBAPP_DESIGN_IDS = (
     "pref-macos",
     "pref-macos-v2",
     "pref-glass-stealth",
+    "aurum",
 )
 
 WEBAPP_DESIGNS: list[dict[str, str]] = [
@@ -96,6 +97,13 @@ WEBAPP_DESIGNS: list[dict[str, str]] = [
         "icon": "blur_circular",
         "accent": "#e4e4e7",
     },
+    {
+        "id": "aurum",
+        "label": "Aurum",
+        "desc": "Luxury fintech: gold, glass KPI и pass-карта подписки",
+        "icon": "diamond",
+        "accent": "#c9a962",
+    },
 ]
 
 DEFAULT_ENABLED_DESIGNS = ",".join(WEBAPP_DESIGN_IDS)
@@ -119,6 +127,7 @@ WEBAPP_THEME_CSS: dict[str, str] = {
     "pref-macos": "webapp-pref-macos.css",
     "pref-macos-v2": "webapp-pref-macos-v2.css",
     "pref-glass-stealth": "webapp-pref-glass-stealth.css",
+    "aurum": "webapp-aurum.css",
 }
 
 WEBAPP_THEME_JS: dict[str, str] = {
@@ -128,6 +137,7 @@ WEBAPP_THEME_JS: dict[str, str] = {
     "pref-macos": "webapp-pref-macos.js",
     "pref-macos-v2": "webapp-pref-macos-v2.js",
     "pref-glass-stealth": "webapp-pref-glass-stealth.js",
+    "aurum": "webapp-aurum.js",
 }
 
 
