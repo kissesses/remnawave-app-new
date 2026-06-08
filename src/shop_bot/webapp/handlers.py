@@ -39,6 +39,8 @@ from shop_bot.data_manager.remnawave_repository import (
     add_to_referral_balance_all, get_balance, get_all_users, is_admin, update_user_stats,
     redeem_promo_code, update_promo_code_status, record_key_from_payload, get_key_by_id,
     update_key, get_key_by_email, set_trial_used, get_next_key_number, get_referral_balance_all,
+    get_referral_balance, set_terms_agreed, get_latest_pending_for_user,
+    get_pending_metadata, get_pending_status, update_key_host_and_info,
 )
 import shop_bot.data_manager.remnawave_repository as rw_repo
 from shop_bot.data_manager.database import (
@@ -47,6 +49,9 @@ from shop_bot.data_manager.database import (
     get_device_tier_by_id,
     get_host,
     get_db_connection,
+    get_latest_speedtest,
+    get_admin_ids,
+    set_referral_balance,
 )
 from shop_bot.modules import remnawave_api
 from shop_bot.config import get_purchase_success_text
@@ -532,6 +537,153 @@ def _format_remaining_details(remaining: timedelta) -> str:
     # Берем только первые две значимые части для краткости
     result_parts = parts[:2]
     return " ".join(result_parts) if result_parts else "меньше минуты"
+
+def _payment_action_label(action: str | None) -> str:
+    labels = {
+        "new": "Покупка ключа",
+        "extend": "Продление ключа",
+        "top_up": "Пополнение баланса",
+        "tier_upgrade": "Апгрейд устройств",
+    }
+    return labels.get((action or "").strip(), "Оплата")
+
+
+def _apply_checkout_promo(
+    price: float,
+    promo_code: str | None,
+    user_id: int,
+    *,
+    allow: bool = True,
+) -> tuple[float, str, float]:
+    code = (promo_code or "").strip()
+    if not allow or not code:
+        return price, "", 0.0
+    promo, _err = rw_repo.check_promo_code_available(code, user_id)
+    if not promo or promo.get("promo_type") != "discount":
+        return price, "", 0.0
+    before = float(price)
+    after = before
+    if promo.get("discount_percent"):
+        after -= after * (float(promo["discount_percent"]) / 100)
+    elif promo.get("discount_amount"):
+        after -= float(promo["discount_amount"])
+    after = max(0.0, round(after, 2))
+    return after, code, round(before - after, 2)
+
+
+def _build_payment_meta(
+    *,
+    user_id: int,
+    final_price: float,
+    action_name: str,
+    key_id: int | None,
+    host_name: str | None,
+    plan_id: int,
+    payment_method: str,
+    payment_id: str,
+    months: int,
+    tier_device_count: int | None,
+    promo_code: str = "",
+    promo_discount: float = 0.0,
+    payment_url: str | None = None,
+) -> dict:
+    meta = {
+        "user_id": user_id,
+        "months": months,
+        "price": float(final_price),
+        "action": action_name,
+        "key_id": key_id,
+        "host_name": host_name,
+        "plan_id": plan_id,
+        "payment_method": payment_method,
+        "payment_id": payment_id,
+        "tier_device_count": tier_device_count,
+        "promo_code": promo_code or "",
+        "promo_discount": float(promo_discount or 0),
+    }
+    if payment_url:
+        meta["payment_url"] = payment_url
+    return meta
+
+
+def _persist_pending_payment(
+    payment_id: str,
+    user_id: int,
+    amount: float,
+    meta: dict,
+    payment_url: str | None = None,
+) -> dict:
+    if payment_url:
+        meta = dict(meta)
+        meta["payment_url"] = payment_url
+    create_payload_pending(payment_id, user_id, float(amount), meta)
+    return meta
+
+
+async def _fetch_key_live_stats(key: dict) -> dict:
+    host_name = key.get("host_name")
+    uuid_val = key.get("remnawave_user_uuid")
+    details = None
+    sub = None
+    if uuid_val:
+        details, sub = await asyncio.gather(
+            remnawave_api.get_key_details_from_host(key),
+            remnawave_api.get_subscription_info(uuid_val, host_name=host_name),
+        )
+    conn = (details or {}).get("connection_string") or key.get("subscription_url") or key.get("key") or ""
+    hw_lim = None
+    hw_usg = 0
+    is_frozen = False
+    if details and details.get("user"):
+        user_payload = details["user"]
+        hw_lim = user_payload.get("hwidDeviceLimit")
+        status_raw = str(user_payload.get("status") or "").upper()
+        if status_raw in {"DISABLED", "INACTIVE", "FROZEN"}:
+            is_frozen = True
+        elif user_payload.get("enabled") is False:
+            is_frozen = True
+        try:
+            dev_data = await remnawave_api.get_connected_devices_count(
+                user_payload.get("uuid") or uuid_val,
+                host_name=host_name,
+            )
+            if dev_data:
+                hw_usg = int(dev_data.get("total") or 0)
+        except Exception:
+            log_suppressed()
+    tr_lim = None
+    tr_usg = None
+    if sub and isinstance(sub, dict):
+        tr_lim = sub.get("trafficLimit") or sub.get("traffic_limit")
+        tr_usg = sub.get("trafficUsed") or sub.get("traffic_used") or sub.get("usedTrafficBytes")
+    limit_display = "∞"
+    if hw_lim is not None:
+        try:
+            limit_val = int(hw_lim)
+            limit_display = str(limit_val) if 0 < limit_val < 99 else "∞"
+        except (TypeError, ValueError):
+            limit_display = "∞"
+    traffic_str = "∞"
+    if tr_lim:
+        try:
+            t_lim_float = float(tr_lim)
+            if t_lim_float > 0:
+                traffic_str = _format_bytes(t_lim_float)
+        except (TypeError, ValueError):
+            traffic_str = "∞"
+    formatted_used = _format_bytes(tr_usg or 0)
+    return {
+        "traffic_used": tr_usg,
+        "traffic_limit": tr_lim,
+        "traffic_info": f"{formatted_used} / {traffic_str}",
+        "hwid_usage": hw_usg,
+        "hwid_limit": hw_lim,
+        "hwid_info": f"{hw_usg} / {limit_display} уст.",
+        "connection_string": conn,
+        "sub_url": conn,
+        "is_frozen": is_frozen,
+    }
+
 
 def _format_bytes(size: Any) -> str:
     if size is None: return "0 B"
@@ -1275,10 +1427,22 @@ def _get_purchase_catalog_json(user_id: int) -> dict:
         host_name = host.get("host_name")
         if not host_name:
             continue
+        speed = None
+        try:
+            last = get_latest_speedtest(host_name)
+            if last and last.get("ok"):
+                speed = {
+                    "ping_ms": float(last.get("ping_ms") or 0),
+                    "download_mbps": float(last.get("download_mbps") or 0),
+                    "upload_mbps": float(last.get("upload_mbps") or 0),
+                }
+        except Exception:
+            log_suppressed()
         hosts_out.append({
             "host_name": host_name,
             "description": (host.get("description") or "").strip() or None,
             "plans": _plans_for_host_json(host_name, user_id),
+            "speedtest": speed,
         })
     return {"ok": True, "hosts": hosts_out}
 
@@ -3052,16 +3216,12 @@ async def api_create_payment(req: CreatePaymentRequest, auth_user: AuthUser):
             if tier_price_per_month > 0:
                 final_price += tier_price_per_month * month_factor
 
-            if req.promo_code:
-                promo, error = rw_repo.check_promo_code_available(req.promo_code, user_id)
-                if promo and promo.get('promo_type') == 'discount':
-                    if promo.get('discount_percent'):
-                        final_price -= final_price * (float(promo['discount_percent']) / 100)
-                    elif promo.get('discount_amount'):
-                        final_price -= float(promo['discount_amount'])
-                    final_price = max(0, round(final_price, 2))
-
             action_name = req.action
+
+        promo_allow = action_name not in ("top_up",)
+        final_price, promo_code_str, promo_discount_amt = _apply_checkout_promo(
+            float(final_price), req.promo_code, user_id, allow=promo_allow,
+        )
         
         # --- YooKassa ---
         if method_id == "pay_yookassa":
@@ -3070,13 +3230,14 @@ async def api_create_payment(req: CreatePaymentRequest, auth_user: AuthUser):
             YookassaConfiguration.account_id = shop_id
             YookassaConfiguration.secret_key = secret
             pid = str(uuid.uuid4())
-            meta = {
-                "user_id": user_id, "months": months, "price": float(final_price),
-                "action": action_name, "key_id": req.key_id, "host_name": req.host_name,
-                "plan_id": plan_id, "payment_method": "YooKassa", "payment_id": pid,
-                "tier_device_count": tier_device_count
-            }
-            create_payload_pending(pid, user_id, float(final_price), meta)
+            meta = _build_payment_meta(
+                user_id=user_id, final_price=final_price, action_name=action_name,
+                key_id=req.key_id, host_name=req.host_name, plan_id=plan_id,
+                payment_method="YooKassa", payment_id=pid, months=months,
+                tier_device_count=tier_device_count,
+                promo_code=promo_code_str, promo_discount=promo_discount_amt,
+            )
+            _persist_pending_payment(pid, user_id, float(final_price), meta)
             comment = get_transaction_comment({"id": user_id, "username": user.get("username")}, action_name, months, req.host_name)
             payload = {
                 "amount": {"value": f"{final_price:.2f}", "currency": "RUB"},
@@ -3086,6 +3247,7 @@ async def api_create_payment(req: CreatePaymentRequest, auth_user: AuthUser):
             try:
                 pay_obj = YookassaPayment.create(payload, pid)
                 pay_url = pay_obj.confirmation.confirmation_url
+                _persist_pending_payment(pid, user_id, float(final_price), meta, pay_url)
                 
                 kb = create_payment_keyboard(pay_url)
                 await _send_telegram_message(user_id, f"<b>Оплата через ЮKassa</b>\n\nСумма: <b>{final_price:.2f} RUB</b>\n\n<i>Вы можете оплатить счет здесь или в WebApp.</i>", kb)
@@ -3101,18 +3263,20 @@ async def api_create_payment(req: CreatePaymentRequest, auth_user: AuthUser):
             mid, key = get_setting("platega_merchant_id"), get_setting("platega_api_key")
             if not mid or not key: return {"ok": False, "error": "Platega не настроена"}
             pid = str(uuid.uuid4())
-            meta = {
-                "user_id": user_id, "months": months, "price": float(final_price),
-                "action": action_name, "key_id": req.key_id, "host_name": req.host_name,
-                "plan_id": plan_id, "payment_method": "Platega Payform", "payment_id": pid,
-                "tier_device_count": tier_device_count
-            }
-            create_payload_pending(pid, user_id, float(final_price), meta)
+            meta = _build_payment_meta(
+                user_id=user_id, final_price=final_price, action_name=action_name,
+                key_id=req.key_id, host_name=req.host_name, plan_id=plan_id,
+                payment_method="Platega Payform", payment_id=pid, months=months,
+                tier_device_count=tier_device_count,
+                promo_code=promo_code_str, promo_discount=promo_discount_amt,
+            )
+            _persist_pending_payment(pid, user_id, float(final_price), meta)
             desc = f"Order {pid}"
             try:
                 platega = PlategaAPI(mid, key)
                 _, url = await platega.create_payment_payform(float(final_price), desc, pid, f"https://t.me/{get_setting('telegram_bot_username')}", f"https://t.me/{get_setting('telegram_bot_username')}")
                 if url:
+                    _persist_pending_payment(pid, user_id, float(final_price), meta, url)
                     kb = create_payment_keyboard(url)
                     await _send_telegram_message(user_id, f"<b>Оплата через Platega</b>\n\nСумма: <b>{final_price:.2f} RUB</b>\n\n<i>Счет также доступен в WebApp.</i>", kb)
                     return {"ok": True, "payment_url": url, "payment_id": pid, "message": "Счёт создан"}
@@ -3125,18 +3289,20 @@ async def api_create_payment(req: CreatePaymentRequest, auth_user: AuthUser):
             mid, key = get_setting("platega_merchant_id"), get_setting("platega_api_key")
             if not mid or not key: return {"ok": False, "error": "Platega не настроена"}
             pid = str(uuid.uuid4())
-            meta = {
-                "user_id": user_id, "months": months, "price": float(final_price),
-                "action": action_name, "key_id": req.key_id, "host_name": req.host_name,
-                "plan_id": plan_id, "payment_method": "Platega", "payment_id": pid,
-                "tier_device_count": tier_device_count
-            }
-            create_payload_pending(pid, user_id, float(final_price), meta)
+            meta = _build_payment_meta(
+                user_id=user_id, final_price=final_price, action_name=action_name,
+                key_id=req.key_id, host_name=req.host_name, plan_id=plan_id,
+                payment_method="Platega", payment_id=pid, months=months,
+                tier_device_count=tier_device_count,
+                promo_code=promo_code_str, promo_discount=promo_discount_amt,
+            )
+            _persist_pending_payment(pid, user_id, float(final_price), meta)
             desc = f"Order {pid}"
             try:
                 platega = PlategaAPI(mid, key)
                 _, url = await platega.create_payment(float(final_price), desc, pid, f"https://t.me/{get_setting('telegram_bot_username')}", f"https://t.me/{get_setting('telegram_bot_username')}", 2)
                 if url:
+                    _persist_pending_payment(pid, user_id, float(final_price), meta, url)
                     kb = create_payment_keyboard(url)
                     await _send_telegram_message(user_id, f"<b>Оплата через Platega</b>\n\nСумма: <b>{final_price:.2f} RUB</b>\n\n<i>Счет также доступен в WebApp.</i>", kb)
                     return {"ok": True, "payment_url": url, "payment_id": pid, "message": "Счёт создан"}
@@ -3149,18 +3315,20 @@ async def api_create_payment(req: CreatePaymentRequest, auth_user: AuthUser):
             mid, key = get_setting("platega_merchant_id"), get_setting("platega_api_key")
             if not mid or not key: return {"ok": False, "error": "Platega не настроена"}
             pid = str(uuid.uuid4())
-            meta = {
-                "user_id": user_id, "months": months, "price": float(final_price),
-                "action": action_name, "key_id": req.key_id, "host_name": req.host_name,
-                "plan_id": plan_id, "payment_method": "Platega Crypto", "payment_id": pid,
-                "tier_device_count": tier_device_count
-            }
-            create_payload_pending(pid, user_id, float(final_price), meta)
+            meta = _build_payment_meta(
+                user_id=user_id, final_price=final_price, action_name=action_name,
+                key_id=req.key_id, host_name=req.host_name, plan_id=plan_id,
+                payment_method="Platega Crypto", payment_id=pid, months=months,
+                tier_device_count=tier_device_count,
+                promo_code=promo_code_str, promo_discount=promo_discount_amt,
+            )
+            _persist_pending_payment(pid, user_id, float(final_price), meta)
             desc = f"Order {pid}"
             try:
                 platega = PlategaAPI(mid, key)
                 _, url = await platega.create_payment(float(final_price), desc, pid, f"https://t.me/{get_setting('telegram_bot_username')}", f"https://t.me/{get_setting('telegram_bot_username')}", 13)
                 if url:
+                    _persist_pending_payment(pid, user_id, float(final_price), meta, url)
                     kb = create_payment_keyboard(url)
                     await _send_telegram_message(user_id, f"<b>Оплата через Platega (Crypto)</b>\n\nСумма: <b>{final_price:.2f} RUB</b>\n\n<i>Счет также доступен в WebApp.</i>", kb)
                     return {"ok": True, "payment_url": url, "payment_id": pid, "message": "Счёт создан"}
@@ -3171,22 +3339,20 @@ async def api_create_payment(req: CreatePaymentRequest, auth_user: AuthUser):
          # --- CryptoBot ---
         elif method_id == "pay_cryptobot":
              pid = str(uuid.uuid4())
-             meta = {
-                "user_id": user_id, "months": months, "price": float(final_price),
-                "action": action_name, "key_id": req.key_id, "host_name": req.host_name,
-                "plan_id": plan_id, "payment_method": "CryptoBot", "payment_id": pid,
-                "tier_device_count": tier_device_count
-            }
-             create_payload_pending(pid, user_id, float(final_price), meta)
-             # payload_str format MUST match what bot expects. Using a generic format for now or just ID
-             # safe encoded payload
+             meta = _build_payment_meta(
+                user_id=user_id, final_price=final_price, action_name=action_name,
+                key_id=req.key_id, host_name=req.host_name, plan_id=plan_id,
+                payment_method="CryptoBot", payment_id=pid, months=months,
+                tier_device_count=tier_device_count,
+                promo_code=promo_code_str, promo_discount=promo_discount_amt,
+            )
+             _persist_pending_payment(pid, user_id, float(final_price), meta)
              payload_str = f"{pid}" 
              
              try:
-                 # Note: create_cryptobot_api_invoice IS imported now
                  res = await create_cryptobot_api_invoice(amount=float(final_price), payload_str=payload_str)
                  if res:
-                     # res[0] is url, res[1] is invoice_id
+                     _persist_pending_payment(pid, user_id, float(final_price), meta, res[0])
                      kb = create_cryptobot_payment_keyboard(res[0], res[1])
                      await _send_telegram_message(user_id, f"<b>Оплата через CryptoBot</b>\n\nСумма: <b>{final_price:.2f} RUB</b>\n\n<i>Счет также доступен в WebApp.</i>", kb)
                      logger.info(f"[WEBAPP] - Успешно создан счет CryptoBot для {user_id}: {pid}")
@@ -3199,13 +3365,14 @@ async def api_create_payment(req: CreatePaymentRequest, auth_user: AuthUser):
         # --- Heleket ---
         elif method_id == "pay_heleket":
             pid = str(uuid.uuid4())
-            meta = {
-                "user_id": user_id, "months": months, "price": float(final_price),
-                "action": action_name, "key_id": req.key_id, "host_name": req.host_name,
-                "plan_id": plan_id, "payment_method": "Heleket", "payment_id": pid,
-                "tier_device_count": tier_device_count
-            }
-            create_payload_pending(pid, user_id, float(final_price), meta)
+            meta = _build_payment_meta(
+                user_id=user_id, final_price=final_price, action_name=action_name,
+                key_id=req.key_id, host_name=req.host_name, plan_id=plan_id,
+                payment_method="Heleket", payment_id=pid, months=months,
+                tier_device_count=tier_device_count,
+                promo_code=promo_code_str, promo_discount=promo_discount_amt,
+            )
+            _persist_pending_payment(pid, user_id, float(final_price), meta)
             
             try:
                 result = await create_heleket_payment_request(
@@ -3219,6 +3386,7 @@ async def api_create_payment(req: CreatePaymentRequest, auth_user: AuthUser):
                 
                 if result and result.get('payment_url'):
                     pay_url = result['payment_url']
+                    _persist_pending_payment(pid, user_id, float(final_price), meta, pay_url)
                     kb = create_payment_keyboard(pay_url)
                     await _send_telegram_message(user_id, f"<b>Оплата через Crypto (Heleket)</b>\n\nСумма: <b>{final_price:.2f} RUB</b>", kb)
                     return {"ok": True, "payment_url": pay_url, "payment_id": pid}
@@ -3234,16 +3402,17 @@ async def api_create_payment(req: CreatePaymentRequest, auth_user: AuthUser):
              receiver = get_setting("yoomoney_receiver")
              if not receiver: return {"ok": False, "error": "YooMoney не настроен"}
              pid = str(uuid.uuid4())
-             meta = {
-                "user_id": user_id, "months": months, "price": float(final_price),
-                "action": action_name, "key_id": req.key_id, "host_name": req.host_name,
-                "plan_id": plan_id, "payment_method": "YooMoney", "payment_id": pid,
-                "tier_device_count": tier_device_count
-            }
-             create_payload_pending(pid, user_id, float(final_price), meta)
+             meta = _build_payment_meta(
+                user_id=user_id, final_price=final_price, action_name=action_name,
+                key_id=req.key_id, host_name=req.host_name, plan_id=plan_id,
+                payment_method="YooMoney", payment_id=pid, months=months,
+                tier_device_count=tier_device_count,
+                promo_code=promo_code_str, promo_discount=promo_discount_amt,
+            )
              label = pid
              desc = get_transaction_comment({"id": user_id, "username": user.get("username")}, action_name, months, req.host_name)
              link = _build_yoomoney_link(receiver, Decimal(str(final_price)), label, desc)
+             _persist_pending_payment(pid, user_id, float(final_price), meta, link)
              
              kb = create_yoomoney_payment_keyboard(link, pid)
              await _send_telegram_message(user_id, f"<b>Оплата через ЮMoney (кошелёк)</b>\n\nСумма: <b>{final_price:.2f} RUB</b>\n\n<i>Счет также доступен в WebApp.</i>", kb)
@@ -3262,19 +3431,22 @@ async def api_create_payment(req: CreatePaymentRequest, auth_user: AuthUser):
              if stars_ratio <= 0: return {"ok": False, "error": "Stars отключены"}
              stars_amount = max(1, int((final_price * stars_ratio)))
              pid = str(uuid.uuid4())
-             meta = {
-                "user_id": user_id, "months": months, "price": float(final_price),
-                "action": action_name, "key_id": req.key_id, "host_name": req.host_name,
-                "plan_id": plan_id, "payment_method": "Telegram Stars", "payment_id": pid,
-                "tier_device_count": tier_device_count
-            }
-             create_payload_pending(pid, user_id, float(final_price), meta)
+             bot_username = get_setting('telegram_bot_username')
+             stars_url = f"tg://resolve?domain={bot_username}"
+             meta = _build_payment_meta(
+                user_id=user_id, final_price=final_price, action_name=action_name,
+                key_id=req.key_id, host_name=req.host_name, plan_id=plan_id,
+                payment_method="Telegram Stars", payment_id=pid, months=months,
+                tier_device_count=tier_device_count,
+                promo_code=promo_code_str, promo_discount=promo_discount_amt,
+                payment_url=stars_url,
+            )
+             _persist_pending_payment(pid, user_id, float(final_price), meta, stars_url)
              title = f"{'Подписка' if action_name == 'new' else 'Продление'} на {months} мес."
              desc = get_transaction_comment({"id": user_id, "username": user.get("username")}, action_name, months, req.host_name)
              await _send_invoice_stars(user_id, title, desc, pid, stars_amount)
-             bot_username = get_setting('telegram_bot_username')
              logger.info(f"[WEBAPP] - Успешно отправлен счет Stars для {user_id} на {stars_amount} звезд")
-             return {"ok": True, "message": "Счёт Stars отправлен в бот", "payment_url": f"tg://resolve?domain={bot_username}"}
+             return {"ok": True, "message": "Счёт Stars отправлен в бот", "payment_url": stars_url}
 
         # --- Balance ---
         elif method_id == "pay_balance":
@@ -3282,13 +3454,13 @@ async def api_create_payment(req: CreatePaymentRequest, auth_user: AuthUser):
                 return {"ok": False, "error": "Недостаточно средств"}
                 
             p_log_id = str(uuid.uuid4())
-            meta = {
-                "user_id": user_id, "months": months, "price": float(final_price),
-                "action": action_name, "key_id": req.key_id, "host_name": req.host_name,
-                "plan_id": plan_id, "payment_method": "Balance", "promo_code": "", "promo_discount": 0,
-                "tier_device_count": tier_device_count,
-                "payment_id": p_log_id
-            }
+            meta = _build_payment_meta(
+                user_id=user_id, final_price=final_price, action_name=action_name,
+                key_id=req.key_id, host_name=req.host_name, plan_id=plan_id,
+                payment_method="Balance", payment_id=p_log_id, months=months,
+                tier_device_count=tier_device_count,
+                promo_code=promo_code_str, promo_discount=promo_discount_amt,
+            )
             token = get_setting("telegram_bot_token")
             bot = Bot(token=token) if token else None
             
@@ -3522,6 +3694,296 @@ async def api_key_comment(req: CommentRequest, auth_user: AuthUser):
     except Exception as e:
         logger.error(f"[WEBAPP] - Ошибка обновления комментария для ключа {req.key_id}: {e}")
         return {"ok": False, "error": str(e)}
+
+
+class SwitchHostRequest(BaseModel):
+    user_id: int
+    key_id: int
+    new_host_name: str
+
+
+class PaymentResumeRequest(BaseModel):
+    user_id: int
+    payment_id: str | None = None
+
+
+class ReferralTransferRequest(BaseModel):
+    user_id: int
+    amount: float | None = None
+
+
+class TermsAgreeRequest(BaseModel):
+    user_id: int
+
+
+class KeyFreezeRequest(BaseModel):
+    user_id: int
+    key_id: int
+    freeze: bool = True
+
+
+@app.post("/api/key/live-stats")
+async def api_key_live_stats(req: KeyActionRequest, auth_user: AuthUser):
+    try:
+        user_id = authorized_user_id(auth_user, req.user_id)
+        user = get_user(user_id)
+        if not user or user.get("is_banned"):
+            return {"ok": False, "error": "Access denied"}
+        key = get_key_by_id(req.key_id)
+        if not key or key.get("user_id") != user_id:
+            return {"ok": False, "error": "Ключ не найден"}
+        stats = await _fetch_key_live_stats(key)
+        return {"ok": True, **stats}
+    except Exception as e:
+        logger.error(f"[WEBAPP] key live-stats {req.key_id}: {e}")
+        return {"ok": False, "error": str(e)}
+
+
+@app.get("/api/key/switch-hosts")
+async def api_key_switch_hosts(user_id: int, key_id: int, auth_user: AuthUser):
+    try:
+        user_id = authorized_user_id(auth_user, user_id)
+        user = get_user(user_id)
+        if not user or user.get("is_banned"):
+            return {"ok": False, "error": "Access denied"}
+        key = get_key_by_id(key_id)
+        if not key or key.get("user_id") != user_id:
+            return {"ok": False, "error": "Ключ не найден"}
+        current = key.get("host_name") or ""
+        hosts = []
+        for h in get_all_hosts(visible_only=True) or []:
+            name = h.get("host_name")
+            if name and name != current:
+                hosts.append({"host_name": name, "description": (h.get("description") or "").strip() or None})
+        return {"ok": True, "current_host": current, "hosts": hosts}
+    except Exception as e:
+        logger.error(f"[WEBAPP] key switch-hosts {key_id}: {e}")
+        return {"ok": False, "error": str(e)}
+
+
+@app.post("/api/key/switch-host")
+async def api_key_switch_host(req: SwitchHostRequest, auth_user: AuthUser):
+    try:
+        user_id = authorized_user_id(auth_user, req.user_id)
+        user = get_user(user_id)
+        if not user or user.get("is_banned"):
+            return {"ok": False, "error": "Access denied"}
+        key = get_key_by_id(req.key_id)
+        if not key or key.get("user_id") != user_id:
+            return {"ok": False, "error": "Ключ не найден"}
+        old_host = key.get("host_name")
+        new_host = (req.new_host_name or "").strip()
+        if not old_host or not new_host or new_host == old_host:
+            return {"ok": False, "error": "Некорректный выбор сервера"}
+        try:
+            expiry_ms = int(datetime.fromisoformat(key["expiry_date"]).timestamp() * 1000)
+        except Exception:
+            expiry_ms = int((get_msk_time().replace(tzinfo=None) + timedelta(days=1)).timestamp() * 1000)
+        hw_lim = key.get("hwid_limit")
+        tr_lim_gb = int(key["traffic_limit_bytes"] / (1024**3)) if key.get("traffic_limit_bytes") else None
+        res = await remnawave_api.create_or_update_key_on_host(
+            new_host, key.get("key_email"), expiry_timestamp_ms=expiry_ms,
+            telegram_id=user_id, hwid_limit=hw_lim, traffic_limit_gb=tr_lim_gb,
+        )
+        if not res:
+            return {"ok": False, "error": f"Не удалось активировать ключ на «{new_host}»"}
+        try:
+            await remnawave_api.delete_client_on_host(old_host, key.get("key_email"))
+        except Exception:
+            log_suppressed()
+        update_key_host_and_info(
+            key_id=req.key_id,
+            new_host_name=new_host,
+            new_remnawave_uuid=res["client_uuid"],
+            new_expiry_ms=res["expiry_timestamp_ms"],
+        )
+        updated = get_key_by_id(req.key_id) or key
+        stats = await _fetch_key_live_stats(updated)
+        return {"ok": True, "host_name": new_host, **stats}
+    except Exception as e:
+        logger.error(f"[WEBAPP] key switch-host {req.key_id}: {e}")
+        return {"ok": False, "error": str(e)}
+
+
+@app.post("/api/key/freeze")
+async def api_key_freeze(req: KeyFreezeRequest, auth_user: AuthUser):
+    try:
+        user_id = authorized_user_id(auth_user, req.user_id)
+        user = get_user(user_id)
+        if not user or user.get("is_banned"):
+            return {"ok": False, "error": "Access denied"}
+        key = get_key_by_id(req.key_id)
+        if not key or key.get("user_id") != user_id:
+            return {"ok": False, "error": "Ключ не найден"}
+        uuid_val = key.get("remnawave_user_uuid")
+        if not uuid_val:
+            return {"ok": False, "error": "Ключ не привязан к серверу"}
+        ok = await remnawave_api.set_user_status(uuid_val, active=not req.freeze)
+        if not ok:
+            return {"ok": False, "error": "Не удалось изменить статус ключа"}
+        return {"ok": True, "is_frozen": bool(req.freeze)}
+    except Exception as e:
+        logger.error(f"[WEBAPP] key freeze {req.key_id}: {e}")
+        return {"ok": False, "error": str(e)}
+
+
+@app.get("/api/payment/pending")
+async def api_payment_pending(user_id: int, auth_user: AuthUser):
+    try:
+        user_id = authorized_user_id(auth_user, user_id)
+        user = get_user(user_id)
+        if not user or user.get("is_banned"):
+            return {"ok": False, "error": "Access denied"}
+        meta = get_latest_pending_for_user(user_id)
+        if not meta:
+            return {"ok": True, "pending": None}
+        pid = meta.get("payment_id")
+        if pid and (get_pending_status(pid) or "").lower() == "paid":
+            return {"ok": True, "pending": None}
+        return {
+            "ok": True,
+            "pending": {
+                "payment_id": pid,
+                "price": float(meta.get("price") or 0),
+                "action": meta.get("action"),
+                "action_label": _payment_action_label(meta.get("action")),
+                "payment_method": meta.get("payment_method"),
+                "host_name": meta.get("host_name"),
+                "payment_url": meta.get("payment_url"),
+            },
+        }
+    except Exception as e:
+        logger.error(f"[WEBAPP] payment pending {user_id}: {e}")
+        return {"ok": False, "error": str(e)}
+
+
+@app.post("/api/payment/resume")
+async def api_payment_resume(req: PaymentResumeRequest, auth_user: AuthUser):
+    try:
+        user_id = authorized_user_id(auth_user, req.user_id)
+        user = get_user(user_id)
+        if not user or user.get("is_banned"):
+            return {"ok": False, "error": "Access denied"}
+        meta = None
+        if req.payment_id:
+            meta = get_pending_metadata(req.payment_id)
+            if meta and int(meta.get("user_id") or 0) != user_id:
+                return {"ok": False, "error": "Access denied"}
+        if not meta:
+            meta = get_latest_pending_for_user(user_id)
+        if not meta:
+            return {"ok": False, "error": "Нет незавершённого платежа"}
+        pid = meta.get("payment_id")
+        if pid and (get_pending_status(pid) or "").lower() == "paid":
+            return {"ok": False, "error": "Платёж уже оплачен"}
+        payment_url = meta.get("payment_url")
+        if not payment_url:
+            method = meta.get("payment_method") or ""
+            price = float(meta.get("price") or 0)
+            if method == "YooMoney" and pid:
+                receiver = get_setting("yoomoney_receiver")
+                if receiver:
+                    desc = get_transaction_comment(
+                        {"id": user_id, "username": user.get("username")},
+                        meta.get("action") or "new",
+                        int(meta.get("months") or 0),
+                        meta.get("host_name"),
+                    )
+                    payment_url = _build_yoomoney_link(receiver, Decimal(str(price)), pid, desc)
+                    _persist_pending_payment(pid, user_id, price, meta, payment_url)
+        if not payment_url:
+            bot_username = (get_setting("telegram_bot_username") or "bot").strip().lstrip("@")
+            payment_url = f"https://t.me/{bot_username}"
+        return {
+            "ok": True,
+            "payment_id": pid,
+            "payment_url": payment_url,
+            "price": float(meta.get("price") or 0),
+            "action_label": _payment_action_label(meta.get("action")),
+        }
+    except Exception as e:
+        logger.error(f"[WEBAPP] payment resume {req.user_id}: {e}")
+        return {"ok": False, "error": str(e)}
+
+
+@app.post("/api/referrals/transfer")
+async def api_referrals_transfer(req: ReferralTransferRequest, auth_user: AuthUser):
+    try:
+        from shop_bot.modules.referral_rewards import payout_mode, minimum_withdrawal_amount
+
+        user_id = authorized_user_id(auth_user, req.user_id)
+        user = get_user(user_id)
+        if not user or user.get("is_banned"):
+            return {"ok": False, "error": "Access denied"}
+        if payout_mode() != "referral_balance":
+            return {"ok": False, "error": "Перевод доступен только в режиме реф. баланса"}
+        balance = float(get_referral_balance(user_id) or 0)
+        if balance <= 0:
+            return {"ok": False, "error": "Реферальный баланс пуст"}
+        amount = float(req.amount) if req.amount is not None else balance
+        if amount <= 0 or amount > balance:
+            return {"ok": False, "error": "Некорректная сумма"}
+        if not add_to_balance(user_id, amount):
+            return {"ok": False, "error": "Не удалось зачислить на баланс"}
+        set_referral_balance(user_id, round(balance - amount, 2))
+        return {
+            "ok": True,
+            "transferred": amount,
+            "referral_balance": float(get_referral_balance(user_id) or 0),
+            "balance": float(get_balance(user_id) or 0),
+        }
+    except Exception as e:
+        logger.error(f"[WEBAPP] referrals transfer {req.user_id}: {e}")
+        return {"ok": False, "error": str(e)}
+
+
+@app.post("/api/referrals/withdraw-request")
+async def api_referrals_withdraw_request(req: ReferralTransferRequest, auth_user: AuthUser):
+    try:
+        from shop_bot.modules.referral_rewards import payout_mode, minimum_withdrawal_amount
+
+        user_id = authorized_user_id(auth_user, req.user_id)
+        user = get_user(user_id)
+        if not user or user.get("is_banned"):
+            return {"ok": False, "error": "Access denied"}
+        if payout_mode() != "referral_balance":
+            return {"ok": False, "error": "Вывод доступен только в режиме реф. баланса"}
+        balance = float(get_referral_balance(user_id) or 0)
+        min_wd = minimum_withdrawal_amount()
+        if balance < min_wd:
+            return {"ok": False, "error": f"Минимум для вывода — {min_wd:.0f} ₽"}
+        username = (user.get("username") or "").strip()
+        admin_text = (
+            f"💸 <b>Заявка на вывод (WebApp)</b>\n"
+            f"Пользователь: <code>{user_id}</code>"
+            f"{f' (@{username})' if username else ''}\n"
+            f"Сумма: <b>{balance:.2f} ₽</b>\n\n"
+            f"Подтвердить: <code>/approve_withdraw_{user_id}</code>"
+        )
+        for aid in get_admin_ids() or []:
+            try:
+                await _send_telegram_message(int(aid), admin_text)
+            except Exception:
+                log_suppressed()
+        return {"ok": True, "amount": balance, "message": "Заявка отправлена администратору"}
+    except Exception as e:
+        logger.error(f"[WEBAPP] referrals withdraw {req.user_id}: {e}")
+        return {"ok": False, "error": str(e)}
+
+
+@app.post("/api/user/terms/agree")
+async def api_user_terms_agree(req: TermsAgreeRequest, auth_user: AuthUser):
+    try:
+        user_id = authorized_user_id(auth_user, req.user_id)
+        user = get_user(user_id)
+        if not user or user.get("is_banned"):
+            return {"ok": False, "error": "Access denied"}
+        set_terms_agreed(user_id)
+        return {"ok": True}
+    except Exception as e:
+        logger.error(f"[WEBAPP] terms agree {req.user_id}: {e}")
+        return {"ok": False, "error": str(e)}
+
 
 def _support_ticket_summary(ticket: dict) -> dict:
     from shop_bot.data_manager.db.support import get_ticket_closed_at
@@ -3926,6 +4388,10 @@ async def api_cabinet_config(user_id: int, auth_user: AuthUser):
             "image": (content_overrides.get("promo_banner_image") or "").strip(),
             "until": (content_overrides.get("promo_alert_until") or "").strip(),
         }
+        terms_url = (get_setting("terms_url") or "").strip()
+        privacy_url = (get_setting("privacy_url") or "").strip()
+        agreed = bool(user.get("agreed_to_terms"))
+        terms_required = bool(terms_url and privacy_url and not agreed)
 
         return {
             "ok": True,
@@ -3971,6 +4437,12 @@ async def api_cabinet_config(user_id: int, auth_user: AuthUser):
             },
             "topup": {"min": 10, "max": 100000, "enabled": show_topup},
             "balance": float(user.get("balance") or 0),
+            "terms": {
+                "required": terms_required,
+                "agreed": agreed,
+                "terms_url": terms_url,
+                "privacy_url": privacy_url,
+            },
             "support_info": {
                 "enabled": show_support,
                 "bot_username": (get_setting("support_bot_username") or "").strip().lstrip("@"),
@@ -4384,15 +4856,21 @@ async def api_referrals_stats(user_id: int, auth_user: AuthUser):
                 "registered_at": str(reg or ""),
                 "total_spent": float(ref.get("total_spent") or 0),
             })
+        from shop_bot.modules.referral_rewards import payout_mode, minimum_withdrawal_amount
+
         ref_discount = get_setting("referral_discount") or "0"
         ref_reward = get_setting("referral_reward") or "0"
         bot_username_raw = (get_setting("telegram_bot_username") or "bot").strip().lstrip("@")
         bot_username = re.sub(r"[^A-Za-z0-9_]", "", bot_username_raw) or "bot"
+        mode = payout_mode()
         return {
             "ok": True,
             "link": f"https://t.me/{bot_username}?start=ref_{user_id}",
             "count": len(items),
             "earned": float(get_referral_balance_all(user_id) or 0),
+            "withdrawable": float(get_referral_balance(user_id) or 0),
+            "payout_mode": mode,
+            "min_withdraw": minimum_withdrawal_amount(),
             "referrals": items,
             "discount_percent": float(ref_discount) if ref_discount else 0,
             "reward_percent": float(ref_reward) if ref_reward else 0,
@@ -4585,6 +5063,22 @@ async def api_user_status(user_id: int, auth_user: AuthUser):
         if reg_date:
             reg_str = str(reg_date).split(".")[0][:19]
 
+        loyalty = None
+        if user.get("seller_active"):
+            s_info = get_seller_user(user_id)
+            if s_info:
+                loyalty = {
+                    "is_seller": True,
+                    "sale_percent": float(s_info.get("seller_sale") or 0),
+                    "ref_percent": float(s_info.get("seller_ref") or 0),
+                }
+        elif _get_seller_discount_percent(user_id) > 0:
+            loyalty = {
+                "is_seller": False,
+                "sale_percent": _get_seller_discount_percent(user_id),
+                "ref_percent": 0.0,
+            }
+
         return {
             "ok": True,
             "keys": formatted_keys,
@@ -4594,6 +5088,7 @@ async def api_user_status(user_id: int, auth_user: AuthUser):
             "referral_count": get_referral_count(user_id),
             "referral_earned": float(get_referral_balance_all(user_id) or 0),
             "referral_link": f"https://t.me/{bot_username}?start=ref_{user_id}",
+            "loyalty": loyalty,
             "profile": {
                 "username": (user.get("username") or "").strip(),
                 "registration_date": reg_str,

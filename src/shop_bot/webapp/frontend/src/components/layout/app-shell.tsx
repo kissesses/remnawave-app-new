@@ -7,6 +7,7 @@ import { useNavigationDirection } from "@/hooks/use-navigation-direction";
 import { useTelegramShell } from "@/hooks/use-telegram-shell";
 import { cn } from "@/lib/utils";
 import { UnreadNotificationsToast } from "@/components/feedback/unread-notifications-toast";
+import { TermsAgreementModal } from "@/components/premium/terms-agreement-modal";
 
 const STACK_PREFIXES = [
   "/history",
@@ -45,6 +46,7 @@ export function AppShell() {
     >
       <AmbientBackground />
       <UnreadNotificationsToast />
+      <TermsAgreementModal />
       {isStack ? (
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.div

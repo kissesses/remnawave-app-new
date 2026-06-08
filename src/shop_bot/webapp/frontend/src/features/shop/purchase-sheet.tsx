@@ -101,13 +101,19 @@ export function PurchaseSheet({ open, onOpenChange, showPromo }: PurchaseSheetPr
                       key={h.host_name}
                       size="sm"
                       variant={activeHost?.host_name === h.host_name ? "tg" : "secondary"}
-                      className="rounded-full"
+                      className="rounded-full flex-col h-auto py-2 px-3"
                       onClick={() => {
                         setHost(h);
                         setPlan(null);
                       }}
                     >
-                      {h.host_name}
+                      <span>{h.host_name}</span>
+                      {h.speedtest?.download_mbps ? (
+                        <span className="text-[10px] opacity-70 mt-0.5 font-normal">
+                          ↓ {Math.round(h.speedtest.download_mbps)} Mbps ·{" "}
+                          {Math.round(h.speedtest.ping_ms)} ms
+                        </span>
+                      ) : null}
                     </Button>
                   ))}
                 </div>

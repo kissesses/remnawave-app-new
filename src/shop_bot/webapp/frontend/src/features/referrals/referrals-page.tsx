@@ -1,6 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Copy, Share2, Users, Wallet } from "lucide-react";
+import { Copy, Share2, Users, Wallet, ArrowRightLeft, Banknote } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { SectionHeader } from "@/components/premium/section-header";
 import { PageSkeleton } from "@/components/feedback/page-skeleton";
@@ -11,7 +12,9 @@ import { formatDate, formatMoney } from "@/lib/utils";
 
 export function ReferralsPage() {
   const userId = getUserId();
+  const qc = useQueryClient();
   const { haptic, openLink } = useTelegram();
+  const [busy, setBusy] = useState<"transfer" | "withdraw" | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["referrals", "stats", userId],
@@ -36,6 +39,42 @@ export function ReferralsPage() {
       copyLink();
     }
   };
+
+  const transferToBalance = async () => {
+    setBusy("transfer");
+    try {
+      const res = await api.transferReferralBalance(userId);
+      if (res.ok) {
+        haptic("success");
+        toast.success(`Переведено ${formatMoney(res.transferred ?? 0)} на баланс`);
+        await qc.invalidateQueries({ queryKey: ["referrals", "stats", userId] });
+        await qc.invalidateQueries({ queryKey: ["user", "status"] });
+      } else {
+        toast.error(res.error ?? "Не удалось перевести");
+      }
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const requestWithdraw = async () => {
+    setBusy("withdraw");
+    try {
+      const res = await api.requestReferralWithdraw(userId);
+      if (res.ok) {
+        haptic("success");
+        toast.success(res.message ?? "Заявка отправлена");
+      } else {
+        toast.error(res.error ?? "Не удалось отправить заявку");
+      }
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const showRefBalance = data?.payout_mode === "referral_balance";
+  const withdrawable = data?.withdrawable ?? 0;
+  const minWithdraw = data?.min_withdraw ?? 100;
 
   if (isLoading) {
     return (
@@ -63,6 +102,12 @@ export function ReferralsPage() {
               <span className="text-lg font-bold">{formatMoney(data?.earned ?? 0)}</span>
             </div>
           </div>
+          {showRefBalance ? (
+            <div className="relative z-10 mt-3 premium-stat-pill">
+              <span className="text-[10px] text-muted-foreground">К выводу</span>
+              <span className="text-base font-bold">{formatMoney(withdrawable)}</span>
+            </div>
+          ) : null}
           {(data?.discount_percent ?? 0) > 0 || (data?.reward_percent ?? 0) > 0 ? (
             <p className="relative z-10 mt-3 text-xs text-muted-foreground">
               {data?.discount_percent ? `Скидка рефералу: −${data.discount_percent}%` : null}
@@ -82,6 +127,35 @@ export function ReferralsPage() {
             Поделиться
           </Button>
         </div>
+
+        {showRefBalance && withdrawable > 0 ? (
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant="outline"
+              className="rounded-2xl h-11"
+              disabled={busy !== null}
+              onClick={transferToBalance}
+            >
+              <ArrowRightLeft className="h-4 w-4 mr-2" />
+              На баланс
+            </Button>
+            <Button
+              variant="secondary"
+              className="rounded-2xl h-11"
+              disabled={busy !== null || withdrawable < minWithdraw}
+              onClick={requestWithdraw}
+            >
+              <Banknote className="h-4 w-4 mr-2" />
+              Вывод
+            </Button>
+          </div>
+        ) : null}
+
+        {showRefBalance && withdrawable > 0 && withdrawable < minWithdraw ? (
+          <p className="text-xs text-muted-foreground px-1">
+            Минимум для вывода — {formatMoney(minWithdraw)}
+          </p>
+        ) : null}
 
         <div>
           <SectionHeader title="Приглашённые" />

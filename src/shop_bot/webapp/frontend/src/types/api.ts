@@ -37,6 +37,19 @@ export interface UserProfileSummary {
   total_keys: number;
 }
 
+export interface LoyaltyInfo {
+  is_seller: boolean;
+  sale_percent: number;
+  ref_percent: number;
+}
+
+export interface TermsInfo {
+  required: boolean;
+  agreed: boolean;
+  terms_url: string;
+  privacy_url: string;
+}
+
 export interface UserStatus {
   ok: boolean;
   keys: VpnKey[];
@@ -46,6 +59,7 @@ export interface UserStatus {
   referral_count: number;
   referral_earned: number;
   referral_link: string;
+  loyalty?: LoyaltyInfo | null;
   profile?: UserProfileSummary;
   error?: string;
 }
@@ -106,6 +120,7 @@ export interface CabinetConfig {
   };
   topup: { min: number; max: number; enabled: boolean };
   balance: number;
+  terms?: TermsInfo;
   support_info?: SupportInfo;
   error?: string;
 }
@@ -205,6 +220,9 @@ export interface ReferralStats {
   link: string;
   count: number;
   earned: number;
+  withdrawable?: number;
+  payout_mode?: string;
+  min_withdraw?: number;
   referrals: {
     user_id: number;
     username: string;
@@ -214,6 +232,31 @@ export interface ReferralStats {
   discount_percent: number;
   reward_percent: number;
   error?: string;
+}
+
+export interface PendingPayment {
+  payment_id: string;
+  price: number;
+  action: string;
+  action_label: string;
+  payment_method: string;
+  host_name?: string;
+  payment_url?: string;
+}
+
+export interface KeyLiveStats {
+  ok: boolean;
+  traffic_info: string;
+  hwid_info: string;
+  sub_url?: string;
+  is_frozen?: boolean;
+  error?: string;
+}
+
+export interface HostSpeedtest {
+  ping_ms: number;
+  download_mbps: number;
+  upload_mbps: number;
 }
 
 export interface OnboardingProgress {
@@ -232,7 +275,9 @@ export interface ShopPlan {
 
 export interface ShopHost {
   host_name: string;
+  description?: string;
   plans: ShopPlan[];
+  speedtest?: HostSpeedtest | null;
 }
 
 export interface PurchaseCatalog {

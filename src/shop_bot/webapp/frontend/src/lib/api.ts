@@ -510,6 +510,96 @@ export const api = {
       body: JSON.stringify({ user_id: userId, host_name: hostName }),
     });
   },
+
+  getKeyLiveStats(userId: number, keyId: number, hostName?: string) {
+    return request<import("@/types/api").KeyLiveStats>("/api/key/live-stats", {
+      method: "POST",
+      body: JSON.stringify({ user_id: userId, key_id: keyId, host_name: hostName }),
+    });
+  },
+
+  getKeySwitchHosts(userId: number, keyId: number) {
+    return request<{
+      ok: boolean;
+      current_host?: string;
+      hosts?: { host_name: string; description?: string }[];
+      error?: string;
+    }>(`/api/key/switch-hosts?user_id=${userId}&key_id=${keyId}`);
+  },
+
+  switchKeyHost(userId: number, keyId: number, newHostName: string) {
+    return request<{ ok: boolean; host_name?: string; error?: string }>(
+      "/api/key/switch-host",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          user_id: userId,
+          key_id: keyId,
+          new_host_name: newHostName,
+        }),
+      },
+    );
+  },
+
+  setKeyFreeze(userId: number, keyId: number, freeze: boolean) {
+    return request<{ ok: boolean; is_frozen?: boolean; error?: string }>(
+      "/api/key/freeze",
+      {
+        method: "POST",
+        body: JSON.stringify({ user_id: userId, key_id: keyId, freeze }),
+      },
+    );
+  },
+
+  getPendingPayment(userId: number) {
+    return request<{ ok: boolean; pending: import("@/types/api").PendingPayment | null }>(
+      `/api/payment/pending?user_id=${userId}`,
+    );
+  },
+
+  resumePayment(userId: number, paymentId?: string) {
+    return request<{
+      ok: boolean;
+      payment_url?: string;
+      payment_id?: string;
+      price?: number;
+      action_label?: string;
+      error?: string;
+    }>("/api/payment/resume", {
+      method: "POST",
+      body: JSON.stringify({ user_id: userId, payment_id: paymentId }),
+    });
+  },
+
+  transferReferralBalance(userId: number, amount?: number) {
+    return request<{
+      ok: boolean;
+      transferred?: number;
+      referral_balance?: number;
+      balance?: number;
+      error?: string;
+    }>("/api/referrals/transfer", {
+      method: "POST",
+      body: JSON.stringify({ user_id: userId, amount }),
+    });
+  },
+
+  requestReferralWithdraw(userId: number) {
+    return request<{ ok: boolean; amount?: number; message?: string; error?: string }>(
+      "/api/referrals/withdraw-request",
+      {
+        method: "POST",
+        body: JSON.stringify({ user_id: userId }),
+      },
+    );
+  },
+
+  agreeTerms(userId: number) {
+    return request<{ ok: boolean; error?: string }>("/api/user/terms/agree", {
+      method: "POST",
+      body: JSON.stringify({ user_id: userId }),
+    });
+  },
 };
 
 export { ApiError };

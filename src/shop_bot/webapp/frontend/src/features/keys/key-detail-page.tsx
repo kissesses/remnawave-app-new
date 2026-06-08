@@ -13,6 +13,8 @@ import {
   Clock,
   Activity,
   Link2,
+  Server,
+  Snowflake,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Header } from "@/components/layout/header";
@@ -24,6 +26,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageSkeleton } from "@/components/feedback/page-skeleton";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { RenewSheet } from "@/features/shop/renew-sheet";
 import { SubscriptionQr } from "@/components/premium/subscription-qr";
 import { useUserStatus, useCabinetConfig } from "@/hooks/use-cabinet";
@@ -43,10 +51,31 @@ export function KeyDetailPage() {
   const [renewOpen, setRenewOpen] = useState(false);
   const [editingComment, setEditingComment] = useState(false);
   const [comment, setComment] = useState("");
+  const [switchOpen, setSwitchOpen] = useState(false);
+  const [switching, setSwitching] = useState(false);
+  const [freezing, setFreezing] = useState(false);
 
   const kid = parseInt(keyId ?? "0", 10);
   const { data: status, isLoading } = useUserStatus();
   const key: VpnKey | undefined = status?.keys?.find((k) => k.key_id === kid);
+
+  const {
+    data: liveStats,
+    isLoading: liveLoading,
+    refetch: refetchLive,
+    isFetching: liveFetching,
+  } = useQuery({
+    queryKey: ["key", "live-stats", kid],
+    queryFn: () => api.getKeyLiveStats(userId, kid, key?.host_name),
+    enabled: kid > 0 && Boolean(key),
+    staleTime: 60_000,
+  });
+
+  const { data: switchData } = useQuery({
+    queryKey: ["key", "switch-hosts", kid],
+    queryFn: () => api.getKeySwitchHosts(userId, kid),
+    enabled: switchOpen && kid > 0,
+  });
 
   const { data: devicesData, isLoading: devicesLoading } = useQuery({
     queryKey: ["key", "devices", kid],
@@ -54,36 +83,43 @@ export function KeyDetailPage() {
     enabled: kid > 0 && Boolean(key),
   });
 
+  const trafficInfo = liveStats?.traffic_info ?? key?.traffic_info ?? "—";
+  const hwidInfo = liveStats?.hwid_info ?? key?.hwid_info ?? "—";
+  const subUrl = liveStats?.sub_url || key?.sub_url;
+  const isFrozen = liveStats?.is_frozen ?? false;
+
   const copySub = () => {
-    if (!key?.sub_url) return;
-    navigator.clipboard.writeText(key.sub_url);
+    if (!subUrl) return;
+    navigator.clipboard.writeText(subUrl);
     haptic("success");
     toast.success("Ссылка скопирована");
   };
 
   const openSub = () => {
-    if (!key?.sub_url) return;
-    if (openLink) openLink(key.sub_url);
-    else window.open(key.sub_url, "_blank");
+    if (!subUrl) return;
+    if (openLink) openLink(subUrl);
+    else window.open(subUrl, "_blank");
   };
 
   const openInApp = (platform: "android" | "ios") => {
-    if (!key?.sub_url) return;
+    if (!subUrl) return;
     const scheme =
       platform === "android"
         ? config?.howto?.import_scheme_android
         : config?.howto?.import_scheme_ios;
-    const url = buildImportUrl(key.sub_url, platform, scheme || undefined);
+    const url = buildImportUrl(subUrl, platform, scheme || undefined);
     if (openLink) openLink(url);
     else window.location.href = url;
     haptic("success");
     toast.success("Открываем приложение…");
   };
 
-  const currentDevices = (() => {
-    const match = key?.hwid_info?.match(/(\d+)/);
-    return match ? parseInt(match[1], 10) : 1;
-  })();
+  const refreshLive = async () => {
+    haptic("light");
+    await refetchLive();
+    await qc.invalidateQueries({ queryKey: ["key", "devices", kid] });
+    toast.success("Данные обновлены");
+  };
 
   const saveComment = async () => {
     await api.saveKeyComment(userId, kid, comment);
@@ -99,9 +135,43 @@ export function KeyDetailPage() {
       haptic("success");
       toast.success("Устройство удалено");
       await qc.invalidateQueries({ queryKey: ["key", "devices", kid] });
-      await qc.invalidateQueries({ queryKey: ["user", "status"] });
+      await refetchLive();
     } else {
       toast.error(res.error ?? "Не удалось удалить");
+    }
+  };
+
+  const switchHost = async (hostName: string) => {
+    setSwitching(true);
+    try {
+      const res = await api.switchKeyHost(userId, kid, hostName);
+      if (res.ok) {
+        haptic("success");
+        toast.success(`Ключ перенесён на ${hostName}`);
+        setSwitchOpen(false);
+        await qc.invalidateQueries({ queryKey: ["user", "status"] });
+        await refetchLive();
+      } else {
+        toast.error(res.error ?? "Не удалось перенести");
+      }
+    } finally {
+      setSwitching(false);
+    }
+  };
+
+  const toggleFreeze = async () => {
+    setFreezing(true);
+    try {
+      const res = await api.setKeyFreeze(userId, kid, !isFrozen);
+      if (res.ok) {
+        haptic("success");
+        toast.success(isFrozen ? "Ключ разморожен" : "Ключ заморожен");
+        await refetchLive();
+      } else {
+        toast.error(res.error ?? "Не удалось изменить статус");
+      }
+    } finally {
+      setFreezing(false);
     }
   };
 
@@ -151,13 +221,26 @@ export function KeyDetailPage() {
                   <p className="mt-1 text-sm text-muted-foreground">
                     {key.days_left > 0 ? `${key.days_left} дн. осталось` : "Истекла"}
                   </p>
-                  <Badge
-                    variant={key.days_left > 0 ? "success" : "destructive"}
-                    className="mt-2"
-                  >
-                    {key.status_text}
-                  </Badge>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <Badge
+                      variant={key.days_left > 0 ? "success" : "destructive"}
+                    >
+                      {key.status_text}
+                    </Badge>
+                    {isFrozen ? (
+                      <Badge variant="secondary">Заморожен</Badge>
+                    ) : null}
+                  </div>
                 </div>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="shrink-0"
+                  onClick={refreshLive}
+                  disabled={liveFetching}
+                >
+                  <RefreshCw className={`h-4 w-4 ${liveFetching ? "animate-spin" : ""}`} />
+                </Button>
               </div>
               <div className="relative z-10 mt-4 grid grid-cols-2 gap-2 text-xs">
                 <div className="premium-stat-pill">
@@ -167,7 +250,7 @@ export function KeyDetailPage() {
                 <div className="premium-stat-pill">
                   <span className="text-muted-foreground">Трафик</span>
                   <span className="mt-1 font-semibold truncate w-full">
-                    {key.traffic_info || "—"}
+                    {liveLoading ? "…" : trafficInfo}
                   </span>
                 </div>
               </div>
@@ -190,7 +273,7 @@ export function KeyDetailPage() {
 
           <StaggerItem>
             <div className="grid grid-cols-2 gap-2">
-              <Button variant="tg" className="rounded-2xl" onClick={copySub} disabled={!key.sub_url}>
+              <Button variant="tg" className="rounded-2xl" onClick={copySub} disabled={!subUrl}>
                 <Copy className="h-4 w-4 mr-2" />
                 Копировать
               </Button>
@@ -198,7 +281,7 @@ export function KeyDetailPage() {
                 variant="secondary"
                 className="rounded-2xl"
                 onClick={openSub}
-                disabled={!key.sub_url}
+                disabled={!subUrl}
               >
                 <ExternalLink className="h-4 w-4 mr-2" />
                 Открыть
@@ -206,11 +289,11 @@ export function KeyDetailPage() {
             </div>
           </StaggerItem>
 
-          {key.sub_url ? (
+          {subUrl ? (
             <StaggerItem>
               <div className="premium-glass flex flex-col items-center gap-4 p-5">
                 <SectionHeader title="QR подписки" />
-                <SubscriptionQr keyId={kid} subUrl={key.sub_url} size={168} />
+                <SubscriptionQr keyId={kid} subUrl={subUrl} size={168} />
                 <p className="text-xs text-muted-foreground text-center">
                   Отсканируйте камерой или в VPN-приложении
                 </p>
@@ -237,13 +320,35 @@ export function KeyDetailPage() {
           ) : null}
 
           <StaggerItem>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant="outline"
+                className="rounded-2xl border-primary/30 h-12"
+                onClick={() => setRenewOpen(true)}
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Продлить
+              </Button>
+              <Button
+                variant="outline"
+                className="rounded-2xl h-12"
+                onClick={() => setSwitchOpen(true)}
+              >
+                <Server className="h-4 w-4 mr-2" />
+                Сменить сервер
+              </Button>
+            </div>
+          </StaggerItem>
+
+          <StaggerItem>
             <Button
-              variant="outline"
-              className="w-full rounded-2xl border-primary/30 h-12"
-              onClick={() => setRenewOpen(true)}
+              variant={isFrozen ? "tg" : "secondary"}
+              className="w-full rounded-2xl h-11"
+              onClick={toggleFreeze}
+              disabled={freezing}
             >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Продлить подписку
+              <Snowflake className="h-4 w-4 mr-2" />
+              {isFrozen ? "Разморозить ключ" : "Заморозить ключ"}
             </Button>
           </StaggerItem>
 
@@ -289,7 +394,10 @@ export function KeyDetailPage() {
             <DeviceTiersCard
               hostName={key.host_name}
               keyId={kid}
-              currentDevices={currentDevices}
+              currentDevices={(() => {
+                const match = hwidInfo.match(/(\d+)/);
+                return match ? parseInt(match[1], 10) : 1;
+              })()}
             />
           </StaggerItem>
 
@@ -298,7 +406,9 @@ export function KeyDetailPage() {
               <SectionHeader
                 title="Устройства"
                 action={
-                  <span className="text-xs text-muted-foreground">{key.hwid_info}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {liveLoading ? "…" : hwidInfo}
+                  </span>
                 }
               />
               <div className="premium-glass divide-y divide-border/40 overflow-hidden">
@@ -349,6 +459,36 @@ export function KeyDetailPage() {
           </StaggerItem>
         </StaggerList>
       </div>
+
+      <Sheet open={switchOpen} onOpenChange={setSwitchOpen}>
+        <SheetContent className="max-h-[70vh] overflow-y-auto rounded-t-3xl">
+          <SheetHeader>
+            <SheetTitle>Смена сервера</SheetTitle>
+          </SheetHeader>
+          <div className="space-y-2 px-5 pb-8">
+            <p className="text-xs text-muted-foreground mb-3">
+              Текущий: <strong>{switchData?.current_host || key.host_name}</strong>
+            </p>
+            {(switchData?.hosts?.length ?? 0) === 0 ? (
+              <p className="text-sm text-muted-foreground">Другие серверы недоступны</p>
+            ) : (
+              switchData?.hosts?.map((h) => (
+                <Button
+                  key={h.host_name}
+                  variant="outline"
+                  className="w-full rounded-2xl justify-start h-12"
+                  disabled={switching}
+                  onClick={() => switchHost(h.host_name)}
+                >
+                  <Server className="h-4 w-4 mr-2 shrink-0" />
+                  <span className="truncate">{h.host_name}</span>
+                </Button>
+              ))
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+
       <RenewSheet
         open={renewOpen}
         onOpenChange={setRenewOpen}

@@ -192,6 +192,7 @@ export function ProfilePage() {
               referralCount={referralCount}
               trialUsed={status?.trial_used}
               trialAvailable={status?.trial_available}
+              loyalty={status?.loyalty}
               onBalanceClick={() => {
                 haptic("selection");
                 navigate("/wallet");

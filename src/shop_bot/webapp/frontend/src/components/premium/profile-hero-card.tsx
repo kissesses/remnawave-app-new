@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatMoney, cn } from "@/lib/utils";
+import type { LoyaltyInfo } from "@/types/api";
 
 interface ProfileHeroCardProps {
   displayName: string;
@@ -15,6 +16,7 @@ interface ProfileHeroCardProps {
   referralCount?: number;
   trialUsed?: boolean;
   trialAvailable?: boolean;
+  loyalty?: LoyaltyInfo | null;
   onBalanceClick?: () => void;
   onKeysClick?: () => void;
   onReferralsClick?: () => void;
@@ -72,6 +74,7 @@ export function ProfileHeroCard({
   referralCount = 0,
   trialUsed,
   trialAvailable,
+  loyalty,
   onBalanceClick,
   onKeysClick,
   onReferralsClick,
@@ -115,6 +118,11 @@ export function ProfileHeroCard({
                   {activeKeys} активн.
                 </Badge>
               )}
+              {loyalty && loyalty.sale_percent > 0 ? (
+                <Badge variant="default" className="text-[10px]">
+                  {loyalty.is_seller ? "Seller" : "VIP"} −{loyalty.sale_percent}%
+                </Badge>
+              ) : null}
             </div>
           </div>
         </div>

@@ -26,6 +26,7 @@ import { TrialHomeCard } from "@/components/premium/trial-home-card";
 import { PromoHomeBanner } from "@/components/premium/promo-home-banner";
 import { OnboardingCard } from "@/components/premium/onboarding-card";
 import { GiftRedeemSheet } from "@/features/gift/gift-redeem-sheet";
+import { PendingPaymentBanner } from "@/components/premium/pending-payment-banner";
 import { Badge } from "@/components/ui/badge";
 import { usePreferences } from "@/hooks/use-preferences";
 import { api, getUserId } from "@/lib/api";
@@ -285,6 +286,7 @@ export function HomePage() {
           <PageSkeleton variant="hero" />
         ) : (
         <div className="space-y-4 p-4">
+          <PendingPaymentBanner />
           {layout
             .filter((id) => !hiddenWidgets.has(id))
             .map((id) => widgets[id as keyof typeof widgets])
