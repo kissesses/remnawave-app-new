@@ -12,6 +12,7 @@ import {
   Calendar,
   Clock,
   Activity,
+  Link2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Header } from "@/components/layout/header";
@@ -24,9 +25,11 @@ import { Button } from "@/components/ui/button";
 import { PageSkeleton } from "@/components/feedback/page-skeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RenewSheet } from "@/features/shop/renew-sheet";
+import { SubscriptionQr } from "@/components/premium/subscription-qr";
 import { useUserStatus, useCabinetConfig } from "@/hooks/use-cabinet";
 import { useTelegram } from "@/hooks/use-telegram";
 import { api, getUserId } from "@/lib/api";
+import { buildImportUrl } from "@/lib/vpn-import";
 import { formatDate } from "@/lib/utils";
 import type { VpnKey } from "@/types/api";
 
@@ -63,6 +66,24 @@ export function KeyDetailPage() {
     if (openLink) openLink(key.sub_url);
     else window.open(key.sub_url, "_blank");
   };
+
+  const openInApp = (platform: "android" | "ios") => {
+    if (!key?.sub_url) return;
+    const scheme =
+      platform === "android"
+        ? config?.howto?.import_scheme_android
+        : config?.howto?.import_scheme_ios;
+    const url = buildImportUrl(key.sub_url, platform, scheme || undefined);
+    if (openLink) openLink(url);
+    else window.location.href = url;
+    haptic("success");
+    toast.success("Открываем приложение…");
+  };
+
+  const currentDevices = (() => {
+    const match = key?.hwid_info?.match(/(\d+)/);
+    return match ? parseInt(match[1], 10) : 1;
+  })();
 
   const saveComment = async () => {
     await api.saveKeyComment(userId, kid, comment);
@@ -185,6 +206,36 @@ export function KeyDetailPage() {
             </div>
           </StaggerItem>
 
+          {key.sub_url ? (
+            <StaggerItem>
+              <div className="premium-glass flex flex-col items-center gap-4 p-5">
+                <SectionHeader title="QR подписки" />
+                <SubscriptionQr keyId={kid} subUrl={key.sub_url} size={168} />
+                <p className="text-xs text-muted-foreground text-center">
+                  Отсканируйте камерой или в VPN-приложении
+                </p>
+                <div className="grid w-full grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    className="rounded-2xl"
+                    onClick={() => openInApp("android")}
+                  >
+                    <Link2 className="h-4 w-4 mr-2" />
+                    Android
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="rounded-2xl"
+                    onClick={() => openInApp("ios")}
+                  >
+                    <Link2 className="h-4 w-4 mr-2" />
+                    iOS
+                  </Button>
+                </div>
+              </div>
+            </StaggerItem>
+          ) : null}
+
           <StaggerItem>
             <Button
               variant="outline"
@@ -235,7 +286,11 @@ export function KeyDetailPage() {
           </StaggerItem>
 
           <StaggerItem>
-            <DeviceTiersCard hostName={key.host_name} />
+            <DeviceTiersCard
+              hostName={key.host_name}
+              keyId={kid}
+              currentDevices={currentDevices}
+            />
           </StaggerItem>
 
           <StaggerItem>

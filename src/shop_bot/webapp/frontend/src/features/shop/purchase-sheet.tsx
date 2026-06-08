@@ -12,7 +12,8 @@ import { PaymentMethodPicker } from "@/components/premium/payment-method-picker"
 import { PromoField } from "@/components/premium/promo-field";
 import { SectionHeader } from "@/components/premium/section-header";
 import { usePaymentFlow } from "@/hooks/use-payment-flow";
-import { useUserStatus } from "@/hooks/use-cabinet";
+import { useUserStatus, useCabinetConfig } from "@/hooks/use-cabinet";
+import { Badge } from "@/components/ui/badge";
 import { api, getUserId } from "@/lib/api";
 import { formatMoney } from "@/lib/utils";
 import { motion } from "framer-motion";
@@ -28,6 +29,8 @@ export function PurchaseSheet({ open, onOpenChange, showPromo }: PurchaseSheetPr
   const userId = getUserId();
   const qc = useQueryClient();
   const { data: status } = useUserStatus();
+  const { data: config } = useCabinetConfig();
+  const sellerDiscount = config?.seller_discount ?? 0;
   const { data, isLoading } = useQuery({
     queryKey: ["shop", "purchase-catalog", userId],
     queryFn: () => api.getPurchaseCatalog(userId),
@@ -74,7 +77,14 @@ export function PurchaseSheet({ open, onOpenChange, showPromo }: PurchaseSheetPr
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="max-h-[92vh] overflow-y-auto rounded-t-3xl">
         <SheetHeader>
-          <SheetTitle className="text-gradient-primary">Купить VPN</SheetTitle>
+          <SheetTitle className="text-gradient-primary flex items-center gap-2">
+            Купить VPN
+            {sellerDiscount > 0 ? (
+              <Badge variant="success" className="text-[10px]">
+                −{sellerDiscount}%
+              </Badge>
+            ) : null}
+          </SheetTitle>
         </SheetHeader>
         <div className="space-y-5 px-5 pb-8">
           {isLoading ? (

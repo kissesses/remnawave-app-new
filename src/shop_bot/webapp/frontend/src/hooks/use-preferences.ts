@@ -12,6 +12,15 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
   notify_promo: true,
   notify_toast: true,
   haptic_enabled: true,
+  notify_telegram_bot: false,
+  default_home_tab: "home",
+  compact_keys: false,
+  locale: "ru",
+  hide_balance: false,
+  support_faq_collapsed: false,
+  home_hidden_widgets: [],
+  auto_renew_remind_days: 3,
+  auto_renew_enabled: false,
 };
 
 export function usePreferences() {

@@ -222,6 +222,54 @@
                             <span>Действует до</span>
                             <input type="datetime-local" id="webapp_promo_alert_until" value="{{ (meta.content_overrides or {}).get('promo_alert_until', '') }}" />
                         </label>
+                        <label class="wapp-field wapp-field--span2">
+                            <span>Баннер на главной · заголовок</span>
+                            <input type="text" id="webapp_promo_banner_title" value="{{ (meta.content_overrides or {}).get('promo_banner_title', '') }}" placeholder="Скидка −20% на все тарифы" maxlength="80" />
+                        </label>
+                        <label class="wapp-field wapp-field--span2">
+                            <span>Баннер · текст</span>
+                            <input type="text" id="webapp_promo_banner_body" value="{{ (meta.content_overrides or {}).get('promo_banner_body', '') }}" placeholder="Только до конца месяца" maxlength="200" />
+                        </label>
+                        <label class="wapp-field">
+                            <span>Баннер · CTA</span>
+                            <input type="text" id="webapp_promo_banner_cta" value="{{ (meta.content_overrides or {}).get('promo_banner_cta', '') }}" placeholder="Подробнее" maxlength="40" />
+                        </label>
+                        <label class="wapp-field">
+                            <span>Баннер · ссылка</span>
+                            <input type="text" id="webapp_promo_banner_href" value="{{ (meta.content_overrides or {}).get('promo_banner_href', '') }}" placeholder="/promo" maxlength="80" />
+                        </label>
+                        <label class="wapp-field wapp-field--span2">
+                            <span>Баннер · image URL</span>
+                            <input type="url" id="webapp_promo_banner_image" value="{{ (meta.content_overrides or {}).get('promo_banner_image', '') }}" placeholder="https://…" />
+                        </label>
+                    </div>
+                </article>
+                <article class="wapp-card wapp-card--span2">
+                    <header class="wapp-card__head">
+                        <span class="wapp-card__glyph material-symbols-outlined">help</span>
+                        <div><h3>FAQ и VPN</h3><p>Контент кабинета: FAQ, ссылки на приложения, layout главной</p></div>
+                    </header>
+                    <div class="wapp-card__body wapp-card__grid">
+                        <label class="wapp-field wapp-field--span2">
+                            <span>FAQ (JSON-массив)</span>
+                            <textarea id="webapp_support_faq_json" rows="4" placeholder='[{"question":"…","answer":"…"}]'>{{ (meta.content_overrides or {}).get('support_faq_json', '') }}</textarea>
+                        </label>
+                        <label class="wapp-field wapp-field--span2">
+                            <span>VPN app links (JSON)</span>
+                            <textarea id="webapp_vpn_app_links_json" rows="3" placeholder='{"android":[{"name":"v2rayNG","url":"https://…"}]}'>{{ (meta.content_overrides or {}).get('vpn_app_links_json', '') }}</textarea>
+                        </label>
+                        <label class="wapp-field">
+                            <span>Deep link Android</span>
+                            <input type="text" id="webapp_vpn_import_scheme_android" value="{{ (meta.content_overrides or {}).get('vpn_import_scheme_android', '') }}" placeholder="v2rayng://install-sub?url=" maxlength="120" />
+                        </label>
+                        <label class="wapp-field">
+                            <span>Deep link iOS</span>
+                            <input type="text" id="webapp_vpn_import_scheme_ios" value="{{ (meta.content_overrides or {}).get('vpn_import_scheme_ios', '') }}" placeholder="streisand://import/" maxlength="120" />
+                        </label>
+                        <label class="wapp-field wapp-field--span2">
+                            <span>Порядок виджетов главной (JSON)</span>
+                            <input type="text" id="webapp_home_layout_json" value="{{ (meta.content_overrides or {}).get('home_layout_json', '') }}" placeholder='["hero","trial","promo","quick_actions","activity"]' maxlength="200" />
+                        </label>
                     </div>
                 </article>
                 <article class="wapp-card">

@@ -3556,6 +3556,53 @@ async def process_successful_payment(bot: Bot | None, metadata: dict) -> bool:
             except Exception as exc:
                 logger.warning("Top-up receipt email error: %s", exc)
             return True
+
+        # --- АПГРЕЙД ЛИМИТА УСТРОЙСТВ ---
+        if action == "tier_upgrade":
+            key = rw_repo.get_key_by_id(kid)
+            if not key:
+                logger.error(f"Ошибка: Ключ #{kid} для апгрейда устройств пользователем {uid} не найден.")
+                return False
+            c_email = key['key_email']
+            tier_dc = metadata.get('tier_device_count')
+            hw_lim = int(tier_dc) if tier_dc else None
+            res = await remnawave_api.create_or_update_key_on_host(
+                host_name=host,
+                email=c_email,
+                days_to_add=0,
+                telegram_id=uid,
+                hwid_limit=hw_lim,
+            )
+            if not res:
+                add_to_balance(uid, float(price))
+                logger.error(f"Возврат средств: {price} RUB — ошибка апгрейда устройств для {uid}")
+                return False
+            if not rw_repo.update_key(kid, remnawave_user_uuid=res.get('client_uuid'), expire_at_ms=res.get('expiry_timestamp_ms')):
+                add_to_balance(uid, float(price))
+                return False
+            p_log_id = metadata.get('payment_id') or str(uuid.uuid4())
+            log_transaction(
+                username=(get_user(uid) or {}).get('username') or f"user{uid}",
+                transaction_id=None,
+                payment_id=p_log_id,
+                user_id=uid,
+                status='paid',
+                amount_rub=float(price),
+                amount_currency=None,
+                currency_name=None,
+                payment_method=pay_method or 'Balance',
+                metadata=json.dumps(metadata, ensure_ascii=False),
+            )
+            if bot and not str(uid).startswith("999"):
+                try:
+                    await bot.send_message(
+                        uid,
+                        f"✅ <b>Лимит устройств обновлён</b>\nТеперь до <b>{hw_lim}</b> устройств на ключе.",
+                    )
+                except Exception:
+                    _log_suppressed("suppressed")
+            return True
+
         proc_msg = None
         if not str(uid).startswith("999"):
             try:

@@ -37,6 +37,15 @@ const VpnSetupPage = lazy(() =>
 const KeyDetailPage = lazy(() =>
   import("@/features/keys/key-detail-page").then((m) => ({ default: m.KeyDetailPage })),
 );
+const PromoPage = lazy(() =>
+  import("@/features/promo/promo-page").then((m) => ({ default: m.PromoPage })),
+);
+const ReferralsPage = lazy(() =>
+  import("@/features/referrals/referrals-page").then((m) => ({ default: m.ReferralsPage })),
+);
+const EmailAuthPage = lazy(() =>
+  import("@/features/auth/email-auth-page").then((m) => ({ default: m.EmailAuthPage })),
+);
 
 function PageFallback() {
   return <PageSkeleton variant="hero" />;
@@ -65,6 +74,9 @@ export const router = createBrowserRouter([
       { path: "settings", element: withSuspense(SettingsPage) },
       { path: "vpn/setup", element: withSuspense(VpnSetupPage) },
       { path: "keys/:keyId", element: withSuspense(KeyDetailPage) },
+      { path: "promo", element: withSuspense(PromoPage) },
+      { path: "referrals", element: withSuspense(ReferralsPage) },
+      { path: "auth/email", element: withSuspense(EmailAuthPage) },
     ],
   },
 ]);

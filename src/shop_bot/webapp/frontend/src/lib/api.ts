@@ -365,6 +365,8 @@ export const api = {
       q?: string;
       limit?: number;
       offset?: number;
+      date_from?: string;
+      date_to?: string;
     },
   ) {
     return request<ActivityTimelineResponse>("/api/user/timeline", {
@@ -375,8 +377,124 @@ export const api = {
         q: options?.q ?? "",
         limit: options?.limit ?? 40,
         offset: options?.offset ?? 0,
+        date_from: options?.date_from ?? "",
+        date_to: options?.date_to ?? "",
       }),
     });
+  },
+
+  getKeySubQr(userId: number, keyId: number) {
+    return request<{ ok: boolean; qr_data_url?: string; error?: string }>(
+      "/api/key/sub-qr",
+      {
+        method: "POST",
+        body: JSON.stringify({ user_id: userId, key_id: keyId }),
+      },
+    );
+  },
+
+  getPromoHistory(userId: number, limit = 20) {
+    return request<{ ok: boolean; items: import("@/types/api").PromoHistoryItem[] }>(
+      `/api/promo/history?user_id=${userId}&limit=${limit}`,
+    );
+  },
+
+  redeemGift(userId: number, token: string) {
+    return request<{ ok: boolean; message?: string; key_id?: number; error?: string }>(
+      "/api/gift/redeem",
+      {
+        method: "POST",
+        body: JSON.stringify({ user_id: userId, token }),
+      },
+    );
+  },
+
+  getReferralStats(userId: number) {
+    return request<import("@/types/api").ReferralStats>(
+      `/api/referrals/stats?user_id=${userId}`,
+    );
+  },
+
+  exportUserData(userId: number) {
+    return request<{ ok: boolean; data?: Record<string, unknown>; error?: string }>(
+      `/api/user/export?user_id=${userId}`,
+    );
+  },
+
+  getOnboardingProgress(userId: number) {
+    return request<{ ok: boolean; progress: import("@/types/api").OnboardingProgress }>(
+      `/api/onboarding/progress?user_id=${userId}`,
+    );
+  },
+
+  saveOnboardingProgress(userId: number, patch: Partial<import("@/types/api").OnboardingProgress>) {
+    return request<{ ok: boolean; progress: import("@/types/api").OnboardingProgress }>(
+      "/api/onboarding/progress",
+      {
+        method: "POST",
+        body: JSON.stringify({ user_id: userId, ...patch }),
+      },
+    );
+  },
+
+  logout(userId: number) {
+    return request<{ ok: boolean }>("/api/auth/logout", {
+      method: "POST",
+      body: JSON.stringify({ user_id: userId }),
+    });
+  },
+
+  uploadSupportAttachment(
+    userId: number,
+    ticketId: number,
+    file: File,
+  ) {
+    return new Promise<{ ok: boolean; url?: string; error?: string }>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64 = String(reader.result ?? "");
+        try {
+          const res = await request<{ ok: boolean; url?: string; error?: string }>(
+            "/api/support/upload",
+            {
+              method: "POST",
+              body: JSON.stringify({
+                user_id: userId,
+                ticket_id: ticketId,
+                filename: file.name,
+                content_base64: base64,
+                mime_type: file.type,
+              }),
+            },
+          );
+          resolve(res);
+        } catch (e) {
+          reject(e);
+        }
+      };
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+  },
+
+  emailLogin(email: string, password: string) {
+    return request<{ ok: boolean; token?: string; error?: string }>(
+      "/api/auth/email/login",
+      {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      },
+    );
+  },
+
+  emailRegister(email: string, password: string) {
+    return request<{ ok: boolean; token?: string; error?: string }>(
+      "/api/auth/email/register",
+      {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      },
+    );
   },
 
   getDeviceTiers(userId: number, hostName: string) {

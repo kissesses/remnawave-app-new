@@ -239,6 +239,16 @@
         const promoHref = ($('webapp_promo_alert_href')?.value || '').trim();
         const promoId = ($('webapp_promo_alert_id')?.value || '').trim();
         const promoUntil = ($('webapp_promo_alert_until')?.value || '').trim();
+        const promoBannerTitle = ($('webapp_promo_banner_title')?.value || '').trim();
+        const promoBannerBody = ($('webapp_promo_banner_body')?.value || '').trim();
+        const promoBannerCta = ($('webapp_promo_banner_cta')?.value || '').trim();
+        const promoBannerHref = ($('webapp_promo_banner_href')?.value || '').trim();
+        const promoBannerImage = ($('webapp_promo_banner_image')?.value || '').trim();
+        const supportFaqJson = ($('webapp_support_faq_json')?.value || '').trim();
+        const vpnAppLinksJson = ($('webapp_vpn_app_links_json')?.value || '').trim();
+        const vpnImportAndroid = ($('webapp_vpn_import_scheme_android')?.value || '').trim();
+        const vpnImportIos = ($('webapp_vpn_import_scheme_ios')?.value || '').trim();
+        const homeLayoutJson = ($('webapp_home_layout_json')?.value || '').trim();
         const payload = {};
         if (heroSub) payload.hero_sub = heroSub;
         if (promoTitle) payload.promo_alert_title = promoTitle;
@@ -246,6 +256,16 @@
         if (promoHref) payload.promo_alert_href = promoHref;
         if (promoId) payload.promo_alert_id = promoId;
         if (promoUntil) payload.promo_alert_until = promoUntil;
+        if (promoBannerTitle) payload.promo_banner_title = promoBannerTitle;
+        if (promoBannerBody) payload.promo_banner_body = promoBannerBody;
+        if (promoBannerCta) payload.promo_banner_cta = promoBannerCta;
+        if (promoBannerHref) payload.promo_banner_href = promoBannerHref;
+        if (promoBannerImage) payload.promo_banner_image = promoBannerImage;
+        if (supportFaqJson) payload.support_faq_json = supportFaqJson;
+        if (vpnAppLinksJson) payload.vpn_app_links_json = vpnAppLinksJson;
+        if (vpnImportAndroid) payload.vpn_import_scheme_android = vpnImportAndroid;
+        if (vpnImportIos) payload.vpn_import_scheme_ios = vpnImportIos;
+        if (homeLayoutJson) payload.home_layout_json = homeLayoutJson;
         return JSON.stringify(payload);
     }
 

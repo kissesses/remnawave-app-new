@@ -10,7 +10,7 @@ export function formatMoney(amount: number, currency = "₽"): string {
   return `${n.toLocaleString("ru-RU", { maximumFractionDigits: 0 })} ${currency}`;
 }
 
-function parseAppDate(dateStr: string): Date | null {
+export function parseAppDate(dateStr: string): Date | null {
   const raw = dateStr?.trim();
   if (!raw) return null;
 

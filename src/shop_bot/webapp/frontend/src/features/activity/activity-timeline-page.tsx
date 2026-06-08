@@ -65,10 +65,18 @@ export function ActivityTimelinePage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [data, setData] = useState<ActivityTimelineResponse | null>(null);
   const [days, setDays] = useState<ActivityTimelineDay[]>([]);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const offsetRef = useRef(0);
 
   const fetchTimeline = useCallback(
-    async (append: boolean, category: ActivityTimelineCategory, q: string) => {
+    async (
+      append: boolean,
+      category: ActivityTimelineCategory,
+      q: string,
+      from: string,
+      to: string,
+    ) => {
       const requestOffset = append ? offsetRef.current : 0;
       if (append) setLoadingMore(true);
       else setLoading(true);
@@ -79,6 +87,8 @@ export function ActivityTimelinePage() {
           q,
           limit: PAGE_SIZE,
           offset: requestOffset,
+          date_from: from,
+          date_to: to,
         });
         if (!res.ok) {
           if (!append) setData(res);
@@ -98,8 +108,8 @@ export function ActivityTimelinePage() {
   );
 
   const refresh = useCallback(async () => {
-    await fetchTimeline(false, filter, search);
-  }, [fetchTimeline, filter, search]);
+    await fetchTimeline(false, filter, search, dateFrom, dateTo);
+  }, [fetchTimeline, filter, search, dateFrom, dateTo]);
 
   const { pullProps, pullOffset } = usePullRefresh(refresh);
 
@@ -110,8 +120,8 @@ export function ActivityTimelinePage() {
 
   useEffect(() => {
     offsetRef.current = 0;
-    fetchTimeline(false, filter, search);
-  }, [filter, search, userId, fetchTimeline]);
+    fetchTimeline(false, filter, search, dateFrom, dateTo);
+  }, [filter, search, dateFrom, dateTo, userId, fetchTimeline]);
 
   const stats = data?.stats;
   const categoryCounts = data?.category_counts ?? {};
@@ -192,6 +202,23 @@ export function ActivityTimelinePage() {
                   <X className="h-4 w-4" />
                 </button>
               )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                type="date"
+                className="h-10 rounded-xl border border-white/10 bg-black/20 px-3 text-xs outline-none"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                aria-label="Дата с"
+              />
+              <input
+                type="date"
+                className="h-10 rounded-xl border border-white/10 bg-black/20 px-3 text-xs outline-none"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                aria-label="Дата по"
+              />
             </div>
 
             <StudioChipRow className="flex-wrap">
@@ -354,7 +381,7 @@ export function ActivityTimelinePage() {
                   disabled={loadingMore}
                   onClick={() => {
                     haptic("selection");
-                    fetchTimeline(true, filter, search);
+                    fetchTimeline(true, filter, search, dateFrom, dateTo);
                   }}
                 >
                   {loadingMore ? (

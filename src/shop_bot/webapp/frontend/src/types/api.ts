@@ -50,6 +50,21 @@ export interface UserStatus {
   error?: string;
 }
 
+export interface PromoBanner {
+  title: string;
+  body: string;
+  cta: string;
+  href: string;
+  image: string;
+  until: string;
+}
+
+export interface VpnAppLink {
+  name: string;
+  url: string;
+  scheme?: string;
+}
+
 export interface CabinetConfig {
   ok: boolean;
   modules: {
@@ -62,6 +77,9 @@ export interface CabinetConfig {
   };
   module_order: string[];
   content_overrides: Record<string, string>;
+  home_layout?: string[];
+  seller_discount?: number;
+  promo_banner?: PromoBanner;
   branding: { welcome_text: string; accent_color: string };
   trial: {
     enabled: boolean;
@@ -76,6 +94,9 @@ export interface CabinetConfig {
     ios: string;
     windows: string;
     linux: string;
+    app_links?: Record<string, VpnAppLink[]>;
+    import_scheme_android?: string;
+    import_scheme_ios?: string;
   };
   referrals: {
     enabled: boolean;
@@ -160,6 +181,45 @@ export interface UserPreferences {
   notify_promo: boolean;
   notify_toast: boolean;
   haptic_enabled: boolean;
+  notify_telegram_bot?: boolean;
+  default_home_tab?: "home" | "wallet" | "profile" | "support";
+  compact_keys?: boolean;
+  locale?: "ru" | "en";
+  hide_balance?: boolean;
+  support_faq_collapsed?: boolean;
+  home_hidden_widgets?: string[];
+  auto_renew_remind_days?: number;
+  auto_renew_enabled?: boolean;
+}
+
+export interface PromoHistoryItem {
+  id: string;
+  title: string;
+  body: string;
+  date: string;
+  amount?: number;
+}
+
+export interface ReferralStats {
+  ok: boolean;
+  link: string;
+  count: number;
+  earned: number;
+  referrals: {
+    user_id: number;
+    username: string;
+    registered_at: string;
+    total_spent: number;
+  }[];
+  discount_percent: number;
+  reward_percent: number;
+  error?: string;
+}
+
+export interface OnboardingProgress {
+  bought: boolean;
+  vpn_setup: boolean;
+  referred: boolean;
 }
 
 export interface ShopPlan {

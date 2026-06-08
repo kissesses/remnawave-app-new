@@ -15,6 +15,14 @@ import {
   Monitor,
   Megaphone,
   Sparkles,
+  Tag,
+  Users,
+  Mail,
+  Download,
+  BellRing,
+  RefreshCw,
+  Wallet,
+  HelpCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Header } from "@/components/layout/header";
@@ -174,10 +182,28 @@ export function SettingsPage() {
     toast.success("Все уведомления прочитаны");
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await api.logout(userId);
     removeAuthToken();
     toast.success("Вы вышли из аккаунта");
     window.location.href = "/";
+  };
+
+  const exportData = async () => {
+    haptic("selection");
+    const res = await api.exportUserData(userId);
+    if (!res.ok || !res.data) {
+      toast.error(res.error ?? "Не удалось экспортировать");
+      return;
+    }
+    const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `cabinet-export-${userId}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Данные скачаны");
   };
 
   const supportBot = config?.support_info?.bot_username?.replace(/^@/, "");
@@ -230,6 +256,27 @@ export function SettingsPage() {
                   checked={prefs.haptic_enabled}
                   onChange={(v) => savePref({ haptic_enabled: v })}
                 />
+                <PrefRow
+                  label="Скрыть баланс на главной"
+                  icon={Wallet}
+                  checked={Boolean(prefs.hide_balance)}
+                  onChange={(v) => savePref({ hide_balance: v })}
+                  divider
+                />
+                <PrefRow
+                  label="Компактный список ключей"
+                  icon={Users}
+                  checked={Boolean(prefs.compact_keys)}
+                  onChange={(v) => savePref({ compact_keys: v })}
+                  divider
+                />
+                <PrefRow
+                  label="FAQ свёрнут по умолчанию"
+                  icon={HelpCircle}
+                  checked={Boolean(prefs.support_faq_collapsed)}
+                  onChange={(v) => savePref({ support_faq_collapsed: v })}
+                  divider
+                />
               </ListGroup>
             </div>
 
@@ -247,6 +294,27 @@ export function SettingsPage() {
                     divider={i > 0}
                   />
                 ))}
+                <PrefRow
+                  label="Дублировать в Telegram-бот"
+                  description="Критичные уведомления также в чат бота"
+                  icon={BellRing}
+                  checked={Boolean(prefs.notify_telegram_bot)}
+                  onChange={(v) => savePref({ notify_telegram_bot: v })}
+                  divider
+                />
+              </ListGroup>
+            </div>
+
+            <div>
+              <SectionHeader title="Подписка" />
+              <ListGroup className="premium-glass border-border/40">
+                <PrefRow
+                  label="Напоминать об истечении"
+                  description={`За ${prefs.auto_renew_remind_days ?? 3} дн. до окончания`}
+                  icon={RefreshCw}
+                  checked={Boolean(prefs.auto_renew_enabled)}
+                  onChange={(v) => savePref({ auto_renew_enabled: v })}
+                />
               </ListGroup>
             </div>
 
@@ -266,6 +334,28 @@ export function SettingsPage() {
                   subtitle={unreadCount > 0 ? `${unreadCount} непрочитанных` : "Центр уведомлений"}
                   onClick={() => navigate("/notifications")}
                 />
+                {config?.modules?.promo && (
+                  <>
+                    <div className="tg-cell-divider" />
+                    <ListCell
+                      icon={Tag}
+                      title="Промокод"
+                      subtitle="Активация и история"
+                      onClick={() => navigate("/promo")}
+                    />
+                  </>
+                )}
+                {config?.referrals?.enabled && (
+                  <>
+                    <div className="tg-cell-divider" />
+                    <ListCell
+                      icon={Users}
+                      title="Рефералы"
+                      subtitle="Статистика и ссылка"
+                      onClick={() => navigate("/referrals")}
+                    />
+                  </>
+                )}
                 {config?.modules?.howto !== false && (
                   <>
                     <div className="tg-cell-divider" />
@@ -319,6 +409,20 @@ export function SettingsPage() {
                     unreadCount > 0 ? `${unreadCount} непрочитанных` : "Все прочитаны"
                   }
                   onClick={markAllRead}
+                />
+                <div className="tg-cell-divider" />
+                <ListCell
+                  icon={Download}
+                  title="Экспорт данных"
+                  subtitle="JSON: платежи, лента, тикеты"
+                  onClick={() => void exportData()}
+                />
+                <div className="tg-cell-divider" />
+                <ListCell
+                  icon={Mail}
+                  title="Email-вход"
+                  subtitle="Для браузера без Telegram"
+                  onClick={() => navigate("/auth/email")}
                 />
               </ListGroup>
             </div>

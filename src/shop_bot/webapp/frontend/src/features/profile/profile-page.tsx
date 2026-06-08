@@ -312,8 +312,14 @@ export function ProfilePage() {
             </div>
 
             {referralsEnabled && (
-              <div id="referrals" ref={referralsRef}>
-                <StudioBoard className="space-y-3">
+              <button
+                type="button"
+                id="referrals"
+                ref={referralsRef}
+                className="w-full text-left"
+                onClick={() => navigate("/referrals")}
+              >
+                <StudioBoard className="space-y-2 active:opacity-90">
                   <div className="flex items-center gap-3">
                     <div className="studio-hub__icon flex items-center justify-center">
                       <Users className="h-5 w-5 text-primary" />
@@ -324,34 +330,10 @@ export function ProfilePage() {
                         {referralCount} приглашено · {formatMoney(referralEarned)} заработано
                       </p>
                     </div>
-                  </div>
-                  {referralLink && (
-                    <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-2.5">
-                      <p className="truncate font-mono text-[11px] text-muted-foreground">
-                        {referralLink}
-                      </p>
-                    </div>
-                  )}
-                  <div className="flex gap-2">
-                    <Button
-                      variant="tg"
-                      className="h-10 flex-1 rounded-xl text-sm"
-                      onClick={copyReferral}
-                    >
-                      <Copy className="mr-2 h-4 w-4" />
-                      Копировать
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="h-10 flex-1 rounded-xl border-white/15 text-sm"
-                      onClick={shareReferral}
-                    >
-                      <Share2 className="mr-2 h-4 w-4" />
-                      Поделиться
-                    </Button>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
                   </div>
                 </StudioBoard>
-              </div>
+              </button>
             )}
 
             <StudioBoard>

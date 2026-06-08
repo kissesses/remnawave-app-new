@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
 import {
   Send,
+  Paperclip,
   MessageSquarePlus,
   Headphones,
   Circle,
@@ -202,6 +203,23 @@ export function SupportPage() {
       }
       setMessage("");
       haptic("success");
+      await invalidateSupport();
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const uploadAttachment = async (file: File) => {
+    if (!activeId || !canSend) return;
+    setSending(true);
+    try {
+      const res = await api.uploadSupportAttachment(userId, activeId, file);
+      if (!res.ok) {
+        toast.error(res.error ?? "Не удалось загрузить файл");
+        return;
+      }
+      haptic("success");
+      toast.success("Файл отправлен");
       await invalidateSupport();
     } finally {
       setSending(false);
@@ -579,6 +597,19 @@ export function SupportPage() {
               >
                 {canSend ? (
                   <div className="flex gap-2">
+                    <label className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-white/10 bg-black/20 text-muted-foreground active:opacity-70">
+                      <Paperclip className="h-5 w-5" />
+                      <input
+                        type="file"
+                        className="sr-only"
+                        accept="image/*,.pdf,.txt"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) void uploadAttachment(file);
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
                     <textarea
                       rows={1}
                       className="max-h-28 min-h-[44px] flex-1 resize-none rounded-2xl border border-white/10 bg-black/20 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/30"

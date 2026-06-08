@@ -41,7 +41,13 @@ from shop_bot.data_manager.remnawave_repository import (
     update_key, get_key_by_email, set_trial_used, get_next_key_number, get_referral_balance_all,
 )
 import shop_bot.data_manager.remnawave_repository as rw_repo
-from shop_bot.data_manager.database import get_seller_user, get_device_tiers, get_host, get_db_connection
+from shop_bot.data_manager.database import (
+    get_seller_user,
+    get_device_tiers,
+    get_device_tier_by_id,
+    get_host,
+    get_db_connection,
+)
 from shop_bot.modules import remnawave_api
 from shop_bot.config import get_purchase_success_text
 import re
@@ -253,6 +259,107 @@ def calculate_webapp_price(price: float, user_id: int) -> float:
         
     return round(price, 2)
 
+
+def _get_seller_discount_percent(user_id: int) -> float:
+    try:
+        user = get_user(user_id)
+        if not user or not user.get("seller_active"):
+            return 0.0
+        seller = get_seller_user(user_id)
+        if seller and seller.get("seller_sale"):
+            return float(seller["seller_sale"])
+    except Exception:
+        log_suppressed()
+    return 0.0
+
+
+def _parse_support_faq_overrides(content_overrides: dict) -> list[dict] | None:
+    raw = (content_overrides.get("support_faq_json") or "").strip()
+    if not raw:
+        return None
+    try:
+        data = json.loads(raw)
+        if isinstance(data, list):
+            items = []
+            for i, item in enumerate(data):
+                if not isinstance(item, dict):
+                    continue
+                question = (item.get("question") or "").strip()
+                answer = (item.get("answer") or "").strip()
+                if question and answer:
+                    items.append({
+                        "id": (item.get("id") or f"faq-{i + 1}")[:48],
+                        "question": question[:200],
+                        "answer": answer[:2000],
+                    })
+            return items or None
+    except Exception:
+        log_suppressed()
+    return None
+
+
+def _parse_home_layout(content_overrides: dict) -> list[str]:
+    raw = (content_overrides.get("home_layout_json") or "").strip()
+    known = {"hero", "trial", "promo", "quick_actions", "keys", "activity", "onboarding"}
+    if raw:
+        try:
+            data = json.loads(raw)
+            if isinstance(data, list):
+                result = [str(x) for x in data if str(x) in known]
+                if result:
+                    return result
+        except Exception:
+            log_suppressed()
+    return ["hero", "trial", "promo", "quick_actions", "keys", "activity"]
+
+
+def _parse_vpn_app_links(content_overrides: dict) -> dict:
+    raw = (content_overrides.get("vpn_app_links_json") or "").strip()
+    if not raw:
+        return {}
+    try:
+        data = json.loads(raw)
+        return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+
+def _onboarding_key(user_id: int) -> str:
+    return f"webapp:onboarding:{user_id}"
+
+
+def _get_onboarding_progress(user_id: int) -> dict:
+    from shop_bot.security.kv_store import get_value
+
+    defaults = {"bought": False, "vpn_setup": False, "referred": False}
+    raw = get_value(_onboarding_key(user_id))
+    if raw:
+        try:
+            parsed = json.loads(raw)
+            if isinstance(parsed, dict):
+                defaults.update({k: bool(parsed[k]) for k in defaults if k in parsed})
+        except Exception:
+            log_suppressed()
+    user = get_user(user_id)
+    keys = get_user_keys(user_id) or []
+    paid_keys = [k for k in keys if not str(k.get("key_email") or "").startswith("trial_")]
+    if paid_keys or float(user.get("total_spent") or 0) > 0:
+        defaults["bought"] = True
+    if get_referral_count(user_id) > 0:
+        defaults["referred"] = True
+    return defaults
+
+
+def _save_onboarding_progress(user_id: int, patch: dict) -> dict:
+    from shop_bot.security.kv_store import set_value
+
+    progress = _get_onboarding_progress(user_id)
+    for key in ("bought", "vpn_setup", "referred"):
+        if key in patch:
+            progress[key] = bool(patch[key])
+    set_value(_onboarding_key(user_id), json.dumps(progress, ensure_ascii=False))
+    return progress
+
 # ===== HELPER FUNCTIONS FOR PAYMENT PROCESS =====
 async def notify_admin_of_purchase(bot: Bot, metadata: dict):
     from shop_bot.bot.handlers import notify_admin_of_purchase as bot_notify
@@ -393,7 +500,14 @@ SPA_CLIENT_PATHS = frozenset({
     "settings",
     "vpn",
     "keys",
+    "promo",
+    "referrals",
+    "auth",
 })
+
+_uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")
+os.makedirs(os.path.join(_uploads_dir, "support"), exist_ok=True)
+app.mount("/webapp/uploads", StaticFiles(directory=_uploads_dir), name="webapp_uploads")
 
 def _format_remaining_details(remaining: timedelta) -> str:
     total_seconds = int(remaining.total_seconds())
@@ -1202,6 +1316,15 @@ def _default_user_preferences() -> dict:
         "notify_promo": True,
         "notify_toast": True,
         "haptic_enabled": True,
+        "notify_telegram_bot": False,
+        "default_home_tab": "home",
+        "compact_keys": False,
+        "locale": "ru",
+        "hide_balance": False,
+        "support_faq_collapsed": False,
+        "home_hidden_widgets": [],
+        "auto_renew_remind_days": 3,
+        "auto_renew_enabled": False,
     }
 
 
@@ -1618,6 +1741,26 @@ def _build_notifications(user_id: int) -> list[dict]:
 
     notifications.sort(key=lambda n: n.get("date") or "", reverse=True)
     return notifications[:50]
+
+
+async def _maybe_push_notifications_to_bot(user_id: int, notifications: list[dict]) -> None:
+    prefs = _get_user_preferences(user_id)
+    if not prefs.get("notify_telegram_bot"):
+        return
+    from shop_bot.security.kv_store import get_value, set_value
+
+    critical_types = {"subscription_expiring", "subscription_expired", "support"}
+    for note in notifications[:5]:
+        if note.get("read"):
+            continue
+        if note.get("type") not in critical_types:
+            continue
+        push_key = f"webapp:bot-push:{user_id}:{note.get('id')}"
+        if get_value(push_key):
+            continue
+        text = f"<b>{note.get('title')}</b>\n{note.get('body')}"
+        if await _send_telegram_message(user_id, text):
+            set_value(push_key, "1", ttl=86400 * 3)
 
 
 def _spa_index_path() -> str:
@@ -2148,6 +2291,7 @@ class CreatePaymentRequest(BaseModel):
     promo_code: str | None = None
     tier_device_count: int | None = None
     tier_price: float = 0
+    tier_id: int | None = None
     amount: float | None = None
 
 class TrialActivateRequest(BaseModel):
@@ -2167,6 +2311,15 @@ class UserPreferencesRequest(BaseModel):
     notify_promo: bool | None = None
     notify_toast: bool | None = None
     haptic_enabled: bool | None = None
+    notify_telegram_bot: bool | None = None
+    default_home_tab: str | None = None
+    compact_keys: bool | None = None
+    locale: str | None = None
+    hide_balance: bool | None = None
+    support_faq_collapsed: bool | None = None
+    home_hidden_widgets: list[str] | None = None
+    auto_renew_remind_days: int | None = None
+    auto_renew_enabled: bool | None = None
 
 class NotificationsReadRequest(BaseModel):
     user_id: int
@@ -2178,6 +2331,28 @@ class TimelineRequest(BaseModel):
     q: str = ""
     limit: int = 40
     offset: int = 0
+    date_from: str = ""
+    date_to: str = ""
+
+class GiftRedeemRequest(BaseModel):
+    user_id: int
+    token: str
+
+class OnboardingProgressRequest(BaseModel):
+    user_id: int
+    vpn_setup: bool | None = None
+    referred: bool | None = None
+
+class KeyQrRequest(BaseModel):
+    user_id: int
+    key_id: int
+
+class SupportUploadRequest(BaseModel):
+    user_id: int
+    ticket_id: int
+    filename: str
+    content_base64: str
+    mime_type: str | None = None
 
 class ApplyPromoRequest(BaseModel):
     user_id: int
@@ -2753,6 +2928,59 @@ async def api_create_payment(req: CreatePaymentRequest, auth_user: AuthUser):
             action_name = "top_up"
             tier_device_count = None
             logger.info(f"[WEBAPP] - Пополнение баланса: User={user_id}, Sum={final_price}, Method={method_id}")
+        elif req.action == "tier_upgrade":
+            if not req.key_id or not req.tier_id:
+                return {"ok": False, "error": "Укажите ключ и тариф устройств"}
+            key = get_key_by_id(req.key_id)
+            if not key or int(key.get("user_id") or 0) != user_id:
+                return {"ok": False, "error": "Ключ не найден"}
+            host_name = req.host_name or key.get("host_name") or ""
+            tier = get_device_tier_by_id(int(req.tier_id))
+            if not tier:
+                return {"ok": False, "error": "Тариф устройств не найден"}
+            from shop_bot.data_manager import database
+            base_devices = int(database.get_setting(f"base_device_{host_name}", "1"))
+            diff = max(0, int(tier["device_count"]) - base_devices)
+            tier_price_per_month = float(diff * tier["price"])
+            tier_device_count = int(tier["device_count"])
+            final_price = calculate_webapp_price(tier_price_per_month, user_id)
+            old_hwid = 1
+            if key.get("remnawave_user_uuid"):
+                try:
+                    user_info = await remnawave_api.get_user_by_uuid(key["remnawave_user_uuid"], host_name=host_name)
+                    if user_info:
+                        old_hwid = int(user_info.get("hwidDeviceLimit") or 1)
+                except Exception:
+                    log_suppressed()
+            if tier_device_count <= old_hwid:
+                return {"ok": False, "error": "Выберите тариф с большим числом устройств"}
+            tiers = get_device_tiers(host_name)
+            old_tier_price = 0.0
+            new_tier_price = float(tier["price"])
+            for t in tiers:
+                if t["device_count"] == old_hwid:
+                    old_tier_price = float(t["price"])
+            old_diff = max(0, old_hwid - base_devices)
+            new_diff = max(0, tier_device_count - base_devices)
+            monthly_diff_price = max(0.0, (new_diff * new_tier_price) - (old_diff * old_tier_price))
+            if key.get("expiry_date") and monthly_diff_price > 0:
+                expire_dt = datetime.strptime(key["expiry_date"], "%Y-%m-%d %H:%M:%S")
+                now = get_msk_time().replace(tzinfo=None)
+                days_left = (expire_dt - now).days
+                if days_left > 0:
+                    remaining_months = float(days_left) / 30.0
+                    final_price = round(calculate_webapp_price(monthly_diff_price * remaining_months, user_id), 2)
+                else:
+                    final_price = round(calculate_webapp_price(monthly_diff_price, user_id), 2)
+            else:
+                final_price = round(calculate_webapp_price(monthly_diff_price, user_id), 2)
+            if final_price <= 0:
+                return {"ok": False, "error": "Сумма апгрейда равна нулю"}
+            months = 0
+            plan_id = 0
+            action_name = "tier_upgrade"
+            req.host_name = host_name
+            logger.info(f"[WEBAPP] - Апгрейд устройств: User={user_id}, Key={req.key_id}, Tier={req.tier_id}, Sum={final_price}")
         else:
             plan_id = req.plan_id
             if not plan_id:
@@ -3688,6 +3916,17 @@ async def api_cabinet_config(user_id: int, auth_user: AuthUser):
         content_overrides = parse_content_overrides(webapp_settings.get("webapp_content_overrides"))
         module_order = parse_module_order(webapp_settings.get("webapp_module_order"))
 
+        seller_discount = _get_seller_discount_percent(user_id)
+        home_layout = _parse_home_layout(content_overrides)
+        promo_banner = {
+            "title": (content_overrides.get("promo_banner_title") or content_overrides.get("promo_alert_title") or "").strip(),
+            "body": (content_overrides.get("promo_banner_body") or content_overrides.get("promo_alert_body") or "").strip(),
+            "cta": (content_overrides.get("promo_banner_cta") or "Подробнее").strip(),
+            "href": (content_overrides.get("promo_banner_href") or content_overrides.get("promo_alert_href") or "/wallet").strip(),
+            "image": (content_overrides.get("promo_banner_image") or "").strip(),
+            "until": (content_overrides.get("promo_alert_until") or "").strip(),
+        }
+
         return {
             "ok": True,
             "modules": {
@@ -3700,6 +3939,9 @@ async def api_cabinet_config(user_id: int, auth_user: AuthUser):
             },
             "module_order": module_order,
             "content_overrides": content_overrides,
+            "home_layout": home_layout,
+            "seller_discount": seller_discount,
+            "promo_banner": promo_banner,
             "branding": {
                 "welcome_text": welcome_text,
                 "accent_color": accent_color,
@@ -3717,6 +3959,9 @@ async def api_cabinet_config(user_id: int, auth_user: AuthUser):
                 "ios": _strip_html(get_setting("howto_ios_text")) if show_howto else "",
                 "windows": _strip_html(get_setting("howto_windows_text")) if show_howto else "",
                 "linux": _strip_html(get_setting("howto_linux_text")) if show_howto else "",
+                "app_links": _parse_vpn_app_links(content_overrides),
+                "import_scheme_android": (content_overrides.get("vpn_import_scheme_android") or "").strip(),
+                "import_scheme_ios": (content_overrides.get("vpn_import_scheme_ios") or "").strip(),
             },
             "referrals": {
                 "enabled": referrals_enabled and show_referrals,
@@ -3738,7 +3983,7 @@ async def api_cabinet_config(user_id: int, auth_user: AuthUser):
                     {"id": key, "label": label}
                     for key, label in _SUPPORT_CATEGORIES.items()
                 ],
-                "faq": _DEFAULT_SUPPORT_FAQ,
+                "faq": _parse_support_faq_overrides(content_overrides) or _DEFAULT_SUPPORT_FAQ,
             },
         }
     except Exception as e:
@@ -3861,10 +4106,15 @@ async def api_user_timeline(req: TimelineRequest, auth_user: AuthUser):
         offset = max(int(req.offset or 0), 0)
         q = (req.q or "").strip()[:120]
 
+        date_from = (req.date_from or "").strip()[:10]
+        date_to = (req.date_to or "").strip()[:10]
+
         payload = build_user_timeline(
             user_id,
             category=category,
             q=q,
+            date_from=date_from,
+            date_to=date_to,
             limit=limit,
             offset=offset,
             exclude_categories=frozenset({CATEGORY_ADMIN}),
@@ -3984,7 +4234,9 @@ async def api_notifications(user_id: int, auth_user: AuthUser):
         user = get_user(user_id)
         if not user or user.get("is_banned"):
             return {"ok": False, "error": "Access denied"}
-        return {"ok": True, "notifications": _build_notifications(user_id)}
+        notes = _build_notifications(user_id)
+        await _maybe_push_notifications_to_bot(user_id, notes)
+        return {"ok": True, "notifications": notes}
     except Exception as e:
         logger.error(f"[WEBAPP] notifications {user_id}: {e}")
         return {"ok": False, "error": str(e)}
@@ -4016,6 +4268,264 @@ async def api_notifications_read(req: NotificationsReadRequest, auth_user: AuthU
         return {"ok": False, "error": str(e)}
 
 
+@app.post("/api/key/sub-qr")
+async def api_key_sub_qr(req: KeyQrRequest, auth_user: AuthUser):
+    try:
+        user_id = authorized_user_id(auth_user, req.user_id)
+        keys = get_user_keys(user_id) or []
+        key = next((k for k in keys if int(k.get("key_id") or 0) == int(req.key_id)), None)
+        if not key:
+            return {"ok": False, "error": "Ключ не найден"}
+        data = _process_key_data(key)
+        sub_url = (data.get("sub_url") or "").strip()
+        if not sub_url:
+            return {"ok": False, "error": "Ссылка подписки недоступна"}
+        qr = qrcode.QRCode(version=None, box_size=8, border=2)
+        qr.add_data(sub_url)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="black", back_color="white")
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        import base64
+        b64 = base64.b64encode(buf.getvalue()).decode("ascii")
+        return {"ok": True, "qr_data_url": f"data:image/png;base64,{b64}"}
+    except Exception as e:
+        logger.error(f"[WEBAPP] key sub-qr {req.key_id}: {e}")
+        return {"ok": False, "error": str(e)}
+
+
+@app.get("/api/promo/history")
+async def api_promo_history(user_id: int, auth_user: AuthUser, limit: int = 20):
+    try:
+        user_id = authorized_user_id(auth_user, user_id)
+        from shop_bot.webhook_server.services.user_timeline import build_user_timeline, CATEGORY_ADMIN
+
+        payload = build_user_timeline(
+            user_id,
+            category="all",
+            q="промо",
+            limit=min(max(limit, 1), 50),
+            offset=0,
+            exclude_categories=frozenset({CATEGORY_ADMIN}),
+        )
+        events = payload.get("events") or []
+        items = []
+        for evt in events:
+            items.append({
+                "id": evt.get("id"),
+                "title": evt.get("title") or "",
+                "body": evt.get("description") or evt.get("subtitle") or "",
+                "date": evt.get("ts") or "",
+                "amount": evt.get("amount"),
+            })
+        return {"ok": True, "items": items}
+    except Exception as e:
+        logger.error(f"[WEBAPP] promo history {user_id}: {e}")
+        return {"ok": False, "error": str(e)}
+
+
+@app.post("/api/gift/redeem")
+async def api_gift_redeem(req: GiftRedeemRequest, auth_user: AuthUser):
+    try:
+        user_id = authorized_user_id(auth_user, req.user_id)
+        user = get_user(user_id)
+        if not user or user.get("is_banned"):
+            return {"ok": False, "error": "Access denied"}
+        token = (req.token or "").strip()
+        if not token:
+            return {"ok": False, "error": "Введите код подарка"}
+        record = rw_repo.get_gift_token(token)
+        if not record:
+            return {"ok": False, "error": "Подарочный код не найден или истёк"}
+        host_name = record.get("host_name") or ""
+        days = int(record.get("days") or 0)
+        if not host_name or days <= 0:
+            return {"ok": False, "error": "Некорректный подарочный код"}
+        u_data = user
+        slug = re.sub(r"[^a-z0-9._-]", "_", (u_data.get("username") or f"user{user_id}").lower()).strip("_")[:16] or f"user{user_id}"
+        cand = f"gift_{slug}"
+        attempt = 0
+        while rw_repo.get_key_by_email(f"{cand if attempt == 0 else cand + '-' + str(attempt)}@bot.local") and attempt < 100:
+            attempt += 1
+        c_email = f"{cand if attempt == 0 else cand + '-' + str(attempt)}@bot.local"
+        res = await remnawave_api.create_or_update_key_on_host(
+            host_name=host_name,
+            email=c_email,
+            days_to_add=days,
+            telegram_id=user_id,
+            tag="GIFT",
+        )
+        if not res:
+            return {"ok": False, "error": "Ошибка активации на сервере VPN"}
+        key_id = record_key_from_payload(user_id=user_id, payload=res, host_name=host_name, description="Gift token")
+        claimed = rw_repo.claim_gift_token(token, user_id, key_id=key_id)
+        if not claimed:
+            return {"ok": False, "error": "Код уже использован или недоступен"}
+        return {"ok": True, "message": f"Подарок активирован на {days} дн.", "key_id": key_id}
+    except Exception as e:
+        logger.error(f"[WEBAPP] gift redeem {req.user_id}: {e}")
+        return {"ok": False, "error": str(e)}
+
+
+@app.get("/api/referrals/stats")
+async def api_referrals_stats(user_id: int, auth_user: AuthUser):
+    try:
+        user_id = authorized_user_id(auth_user, user_id)
+        user = get_user(user_id)
+        if not user or user.get("is_banned"):
+            return {"ok": False, "error": "Access denied"}
+        referrals = get_referrals_for_user(user_id) or []
+        items = []
+        for ref in referrals:
+            reg = ref.get("registration_date")
+            items.append({
+                "user_id": ref.get("telegram_id"),
+                "username": (ref.get("username") or "").strip(),
+                "registered_at": str(reg or ""),
+                "total_spent": float(ref.get("total_spent") or 0),
+            })
+        ref_discount = get_setting("referral_discount") or "0"
+        ref_reward = get_setting("referral_reward") or "0"
+        bot_username_raw = (get_setting("telegram_bot_username") or "bot").strip().lstrip("@")
+        bot_username = re.sub(r"[^A-Za-z0-9_]", "", bot_username_raw) or "bot"
+        return {
+            "ok": True,
+            "link": f"https://t.me/{bot_username}?start=ref_{user_id}",
+            "count": len(items),
+            "earned": float(get_referral_balance_all(user_id) or 0),
+            "referrals": items,
+            "discount_percent": float(ref_discount) if ref_discount else 0,
+            "reward_percent": float(ref_reward) if ref_reward else 0,
+        }
+    except Exception as e:
+        logger.error(f"[WEBAPP] referrals stats {user_id}: {e}")
+        return {"ok": False, "error": str(e)}
+
+
+@app.get("/api/user/export")
+async def api_user_export(user_id: int, auth_user: AuthUser):
+    try:
+        user_id = authorized_user_id(auth_user, user_id)
+        user = get_user(user_id)
+        if not user or user.get("is_banned"):
+            return {"ok": False, "error": "Access denied"}
+        from shop_bot.webhook_server.services.user_timeline import build_user_timeline, CATEGORY_ADMIN
+
+        timeline = build_user_timeline(
+            user_id,
+            limit=500,
+            offset=0,
+            exclude_categories=frozenset({CATEGORY_ADMIN}),
+        )
+        payments, balance_ops = _get_user_transactions(user_id, 500)
+        from shop_bot.data_manager.db.support import get_user_tickets
+
+        tickets_raw = get_user_tickets(user_id) or []
+        tickets = [
+            {
+                "ticket_id": t.get("ticket_id"),
+                "subject": t.get("subject"),
+                "status": t.get("status"),
+                "created_at": t.get("created_at"),
+                "updated_at": t.get("updated_at"),
+            }
+            for t in tickets_raw
+        ]
+        export_data = {
+            "exported_at": datetime.now().isoformat(),
+            "user_id": user_id,
+            "profile": {
+                "username": user.get("username"),
+                "registration_date": user.get("registration_date"),
+                "balance": float(user.get("balance") or 0),
+                "total_spent": float(user.get("total_spent") or 0),
+            },
+            "timeline": timeline.get("events") or [],
+            "payments": payments,
+            "balance_operations": balance_ops,
+            "tickets": tickets,
+            "preferences": _get_user_preferences(user_id),
+        }
+        return JSONResponse({"ok": True, "data": export_data})
+    except Exception as e:
+        logger.error(f"[WEBAPP] user export {user_id}: {e}")
+        return {"ok": False, "error": str(e)}
+
+
+@app.get("/api/onboarding/progress")
+async def api_onboarding_progress_get(user_id: int, auth_user: AuthUser):
+    try:
+        user_id = authorized_user_id(auth_user, user_id)
+        return {"ok": True, "progress": _get_onboarding_progress(user_id)}
+    except Exception as e:
+        logger.error(f"[WEBAPP] onboarding get {user_id}: {e}")
+        return {"ok": False, "error": str(e)}
+
+
+@app.post("/api/onboarding/progress")
+async def api_onboarding_progress_save(req: OnboardingProgressRequest, auth_user: AuthUser):
+    try:
+        user_id = authorized_user_id(auth_user, req.user_id)
+        patch = req.model_dump(exclude={"user_id"}, exclude_none=True)
+        progress = _save_onboarding_progress(user_id, patch)
+        return {"ok": True, "progress": progress}
+    except Exception as e:
+        logger.error(f"[WEBAPP] onboarding save {req.user_id}: {e}")
+        return {"ok": False, "error": str(e)}
+
+
+@app.post("/api/auth/logout")
+async def api_auth_logout(user_id: int, auth_user: AuthUser, request: Request):
+    try:
+        user_id = authorized_user_id(auth_user, user_id)
+        auth_header = request.headers.get("Authorization") or ""
+        token = auth_header.removeprefix("Bearer ").strip()
+        if token:
+            from shop_bot.security.kv_store import set_value
+            set_value(f"webapp:token-revoked:{token[:48]}", "1", ttl=DEFAULT_TOKEN_DAYS * 86400)
+        return {"ok": True}
+    except Exception as e:
+        logger.error(f"[WEBAPP] logout {user_id}: {e}")
+        return {"ok": False, "error": str(e)}
+
+
+@app.post("/api/support/upload")
+async def api_support_upload(req: SupportUploadRequest, auth_user: AuthUser):
+    try:
+        user_id = authorized_user_id(auth_user, req.user_id)
+        from shop_bot.data_manager.db.support import get_ticket
+        from shop_bot.data_manager.remnawave_repository import add_support_message
+
+        ticket = get_ticket(req.ticket_id)
+        if not ticket or int(ticket.get("user_id") or 0) != user_id:
+            return {"ok": False, "error": "Тикет не найден"}
+        import base64
+        raw = (req.content_base64 or "").strip()
+        if "," in raw:
+            raw = raw.split(",", 1)[1]
+        try:
+            data = base64.b64decode(raw)
+        except Exception:
+            return {"ok": False, "error": "Некорректный файл"}
+        if len(data) > 5 * 1024 * 1024:
+            return {"ok": False, "error": "Файл слишком большой (макс. 5 МБ)"}
+        uploads_dir = os.path.join(os.path.dirname(__file__), "uploads", "support")
+        os.makedirs(uploads_dir, exist_ok=True)
+        safe_name = re.sub(r"[^a-zA-Z0-9._-]", "_", (req.filename or "file"))[:80]
+        file_id = uuid.uuid4().hex[:12]
+        path = os.path.join(uploads_dir, f"{file_id}_{safe_name}")
+        with open(path, "wb") as f:
+            f.write(data)
+        url = f"/webapp/uploads/support/{file_id}_{safe_name}"
+        mime = (req.mime_type or "application/octet-stream").split("/")[0]
+        label = "📷 Фото" if mime == "image" else "📎 Файл"
+        add_support_message(req.ticket_id, sender="user", content=f"{label}: [{safe_name}]({url})")
+        return {"ok": True, "url": url}
+    except Exception as e:
+        logger.error(f"[WEBAPP] support upload {req.ticket_id}: {e}")
+        return {"ok": False, "error": str(e)}
+
+
 @app.get("/api/user/preferences")
 async def api_user_preferences_get(user_id: int, auth_user: AuthUser):
     try:
@@ -4039,6 +4549,12 @@ async def api_user_preferences_save(req: UserPreferencesRequest, auth_user: Auth
         patch = req.model_dump(exclude={"user_id"}, exclude_none=True)
         if patch.get("theme") and patch["theme"] not in ("system", "light", "dark"):
             return {"ok": False, "error": "invalid theme"}
+        if patch.get("default_home_tab") and patch["default_home_tab"] not in ("home", "wallet", "profile", "support"):
+            return {"ok": False, "error": "invalid default_home_tab"}
+        if patch.get("locale") and patch["locale"] not in ("ru", "en"):
+            return {"ok": False, "error": "invalid locale"}
+        if patch.get("auto_renew_remind_days") is not None:
+            patch["auto_renew_remind_days"] = max(1, min(int(patch["auto_renew_remind_days"]), 30))
         prefs = _save_user_preferences(user_id, patch)
         return {"ok": True, "preferences": prefs}
     except Exception as e:
