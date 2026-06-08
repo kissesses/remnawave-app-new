@@ -4,7 +4,14 @@
     let cabinetConfig = null;
 
     function getUserId() {
-        return window.Telegram?.WebApp?.initDataUnsafe?.user?.id || window.RENDERED_USER_ID;
+        if (typeof window.getWebappUserId === 'function') return window.getWebappUserId();
+        const rendered = Number(window.RENDERED_USER_ID) || 0;
+        if (rendered) return rendered;
+        return Number(window.Telegram?.WebApp?.initDataUnsafe?.user?.id) || 0;
+    }
+
+    function isNativeDesign() {
+        return document.documentElement.dataset.webappDesign === 'native';
     }
 
     function notify(msg, type) {
@@ -410,9 +417,11 @@
         const cfg = await loadCabinetConfig();
         applyBranding(cfg);
         applyModuleVisibility(cfg);
-        renderTrialBanner(cfg);
-        renderQuickActions();
-        renderProfileActions();
+        if (!isNativeDesign()) {
+            renderTrialBanner(cfg);
+            renderQuickActions();
+            renderProfileActions();
+        }
         renderSetupOsTabs(cfg);
         applyModuleVisibility(cfg);
     }

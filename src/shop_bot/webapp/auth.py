@@ -46,7 +46,7 @@ async def require_webapp_user(request: Request) -> dict:
 
 def authorized_user_id(user: dict, claimed_user_id: int | None = None) -> int:
     uid = int(user["telegram_id"])
-    if claimed_user_id is not None and int(claimed_user_id) != uid:
+    if claimed_user_id is not None and int(claimed_user_id) not in (0, uid):
         raise HTTPException(
             status_code=403,
             detail={"ok": False, "error": "Forbidden"},

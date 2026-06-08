@@ -1,3 +1,21 @@
+        function resolveWebappUserId() {
+            if (typeof window.getWebappUserId === 'function') return window.getWebappUserId();
+            const rendered = Number(window.RENDERED_USER_ID) || 0;
+            if (rendered) return rendered;
+            return Number(window.Telegram?.WebApp?.initDataUnsafe?.user?.id) || 0;
+        }
+
+        async function parseApiJson(res) {
+            let data = {};
+            try { data = await res.json(); } catch (_) { /* ignore */ }
+            if (!res.ok) {
+                const detail = data.detail;
+                const err = (detail && (detail.error || detail)) || data.error || ('Ошибка ' + res.status);
+                throw new Error(typeof err === 'string' ? err : 'Ошибка запроса');
+            }
+            return data;
+        }
+
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark')
         } else {
@@ -193,9 +211,9 @@
                 const response = await fetch('/api/support/status', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: RENDERED_USER_ID })
+                    body: JSON.stringify({ user_id: resolveWebappUserId() })
                 });
-                const data = await response.json();
+                const data = await parseApiJson(response);
 
                 document.getElementById('support-loading').classList.add('hidden');
 
@@ -227,6 +245,9 @@
                 }
             } catch (e) {
                 console.error(e);
+                document.getElementById('support-loading')?.classList.add('hidden');
+                document.getElementById('support-create-view')?.classList.remove('hidden');
+                document.getElementById('support-chat-view')?.classList.add('hidden');
             }
         }
 
@@ -244,9 +265,9 @@
                 const res = await fetch('/api/support/create', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: RENDERED_USER_ID, subject: subj })
+                    body: JSON.stringify({ user_id: resolveWebappUserId(), subject: subj })
                 });
-                const data = await res.json();
+                const data = await parseApiJson(res);
                 if (data.ok) {
                     input.value = '';
                     await fetchSupportStatus();
@@ -254,7 +275,7 @@
                     showNotification(data.error || 'Ошибка', 'error');
                 }
             } catch (e) {
-                showNotification('Ошибка связи', 'error');
+                showNotification(e.message || 'Ошибка связи', 'error');
             } finally {
                 btn.innerHTML = ogHtml;
                 btn.disabled = false;
@@ -276,12 +297,12 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        user_id: RENDERED_USER_ID,
+                        user_id: resolveWebappUserId(),
                         ticket_id: currentTicketId,
                         message: text
                     })
                 });
-                const data = await res.json();
+                const data = await parseApiJson(res);
                 if (data.ok) {
                     input.value = '';
                     input.style.height = '';
@@ -290,7 +311,7 @@
                     showNotification(data.error || 'Ошибка отправки', 'error');
                 }
             } catch (e) {
-                showNotification('Ошибка связи', 'error');
+                showNotification(e.message || 'Ошибка связи', 'error');
             } finally {
                 btn.disabled = false;
                 btn.style.opacity = '1';

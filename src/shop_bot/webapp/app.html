@@ -761,7 +761,15 @@
     </div>
     <!-- ======== Конец Страница поддержки ======== -->
 
-    <script>window.RENDERED_USER_ID = parseInt("{{ user_id }}") || 0;</script>
+    <script>
+        window.RENDERED_USER_ID = parseInt("{{ user_id }}") || 0;
+        window.getWebappUserId = function () {
+            var rendered = Number(window.RENDERED_USER_ID) || 0;
+            if (rendered) return rendered;
+            var tg = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user;
+            return (tg && tg.id) ? Number(tg.id) : 0;
+        };
+    </script>
 
     <div id="payment-modal" class="fixed inset-0 z-[100] hidden items-end sm:items-center justify-center">
         <div class="fixed inset-0 bg-black/70 backdrop-blur-xl transition-opacity duration-300 opacity-0 pointer-events-none"

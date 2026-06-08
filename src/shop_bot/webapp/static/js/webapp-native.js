@@ -40,6 +40,7 @@
     let ptrStartY = 0;
     let ptrPulling = false;
     let badgeTimer = null;
+    let profileRenderGen = 0;
 
     function isActive() {
         return document.documentElement.dataset.webappDesign === DESIGN;
@@ -108,9 +109,18 @@
         }
         const mainBadge = document.getElementById('webapp-native-main-badge');
         if (mainBadge) {
-            mainBadge.hidden = !(warnRenew || trial || !active);
-            mainBadge.textContent = warnRenew ? '!' : '1';
+            const show = warnRenew || trial || !active;
+            mainBadge.hidden = !show;
+            mainBadge.textContent = warnRenew ? '!' : '';
+            mainBadge.classList.toggle('is-dot', show && !warnRenew);
         }
+    }
+
+    function pruneLegacyChrome() {
+        document.getElementById('webapp-cabinet-quick')?.remove();
+        document.getElementById('webapp-profile-extra-actions')?.remove();
+        document.getElementById('webapp-trial-banner')?.remove();
+        document.getElementById('webapp-native-profile')?.remove();
     }
 
     async function fetchSupportBadge() {
@@ -191,7 +201,7 @@
                 /* setup tabs rendered on cabinet init */
             }
         });
-        if (id === 'profile-page') renderProfileExtras();
+        if (id === 'profile-page') renderProfilePage();
         if (id === 'main-page') renderHome();
     }
 
@@ -434,27 +444,73 @@
         window.__webappNativeVisHooked = true;
     }
 
-    async function renderProfileExtras() {
+    function syncProfileAvatar(slot) {
+        if (!slot) return;
+        const img = document.getElementById('webapp-profile-avatar-img');
+        const url = img?.src;
+        const hasPhoto = url && img && !img.classList.contains('hidden');
+        if (hasPhoto) {
+            slot.innerHTML = `<img src="${url}" alt="" class="webapp-native-profile__avatar-img" />`;
+        } else {
+            slot.innerHTML = `<span class="webapp-native-profile__avatar-fallback">${K().getUserInitial()}</span>`;
+        }
+    }
+
+    async function renderProfilePage() {
+        if (!isActive()) return;
         const main = document.querySelector('#profile-page main');
         if (!main) return;
-        document.getElementById('webapp-native-profile-extras')?.remove();
+        const gen = ++profileRenderGen;
+        document.getElementById('webapp-native-profile')?.remove();
+
         const data = await K().fetchData();
+        if (gen !== profileRenderGen) return;
+
         const balance = data.status?.balance ?? 0;
-        const keys = data.status?.keys?.length ?? 0;
+        const keys = data.status?.keys || [];
+        const cfg = data.cfg;
+        lastKey = keys[0] || null;
+        lastCfg = cfg;
+        const refCount = data.status?.referral_count ?? cfg?.referrals?.count ?? 0;
+        const username = K().getUsername();
+
         const block = document.createElement('div');
-        block.id = 'webapp-native-profile-extras';
-        block.className = 'webapp-native-profile-extras';
+        block.id = 'webapp-native-profile';
+        block.className = 'webapp-native-profile';
         block.innerHTML = `
+            <div class="webapp-native-profile__hero">
+                <span class="webapp-native-profile__avatar" id="webapp-native-profile-avatar-slot"></span>
+                <div class="webapp-native-profile__meta">
+                    <span class="webapp-native-profile__name">${username}</span>
+                    <span class="webapp-native-profile__sub">${keys.length ? keys.length + ' ключ(ей)' : 'Нет активных ключей'}</span>
+                </div>
+            </div>
             ${sectionLabel('Аккаунт')}
             <section class="webapp-native-group">
                 ${cell('account_balance_wallet', ICON_COLORS.balance, 'Баланс', K().formatMoney(balance), 'topup')}
-                ${cell('vpn_key', ICON_COLORS.vpn, 'Ключи', String(keys), 'profile-keys', { info: true })}
                 ${cell('redeem', ICON_COLORS.promo, 'Промокод', '', 'promo')}
+                ${cell('receipt_long', ICON_COLORS.history, 'История платежей', '', 'history')}
+                ${cell('group_add', ICON_COLORS.referral, 'Реферальная программа', String(refCount), 'referral')}
+            </section>
+            ${keys.length ? `${sectionLabel('Ключи')}
+            <section class="webapp-native-group webapp-native-profile-keys">
+                ${keys.map((k) => cell('vpn_key', ICON_COLORS.vpn, k.host_name || 'VPN', k.days_left > 0 ? (k.remaining_str || k.days_left + ' дн.') : 'Неактивен', 'setup')).join('')}
+            </section>` : ''}
+            ${sectionLabel('Сервис')}
+            <section class="webapp-native-group">
+                ${cell('headset_mic', ICON_COLORS.support, 'Поддержка', '', 'support')}
+                ${cell('palette', '#8E8E93', 'Оформление кабинета', '', 'theme')}
             </section>`;
+
         block.querySelectorAll('[data-native-action]').forEach((btn) => {
-            btn.addEventListener('click', () => handleAction(btn.dataset.nativeAction, lastKey));
+            btn.addEventListener('click', () => {
+                const action = btn.dataset.nativeAction;
+                if (action === 'theme') document.getElementById('webapp-theme-fab')?.click();
+                else handleAction(action, lastKey);
+            });
         });
         main.prepend(block);
+        syncProfileAvatar(document.getElementById('webapp-native-profile-avatar-slot'));
     }
 
     async function renderHome() {
@@ -564,7 +620,7 @@
         if (badgeTimer) clearInterval(badgeTimer);
         document.getElementById('webapp-native-home')?.remove();
         document.getElementById('webapp-native-ptr')?.remove();
-        document.getElementById('webapp-native-profile-extras')?.remove();
+        document.getElementById('webapp-native-profile')?.remove();
         document.getElementById('webapp-native-subnav')?.remove();
         document.getElementById('webapp-native-tabbar')?.remove();
         document.getElementById('webapp-native-search-fab')?.remove();
@@ -574,6 +630,7 @@
 
     function init() {
         if (!isActive() || !document.getElementById('main-page')) return;
+        pruneLegacyChrome();
         loadAppearance();
         hookShowPage();
         setupVisibilityRefresh();
@@ -585,6 +642,7 @@
         syncTabAvatar();
         fetchSupportBadge();
         badgeTimer = setInterval(fetchSupportBadge, 45000);
+        if (K().pageIdFromHash() === 'profile-page') renderProfilePage();
     }
 
     window.WebAppNative = { init, destroy, syncNav, onPageChange, refresh: renderHome, isActive, syncTabAvatar };
