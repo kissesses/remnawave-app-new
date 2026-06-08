@@ -72,7 +72,7 @@ export function SettingsPage() {
                     className={cn(
                       "flex flex-col items-center gap-2 rounded-2xl border p-4 transition-all",
                       active
-                        ? "border-primary bg-primary/10 shadow-[0_0_0_1px_hsl(var(--primary)/0.25)]"
+                        ? "border-primary/50 bg-primary/10"
                         : "border-border/50 premium-glass",
                     )}
                   >

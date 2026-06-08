@@ -145,8 +145,8 @@ export function HomePage() {
                   onClick={() => navigate(`/keys/${k.key_id}`)}
                   className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold border transition-all active:scale-95 ${
                     k.key_id === key?.key_id
-                      ? "border-primary/50 bg-primary/15 text-primary shadow-[0_0_20px_hsl(var(--primary)/0.15)]"
-                      : "border-border/50 bg-card/40 text-muted-foreground backdrop-blur-sm"
+                      ? "border-primary/40 bg-primary/10 text-primary"
+                      : "border-border/50 bg-secondary/40 text-muted-foreground"
                   }`}
                 >
                   {k.name || k.host_name}

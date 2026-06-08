@@ -93,7 +93,7 @@ export function NotificationsPage() {
                   className={`w-full rounded-2xl border p-4 text-left transition-colors active:scale-[0.99] ${
                     n.read
                       ? "border-border/40 bg-card/50"
-                      : "border-primary/30 bg-primary/5 shadow-[0_0_20px_hsl(var(--primary)/0.08)]"
+                      : "border-primary/25 bg-primary/5"
                   }`}
                 >
                   <div className="flex gap-3">

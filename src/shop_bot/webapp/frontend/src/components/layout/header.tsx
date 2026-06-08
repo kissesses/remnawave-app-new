@@ -35,7 +35,7 @@ export function Header({ title, showBack, showNotifications, logo, action }: Hea
   return (
     <header
       className={cn(
-        "app-header sticky top-0 z-40 flex h-14 shrink-0 items-center gap-2 border-b border-border/40 bg-background/80 px-4 backdrop-blur-xl",
+        "app-header sticky top-0 z-40 flex h-14 shrink-0 items-center gap-2 px-4",
       )}
     >
       {showBack && !useNativeBack ? (
@@ -50,12 +50,11 @@ export function Header({ title, showBack, showNotifications, logo, action }: Hea
       ) : showBack && useNativeBack ? (
         <div className="w-2 shrink-0" />
       ) : logo ? (
-        <div className="relative shrink-0">
-          <div className="absolute inset-0 rounded-xl bg-primary/20 blur-md scale-110" />
+        <div className="shrink-0">
           <img
             src={logo}
             alt=""
-            className="relative h-9 w-9 rounded-xl object-cover border border-primary/25 shadow-md"
+            className="h-9 w-9 rounded-[0.65rem] object-cover border border-border/50 shadow-sm"
           />
         </div>
       ) : (

@@ -114,7 +114,7 @@ export function PurchaseSheet({ open, onOpenChange, showPromo }: PurchaseSheetPr
                       onClick={() => setPlan(p)}
                       className={`rounded-2xl border p-4 text-left transition-all ${
                         plan?.plan_id === p.plan_id
-                          ? "border-primary bg-primary/10 shadow-[0_0_0_1px_hsl(var(--primary)/0.25)]"
+                          ? "border-primary/50 bg-primary/10"
                           : "border-border/50 premium-glass"
                       }`}
                     >

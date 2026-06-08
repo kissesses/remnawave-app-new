@@ -51,13 +51,9 @@ export function BottomNav() {
                   )}
                   transition={{ type: "spring", stiffness: 480, damping: 32 }}
                 />
-                <motion.div
-                  animate={{ scale: active ? 1.08 : 1, y: active ? -1 : 0 }}
-                  transition={{ type: "spring", stiffness: 500, damping: 28 }}
-                  className="relative z-10 flex h-7 w-7 items-center justify-center"
-                >
-                  <Icon className="h-[21px] w-[21px]" strokeWidth={active ? 2.4 : 1.8} />
-                </motion.div>
+                <div className="relative z-10 flex h-7 w-7 items-center justify-center">
+                  <Icon className="h-[21px] w-[21px]" strokeWidth={active ? 2.25 : 1.75} />
+                </div>
                 <span className="relative z-10">{label}</span>
               </NavLink>
             );

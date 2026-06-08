@@ -57,7 +57,7 @@ export function AppShell() {
         position="top-center"
         toastOptions={{
           className:
-            "rounded-2xl border border-border/40 bg-card/90 text-foreground shadow-2xl backdrop-blur-xl",
+            "rounded-[1.15rem] border border-border/50 bg-card/85 text-foreground backdrop-blur-xl",
           style: { marginTop: "var(--tg-content-safe-area-inset-top, 0px)" },
         }}
         richColors

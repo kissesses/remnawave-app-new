@@ -28,7 +28,7 @@ function AnimatedBalance({ value }: { value: number }) {
   useEffect(() => {
     spring.set(value);
   }, [value, spring]);
-  return <span className="text-4xl font-bold tracking-tight text-gradient-primary">{display}</span>;
+  return <span className="text-4xl font-bold tracking-tight text-foreground">{display}</span>;
 }
 
 export function WalletPage() {

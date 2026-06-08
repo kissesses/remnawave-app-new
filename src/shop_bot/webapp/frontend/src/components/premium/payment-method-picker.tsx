@@ -55,7 +55,7 @@ export function PaymentMethodPicker({
             className={cn(
               "flex items-center gap-3 rounded-2xl border p-4 text-left transition-colors",
               active
-                ? "border-primary bg-primary/10 shadow-[0_0_0_1px_hsl(var(--primary)/0.3)]"
+                ? "border-primary/50 bg-primary/10"
                 : "border-border/50 bg-card/50",
             )}
           >
