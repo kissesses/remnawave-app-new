@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -25,14 +26,16 @@ export function StudioOverviewCard({
   className?: string;
 }) {
   return (
-    <button
+    <motion.button
       type="button"
       onClick={onClick}
+      whileTap={{ scale: 0.97 }}
+      transition={{ type: "spring", stiffness: 520, damping: 32 }}
       className={cn("studio-overview-card", className)}
     >
       <Icon className="studio-overview-card__icon h-5 w-5" strokeWidth={2} />
       <span className="studio-overview-card__title">{title}</span>
       {meta && <span className="studio-overview-card__meta">{meta}</span>}
-    </button>
+    </motion.button>
   );
 }

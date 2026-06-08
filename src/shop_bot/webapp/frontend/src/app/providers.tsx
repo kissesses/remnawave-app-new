@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect } from "react";
+import { ThemeProvider } from "@/components/theme/theme-provider";
 import { useThemeStore } from "@/stores/theme-store";
 import { useNotifications } from "@/hooks/use-cabinet";
 import { useBranding } from "@/hooks/use-branding";
@@ -43,10 +44,12 @@ function NotificationBadgeSync() {
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeSync />
-      <BrandingSync />
-      <NotificationBadgeSync />
-      {children}
+      <ThemeProvider>
+        <ThemeSync />
+        <BrandingSync />
+        <NotificationBadgeSync />
+        {children}
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

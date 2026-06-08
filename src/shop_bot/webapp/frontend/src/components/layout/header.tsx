@@ -60,7 +60,7 @@ export function Header({ title, showBack, showNotifications, logo, action }: Hea
       ) : (
         <div className="w-2 shrink-0" />
       )}
-      <h1 className="flex-1 text-[17px] font-bold truncate tracking-tight">{title}</h1>
+      <h1 className="flex-1 truncate text-[17px] font-bold tracking-tight text-foreground">{title}</h1>
       {action}
       {showNotifications && !action ? (
         <Button

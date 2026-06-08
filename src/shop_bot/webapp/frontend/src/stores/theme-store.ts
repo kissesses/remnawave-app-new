@@ -1,66 +1,39 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { applyDesignTokens } from "@/lib/design-tokens";
 import type { UserPreferences } from "@/types/api";
 
 type ThemeMode = UserPreferences["theme"];
 
 interface ThemeState {
   mode: ThemeMode;
-  resolved: "light" | "dark";
+  resolved: "dark";
   setMode: (mode: ThemeMode) => void;
   applyResolved: () => void;
 }
 
-function resolveTheme(mode: ThemeMode): "light" | "dark" {
-  if (mode === "light") return "light";
-  if (mode === "dark") return "dark";
-  const tg = window.Telegram?.WebApp?.colorScheme;
-  if (tg) return tg;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
-}
-
-function applyDomTheme(resolved: "light" | "dark") {
-  const root = document.documentElement;
-  root.classList.toggle("dark", resolved === "dark");
-  const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) {
-    meta.setAttribute("content", resolved === "dark" ? "#17212B" : "#FFFFFF");
-  }
-  const accent = getComputedStyle(root).getPropertyValue("--primary").trim();
-  if (window.Telegram?.WebApp) {
-    try {
-      document.documentElement.style.setProperty(
-        "--tg-theme-bg-color",
-        resolved === "dark" ? "#17212B" : "#FFFFFF",
-      );
-    } catch {
-      /* ignore */
-    }
-  }
-  void accent;
+function applyDomTheme() {
+  applyDesignTokens();
 }
 
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set, get) => ({
-      mode: "system",
+      mode: "dark",
       resolved: "dark",
       setMode: (mode) => {
-        const resolved = resolveTheme(mode);
-        applyDomTheme(resolved);
-        set({ mode, resolved });
+        applyDomTheme();
+        set({ mode: mode === "light" ? "dark" : mode, resolved: "dark" });
       },
       applyResolved: () => {
-        const resolved = resolveTheme(get().mode);
-        applyDomTheme(resolved);
-        set({ resolved });
+        applyDomTheme();
+        set({ resolved: "dark" });
+        void get().mode;
       },
     }),
     {
       name: "webapp-theme",
-      partialize: (s) => ({ mode: s.mode }),
+      partialize: (s) => ({ mode: "dark" as ThemeMode }),
       onRehydrateStorage: () => (state) => {
         if (state) state.applyResolved();
       },

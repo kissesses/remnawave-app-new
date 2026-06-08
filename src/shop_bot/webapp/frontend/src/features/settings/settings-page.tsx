@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { Moon, Sun, Monitor, Bell, LogOut } from "lucide-react";
-import { motion } from "framer-motion";
+import { Moon, Bell, LogOut, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { Header } from "@/components/layout/header";
 import { SectionHeader } from "@/components/premium/section-header";
@@ -10,13 +9,7 @@ import { useThemeStore } from "@/stores/theme-store";
 import { api, getUserId, removeAuthToken, getBootstrap } from "@/lib/api";
 import type { UserPreferences } from "@/types/api";
 import { useTelegram } from "@/hooks/use-telegram";
-import { cn } from "@/lib/utils";
-
-const themeOptions = [
-  { id: "system" as const, label: "Авто", icon: Monitor },
-  { id: "light" as const, label: "Светлая", icon: Sun },
-  { id: "dark" as const, label: "Тёмная", icon: Moon },
-];
+import { StudioCard } from "@/components/studio/studio-board";
 
 export function SettingsPage() {
   const { mode, setMode } = useThemeStore();
@@ -60,28 +53,20 @@ export function SettingsPage() {
         <div className="space-y-6 p-4">
           <div>
             <SectionHeader title="Тема оформления" />
-            <div className="grid grid-cols-3 gap-2">
-              {themeOptions.map((opt) => {
-                const active = mode === opt.id;
-                return (
-                  <motion.button
-                    key={opt.id}
-                    type="button"
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => savePref({ theme: opt.id })}
-                    className={cn(
-                      "flex flex-col items-center gap-2 rounded-2xl border p-4 transition-all",
-                      active
-                        ? "border-primary/50 bg-primary/10"
-                        : "border-border/50 premium-glass",
-                    )}
-                  >
-                    <opt.icon className={cn("h-6 w-6", active ? "text-primary" : "text-muted-foreground")} />
-                    <span className="text-xs font-medium">{opt.label}</span>
-                  </motion.button>
-                );
-              })}
-            </div>
+            <StudioCard>
+              <div className="flex items-center gap-3">
+                <div className="studio-hub__icon h-10 w-10">
+                  <Moon className="h-5 w-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-foreground">Cyber Dark</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Премиальная тёмная тема с glass-эффектами
+                  </p>
+                </div>
+                <Shield className="h-4 w-4 text-primary shrink-0" />
+              </div>
+            </StudioCard>
           </div>
 
           <div>
@@ -128,7 +113,7 @@ export function SettingsPage() {
               )}
               <div>
                 <p className="font-semibold">{branding.title || "VPN Cabinet"}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Telegram Premium WebApp</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Premium WebApp</p>
               </div>
             </div>
           </div>

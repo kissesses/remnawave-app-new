@@ -3,10 +3,11 @@ import { createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
 import { Providers } from "@/app/providers";
 import { router } from "@/app/router";
+import { applyDesignTokens } from "@/lib/design-tokens";
 import { useThemeStore } from "@/stores/theme-store";
 import "./index.css";
 
-// Apply theme before first paint
+applyDesignTokens();
 useThemeStore.getState().applyResolved();
 
 // Auth token helpers for FastAPI

@@ -29,7 +29,7 @@ export function BottomNav() {
       style={{ bottom: safeBottom }}
     >
       <nav className="premium-dock mx-auto max-w-lg pointer-events-auto">
-        <div className="flex h-[54px] items-stretch justify-around px-1">
+        <div className="flex h-[58px] items-stretch justify-around px-1.5">
           {tabs.map(({ to, label, icon: Icon }) => {
             const active =
               to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
@@ -46,7 +46,7 @@ export function BottomNav() {
                 <motion.div
                   layoutId="dock-pill"
                   className={cn(
-                    "absolute inset-x-1.5 inset-y-1.5 rounded-xl",
+                    "absolute inset-x-1.5 inset-y-1.5 rounded-2xl",
                     active ? "premium-dock-active" : "opacity-0",
                   )}
                   transition={{ type: "spring", stiffness: 480, damping: 32 }}

@@ -33,21 +33,22 @@ export default {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
+          elevated: "hsl(var(--card-elevated))",
         },
-        tg: {
-          blue: "#3390EC",
-          light: "#FFFFFF",
-          dark: "#17212B",
-          card: "#232E3C",
-        },
+        success: "hsl(var(--success))",
+        warning: "hsl(var(--warning))",
       },
       borderRadius: {
         lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        md: "calc(var(--radius) - 4px)",
+        sm: "calc(var(--radius) - 8px)",
+        "2xl": "1.25rem",
+        "3xl": "1.5rem",
+        "4xl": "1.75rem",
       },
       fontFamily: {
         sans: [
+          "Inter",
           "-apple-system",
           "BlinkMacSystemFont",
           "SF Pro Text",
@@ -57,6 +58,11 @@ export default {
           "Arial",
           "sans-serif",
         ],
+      },
+      boxShadow: {
+        glass: "inset 0 1px 0 rgba(255,255,255,0.07), 0 12px 40px rgba(0,0,0,0.45)",
+        glow: "0 0 40px rgba(141, 214, 255, 0.12)",
+        neo: "4px 4px 16px rgba(0,0,0,0.35), -2px -2px 12px rgba(141,214,255,0.04)",
       },
       keyframes: {
         shimmer: {
