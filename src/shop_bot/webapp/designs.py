@@ -4,118 +4,9 @@ from __future__ import annotations
 
 import json
 
-WEBAPP_DESIGN_IDS = (
-    "native",
-    "vault",
-    "classic",
-    "ios",
-    "desktop",
-    "stealth",
-    "stealth-glass",
-    "glass-hub",
-    "nova",
-    "pref-classic",
-    "pref-macos",
-    "pref-macos-v2",
-    "pref-glass-stealth",
-    "aurum",
-)
+WEBAPP_DESIGN_IDS = ("aurum",)
 
 WEBAPP_DESIGNS: list[dict[str, str]] = [
-    {
-        "id": "native",
-        "label": "Native",
-        "desc": "Как Telegram: группы настроек и нижнее меню",
-        "icon": "phone_iphone",
-        "accent": "#2AABEE",
-        "group": "premium",
-    },
-    {
-        "id": "vault",
-        "label": "Vault",
-        "desc": "Cybersecurity SaaS dashboard",
-        "icon": "security",
-        "accent": "#3b82f6",
-        "group": "premium",
-    },
-    {
-        "id": "classic",
-        "label": "Prism",
-        "desc": "Современный glass-кабинет с нижней навигацией",
-        "icon": "diamond",
-        "accent": "#10b981",
-        "group": "premium",
-    },
-    {
-        "id": "ios",
-        "label": "Mobile",
-        "desc": "Мобильный стиль с нижней панелью",
-        "icon": "auto_awesome",
-        "accent": "#10b981",
-    },
-    {
-        "id": "desktop",
-        "label": "Desktop",
-        "desc": "Широкий макет для компьютера",
-        "icon": "desktop_windows",
-        "accent": "#6366f1",
-    },
-    {
-        "id": "stealth",
-        "label": "Stealth",
-        "desc": "Неоновая мини-аппа с сеткой и 3 вкладками",
-        "icon": "shield",
-        "accent": "#ff2357",
-    },
-    {
-        "id": "stealth-glass",
-        "label": "Glass",
-        "desc": "Стеклянная классика с верхним меню",
-        "icon": "blur_on",
-        "accent": "#8b5cf6",
-    },
-    {
-        "id": "glass-hub",
-        "label": "Hub",
-        "desc": "Bento-mosaic: асимметричная сетка плиток",
-        "icon": "dashboard",
-        "accent": "#3b82f6",
-    },
-    {
-        "id": "nova",
-        "label": "Nova",
-        "desc": "Snap-deck: листайте полноэкранные слайды",
-        "icon": "view_carousel",
-        "accent": "#6366f1",
-    },
-    {
-        "id": "pref-classic",
-        "label": "Ledger",
-        "desc": "Выписка-тimeline: чек подписки и drawer-меню",
-        "icon": "receipt_long",
-        "accent": "#10b981",
-    },
-    {
-        "id": "pref-macos",
-        "label": "Aqua",
-        "desc": "Menu bar + окно Subscription.app и Dock",
-        "icon": "laptop_mac",
-        "accent": "#0a84ff",
-    },
-    {
-        "id": "pref-macos-v2",
-        "label": "Stage",
-        "desc": "Левый rail + горизонтальные snap-панели",
-        "icon": "view_sidebar",
-        "accent": "#0a84ff",
-    },
-    {
-        "id": "pref-glass-stealth",
-        "label": "Void",
-        "desc": "Орбитальное меню и стеклянные shards",
-        "icon": "blur_circular",
-        "accent": "#e4e4e7",
-    },
     {
         "id": "aurum",
         "label": "Aurum",
@@ -125,7 +16,7 @@ WEBAPP_DESIGNS: list[dict[str, str]] = [
     },
 ]
 
-DEFAULT_ENABLED_DESIGNS = ",".join(WEBAPP_DESIGN_IDS)
+DEFAULT_ENABLED_DESIGNS = "aurum"
 
 WEBAPP_SHARED_CSS = (
     "webapp-ui-tokens.css",
@@ -137,32 +28,10 @@ WEBAPP_SHARED_CSS = (
 )
 
 WEBAPP_THEME_CSS: dict[str, str] = {
-    "native": "webapp-native.css",
-    "vault": "webapp-vault.css",
-    "classic": "webapp-prism.css",
-    "ios": "webapp-ios.css",
-    "desktop": "webapp-desktop.css",
-    "stealth": "webapp-stealth.css",
-    "stealth-glass": "webapp-stealth-glass.css",
-    "glass-hub": "webapp-glass-hub.css",
-    "nova": "webapp-nova.css",
-    "pref-classic": "webapp-pref-classic.css",
-    "pref-macos": "webapp-pref-macos.css",
-    "pref-macos-v2": "webapp-pref-macos-v2.css",
-    "pref-glass-stealth": "webapp-pref-glass-stealth.css",
     "aurum": "webapp-aurum.css",
 }
 
 WEBAPP_THEME_JS: dict[str, str] = {
-    "native": "webapp-native.js",
-    "vault": "webapp-vault.js",
-    "classic": "webapp-prism.js",
-    "glass-hub": "webapp-glass-hub.js",
-    "nova": "webapp-nova.js",
-    "pref-classic": "webapp-pref-classic.js",
-    "pref-macos": "webapp-pref-macos.js",
-    "pref-macos-v2": "webapp-pref-macos-v2.js",
-    "pref-glass-stealth": "webapp-pref-glass-stealth.js",
     "aurum": "webapp-aurum.js",
 }
 
@@ -177,15 +46,15 @@ def parse_enabled_designs(raw: str | None) -> list[str]:
         if design_id in WEBAPP_DESIGN_IDS and design_id not in seen:
             seen.add(design_id)
             result.append(design_id)
-    return result or ["native"]
+    return result or ["aurum"]
 
 
 def build_design_config(settings: dict | None, user_id: int | None = None) -> dict:
     settings = settings or {}
     enabled = parse_enabled_designs(settings.get("webapp_enabled_designs"))
-    default = (settings.get("webapp_default_design") or "native").strip()
+    default = (settings.get("webapp_default_design") or "aurum").strip()
     if default not in WEBAPP_DESIGN_IDS:
-        default = "native"
+        default = "aurum"
     if default not in enabled:
         default = enabled[0]
     ab_b = (settings.get("webapp_ab_design_b") or "").strip()
@@ -197,7 +66,7 @@ def build_design_config(settings: dict | None, user_id: int | None = None) -> di
         if (int(user_id) % 100) < ab_pct:
             default = ab_b
     picker_raw = settings.get("webapp_theme_picker")
-    picker_enabled = True
+    picker_enabled = False
     if picker_raw is not None:
         picker_enabled = str(picker_raw).strip().lower() in ("1", "true", "yes", "on")
     return {
@@ -243,10 +112,8 @@ def build_design_scripts(default_design: str) -> str:
         '<script defer src="/static/js/webapp-shop.js"></script>',
         '<script defer src="/static/js/webapp-cabinet.js"></script>',
     ]
-    seen_js: set[str] = set()
-    for theme_js in WEBAPP_THEME_JS.values():
-        if theme_js not in seen_js:
-            seen_js.add(theme_js)
-            lines.append(f'<script defer src="/static/js/{theme_js}"></script>')
+    theme_js = WEBAPP_THEME_JS.get(default_design)
+    if theme_js:
+        lines.append(f'<script defer src="/static/js/{theme_js}"></script>')
     lines.append('<script defer src="/static/js/webapp-theme-manager.js"></script>')
     return "\n    ".join(lines)

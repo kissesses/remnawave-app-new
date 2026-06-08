@@ -2,32 +2,10 @@
     'use strict';
 
     var THEME_CSS = {
-        native: '/static/css/webapp-native.css',
-        vault: '/static/css/webapp-vault.css',
-        classic: '/static/css/webapp-prism.css',
-        ios: '/static/css/webapp-ios.css',
-        desktop: '/static/css/webapp-desktop.css',
-        stealth: '/static/css/webapp-stealth.css',
-        'stealth-glass': '/static/css/webapp-stealth-glass.css',
-        'glass-hub': '/static/css/webapp-glass-hub.css',
-        nova: '/static/css/webapp-nova.css',
-        'pref-classic': '/static/css/webapp-pref-classic.css',
-        'pref-macos': '/static/css/webapp-pref-macos.css',
-        'pref-macos-v2': '/static/css/webapp-pref-macos-v2.css',
-        'pref-glass-stealth': '/static/css/webapp-pref-glass-stealth.css',
         aurum: '/static/css/webapp-aurum.css',
     };
 
     var THEME_JS = {
-        native: '/static/js/webapp-native.js',
-        vault: '/static/js/webapp-vault.js',
-        classic: '/static/js/webapp-prism.js',
-        'glass-hub': '/static/js/webapp-glass-hub.js',
-        nova: '/static/js/webapp-nova.js',
-        'pref-classic': '/static/js/webapp-pref-classic.js',
-        'pref-macos': '/static/js/webapp-pref-macos.js',
-        'pref-macos-v2': '/static/js/webapp-pref-macos-v2.js',
-        'pref-glass-stealth': '/static/js/webapp-pref-glass-stealth.js',
         aurum: '/static/js/webapp-aurum.js',
     };
 
@@ -40,7 +18,7 @@
     } catch (e) { /* ignore */ }
 
     function activeDesign() {
-        return document.documentElement.dataset.webappDesign || 'vault';
+        return document.documentElement.dataset.webappDesign || 'aurum';
     }
 
     function ensureStylesheet(href) {
@@ -71,8 +49,8 @@
     }
 
     function ensureThemeAssets(design) {
-        var href = THEME_CSS[design];
-        var js = THEME_JS[design];
+        var href = THEME_CSS[design] || THEME_CSS.aurum;
+        var js = THEME_JS[design] || THEME_JS.aurum;
         return Promise.all([
             ensureStylesheet(href),
             ensureScript(js),
@@ -80,15 +58,16 @@
     }
 
     function syncThemeAssets() {
-        var design = activeDesign();
-        ensureThemeAssets(design);
+        ensureThemeAssets(activeDesign());
     }
 
     window.__webappEnsureThemeAssets = ensureThemeAssets;
 
     window.__webappFetchCabinetConfig = function () {
         if (window.__webappCabinetConfigPromise) return window.__webappCabinetConfigPromise;
-        var userId = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user && window.Telegram.WebApp.initDataUnsafe.user.id) || window.RENDERED_USER_ID;
+        var userId = (typeof window.getWebappUserId === 'function')
+            ? window.getWebappUserId()
+            : ((window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user && window.Telegram.WebApp.initDataUnsafe.user.id) || window.RENDERED_USER_ID);
         if (!userId) return Promise.resolve(null);
         window.__webappCabinetConfigPromise = fetch('/api/cabinet/config?user_id=' + userId, { credentials: 'include' })
             .then(function (r) { return r.json(); })

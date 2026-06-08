@@ -1460,7 +1460,7 @@ async def _render_studio_preview(
     if accent:
         settings["webapp_accent_color"] = accent
     if design_id not in WEBAPP_DESIGN_IDS:
-        design_id = "classic"
+        design_id = "aurum"
 
     p = os.path.join(os.path.dirname(__file__), "app.html")
     with open(p, "r", encoding="utf-8") as f:
@@ -1509,7 +1509,7 @@ async def webapp_health():
 @app.get("/studio-preview", response_class=HTMLResponse)
 async def studio_preview(
     token: str,
-    design: str = "classic",
+    design: str = "aurum",
     device: str = "mobile",
     title: str = "",
     logo: str = "",

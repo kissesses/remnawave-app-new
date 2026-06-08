@@ -601,13 +601,13 @@ def _ensure_webapp_settings_table(cursor: sqlite3.Cursor):
         if "tg_fullscreen" not in columns:
             cursor.execute("ALTER TABLE webapp_settings ADD COLUMN tg_fullscreen INTEGER DEFAULT 0")
         if "webapp_default_design" not in columns:
-            cursor.execute("ALTER TABLE webapp_settings ADD COLUMN webapp_default_design TEXT DEFAULT 'native'")
+            cursor.execute("ALTER TABLE webapp_settings ADD COLUMN webapp_default_design TEXT DEFAULT 'aurum'")
         if "webapp_enabled_designs" not in columns:
             cursor.execute(
-                "ALTER TABLE webapp_settings ADD COLUMN webapp_enabled_designs TEXT DEFAULT 'native,vault,classic,ios,desktop,stealth,stealth-glass,glass-hub,nova,pref-classic,pref-macos,pref-macos-v2,pref-glass-stealth,aurum'"
+                "ALTER TABLE webapp_settings ADD COLUMN webapp_enabled_designs TEXT DEFAULT 'aurum'"
             )
         if "webapp_theme_picker" not in columns:
-            cursor.execute("ALTER TABLE webapp_settings ADD COLUMN webapp_theme_picker INTEGER DEFAULT 1")
+            cursor.execute("ALTER TABLE webapp_settings ADD COLUMN webapp_theme_picker INTEGER DEFAULT 0")
 
         cursor.execute("INSERT OR IGNORE INTO webapp_settings (id, webapp_title, webapp_domen, webapp_enable, webapp_logo, webapp_icon) VALUES (1, 'VPN', '', 0, '', '')")
         _ensure_webapp_studio_columns(cursor)
@@ -619,14 +619,14 @@ def _ensure_webapp_settings_table(cursor: sqlite3.Cursor):
 
 
 def _ensure_webapp_design_columns(cursor) -> None:
-    _ensure_table_column(cursor, "webapp_settings", "webapp_default_design", "TEXT DEFAULT 'native'")
+    _ensure_table_column(cursor, "webapp_settings", "webapp_default_design", "TEXT DEFAULT 'aurum'")
     _ensure_table_column(
         cursor,
         "webapp_settings",
         "webapp_enabled_designs",
-        "TEXT DEFAULT 'native,vault,classic,ios,desktop,stealth,stealth-glass,glass-hub,nova,pref-classic,pref-macos,pref-macos-v2,pref-glass-stealth,aurum'",
+        "TEXT DEFAULT 'aurum'",
     )
-    _ensure_table_column(cursor, "webapp_settings", "webapp_theme_picker", "INTEGER DEFAULT 1")
+    _ensure_table_column(cursor, "webapp_settings", "webapp_theme_picker", "INTEGER DEFAULT 0")
 
 
 def _ensure_webapp_studio_columns(cursor) -> None:

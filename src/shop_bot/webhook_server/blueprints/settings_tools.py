@@ -535,11 +535,11 @@ def webapp_save():
         domen = request.form.get('domen', '').strip()
         logo = request.form.get('logo', '').strip()
         icon = request.form.get('icon', '').strip()
-        default_design = (request.form.get('default_design') or 'classic').strip()
+        default_design = (request.form.get('default_design') or 'aurum').strip()
         enabled_raw = request.form.getlist('webapp_design_enabled')
         enabled = [d for d in enabled_raw if d in WEBAPP_DESIGN_IDS]
         if not enabled:
-            enabled = ['classic']
+            enabled = ['aurum']
         if default_design not in WEBAPP_DESIGN_IDS or default_design not in enabled:
             default_design = enabled[0]
         enabled_str = ','.join(parse_enabled_designs(','.join(enabled)))

@@ -27,6 +27,11 @@
     overflow: hidden;
 }
 
+.webapp-panel-design-card__preview--aurum {
+    background: linear-gradient(180deg, #1a1712 0%, #0c0c0e 55%, #0c0c0e 100%);
+    box-shadow: inset 0 -8px 0 rgba(201, 169, 98, 0.22);
+}
+
 .webapp-panel-design-card__preview--classic {
     background: linear-gradient(180deg, #171717 0%, #0a0a0a 100%);
 }

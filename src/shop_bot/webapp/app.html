@@ -15,11 +15,10 @@
             var enabled = Array.isArray(cfg.enabled) && cfg.enabled.length ? cfg.enabled : null;
             var mobile = window.matchMedia('(max-width: 768px)').matches ||
                 /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent || '');
-            var design = localStorage.getItem(key) || cfg.default || 'native';
-            if (['native', 'vault', 'ios', 'desktop', 'stealth', 'stealth-glass', 'glass-hub', 'nova', 'pref-classic', 'pref-macos', 'pref-macos-v2', 'pref-glass-stealth', 'aurum'].indexOf(design) === -1) design = 'native';
-            if (enabled && enabled.indexOf(design) === -1) design = cfg.default || enabled[0] || 'native';
-            if (mobile && design === 'desktop') design = enabled && enabled.indexOf('native') !== -1 ? 'native' : (enabled && enabled.indexOf('classic') !== -1 ? 'classic' : (cfg.default || 'native'));
-            if (enabled && enabled.indexOf(design) === -1) design = enabled[0] || 'native';
+            var design = localStorage.getItem(key) || cfg.default || 'aurum';
+            if (design !== 'aurum') design = 'aurum';
+            if (enabled && enabled.indexOf(design) === -1) design = cfg.default || enabled[0] || 'aurum';
+            if (enabled && enabled.indexOf(design) === -1) design = enabled[0] || 'aurum';
             document.documentElement.dataset.webappDesign = design;
         })();
     </script>
@@ -211,22 +210,9 @@
     <div id="webapp-boot-loader" aria-hidden="true"><div id="webapp-boot-loader__ring"></div></div>
     <script>
         (function () {
-            var d = document.documentElement.getAttribute('data-webapp-design') || 'vault';
+            var d = document.documentElement.getAttribute('data-webapp-design') || 'aurum';
             var map = {
-                native: 'webapp-design-native',
-                vault: 'webapp-design-vault',
-                classic: 'webapp-design-classic',
-                ios: 'webapp-design-ios',
-                desktop: 'webapp-design-desktop',
-                stealth: 'webapp-design-stealth',
-                'stealth-glass': 'webapp-design-stealth-glass',
-                'glass-hub': 'webapp-design-glass-hub',
-                nova: 'webapp-design-nova',
                 aurum: 'webapp-design-aurum',
-                'pref-classic': 'webapp-design-pref-classic',
-                'pref-macos': 'webapp-design-pref-macos',
-                'pref-macos-v2': 'webapp-design-pref-macos-v2',
-                'pref-glass-stealth': 'webapp-design-pref-glass-stealth',
             };
             Object.keys(map).forEach(function (id) {
                 document.body.classList.toggle(map[id], d === id);

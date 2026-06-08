@@ -10,10 +10,6 @@
         return Number(window.Telegram?.WebApp?.initDataUnsafe?.user?.id) || 0;
     }
 
-    function isNativeDesign() {
-        return document.documentElement.dataset.webappDesign === 'native';
-    }
-
     function notify(msg, type) {
         if (typeof window.showNotification === 'function') {
             window.showNotification(msg, type);
@@ -417,11 +413,9 @@
         const cfg = await loadCabinetConfig();
         applyBranding(cfg);
         applyModuleVisibility(cfg);
-        if (!isNativeDesign()) {
-            renderTrialBanner(cfg);
-            renderQuickActions();
-            renderProfileActions();
-        }
+        renderTrialBanner(cfg);
+        renderQuickActions();
+        renderProfileActions();
         renderSetupOsTabs(cfg);
         applyModuleVisibility(cfg);
     }

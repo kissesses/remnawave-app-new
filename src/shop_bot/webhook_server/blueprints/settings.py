@@ -614,7 +614,7 @@ def _load_settings_page_context(tab: str) -> dict:
         except Exception:
             ctx['webapp'] = {}
             ctx['webapp_designs'] = []
-            ctx['webapp_enabled_design_list'] = ['classic']
+            ctx['webapp_enabled_design_list'] = ['aurum']
             ctx['webapp_meta'] = {}
 
     return ctx

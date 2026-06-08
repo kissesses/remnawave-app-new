@@ -15,21 +15,10 @@ from shop_bot.webapp.designs import WEBAPP_DESIGN_IDS, WEBAPP_DESIGNS, parse_ena
 
 DESIGN_GROUPS: list[dict[str, str]] = [
     {"id": "all", "label": "Все"},
-    {"id": "classic", "label": "Классика"},
-    {"id": "mobile", "label": "Mobile"},
-    {"id": "desktop", "label": "Desktop"},
-    {"id": "stealth", "label": "Stealth"},
-    {"id": "glass", "label": "Glass"},
 ]
 
 DESIGN_GROUP_MAP: dict[str, str] = {
-    "classic": "classic",
-    "ios": "mobile",
-    "desktop": "desktop",
-    "stealth": "stealth",
-    "stealth-glass": "stealth",
-    "glass-hub": "glass",
-    "nova": "glass",
+    "aurum": "all",
 }
 
 DESIGN_LABELS: dict[str, str] = {d["id"]: d["label"] for d in WEBAPP_DESIGNS}
@@ -240,7 +229,7 @@ def _build_alerts(webapp: dict, health: dict, enabled_designs: list[str]) -> lis
     if enabled and not enabled_designs:
         alerts.append({
             "level": "bad",
-            "text": "Не выбран ни один дизайн кабинета — будет использован classic.",
+            "text": "Не выбран ни один дизайн кабинета — будет использован Aurum.",
         })
     ssl = health.get("ssl") or {}
     if enabled and domain and ssl.get("ok") and ssl.get("warn"):
@@ -270,9 +259,9 @@ def build_webapp_meta(
     webapp = dict(webapp or {})
     settings = settings or {}
     enabled_designs = parse_enabled_designs(webapp.get("webapp_enabled_designs"))
-    default_design = (webapp.get("webapp_default_design") or "native").strip()
+    default_design = (webapp.get("webapp_default_design") or "aurum").strip()
     if default_design not in WEBAPP_DESIGN_IDS:
-        default_design = enabled_designs[0] if enabled_designs else "native"
+        default_design = enabled_designs[0] if enabled_designs else "aurum"
     health = check_health(webapp)
     enabled = _truthy(webapp.get("webapp_enable"))
     domain = normalize_domain(webapp.get("webapp_domen"))
@@ -304,7 +293,7 @@ def build_webapp_meta(
             "desc": d["desc"],
             "icon": d["icon"],
             "accent": d["accent"],
-            "group": DESIGN_GROUP_MAP.get(d["id"], "classic"),
+            "group": DESIGN_GROUP_MAP.get(d["id"], "all"),
             "enabled": d["id"] in enabled_designs,
             "is_default": d["id"] == default_design,
             "uses": stats.get(d["id"], 0),
@@ -392,7 +381,7 @@ def render_preview_html(
     accent: str = "",
 ) -> str:
     if design_id not in WEBAPP_DESIGN_IDS:
-        design_id = "classic"
+        design_id = "aurum"
     device = "desktop" if device == "desktop" else "mobile"
     accent = normalize_accent(accent) or DESIGN_ACCENTS.get(design_id, "#0a84ff")
     label = DESIGN_LABELS.get(design_id, design_id)
@@ -404,15 +393,9 @@ def render_preview_html(
     frame_h = "520px" if device == "desktop" else "680px"
 
     bg_styles = {
-        "classic": "background:linear-gradient(180deg,#171717,#0a0a0a)",
-        "ios": "background:linear-gradient(180deg,#111,#000);padding-bottom:52px",
-        "desktop": "background:#111;display:grid;grid-template-columns:220px 1fr",
-        "stealth": "background:#020202 radial-gradient(circle at 70% 20%, rgba(255,35,87,.25), transparent 55%)",
-        "stealth-glass": "background:linear-gradient(180deg,rgba(139,92,246,.15),#0b0f19)",
-        "glass-hub": "background:linear-gradient(180deg,rgba(59,130,246,.18),#0b0e14 45%)",
-        "nova": "background:linear-gradient(180deg,rgba(99,102,241,.22),#0f1117 45%);padding-bottom:52px",
+        "aurum": "background:linear-gradient(180deg,#14120f,#0c0c0e);padding-bottom:52px",
     }
-    body_style = bg_styles.get(design_id, bg_styles["classic"])
+    body_style = bg_styles.get(design_id, bg_styles["aurum"])
 
     logo_html = (
         f'<img src="{logo_e}" alt="" style="width:28px;height:28px;object-fit:contain;border-radius:8px">'
