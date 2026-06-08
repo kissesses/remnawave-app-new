@@ -388,6 +388,7 @@ SPA_CLIENT_PATHS = frozenset({
     "profile",
     "support",
     "history",
+    "activity",
     "notifications",
     "settings",
     "vpn",
@@ -2164,6 +2165,13 @@ class NotificationsReadRequest(BaseModel):
     user_id: int
     ids: list[str] = []
 
+class TimelineRequest(BaseModel):
+    user_id: int
+    category: str = "all"
+    q: str = ""
+    limit: int = 40
+    offset: int = 0
+
 class ApplyPromoRequest(BaseModel):
     user_id: int
     promo_code: str
@@ -3783,6 +3791,122 @@ async def api_trial_activate(req: TrialActivateRequest, auth_user: AuthUser):
     except Exception as e:
         logger.error(f"[WEBAPP] - Ошибка активации trial для {req.user_id}: {e}", exc_info=True)
         return {"ok": False, "error": "Не удалось активировать пробный период"}
+
+WEBAPP_TIMELINE_CATEGORIES = [
+    {"id": "all", "label": "Все"},
+    {"id": "payments", "label": "Платежи"},
+    {"id": "balance", "label": "Баланс"},
+    {"id": "keys", "label": "Ключи"},
+    {"id": "support", "label": "Поддержка"},
+    {"id": "referral", "label": "Рефералы"},
+    {"id": "system", "label": "Система"},
+]
+
+
+def _webapp_timeline_event(event: dict) -> dict:
+    meta = event.get("meta") or {}
+    key_id = meta.get("key_id")
+    ticket_id = meta.get("ticket_id")
+    href = None
+    if key_id:
+        href = f"/keys/{key_id}"
+    elif ticket_id:
+        href = "/support"
+    return {
+        "id": event.get("id"),
+        "kind": event.get("kind"),
+        "category": event.get("category"),
+        "accent": event.get("accent"),
+        "ts": event.get("ts") or "",
+        "day": event.get("day") or "",
+        "title": event.get("title") or "",
+        "subtitle": event.get("subtitle") or "",
+        "description": event.get("description") or "",
+        "amount": event.get("amount"),
+        "amount_signed": bool(event.get("amount_signed")),
+        "status_label": event.get("status_label"),
+        "badges": event.get("badges") or [],
+        "href": href,
+        "key_id": key_id,
+        "ticket_id": ticket_id,
+    }
+
+
+@app.post("/api/user/timeline")
+async def api_user_timeline(req: TimelineRequest, auth_user: AuthUser):
+    try:
+        user_id = authorized_user_id(auth_user, req.user_id)
+        user = get_user(user_id)
+        if not user or user.get("is_banned"):
+            return {"ok": False, "error": "Access denied"}
+
+        from shop_bot.webhook_server.services.user_timeline import (
+            CATEGORY_ADMIN,
+            build_user_timeline,
+        )
+
+        category = (req.category or "all").strip().lower()
+        allowed = {c["id"] for c in WEBAPP_TIMELINE_CATEGORIES}
+        if category not in allowed:
+            category = "all"
+
+        limit = min(max(int(req.limit or 40), 1), 80)
+        offset = max(int(req.offset or 0), 0)
+        q = (req.q or "").strip()[:120]
+
+        payload = build_user_timeline(
+            user_id,
+            category=category,
+            q=q,
+            limit=limit,
+            offset=offset,
+            exclude_categories=frozenset({CATEGORY_ADMIN}),
+        )
+        if not payload.get("ok"):
+            return {"ok": False, "error": payload.get("error") or "timeline_failed"}
+
+        events = [_webapp_timeline_event(e) for e in (payload.get("events") or [])]
+        days: list[dict] = []
+        current_day = None
+        for evt in events:
+            day = evt.get("day") or "—"
+            if day != current_day:
+                current_day = day
+                days.append({"day": day, "events": []})
+            days[-1]["events"].append(evt)
+
+        stats = payload.get("stats") or {}
+        category_counts = {
+            c["id"]: int((payload.get("category_counts") or {}).get(c["id"]) or 0)
+            for c in WEBAPP_TIMELINE_CATEGORIES
+        }
+        if CATEGORY_ADMIN in (payload.get("category_counts") or {}):
+            admin_n = int(payload["category_counts"][CATEGORY_ADMIN])
+            category_counts["all"] = max(0, category_counts.get("all", 0) - admin_n)
+
+        return {
+            "ok": True,
+            "categories": WEBAPP_TIMELINE_CATEGORIES,
+            "stats": {
+                "total_events": int(stats.get("total_events") or 0),
+                "payments_count": int(stats.get("payments_count") or 0),
+                "payments_sum": float(stats.get("payments_sum") or 0),
+                "support_tickets": int(stats.get("support_tickets") or 0),
+                "total_spent": float(stats.get("total_spent") or 0),
+                "referral_count": int(stats.get("referral_count") or 0),
+            },
+            "category_counts": category_counts,
+            "events": events,
+            "days": days,
+            "total": int(payload.get("total") or 0),
+            "offset": offset,
+            "limit": limit,
+            "has_more": bool(payload.get("has_more")),
+        }
+    except Exception as e:
+        logger.error(f"[WEBAPP] - Ошибка timeline для {req.user_id}: {e}")
+        return {"ok": False, "error": str(e)}
+
 
 @app.get("/api/payments/history")
 async def api_payments_history(user_id: int, auth_user: AuthUser, limit: int = 50):

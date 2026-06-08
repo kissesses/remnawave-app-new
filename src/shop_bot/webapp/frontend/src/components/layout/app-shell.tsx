@@ -8,7 +8,7 @@ import { useTelegramShell } from "@/hooks/use-telegram-shell";
 import { cn } from "@/lib/utils";
 import { UnreadNotificationsToast } from "@/components/feedback/unread-notifications-toast";
 
-const STACK_PREFIXES = ["/history", "/notifications", "/settings", "/vpn", "/keys"];
+const STACK_PREFIXES = ["/history", "/activity", "/notifications", "/settings", "/vpn", "/keys"];
 
 function isStackPath(path: string) {
   return STACK_PREFIXES.some((p) => path.startsWith(p));

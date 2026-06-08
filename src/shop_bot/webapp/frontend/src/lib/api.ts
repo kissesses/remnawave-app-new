@@ -2,6 +2,7 @@ import type {
   BootstrapData,
   CabinetConfig,
   Notification,
+  ActivityTimelineResponse,
   PaymentHistory,
   PurchaseCatalog,
   RenewCatalog,
@@ -354,6 +355,27 @@ export const api = {
     return request<{ ok: boolean }>("/api/key/comment", {
       method: "POST",
       body: JSON.stringify({ user_id: userId, key_id: keyId, comment }),
+    });
+  },
+
+  getActivityTimeline(
+    userId: number,
+    options?: {
+      category?: string;
+      q?: string;
+      limit?: number;
+      offset?: number;
+    },
+  ) {
+    return request<ActivityTimelineResponse>("/api/user/timeline", {
+      method: "POST",
+      body: JSON.stringify({
+        user_id: userId,
+        category: options?.category ?? "all",
+        q: options?.q ?? "",
+        limit: options?.limit ?? 40,
+        offset: options?.offset ?? 0,
+      }),
     });
   },
 

@@ -401,6 +401,89 @@
     @apply mt-0.5 text-[10px] font-medium text-muted-foreground;
   }
 
+  .activity-entry {
+    position: relative;
+  }
+
+  .activity-entry__glow {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      ellipse 70% 80% at 0% 50%,
+      rgba(var(--lb-blue), 0.18),
+      transparent 70%
+    );
+    pointer-events: none;
+  }
+
+  .activity-hero {
+    position: relative;
+  }
+
+  .activity-hero__glow {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      ellipse 90% 70% at 100% 0%,
+      rgba(var(--lb-blue), 0.2),
+      transparent 65%
+    );
+    pointer-events: none;
+  }
+
+  .activity-hero__icon {
+    @apply flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/15;
+  }
+
+  .activity-stat-pill {
+    @apply rounded-xl border border-white/10 bg-black/20 px-2 py-2.5 text-center;
+  }
+
+  .activity-stat-pill__value {
+    @apply text-sm font-bold tabular-nums text-foreground;
+  }
+
+  .activity-stat-pill__label {
+    @apply mt-0.5 text-[10px] font-medium text-muted-foreground;
+  }
+
+  .activity-timeline {
+    @apply space-y-5;
+  }
+
+  .activity-timeline__day-label {
+    @apply sticky top-0 z-10 mb-3 w-fit rounded-full border border-white/10 bg-background/80 px-3 py-1 text-[11px] font-semibold text-muted-foreground backdrop-blur-md;
+  }
+
+  .activity-timeline__events {
+    @apply space-y-3 pl-1;
+  }
+
+  .activity-timeline__card {
+    @apply relative flex gap-3;
+  }
+
+  .activity-timeline__rail {
+    @apply relative flex w-4 shrink-0 justify-center pt-5;
+  }
+
+  .activity-timeline__rail::before {
+    content: "";
+    @apply absolute bottom-0 left-1/2 top-0 w-px -translate-x-1/2 bg-white/10;
+  }
+
+  .activity-timeline__day:last-child .activity-timeline__events .activity-timeline__card:last-child .activity-timeline__rail::before {
+    @apply bottom-auto h-5;
+  }
+
+  .activity-timeline__dot {
+    @apply relative z-[1] h-3 w-3 shrink-0 rounded-full ring-4 ring-background;
+  }
+
+  .activity-timeline__body {
+    @apply min-w-0 flex-1;
+  }
+
   .studio-overview-card__meta {
     @apply text-[0.625rem] text-muted-foreground;
   }

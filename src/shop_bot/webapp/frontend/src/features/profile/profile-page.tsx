@@ -7,12 +7,13 @@ import {
   Copy,
   ChevronRight,
   Shield,
-  History,
   Wrench,
   Share2,
   Calendar,
   TrendingUp,
   Bell,
+  Activity,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Header } from "@/components/layout/header";
@@ -140,13 +141,6 @@ export function ProfilePage() {
     show: boolean;
   }[] = [
     {
-      id: "history",
-      icon: History,
-      label: "История операций",
-      onClick: () => navigate("/history"),
-      show: true,
-    },
-    {
       id: "notifications",
       icon: Bell,
       label: "Уведомления",
@@ -212,6 +206,31 @@ export function ProfilePage() {
                 scrollTo(referralsRef);
               }}
             />
+
+            <motion.button
+              type="button"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              whileTap={{ scale: 0.99 }}
+              className="activity-entry surface-elevated flex w-full items-center gap-3 overflow-hidden rounded-xl p-4 text-left"
+              onClick={() => {
+                haptic("selection");
+                navigate("/activity");
+              }}
+            >
+              <div className="activity-entry__glow" />
+              <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/15">
+                <Activity className="h-5 w-5 text-primary" />
+              </div>
+              <div className="relative min-w-0 flex-1">
+                <p className="font-semibold">Лента активности</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Платежи, ключи, поддержка, рефералы и системные события
+                </p>
+              </div>
+              <Sparkles className="relative h-4 w-4 shrink-0 text-primary/80" />
+              <ChevronRight className="relative h-4 w-4 shrink-0 text-muted-foreground" />
+            </motion.button>
 
             <div ref={keysRef}>
               <SectionHeader title="Мои подписки" />

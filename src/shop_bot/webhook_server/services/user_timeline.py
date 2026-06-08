@@ -633,6 +633,7 @@ def build_user_timeline(
     date_to: str = "",
     limit: int = 80,
     offset: int = 0,
+    exclude_categories: frozenset[str] | None = None,
 ) -> dict[str, Any]:
     user = get_user(user_id)
     if not user:
@@ -650,6 +651,9 @@ def build_user_timeline(
     all_events.extend(_admin_events(user_id))
 
     all_events.sort(key=lambda e: (e.get("ts_ms") or 0, e.get("id") or ""), reverse=True)
+
+    if exclude_categories:
+        all_events = [e for e in all_events if e.get("category") not in exclude_categories]
 
     stats = _compute_stats(all_events, user)
     filtered = [e for e in all_events if _matches_filters(e, category=category, q=q, date_from=date_from, date_to=date_to)]

@@ -194,7 +194,7 @@ export function HomePage() {
                 <button
                   type="button"
                   className="text-xs font-semibold text-primary"
-                  onClick={() => navigate("/history")}
+                  onClick={() => navigate("/activity")}
                 >
                   Все →
                 </button>
@@ -212,7 +212,7 @@ export function HomePage() {
                     className={`flex w-full items-center justify-between py-2.5 text-left text-sm active:opacity-70 ${
                       i > 0 ? "border-t border-border/30" : ""
                     }`}
-                    onClick={() => navigate("/history")}
+                    onClick={() => navigate("/activity")}
                   >
                     <div>
                       <div className="font-medium">{item.label}</div>

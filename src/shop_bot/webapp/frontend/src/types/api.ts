@@ -246,3 +246,57 @@ export interface PaymentMethod {
   label: string;
   icon?: string;
 }
+
+export type ActivityTimelineCategory =
+  | "all"
+  | "payments"
+  | "balance"
+  | "keys"
+  | "support"
+  | "referral"
+  | "system";
+
+export interface ActivityTimelineEvent {
+  id: string;
+  kind: string;
+  category: ActivityTimelineCategory;
+  accent: string;
+  ts: string;
+  day: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  amount?: number | null;
+  amount_signed?: boolean;
+  status_label?: string;
+  badges: string[];
+  href?: string | null;
+  key_id?: number;
+  ticket_id?: number;
+}
+
+export interface ActivityTimelineDay {
+  day: string;
+  events: ActivityTimelineEvent[];
+}
+
+export interface ActivityTimelineResponse {
+  ok: boolean;
+  categories: { id: ActivityTimelineCategory; label: string }[];
+  stats: {
+    total_events: number;
+    payments_count: number;
+    payments_sum: number;
+    support_tickets: number;
+    total_spent: number;
+    referral_count: number;
+  };
+  category_counts: Partial<Record<ActivityTimelineCategory, number>>;
+  events: ActivityTimelineEvent[];
+  days: ActivityTimelineDay[];
+  total: number;
+  offset: number;
+  limit: number;
+  has_more: boolean;
+  error?: string;
+}

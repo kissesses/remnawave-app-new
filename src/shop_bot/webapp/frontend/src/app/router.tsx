@@ -18,6 +18,11 @@ const SupportPage = lazy(() =>
 const HistoryPage = lazy(() =>
   import("@/features/history/history-page").then((m) => ({ default: m.HistoryPage })),
 );
+const ActivityTimelinePage = lazy(() =>
+  import("@/features/activity/activity-timeline-page").then((m) => ({
+    default: m.ActivityTimelinePage,
+  })),
+);
 const NotificationsPage = lazy(() =>
   import("@/features/notifications/notifications-page").then((m) => ({
     default: m.NotificationsPage,
@@ -55,6 +60,7 @@ export const router = createBrowserRouter([
       { path: "profile", element: withSuspense(ProfilePage) },
       { path: "support", element: withSuspense(SupportPage) },
       { path: "history", element: withSuspense(HistoryPage) },
+      { path: "activity", element: withSuspense(ActivityTimelinePage) },
       { path: "notifications", element: withSuspense(NotificationsPage) },
       { path: "settings", element: withSuspense(SettingsPage) },
       { path: "vpn/setup", element: withSuspense(VpnSetupPage) },
