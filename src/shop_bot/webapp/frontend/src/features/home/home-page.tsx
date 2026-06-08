@@ -154,6 +154,7 @@ export function HomePage() {
               {quickActions.map((action, i) => (
                 <motion.div
                   key={action.id}
+                  className="h-full"
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: i * 0.04 }}

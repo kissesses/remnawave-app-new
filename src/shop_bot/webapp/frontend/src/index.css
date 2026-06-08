@@ -343,10 +343,15 @@
 
   .studio-overview-grid {
     @apply grid grid-cols-2 gap-2.5;
+    grid-auto-rows: 1fr;
+  }
+
+  .studio-overview-grid > * {
+    @apply h-full min-h-[5.5rem];
   }
 
   .studio-overview-card {
-    @apply surface-glass flex flex-col items-start gap-1.5 rounded-xl p-3.5 text-left transition-all duration-150 active:scale-[0.98];
+    @apply surface-glass flex h-full w-full min-h-[5.5rem] flex-col items-center justify-center gap-2 rounded-xl p-3 text-center transition-all duration-150 active:scale-[0.98];
   }
 
   .studio-overview-card:active {
@@ -354,12 +359,19 @@
     border-color: rgba(var(--lb-blue), 0.25);
   }
 
+  .studio-overview-card__icon-wrap {
+    @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px];
+    background: rgba(var(--lb-blue), 0.18);
+    border: 1px solid rgba(var(--lb-blue), 0.25);
+    color: hsl(var(--primary));
+  }
+
   .studio-overview-card__icon {
     color: hsl(var(--primary));
   }
 
   .studio-overview-card__title {
-    @apply text-sm font-semibold text-foreground;
+    @apply flex min-h-[2.5rem] w-full items-center justify-center text-xs font-semibold leading-snug text-foreground;
   }
 
   .studio-overview-card__meta {

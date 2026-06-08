@@ -146,11 +146,22 @@ export interface SupportMessage {
   created_at: string;
 }
 
+export interface SupportTicketSummary {
+  ticket_id: number;
+  subject: string;
+  status: string;
+  updated_at: string;
+  message_count: number;
+}
+
 export interface SupportStatus {
   ok: boolean;
   has_ticket: boolean;
   ticket_id?: number;
   subject?: string;
+  status?: string;
+  can_send?: boolean;
+  tickets?: SupportTicketSummary[];
   messages?: SupportMessage[];
   error?: string;
 }

@@ -220,10 +220,13 @@ export const api = {
     );
   },
 
-  getSupportStatus(userId: number) {
+  getSupportStatus(userId: number, ticketId?: number) {
     return request<SupportStatus>("/api/support/status", {
       method: "POST",
-      body: JSON.stringify({ user_id: userId }),
+      body: JSON.stringify({
+        user_id: userId,
+        ...(ticketId != null ? { ticket_id: ticketId } : {}),
+      }),
     });
   },
 

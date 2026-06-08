@@ -1741,6 +1741,7 @@ async def index(request: Request, user_id: int | None = None, token: str | None 
 
 class SupportStatusRequest(BaseModel):
     user_id: int
+    ticket_id: int | None = None
 
 class SupportTicketCreateRequest(BaseModel):
     user_id: int
@@ -2936,33 +2937,62 @@ async def api_support_status(req: SupportStatusRequest, auth_user: AuthUser):
         user = get_user(user_id)
         if not user or user.get('is_banned'):
             return {"ok": False, "error": "Access denied"}
-            
-        from shop_bot.data_manager.remnawave_repository import get_user_tickets, get_ticket_messages
+
+        from shop_bot.data_manager.remnawave_repository import (
+            get_user_tickets,
+            get_ticket_messages,
+            get_ticket,
+        )
+
         tickets = get_user_tickets(user_id) or []
-        open_tickets = [t for t in tickets if t.get('status') == 'open']
-        if not open_tickets:
-            return {"ok": True, "has_ticket": False}
-        
-        ticket = max(open_tickets, key=lambda t: int(t['ticket_id']))
-        messages = get_ticket_messages(ticket['ticket_id']) or []
-        
+        if not tickets:
+            return {"ok": True, "has_ticket": False, "tickets": [], "messages": []}
+
+        ticket_summaries = []
+        for t in tickets:
+            tid = int(t["ticket_id"])
+            msgs = get_ticket_messages(tid) or []
+            visible = [m for m in msgs if m.get("sender") != "note"]
+            ticket_summaries.append({
+                "ticket_id": tid,
+                "subject": t.get("subject") or "Обращение без темы",
+                "status": t.get("status") or "open",
+                "updated_at": t.get("updated_at") or t.get("created_at") or "",
+                "message_count": len(visible),
+            })
+
+        active = None
+        if req.ticket_id:
+            candidate = get_ticket(req.ticket_id)
+            if candidate and candidate.get("user_id") == user_id:
+                active = candidate
+        if not active:
+            open_tickets = [t for t in tickets if t.get("status") == "open"]
+            if open_tickets:
+                active = max(open_tickets, key=lambda t: int(t["ticket_id"]))
+            else:
+                active = tickets[0]
+
+        messages = get_ticket_messages(active["ticket_id"]) or []
         formatted_messages = []
         for m in messages:
-            if m.get('sender') == 'note':
+            if m.get("sender") == "note":
                 continue
             formatted_messages.append({
                 "sender": m.get("sender"),
                 "content": m.get("content"),
-                "created_at": m.get("created_at")
+                "created_at": m.get("created_at"),
             })
-            
+
         return {
-            "ok": True, 
-            "has_ticket": True, 
-            "ticket_id": ticket['ticket_id'],
-            "subject": ticket.get('subject', 'Обращение без темы'),
-            "status": ticket.get('status'),
-            "messages": formatted_messages
+            "ok": True,
+            "has_ticket": True,
+            "ticket_id": active["ticket_id"],
+            "subject": active.get("subject", "Обращение без темы"),
+            "status": active.get("status"),
+            "can_send": active.get("status") == "open",
+            "tickets": ticket_summaries,
+            "messages": formatted_messages,
         }
     except Exception as e:
         logger.error(f"[WEBAPP] - Ошибка статуса поддержки для {req.user_id}: {e}")
@@ -2983,13 +3013,19 @@ async def api_support_create(req: SupportTicketCreateRequest, auth_user: AuthUse
             return {"ok": False, "error": "Тема обращения не может быть пустой"}
             
         ticket_id, created_new = get_or_create_open_ticket(user_id, subject_text)
-        
+
         if not ticket_id:
             return {"ok": False, "error": "Не удалось создать тикет"}
-            
+
         if not created_new:
             return {"ok": False, "error": "У вас уже есть открытый тикет"}
-            
+
+        add_support_message(
+            ticket_id,
+            sender="user",
+            content=f"Тема: {subject_text}",
+        )
+
         from aiogram import Bot
         token = get_setting("support_bot_token")
         if token:
