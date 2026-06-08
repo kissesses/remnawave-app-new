@@ -361,7 +361,7 @@ def _support_events(user_id: int) -> list[dict[str, Any]]:
                 ts=created,
                 title=f"Тикет #{tid}",
                 subtitle=subject,
-                description=f"Статус: {status}",
+                description="",
                 status=status,
                 status_label="Открыт" if status == "open" else "Закрыт",
                 links=[{"label": "Открыть тикет", "href": f"/support/{tid}"}],

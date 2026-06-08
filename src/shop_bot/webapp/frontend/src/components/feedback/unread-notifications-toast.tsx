@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useNotifications } from "@/hooks/use-cabinet";
 import { getUserId } from "@/lib/api";
 import { pickTopUnreadNotification } from "@/lib/notifications";
+import { usePreferencesStore } from "@/stores/preferences-store";
 
 export function UnreadNotificationsToast() {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ export function UnreadNotificationsToast() {
 
   useEffect(() => {
     if (!isSuccess || shown.current) return;
+    if (!usePreferencesStore.getState().notifyToast) return;
 
     const unread = (data ?? []).filter((n) => !n.read);
     if (!unread.length) return;

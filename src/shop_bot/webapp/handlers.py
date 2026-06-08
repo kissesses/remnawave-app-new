@@ -1199,6 +1199,9 @@ def _default_user_preferences() -> dict:
         "notify_subscription": True,
         "notify_support": True,
         "notify_referral": True,
+        "notify_promo": True,
+        "notify_toast": True,
+        "haptic_enabled": True,
     }
 
 
@@ -1610,7 +1613,8 @@ def _build_notifications(user_id: int) -> list[dict]:
                 href="/profile",
             ))
 
-    notifications.extend(_build_promo_campaign_notifications(user_id, read_ids))
+    if prefs.get("notify_promo", True):
+        notifications.extend(_build_promo_campaign_notifications(user_id, read_ids))
 
     notifications.sort(key=lambda n: n.get("date") or "", reverse=True)
     return notifications[:50]
@@ -2160,6 +2164,9 @@ class UserPreferencesRequest(BaseModel):
     notify_subscription: bool | None = None
     notify_support: bool | None = None
     notify_referral: bool | None = None
+    notify_promo: bool | None = None
+    notify_toast: bool | None = None
+    haptic_enabled: bool | None = None
 
 class NotificationsReadRequest(BaseModel):
     user_id: int

@@ -74,6 +74,31 @@ export function formatActivityTime(ts: string): string {
   return formatTime(ts) || "";
 }
 
+export function getEventTitle(event: ActivityTimelineEvent): string {
+  if (event.kind === "support_message") {
+    const sender = event.subtitle?.split("·").pop()?.trim().toLowerCase();
+    if (sender === "admin") return "Ответ поддержки";
+    if (sender === "user") return "Ваше сообщение";
+  }
+  return event.title;
+}
+
+export function getEventSubtitle(event: ActivityTimelineEvent): string | null {
+  const subtitle = event.subtitle?.trim();
+  if (!subtitle) return null;
+  return subtitle
+    .replace(/\badmin\b/gi, "Поддержка")
+    .replace(/\buser\b/gi, "Вы");
+}
+
+export function getEventDescription(event: ActivityTimelineEvent): string | null {
+  const desc = event.description?.trim();
+  if (!desc) return null;
+  if (event.kind === "support_ticket" && /^статус:/i.test(desc)) return null;
+  if (desc.length > 140) return `${desc.slice(0, 140).trim()}…`;
+  return desc;
+}
+
 export function formatActivityAmount(event: ActivityTimelineEvent): string | null {
   if (event.amount == null || Number.isNaN(Number(event.amount))) return null;
   const n = Math.abs(Number(event.amount));

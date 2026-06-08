@@ -20,6 +20,15 @@ interface ProfileHeroCardProps {
   onReferralsClick?: () => void;
 }
 
+function normalizeProfileHandle(value: string): string {
+  return value.trim().toLowerCase().replace(/^@/, "").replace(/[^\w]/g, "");
+}
+
+function shouldShowUsername(displayName: string, username?: string): boolean {
+  if (!username?.trim()) return false;
+  return normalizeProfileHandle(username) !== normalizeProfileHandle(displayName);
+}
+
 function StatPill({
   value,
   label,
@@ -82,8 +91,10 @@ export function ProfileHeroCard({
           </Avatar>
           <div className="min-w-0 flex-1 pt-0.5">
             <h2 className="truncate text-lg font-bold tracking-tight">{displayName}</h2>
-            {username && (
-              <p className="mt-0.5 truncate text-sm text-primary">@{username}</p>
+            {shouldShowUsername(displayName, username) && (
+              <p className="mt-0.5 truncate text-sm text-primary">
+                @{username!.replace(/^@/, "")}
+              </p>
             )}
             <p className="mt-1 text-xs text-muted-foreground">
               ID <span className="font-medium text-foreground">{userId}</span>

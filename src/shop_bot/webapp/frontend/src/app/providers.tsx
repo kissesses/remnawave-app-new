@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { useThemeStore } from "@/stores/theme-store";
 import { useNotifications } from "@/hooks/use-cabinet";
+import { usePreferences } from "@/hooks/use-preferences";
 import { useBranding } from "@/hooks/use-branding";
 import { useUiStore } from "@/stores/ui-store";
 const queryClient = new QueryClient({
@@ -31,6 +32,11 @@ function BrandingSync() {
   return null;
 }
 
+function PreferencesSync() {
+  usePreferences();
+  return null;
+}
+
 function NotificationBadgeSync() {
   const { data } = useNotifications();
   const setUnread = useUiStore((s) => s.setUnreadNotifications);
@@ -46,6 +52,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <ThemeProvider>
         <ThemeSync />
         <BrandingSync />
+        <PreferencesSync />
         <NotificationBadgeSync />
         {children}
       </ThemeProvider>

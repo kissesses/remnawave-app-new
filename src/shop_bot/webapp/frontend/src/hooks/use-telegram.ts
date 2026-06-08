@@ -1,5 +1,6 @@
 import { useCallback, useEffect } from "react";
 import { useThemeStore } from "@/stores/theme-store";
+import { usePreferencesStore } from "@/stores/preferences-store";
 
 export function useTelegram() {
   const tg = window.Telegram?.WebApp;
@@ -21,6 +22,7 @@ export function useTelegram() {
 
   const haptic = useCallback(
     (type: "light" | "medium" | "heavy" | "success" | "error" | "selection") => {
+      if (!usePreferencesStore.getState().hapticEnabled) return;
       const hf = tg?.HapticFeedback;
       if (!hf) return;
       if (type === "selection") hf.selectionChanged();

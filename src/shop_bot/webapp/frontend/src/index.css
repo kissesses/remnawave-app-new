@@ -448,40 +448,55 @@
   }
 
   .activity-timeline {
-    @apply space-y-5;
+    @apply relative pt-1;
+  }
+
+  .activity-timeline::before {
+    content: "";
+    position: absolute;
+    left: 10px;
+    top: 0.5rem;
+    bottom: 0.5rem;
+    width: 2px;
+    border-radius: 9999px;
+    background: linear-gradient(
+      180deg,
+      rgba(var(--lb-blue), 0.55) 0%,
+      rgba(var(--lb-blue), 0.12) 100%
+    );
+    pointer-events: none;
+  }
+
+  .activity-timeline__day + .activity-timeline__day {
+    @apply mt-5;
   }
 
   .activity-timeline__day-label {
-    @apply sticky top-0 z-10 mb-3 w-fit rounded-full border border-white/10 bg-background/80 px-3 py-1 text-[11px] font-semibold text-muted-foreground backdrop-blur-md;
+    @apply relative z-[1] mb-3 ml-8 inline-flex rounded-full border border-white/10 bg-background/90 px-3 py-1 text-[11px] font-semibold text-muted-foreground shadow-sm backdrop-blur-md;
   }
 
   .activity-timeline__events {
-    @apply space-y-3 pl-1;
+    @apply space-y-2.5;
   }
 
   .activity-timeline__card {
-    @apply relative flex gap-3;
+    @apply relative grid grid-cols-[22px_minmax(0,1fr)] items-start gap-3;
   }
 
   .activity-timeline__rail {
-    @apply relative flex w-4 shrink-0 justify-center pt-5;
-  }
-
-  .activity-timeline__rail::before {
-    content: "";
-    @apply absolute bottom-0 left-1/2 top-0 w-px -translate-x-1/2 bg-white/10;
-  }
-
-  .activity-timeline__day:last-child .activity-timeline__events .activity-timeline__card:last-child .activity-timeline__rail::before {
-    @apply bottom-auto h-5;
+    @apply relative z-[1] flex w-[22px] shrink-0 justify-center pt-[1.35rem];
   }
 
   .activity-timeline__dot {
-    @apply relative z-[1] h-3 w-3 shrink-0 rounded-full ring-4 ring-background;
+    @apply h-2.5 w-2.5 shrink-0 rounded-full ring-[3px] ring-background;
   }
 
   .activity-timeline__body {
-    @apply min-w-0 flex-1;
+    @apply min-w-0;
+  }
+
+  .activity-timeline__desc {
+    @apply mt-1.5 line-clamp-2 text-xs leading-relaxed text-foreground/75;
   }
 
   .studio-overview-card__meta {

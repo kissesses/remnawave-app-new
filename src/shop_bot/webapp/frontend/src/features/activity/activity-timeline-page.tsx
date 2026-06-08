@@ -28,6 +28,9 @@ import {
   formatActivityTime,
   getActivityAccent,
   getActivityIcon,
+  getEventDescription,
+  getEventSubtitle,
+  getEventTitle,
 } from "@/lib/activity-timeline";
 import type {
   ActivityTimelineCategory,
@@ -234,19 +237,23 @@ export function ActivityTimelinePage() {
                         const Icon = getActivityIcon(event.kind);
                         const accent = getActivityAccent(event.accent);
                         const amount = formatActivityAmount(event);
+                        const title = getEventTitle(event);
+                        const subtitle = getEventSubtitle(event);
+                        const description = getEventDescription(event);
+                        const clickable = Boolean(event.href);
+                        const CardTag = clickable ? motion.button : motion.div;
                         return (
-                          <motion.button
+                          <CardTag
                             key={event.id}
-                            type="button"
+                            type={clickable ? "button" : undefined}
                             initial={{ opacity: 0, x: -8 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: Math.min(ei * 0.03, 0.2) }}
                             className={cn(
                               "activity-timeline__card w-full text-left",
-                              event.href && "cursor-pointer active:scale-[0.99]",
+                              clickable && "cursor-pointer active:scale-[0.99]",
                             )}
-                            onClick={() => openEvent(event)}
-                            disabled={!event.href}
+                            onClick={clickable ? () => openEvent(event) : undefined}
                           >
                             <div className="activity-timeline__rail">
                               <span
@@ -269,7 +276,7 @@ export function ActivityTimelinePage() {
                                 </div>
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-start justify-between gap-2">
-                                    <p className="font-semibold leading-snug">{event.title}</p>
+                                    <p className="font-semibold leading-snug">{title}</p>
                                     {amount && (
                                       <span
                                         className={cn(
@@ -285,19 +292,26 @@ export function ActivityTimelinePage() {
                                       </span>
                                     )}
                                   </div>
-                                  {event.subtitle && (
+                                  {subtitle && (
                                     <p className="mt-0.5 text-xs text-muted-foreground">
-                                      {event.subtitle}
+                                      {subtitle}
                                     </p>
                                   )}
-                                  {event.description && (
-                                    <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground/90">
-                                      {event.description}
-                                    </p>
+                                  {description && (
+                                    <p className="activity-timeline__desc">{description}</p>
                                   )}
                                   <div className="mt-2 flex flex-wrap items-center gap-1.5">
                                     {event.status_label && (
-                                      <Badge variant="secondary" className="text-[10px]">
+                                      <Badge
+                                        variant={
+                                          event.status_label === "Закрыт"
+                                            ? "secondary"
+                                            : event.status_label === "Открыт"
+                                              ? "success"
+                                              : "secondary"
+                                        }
+                                        className="text-[10px]"
+                                      >
                                         {event.status_label}
                                       </Badge>
                                     )}
@@ -311,18 +325,18 @@ export function ActivityTimelinePage() {
                                       </Badge>
                                     ))}
                                     {event.ts && (
-                                      <span className="text-[10px] tabular-nums text-muted-foreground">
+                                      <span className="ml-auto text-[10px] tabular-nums text-muted-foreground">
                                         {formatActivityTime(event.ts)}
                                       </span>
                                     )}
                                   </div>
                                 </div>
-                                {event.href && (
+                                {clickable && (
                                   <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
                                 )}
                               </div>
                             </div>
-                          </motion.button>
+                          </CardTag>
                         );
                       })}
                     </div>
@@ -355,19 +369,19 @@ export function ActivityTimelinePage() {
               </div>
             )}
 
-            {stats && stats.support_tickets > 0 && (
+            {stats && stats.support_tickets > 0 && filter !== "support" && (
               <button
                 type="button"
-                className="studio-board flex w-full items-center gap-3 p-3 text-left active:opacity-80"
+                className="ml-8 studio-board flex w-[calc(100%-2rem)] items-center gap-3 p-3 text-left active:opacity-80"
                 onClick={() => navigate("/support")}
               >
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15">
                   <Headphones className="h-4 w-4 text-primary" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold">Обращения в поддержку</p>
+                  <p className="text-sm font-semibold">Открыть поддержку</p>
                   <p className="text-xs text-muted-foreground">
-                    {stats.support_tickets} тикетов в ленте
+                    {stats.support_tickets} обращений в истории
                   </p>
                 </div>
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />

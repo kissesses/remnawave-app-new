@@ -157,6 +157,9 @@ export interface UserPreferences {
   notify_subscription: boolean;
   notify_support: boolean;
   notify_referral: boolean;
+  notify_promo: boolean;
+  notify_toast: boolean;
+  haptic_enabled: boolean;
 }
 
 export interface ShopPlan {
