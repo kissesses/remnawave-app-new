@@ -17,6 +17,7 @@ interface ProfileHeroCardProps {
   trialUsed?: boolean;
   trialAvailable?: boolean;
   loyalty?: LoyaltyInfo | null;
+  hideBalance?: boolean;
   onBalanceClick?: () => void;
   onKeysClick?: () => void;
   onReferralsClick?: () => void;
@@ -75,6 +76,7 @@ export function ProfileHeroCard({
   trialUsed,
   trialAvailable,
   loyalty,
+  hideBalance,
   onBalanceClick,
   onKeysClick,
   onReferralsClick,
@@ -127,8 +129,10 @@ export function ProfileHeroCard({
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-3 gap-2">
-          <StatPill value={formatMoney(balance)} label="Баланс" onClick={onBalanceClick} />
+        <div className={cn("mt-4 grid gap-2", hideBalance ? "grid-cols-2" : "grid-cols-3")}>
+          {!hideBalance ? (
+            <StatPill value={formatMoney(balance)} label="Баланс" onClick={onBalanceClick} />
+          ) : null}
           <StatPill
             value={`${activeKeys}/${totalKeys}`}
             label="Ключи"

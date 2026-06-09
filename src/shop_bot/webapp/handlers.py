@@ -1674,30 +1674,45 @@ def _build_notifications(user_id: int) -> list[dict]:
                     severity="warning",
                     href=key_href,
                 ))
-            elif days <= 3:
-                notifications.append(_notification_item(
-                    nid=f"sub-expiring-{kid}",
-                    ntype="subscription_expiring",
-                    category="subscription",
-                    title="Ключ скоро истекает",
-                    body=f"Осталось {days} дн. · {key_name}",
-                    date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    read_ids=read_ids,
-                    severity="warning",
-                    href=key_href,
-                ))
-            elif days <= 7:
-                notifications.append(_notification_item(
-                    nid=f"sub-remind-{kid}",
-                    ntype="subscription_expiring",
-                    category="subscription",
-                    title="Напоминание о подписке",
-                    body=f"До окончания {days} дн. · {key_name}",
-                    date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    read_ids=read_ids,
-                    severity="info",
-                    href=key_href,
-                ))
+            elif prefs.get("auto_renew_enabled"):
+                remind_days = max(1, int(prefs.get("auto_renew_remind_days") or 3))
+                if days <= remind_days:
+                    notifications.append(_notification_item(
+                        nid=f"sub-expiring-{kid}",
+                        ntype="subscription_expiring",
+                        category="subscription",
+                        title="Ключ скоро истекает",
+                        body=f"Осталось {days} дн. · {key_name}",
+                        date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        read_ids=read_ids,
+                        severity="warning" if days <= max(1, remind_days // 2) else "info",
+                        href=key_href,
+                    ))
+            else:
+                if days <= 3:
+                    notifications.append(_notification_item(
+                        nid=f"sub-expiring-{kid}",
+                        ntype="subscription_expiring",
+                        category="subscription",
+                        title="Ключ скоро истекает",
+                        body=f"Осталось {days} дн. · {key_name}",
+                        date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        read_ids=read_ids,
+                        severity="warning",
+                        href=key_href,
+                    ))
+                elif days <= 7:
+                    notifications.append(_notification_item(
+                        nid=f"sub-remind-{kid}",
+                        ntype="subscription_expiring",
+                        category="subscription",
+                        title="Напоминание о подписке",
+                        body=f"До окончания {days} дн. · {key_name}",
+                        date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        read_ids=read_ids,
+                        severity="info",
+                        href=key_href,
+                    ))
 
             hwid_limit = key.get("limit_ips")
             hwid_usage = int(key.get("used_ips") or 0)

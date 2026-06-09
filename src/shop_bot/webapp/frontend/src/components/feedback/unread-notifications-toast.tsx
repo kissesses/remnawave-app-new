@@ -13,7 +13,7 @@ export function UnreadNotificationsToast() {
 
   useEffect(() => {
     if (!isSuccess || shown.current) return;
-    if (!usePreferencesStore.getState().notifyToast) return;
+    if (!usePreferencesStore.getState().notify_toast) return;
 
     const unread = (data ?? []).filter((n) => !n.read);
     if (!unread.length) return;

@@ -29,6 +29,7 @@ import { api, getUserId } from "@/lib/api";
 import { formatTime, formatDate, cn } from "@/lib/utils";
 import { useTelegram } from "@/hooks/use-telegram";
 import { useCabinetConfig } from "@/hooks/use-cabinet";
+import { usePreferences } from "@/hooks/use-preferences";
 import type { SupportMessage, SupportTicketSummary } from "@/types/api";
 
 const TAB_BAR_PAD =
@@ -128,6 +129,7 @@ export function SupportPage() {
   const qc = useQueryClient();
   const { haptic, openLink } = useTelegram();
   const { data: config } = useCabinetConfig();
+  const { data: prefs } = usePreferences();
 
   const supportInfo = config?.support_info;
   const categories = supportInfo?.categories?.length
@@ -142,7 +144,7 @@ export function SupportPage() {
   const [firstMessage, setFirstMessage] = useState("");
   const [category, setCategory] = useState("other");
   const [sending, setSending] = useState(false);
-  const [faqOpen, setFaqOpen] = useState(true);
+  const [faqOpen, setFaqOpen] = useState(() => !prefs?.support_faq_collapsed);
   const [expandedFaq, setExpandedFaq] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [selectedTicketId, setSelectedTicketId] = useState<number | undefined>();
@@ -166,6 +168,10 @@ export function SupportPage() {
     () => groupMessagesWithDates(data?.messages ?? []),
     [data?.messages],
   );
+
+  useEffect(() => {
+    if (prefs) setFaqOpen(!prefs.support_faq_collapsed);
+  }, [prefs?.support_faq_collapsed]);
 
   useEffect(() => {
     if (data?.has_ticket && hasOpenTicket) setFaqOpen(false);

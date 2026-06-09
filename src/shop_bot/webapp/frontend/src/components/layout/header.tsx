@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from "react";
 import { ChevronLeft, Bell } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useUiStore } from "@/stores/ui-store";
@@ -17,20 +17,23 @@ interface HeaderProps {
 
 export function Header({ title, showBack, showNotifications, logo, action }: HeaderProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const unread = useUiStore((s) => s.unreadNotifications);
-  const { haptic, showBackButton, isTelegram } = useTelegram();
+  const { haptic, showBackButton } = useTelegram();
 
   const goBack = useCallback(() => {
     haptic("selection");
+    if (location.key === "default") {
+      navigate("/", { replace: true });
+      return;
+    }
     navigate(-1);
-  }, [haptic, navigate]);
+  }, [haptic, location.key, navigate]);
 
   useEffect(() => {
     if (!showBack) return;
     return showBackButton(goBack);
   }, [showBack, showBackButton, goBack]);
-
-  const useNativeBack = showBack && isTelegram;
 
   return (
     <header
@@ -38,17 +41,16 @@ export function Header({ title, showBack, showNotifications, logo, action }: Hea
         "app-header sticky top-0 z-40 flex h-14 shrink-0 items-center gap-2 px-4",
       )}
     >
-      {showBack && !useNativeBack ? (
+      {showBack ? (
         <Button
           variant="ghost"
           size="icon"
           className="h-10 w-10 -ml-2 rounded-xl"
           onClick={goBack}
+          aria-label="Назад"
         >
           <ChevronLeft className="h-6 w-6" />
         </Button>
-      ) : showBack && useNativeBack ? (
-        <div className="w-2 shrink-0" />
       ) : logo ? (
         <div className="shrink-0">
           <img

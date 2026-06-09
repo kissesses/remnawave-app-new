@@ -123,6 +123,9 @@ export function HomePage() {
                     <StudioStat>до {formatDate(key.expire_date_str)}</StudioStat>
                   )}
                   {key.traffic_info && <StudioStat>{key.traffic_info}</StudioStat>}
+                  {!prefs?.hide_balance && status?.balance != null ? (
+                    <StudioStat>{formatMoney(status.balance)}</StudioStat>
+                  ) : null}
                   {sellerDiscount > 0 ? (
                     <StudioStat>
                       <Badge variant="success" className="text-[10px]">
@@ -264,6 +267,8 @@ export function HomePage() {
       percent,
       heroSub,
       sellerDiscount,
+      prefs?.hide_balance,
+      status?.balance,
       config,
       quickActions,
       recent,

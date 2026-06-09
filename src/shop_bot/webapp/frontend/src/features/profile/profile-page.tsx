@@ -32,6 +32,7 @@ import {
   useRefreshCabinet,
   useUserId,
 } from "@/hooks/use-cabinet";
+import { usePreferences } from "@/hooks/use-preferences";
 import { usePullRefresh } from "@/hooks/use-pull-refresh";
 import { useTelegram } from "@/hooks/use-telegram";
 import { useUiStore } from "@/stores/ui-store";
@@ -92,6 +93,7 @@ export function ProfilePage() {
   const { pullProps, pullOffset } = usePullRefresh(refresh);
   const { data: status, isLoading } = useUserStatus();
   const { data: config } = useCabinetConfig();
+  const { data: prefs } = usePreferences();
   const { displayName, user: tgUser, haptic, openLink } = useTelegram();
   const unreadNotifications = useUiStore((s) => s.unreadNotifications);
   const [keyFilter, setKeyFilter] = useState<KeyFilter>("all");
@@ -108,6 +110,8 @@ export function ProfilePage() {
   const referralsEnabled = config?.referrals?.enabled;
 
   const keys = status?.keys ?? [];
+  const compactKeys = Boolean(prefs?.compact_keys);
+  const hideBalance = Boolean(prefs?.hide_balance);
   const filteredKeys = useMemo(() => filterKeys(keys, keyFilter), [keys, keyFilter]);
   const activeCount = profile?.active_keys ?? keys.filter((k) => k.days_left > 0).length;
   const totalCount = profile?.total_keys ?? keys.length;
@@ -193,6 +197,7 @@ export function ProfilePage() {
               trialUsed={status?.trial_used}
               trialAvailable={status?.trial_available}
               loyalty={status?.loyalty}
+              hideBalance={hideBalance}
               onBalanceClick={() => {
                 haptic("selection");
                 navigate("/wallet");
@@ -275,28 +280,37 @@ export function ProfilePage() {
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: i * 0.04 }}
                           whileTap={{ scale: 0.99 }}
-                          className="studio-card flex w-full items-center gap-3 text-left !p-3"
+                          className={cn(
+                            "studio-card flex w-full items-center text-left",
+                            compactKeys ? "gap-2 !p-2" : "gap-3 !p-3",
+                          )}
                           onClick={() => {
                             haptic("selection");
                             navigate(`/keys/${key.key_id}`);
                           }}
                         >
-                          <SubscriptionRing percent={percent} size={52} />
+                          <SubscriptionRing percent={percent} size={compactKeys ? 44 : 52} />
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
                               <Shield className="h-3.5 w-3.5 shrink-0 text-primary" />
-                              <span className="truncate font-semibold">
+                              <span className={cn("truncate font-semibold", compactKeys && "text-sm")}>
                                 {key.name || key.host_name}
                               </span>
                             </div>
                             <p className="mt-1 text-xs text-muted-foreground">
                               {key.host_name} · до {key.expire_date_str}
                             </p>
-                            <div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground">
-                              <span>{key.days_left} дн.</span>
-                              {key.traffic_info && <span>{key.traffic_info}</span>}
-                              {key.hwid_info && <span>{key.hwid_info}</span>}
-                            </div>
+                            {!compactKeys ? (
+                              <div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground">
+                                <span>{key.days_left} дн.</span>
+                                {key.traffic_info && <span>{key.traffic_info}</span>}
+                                {key.hwid_info && <span>{key.hwid_info}</span>}
+                              </div>
+                            ) : (
+                              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                                {key.days_left} дн.
+                              </p>
+                            )}
                           </div>
                           <div className="flex shrink-0 flex-col items-end gap-1">
                             <Badge variant={key.days_left > 0 ? "success" : "warning"}>

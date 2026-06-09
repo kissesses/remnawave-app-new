@@ -22,7 +22,7 @@ export function useTelegram() {
 
   const haptic = useCallback(
     (type: "light" | "medium" | "heavy" | "success" | "error" | "selection") => {
-      if (!usePreferencesStore.getState().hapticEnabled) return;
+      if (!usePreferencesStore.getState().haptic_enabled) return;
       const hf = tg?.HapticFeedback;
       if (!hf) return;
       if (type === "selection") hf.selectionChanged();

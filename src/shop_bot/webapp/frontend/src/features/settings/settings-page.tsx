@@ -31,7 +31,6 @@ import { Switch } from "@/components/ui/switch";
 import { ListCell, ListGroup } from "@/components/layout/list-cell";
 import { StudioChip, StudioChipRow } from "@/components/studio/studio-chip";
 import { PageSkeleton } from "@/components/feedback/page-skeleton";
-import { useThemeStore } from "@/stores/theme-store";
 import { api, getUserId, removeAuthToken, getBootstrap } from "@/lib/api";
 import type { UserPreferences } from "@/types/api";
 import { useTelegram } from "@/hooks/use-telegram";
@@ -142,7 +141,6 @@ function PrefRow({
 
 export function SettingsPage() {
   const navigate = useNavigate();
-  const { setMode } = useThemeStore();
   const { haptic, displayName, user: tgUser } = useTelegram();
   const branding = getBootstrap().branding;
   const userId = getUserId();
@@ -159,7 +157,6 @@ export function SettingsPage() {
 
   const savePref = async (patch: Partial<UserPreferences>) => {
     haptic("selection");
-    if (patch.theme) setMode(patch.theme);
     const res = await savePreferences(patch);
     if (!res.ok) toast.error("Не удалось сохранить настройки");
   };
