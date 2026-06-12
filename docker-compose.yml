@@ -53,7 +53,6 @@ services:
     <<: [*common, *logging, *env-shopbot, *hardening]
     stop_grace_period: 45s
     mem_limit: ${APP_MEM_LIMIT:-1024m}
-    cpus: "1.5"
     ports:
       - "127.0.0.1:1337:1337"
       - "127.0.0.1:8000:8000"
@@ -112,7 +111,6 @@ services:
     image: postgres:18-alpine
     <<: [*common, *logging, *hardening-db]
     mem_limit: ${POSTGRES_MEM_LIMIT:-768m}
-    cpus: "1.0"
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-shopbot}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
@@ -131,7 +129,6 @@ services:
     image: redis:8-alpine
     <<: [*common, *logging, *hardening-db]
     mem_limit: ${REDIS_MEM_LIMIT:-192m}
-    cpus: "0.5"
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
     command:
