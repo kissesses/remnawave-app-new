@@ -16,7 +16,25 @@ env:
   IMAGE_NAME: kissesses/remnawave-app-new
 
 jobs:
+  stealthx-frontend-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: src/shop_bot/webapp/frontend/package-lock.json
+
+      - name: Build STEALTHX frontend
+        working-directory: src/shop_bot/webapp/frontend
+        run: |
+          npm ci
+          npm run build
+
   build:
+    needs: stealthx-frontend-check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
