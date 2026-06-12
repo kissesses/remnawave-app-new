@@ -116,7 +116,7 @@ export function WalletPage() {
               icon={History}
               title="История операций"
               subtitle="Все платежи и пополнения"
-              onClick={() => navigate("/history")}
+              onClick={() => navigate("/app/history")}
             />
           </ListGroup>
         </div>

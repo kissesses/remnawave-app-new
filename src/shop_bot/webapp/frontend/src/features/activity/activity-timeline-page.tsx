@@ -400,7 +400,7 @@ export function ActivityTimelinePage() {
               <button
                 type="button"
                 className="ml-8 studio-board flex w-[calc(100%-2rem)] items-center gap-3 p-3 text-left active:opacity-80"
-                onClick={() => navigate("/support")}
+                onClick={() => navigate("/app/support")}
               >
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15">
                   <Headphones className="h-4 w-4 text-primary" />

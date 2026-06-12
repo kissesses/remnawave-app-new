@@ -15,7 +15,7 @@ export function PromoHomeBanner({ banner }: PromoHomeBannerProps) {
   const until = banner.until ? parseAppDate(banner.until) : null;
   if (until && until.getTime() < Date.now()) return null;
 
-  const href = banner.href?.startsWith("/") ? banner.href : "/wallet";
+  const href = banner.href?.startsWith("/") ? banner.href : "/app/wallet";
 
   return (
     <motion.button

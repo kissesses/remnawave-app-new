@@ -87,11 +87,11 @@ export function HomePage() {
     onBuy: () => setPurchaseOpen(true),
     onRenew: () => setRenewOpen(true),
     onTrial: openTrial,
-    onReferrals: () => navigate("/referrals"),
-    onHowto: () => navigate("/vpn/setup"),
-    onTopup: () => navigate("/wallet"),
-    onPromo: () => navigate("/promo"),
-    onSupport: () => navigate("/support"),
+    onReferrals: () => navigate("/app/referrals"),
+    onHowto: () => navigate("/app/vpn/setup"),
+    onTopup: () => navigate("/app/wallet"),
+    onPromo: () => navigate("/app/promo"),
+    onSupport: () => navigate("/app/support"),
   }).filter((action) => !["topup", "support"].includes(action.id));
 
   const hiddenWidgets = new Set(prefs?.home_hidden_widgets ?? []);
@@ -112,7 +112,7 @@ export function HomePage() {
                   : "Истекла — продлите"
                 : heroSub || "Оформите доступ к VPN"
             }
-            onClick={() => key && navigate(`/keys/${key.key_id}`)}
+            onClick={() => key && navigate(`/app/keys/${key.key_id}`)}
             stats={
               key ? (
                 <>
@@ -204,7 +204,7 @@ export function HomePage() {
               <StudioChip
                 key={k.key_id}
                 active={k.key_id === key?.key_id}
-                onClick={() => navigate(`/keys/${k.key_id}`)}
+                onClick={() => navigate(`/app/keys/${k.key_id}`)}
               >
                 {k.name || k.host_name}
               </StudioChip>
@@ -223,7 +223,7 @@ export function HomePage() {
               <button
                 type="button"
                 className="text-xs font-semibold text-primary"
-                onClick={() => navigate("/activity")}
+                onClick={() => navigate("/app/activity")}
               >
                 Все →
               </button>
@@ -241,7 +241,7 @@ export function HomePage() {
                   className={`flex w-full items-center justify-between py-2.5 text-left text-sm active:opacity-70 ${
                     i > 0 ? "border-t border-border/30" : ""
                   }`}
-                  onClick={() => navigate("/activity")}
+                  onClick={() => navigate("/app/activity")}
                 >
                   <div>
                     <div className="font-medium">{item.label}</div>

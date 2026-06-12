@@ -26,7 +26,7 @@ export function UnreadNotificationsToast() {
     if (!top) return;
 
     const go = (href?: string) => {
-      navigate(href || "/notifications");
+      navigate(href || "/app/notifications");
     };
 
     toast(top.title, {
@@ -43,7 +43,7 @@ export function UnreadNotificationsToast() {
         duration: 7000,
         action: {
           label: "Все",
-          onClick: () => go("/notifications"),
+          onClick: () => go("/app/notifications"),
         },
       });
     }

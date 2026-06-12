@@ -322,14 +322,14 @@ export function SettingsPage() {
                   icon={Activity}
                   title="Лента активности"
                   subtitle="Вся история событий"
-                  onClick={() => navigate("/activity")}
+                  onClick={() => navigate("/app/activity")}
                 />
                 <div className="tg-cell-divider" />
                 <ListCell
                   icon={Bell}
                   title="Уведомления"
                   subtitle={unreadCount > 0 ? `${unreadCount} непрочитанных` : "Центр уведомлений"}
-                  onClick={() => navigate("/notifications")}
+                  onClick={() => navigate("/app/notifications")}
                 />
                 {config?.modules?.promo && (
                   <>
@@ -338,7 +338,7 @@ export function SettingsPage() {
                       icon={Tag}
                       title="Промокод"
                       subtitle="Активация и история"
-                      onClick={() => navigate("/promo")}
+                      onClick={() => navigate("/app/promo")}
                     />
                   </>
                 )}
@@ -349,7 +349,7 @@ export function SettingsPage() {
                       icon={Users}
                       title="Рефералы"
                       subtitle="Статистика и ссылка"
-                      onClick={() => navigate("/referrals")}
+                      onClick={() => navigate("/app/referrals")}
                     />
                   </>
                 )}
@@ -360,7 +360,7 @@ export function SettingsPage() {
                       icon={Wrench}
                       title="Настройка VPN"
                       subtitle="Инструкции для устройств"
-                      onClick={() => navigate("/vpn/setup")}
+                      onClick={() => navigate("/app/vpn/setup")}
                     />
                   </>
                 )}
@@ -371,7 +371,7 @@ export function SettingsPage() {
                       icon={Headphones}
                       title="Поддержка"
                       subtitle={supportBot ? `@${supportBot}` : "Обращения и FAQ"}
-                      onClick={() => navigate("/support")}
+                      onClick={() => navigate("/app/support")}
                     />
                   </>
                 )}
@@ -419,7 +419,7 @@ export function SettingsPage() {
                   icon={Mail}
                   title="Email-вход"
                   subtitle="Для браузера без Telegram"
-                  onClick={() => navigate("/auth/email")}
+                  onClick={() => navigate("/app/auth/email")}
                 />
               </ListGroup>
             </div>

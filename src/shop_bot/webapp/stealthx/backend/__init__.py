@@ -1,0 +1,1 @@
+"""STEALTHX backend application."""

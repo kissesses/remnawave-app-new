@@ -149,7 +149,7 @@ export function ProfilePage() {
       icon: Bell,
       label: "Уведомления",
       badge: unreadNotifications,
-      onClick: () => navigate("/notifications"),
+      onClick: () => navigate("/app/notifications"),
       show: true,
     },
     {
@@ -157,14 +157,14 @@ export function ProfilePage() {
       icon: Wrench,
       label: "Настройка VPN",
       meta: "Инструкции для устройств",
-      onClick: () => navigate("/vpn/setup"),
+      onClick: () => navigate("/app/vpn/setup"),
       show: config?.modules?.howto !== false,
     },
     {
       id: "settings",
       icon: Settings,
       label: "Настройки",
-      onClick: () => navigate("/settings"),
+      onClick: () => navigate("/app/settings"),
       show: true,
     },
   ].filter((item) => item.show);
@@ -200,7 +200,7 @@ export function ProfilePage() {
               hideBalance={hideBalance}
               onBalanceClick={() => {
                 haptic("selection");
-                navigate("/wallet");
+                navigate("/app/wallet");
               }}
               onKeysClick={() => {
                 haptic("selection");
@@ -221,7 +221,7 @@ export function ProfilePage() {
               className="activity-entry surface-elevated flex w-full items-center gap-3 overflow-hidden rounded-xl p-4 text-left"
               onClick={() => {
                 haptic("selection");
-                navigate("/activity");
+                navigate("/app/activity");
               }}
             >
               <div className="activity-entry__glow" />
@@ -286,7 +286,7 @@ export function ProfilePage() {
                           )}
                           onClick={() => {
                             haptic("selection");
-                            navigate(`/keys/${key.key_id}`);
+                            navigate(`/app/keys/${key.key_id}`);
                           }}
                         >
                           <SubscriptionRing percent={percent} size={compactKeys ? 44 : 52} />
@@ -332,7 +332,7 @@ export function ProfilePage() {
                 id="referrals"
                 ref={referralsRef}
                 className="w-full text-left"
-                onClick={() => navigate("/referrals")}
+                onClick={() => navigate("/app/referrals")}
               >
                 <StudioBoard className="space-y-2 active:opacity-90">
                   <div className="flex items-center gap-3">

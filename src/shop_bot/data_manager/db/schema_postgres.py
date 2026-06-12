@@ -455,6 +455,57 @@ CREATE TABLE IF NOT EXISTS dev_support_nonces (
     installation_id TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS stealthx_plans (
+    id SERIAL PRIMARY KEY,
+    slug TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
+    price_usd DOUBLE PRECISION NOT NULL,
+    popular BOOLEAN DEFAULT FALSE,
+    features TEXT DEFAULT '[]',
+    active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS stealthx_subscriptions (
+    id SERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    plan_id INTEGER NOT NULL,
+    status TEXT DEFAULT 'active',
+    expires_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS stealthx_vpn_servers (
+    id SERIAL PRIMARY KEY,
+    country TEXT NOT NULL,
+    country_code TEXT DEFAULT '',
+    host_name TEXT NOT NULL,
+    ping_ms INTEGER DEFAULT 0,
+    load_pct INTEGER DEFAULT 0,
+    status TEXT DEFAULT 'online',
+    lat DOUBLE PRECISION DEFAULT 0,
+    lng DOUBLE PRECISION DEFAULT 0,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS stealthx_payments (
+    id SERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    plan_id INTEGER,
+    amount_usd DOUBLE PRECISION DEFAULT 0,
+    status TEXT DEFAULT 'pending',
+    external_id TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS stealthx_logs (
+    id SERIAL PRIMARY KEY,
+    user_id BIGINT,
+    action TEXT NOT NULL,
+    details TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 """
 
 _PG_INDEXES = """
@@ -590,6 +641,9 @@ def run_migration_postgres() -> None:
                 _ensure_webapp_design_columns(cursor)
                 _ensure_webapp_studio_columns(cursor)
                 _ensure_webapp_platform_columns(cursor)
+                from shop_bot.data_manager.db.schema import _ensure_table_column
+                _ensure_table_column(cursor, "users", "jwt_refresh_hash", "TEXT")
+                _ensure_table_column(cursor, "users", "display_name", "TEXT")
                 try:
                     from shop_bot.data_manager.panel_access import (
                         _ensure_default_roles,

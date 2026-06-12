@@ -24,7 +24,7 @@ export function Header({ title, showBack, showNotifications, logo, action }: Hea
   const goBack = useCallback(() => {
     haptic("selection");
     if (location.key === "default") {
-      navigate("/", { replace: true });
+      navigate("/app", { replace: true });
       return;
     }
     navigate(-1);
@@ -71,7 +71,7 @@ export function Header({ title, showBack, showNotifications, logo, action }: Hea
           className="relative h-10 w-10 rounded-xl"
           onClick={() => {
             haptic("selection");
-            navigate("/notifications");
+            navigate("/app/notifications");
           }}
         >
           <Bell className="h-5 w-5" />

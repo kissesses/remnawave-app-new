@@ -18,6 +18,7 @@ export default defineConfig({
           vendor: ["react", "react-dom", "react-router-dom"],
           motion: ["framer-motion"],
           charts: ["recharts"],
+          globe: ["react-globe.gl", "three"],
         },
       },
     },

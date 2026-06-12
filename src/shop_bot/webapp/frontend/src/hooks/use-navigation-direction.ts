@@ -1,17 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 
-const TAB_ORDER = ["/", "/wallet", "/profile", "/support"];
+const TAB_ORDER = ["/app", "/app/wallet", "/app/profile", "/app/support"];
 
-const STACK_PREFIXES = ["/history", "/notifications", "/settings", "/vpn", "/keys"];
+const STACK_PREFIXES = ["/app/history", "/app/notifications", "/app/settings", "/app/vpn", "/app/keys"];
 
 function isStack(path: string) {
   return STACK_PREFIXES.some((p) => path.startsWith(p));
 }
 
 function tabIndex(path: string) {
-  if (path === "/") return 0;
-  const idx = TAB_ORDER.findIndex((t) => t !== "/" && path.startsWith(t));
+  if (path === "/app" || path === "/app/") return 0;
+  const idx = TAB_ORDER.findIndex((t) => t !== "/app" && path.startsWith(t));
   return idx >= 0 ? idx : 0;
 }
 

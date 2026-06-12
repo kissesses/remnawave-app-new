@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 
-WEBAPP_DESIGN_IDS = ("telegram-premium",)
+WEBAPP_DESIGN_IDS = ("telegram-premium", "stealthx")
 
 WEBAPP_DESIGNS: list[dict[str, str]] = [
     {
@@ -13,6 +13,13 @@ WEBAPP_DESIGNS: list[dict[str, str]] = [
         "desc": "Минималистичный кабинет в стиле Telegram Premium",
         "icon": "verified",
         "accent": "#3390EC",
+    },
+    {
+        "id": "stealthx",
+        "label": "STEALTHX",
+        "desc": "Премиальный cyberpunk VPN в стиле STEALTHX",
+        "icon": "diamond",
+        "accent": "#6D28FF",
     },
 ]
 

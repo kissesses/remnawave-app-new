@@ -24,7 +24,7 @@ export function EmailAuthPage() {
     if (res.ok && res.token) {
       setAuthToken(res.token);
       toast.success(mode === "login" ? "Вход выполнен" : "Аккаунт создан");
-      navigate("/", { replace: true });
+      navigate("/app", { replace: true });
       window.location.reload();
     } else {
       toast.error(res.error ?? "Ошибка авторизации");

@@ -17,4 +17,16 @@ while [ "$attempt" -le "$max_attempts" ]; do
     sleep 3
     attempt=$((attempt + 1))
 done
+
+if [ "${STEALTHX_AUTO_CONFIGURE:-1}" != "0" ]; then
+    echo "[entrypoint] STEALTHX auto-configure..."
+    /app/.venv/bin/python /app/project/scripts/stealthx-docker-init.py || {
+        if [ "${STEALTHX_INIT_STRICT:-0}" = "1" ]; then
+            echo "[entrypoint] FATAL: STEALTHX init failed (STEALTHX_INIT_STRICT=1)" >&2
+            exit 1
+        fi
+        echo "[entrypoint] STEALTHX init warning — continuing"
+    }
+fi
+
 exec /app/.venv/bin/python -m shop_bot

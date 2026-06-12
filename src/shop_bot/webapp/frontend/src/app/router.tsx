@@ -3,6 +3,9 @@ import { createBrowserRouter } from "react-router-dom";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageSkeleton } from "@/components/feedback/page-skeleton";
 
+const LandingPage = lazy(() =>
+  import("@/pages/landing-page").then((m) => ({ default: m.LandingPage })),
+);
 const HomePage = lazy(() =>
   import("@/features/home/home-page").then((m) => ({ default: m.HomePage })),
 );
@@ -62,6 +65,10 @@ function withSuspense(Component: ComponentType) {
 export const router = createBrowserRouter([
   {
     path: "/",
+    element: withSuspense(LandingPage),
+  },
+  {
+    path: "/app",
     element: <AppShell />,
     children: [
       { index: true, element: withSuspense(HomePage) },

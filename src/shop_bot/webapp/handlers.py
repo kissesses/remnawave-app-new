@@ -496,6 +496,7 @@ if os.path.isdir(_dist_assets):
     app.mount("/assets", StaticFiles(directory=_dist_assets), name="webapp_assets")
 
 SPA_CLIENT_PATHS = frozenset({
+    "app",
     "wallet",
     "profile",
     "support",
@@ -509,6 +510,19 @@ SPA_CLIENT_PATHS = frozenset({
     "referrals",
     "auth",
 })
+
+_LEGACY_APP_REDIRECTS = {
+    "wallet": "/app/wallet",
+    "profile": "/app/profile",
+    "support": "/app/support",
+    "history": "/app/history",
+    "activity": "/app/activity",
+    "notifications": "/app/notifications",
+    "settings": "/app/settings",
+    "promo": "/app/promo",
+    "referrals": "/app/referrals",
+    "auth": "/app/auth/email",
+}
 
 _uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")
 os.makedirs(os.path.join(_uploads_dir, "support"), exist_ok=True)
@@ -1985,6 +1999,65 @@ def _render_spa_shell(user_id: int, webapp_settings: dict | None = None) -> HTML
     return HTMLResponse(content=content)
 
 
+def _render_public_spa_shell() -> HTMLResponse:
+    index_path = _spa_index_path()
+    if not os.path.isfile(index_path):
+        return HTMLResponse(
+            content=(
+                "<h1>WebApp не собран</h1>"
+                "<p>Выполните: <code>cd src/shop_bot/webapp/frontend && npm install && npm run build</code></p>"
+            ),
+            status_code=503,
+        )
+    webapp_settings = get_webapp_settings() or {}
+    with open(index_path, "r", encoding="utf-8") as f:
+        content = f.read()
+    accent = (webapp_settings.get("webapp_accent_color") or "#6D28FF").strip()
+    if accent and not accent.startswith("#"):
+        accent = f"#{accent}"
+    bootstrap = {
+        "userId": None,
+        "tgFullscreen": False,
+        "branding": {
+            "welcome_text": "STEALTHX",
+            "accent_color": accent,
+            "logo": webapp_settings.get("webapp_logo") or "",
+            "icon": webapp_settings.get("webapp_icon") or "",
+            "title": "STEALTHX",
+        },
+        "design": "stealthx",
+    }
+    bootstrap_html = (
+        f'<script id="webapp-bootstrap" type="application/json">{html.escape(json.dumps(bootstrap, ensure_ascii=False))}</script>\n'
+        f'    <script>window.__WEBAPP_BOOTSTRAP__=JSON.parse(document.getElementById("webapp-bootstrap").textContent);</script>'
+    )
+    content = content.replace("<!-- WEBAPP_BOOTSTRAP -->", bootstrap_html)
+    content = content.replace(
+        "<title>Личный кабинет</title>",
+        "<title>STEALTHX — Твоя свобода. Твоя безопасность.</title>",
+    )
+    content = content.replace(
+        'content="noindex, nofollow"',
+        'content="index, follow"',
+    )
+    return HTMLResponse(content=content)
+
+
+def _serve_login_page() -> HTMLResponse:
+    p = os.path.join(os.path.dirname(__file__), "login.html")
+    if not os.path.exists(p):
+        return HTMLResponse(content="<h1>Login page not found</h1>", status_code=404)
+    with open(p, "r", encoding="utf-8") as f:
+        content = f.read()
+    webapp_settings = get_webapp_settings()
+    context = {
+        "webapp_logo": webapp_settings.get("webapp_logo") or "",
+        "webapp_icon": webapp_settings.get("webapp_icon") or "",
+    }
+    content = _process_template_placeholders(content, 0, webapp_settings, context)
+    return HTMLResponse(content=content)
+
+
 def _get_servers_and_plans_html(user_id: int | None = None):
     try:
         hosts = get_all_hosts(visible_only=True)
@@ -2323,40 +2396,34 @@ async def studio_preview(
 
 
 @app.get("/", response_class=HTMLResponse)
-async def index(request: Request, user_id: int | None = None, token: str | None = None):
+async def landing_index():
+    return _render_public_spa_shell()
+
+
+@app.get("/login", response_class=HTMLResponse)
+async def login_page():
+    return _serve_login_page()
+
+
+@app.get("/app", response_class=HTMLResponse)
+@app.get("/app/{rest_path:path}", response_class=HTMLResponse)
+async def app_spa(request: Request, rest_path: str = "", user_id: int | None = None, token: str | None = None):
     try:
         from shop_bot.data_manager import database
         from shop_bot.webapp.auth import extract_auth_token, resolve_user_from_token
 
-        # 1. Authorize by Token (query param)
         if token:
             user = database.get_user_by_auth_token(token)
             if user:
                 user_id = user['telegram_id']
 
-        # 2. Authorize by persistent cookie (skip login.html on repeat opens)
         if user_id is None:
             cookie_user = resolve_user_from_token(extract_auth_token(request))
             if cookie_user:
                 user_id = cookie_user['telegram_id']
-        
-        # 3. If no user_id (and no valid token), serve login.html
+
         if user_id is None:
-            p = os.path.join(os.path.dirname(__file__), "login.html")
-            if os.path.exists(p):
-                with open(p, "r", encoding="utf-8") as f:
-                    content = f.read()
-                
-                # Process placeholders for login page too
-                webapp_settings = get_webapp_settings()
-                context = {
-                    "webapp_logo": webapp_settings.get("webapp_logo") or "",
-                    "webapp_icon": webapp_settings.get("webapp_icon") or ""
-                }
-                content = _process_template_placeholders(content, 0, webapp_settings, context)
-                return HTMLResponse(content=content)
-            else:
-                return HTMLResponse(content="<h1>Login page not found</h1>", status_code=404)
+            return _serve_login_page()
 
         webapp_settings = get_webapp_settings()
         user = get_user(user_id)
@@ -2364,10 +2431,11 @@ async def index(request: Request, user_id: int | None = None, token: str | None 
             return _render_banned_page(webapp_settings)
 
         return await _render_main_page(user_id)
-
     except Exception as e:
         error_details = traceback.format_exc()
-        return HTMLResponse(content=f"<h1>500 Internal Server Error</h1><pre>{error_details}</pre>", status_code=500)
+        logger.error(f"[WEBAPP] - Ошибка app SPA: {e}\n{error_details}")
+        return HTMLResponse(content=f"<h1>Error</h1><pre>{html.escape(str(e))}</pre>", status_code=500)
+
 
 # ===== API Models =====
 
@@ -5149,8 +5217,18 @@ async def dynamic_route(request: Request, path_param: str):
             path_param in SPA_CLIENT_PATHS
             or path_param.startswith("vpn/")
             or path_param.startswith("keys/")
+            or path_param.startswith("app/")
         ):
             from shop_bot.webapp.auth import extract_auth_token, resolve_user_from_token
+            from starlette.responses import RedirectResponse
+
+            if path_param in _LEGACY_APP_REDIRECTS:
+                return RedirectResponse(url=_LEGACY_APP_REDIRECTS[path_param], status_code=302)
+            if path_param.startswith("vpn/"):
+                return RedirectResponse(url=f"/app/{path_param}", status_code=302)
+            if path_param.startswith("keys/"):
+                return RedirectResponse(url=f"/app/{path_param}", status_code=302)
+
             cookie_user = resolve_user_from_token(extract_auth_token(request))
             if cookie_user:
                 webapp_settings = get_webapp_settings()
@@ -5162,3 +5240,10 @@ async def dynamic_route(request: Request, path_param: str):
     except Exception as e:
         logger.error(f"[WEBAPP] - Ошибка динамического маршрута: {e}")
         return HTMLResponse(content="<h1>Error</h1>", status_code=500)
+
+
+try:
+    from shop_bot.webapp.stealthx.backend.routers import api_router as stealthx_api_router
+    app.include_router(stealthx_api_router, prefix="/api")
+except Exception as _stealthx_import_err:
+    logger.warning("STEALTHX API routers not loaded: %s", _stealthx_import_err)

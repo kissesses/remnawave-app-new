@@ -10,15 +10,15 @@ import { UnreadNotificationsToast } from "@/components/feedback/unread-notificat
 import { TermsAgreementModal } from "@/components/premium/terms-agreement-modal";
 
 const STACK_PREFIXES = [
-  "/history",
-  "/activity",
-  "/notifications",
-  "/settings",
-  "/vpn",
-  "/keys",
-  "/promo",
-  "/referrals",
-  "/auth",
+  "/app/history",
+  "/app/activity",
+  "/app/notifications",
+  "/app/settings",
+  "/app/vpn",
+  "/app/keys",
+  "/app/promo",
+  "/app/referrals",
+  "/app/auth",
 ];
 
 function isStackPath(path: string) {

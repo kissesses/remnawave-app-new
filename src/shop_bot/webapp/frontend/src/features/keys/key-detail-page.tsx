@@ -452,7 +452,7 @@ export function KeyDetailPage() {
             <Button
               variant="secondary"
               className="w-full rounded-2xl"
-              onClick={() => navigate("/vpn/setup")}
+              onClick={() => navigate("/app/vpn/setup")}
             >
               Инструкция по настройке
             </Button>

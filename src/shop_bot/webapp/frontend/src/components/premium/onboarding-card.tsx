@@ -6,9 +6,9 @@ import { api, getUserId } from "@/lib/api";
 import type { OnboardingProgress } from "@/types/api";
 
 const STEPS = [
-  { id: "bought" as const, label: "Оформить подписку", icon: Shield, href: "/" },
-  { id: "vpn_setup" as const, label: "Настроить VPN", icon: Gift, href: "/vpn/setup" },
-  { id: "referred" as const, label: "Пригласить друга", icon: Users, href: "/referrals" },
+  { id: "bought" as const, label: "Оформить подписку", icon: Shield, href: "/app" },
+  { id: "vpn_setup" as const, label: "Настроить VPN", icon: Gift, href: "/app/vpn/setup" },
+  { id: "referred" as const, label: "Пригласить друга", icon: Users, href: "/app/referrals" },
 ];
 
 export function OnboardingCard() {
@@ -27,7 +27,7 @@ export function OnboardingCard() {
 
   const markVpnSetup = async () => {
     await api.saveOnboardingProgress(getUserId(), { vpn_setup: true });
-    navigate("/vpn/setup");
+    navigate("/app/vpn/setup");
   };
 
   return (

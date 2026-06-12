@@ -6,13 +6,13 @@ import { useTelegram } from "@/hooks/use-telegram";
 import { useSupportUnread } from "@/hooks/use-cabinet";
 
 const tabs = [
-  { to: "/", label: "Главная", icon: Home },
-  { to: "/wallet", label: "Кошелёк", icon: Wallet },
-  { to: "/profile", label: "Профиль", icon: User },
-  { to: "/support", label: "Поддержка", icon: Headphones },
+  { to: "/app", label: "Главная", icon: Home },
+  { to: "/app/wallet", label: "Кошелёк", icon: Wallet },
+  { to: "/app/profile", label: "Профиль", icon: User },
+  { to: "/app/support", label: "Поддержка", icon: Headphones },
 ] as const;
 
-const HIDDEN_PREFIXES = ["/history", "/notifications", "/settings", "/vpn", "/keys"];
+const HIDDEN_PREFIXES = ["/app/history", "/app/notifications", "/app/settings", "/app/vpn", "/app/keys"];
 
 export function BottomNav() {
   const location = useLocation();
@@ -34,7 +34,9 @@ export function BottomNav() {
         <div className="flex h-[58px] items-stretch justify-around px-1.5">
           {tabs.map(({ to, label, icon: Icon }) => {
             const active =
-              to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
+              to === "/app"
+                ? location.pathname === "/app" || location.pathname === "/app/"
+                : location.pathname.startsWith(to);
             return (
               <NavLink
                 key={to}
@@ -55,7 +57,7 @@ export function BottomNav() {
                 />
                 <div className="relative z-10 flex h-7 w-7 items-center justify-center">
                   <Icon className="h-[21px] w-[21px]" strokeWidth={active ? 2.25 : 1.75} />
-                  {to === "/support" && supportUnread > 0 && !active && (
+                  {to === "/app/support" && supportUnread > 0 && !active && (
                     <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-destructive-foreground">
                       {supportUnread > 9 ? "9+" : supportUnread}
                     </span>
