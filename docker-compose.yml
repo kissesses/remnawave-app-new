@@ -1,18 +1,20 @@
-# Remnawave App — production (co-install с Remnawave Panel на одном сервере)
+# Remnawave App + STEALTHX — единый Docker Compose
 #
-# Требования:
-#   1. Remnawave Panel уже установлен (/opt/remnawave)
-#   2. Docker-сеть remnawave-network существует
-#
-# Быстрая установка:
-#   mkdir /opt/remnawave-app && cd /opt/remnawave-app
-#   curl -o docker-compose.yml https://raw.githubusercontent.com/kissesses/remnawave-app-new/main/docker-compose.yml
-#   curl -o .env https://raw.githubusercontent.com/kissesses/remnawave-app-new/main/.env.example
-#   Секреты: docs/INSTALL.md (openssl + sed)
+# Установка:
+#   cp .env.example .env
+#   # заполните секреты (docs/INSTALL.md)
 #   docker compose pull && docker compose up -d
 #
-# Reverse proxy — в Nginx Remnawave (см. docs/INSTALL.md).
-# Prod: PostgreSQL и Redis без ports на хост — только внутри Docker-сети.
+# Локальная сборка (без pull):
+#   docker compose up -d --build
+#
+# Co-install с Remnawave Panel (по умолчанию):
+#   COMPOSE_NETWORK_EXTERNAL=true  — сеть remnawave-network
+#
+# Standalone (без Panel):
+#   COMPOSE_NETWORK_EXTERNAL=false в .env
+#
+# STEALTHX: landing http://127.0.0.1:8000/  ·  кабинет /app  ·  панель :1337
 
 x-common: &common
   restart: unless-stopped
@@ -22,14 +24,10 @@ x-logging: &logging
     driver: json-file
     options:
       max-size: 50m
-      max-file: 3
+      max-file: 5
 
 x-env-shopbot: &env-shopbot
   env_file: .env
-
-x-coinstall-network: &coinstall-network
-  networks:
-    - remnawave-network
 
 x-hardening: &hardening
   init: true
@@ -38,13 +36,7 @@ x-hardening: &hardening
   cap_drop:
     - ALL
 
-x-hardening-postgres: &hardening-postgres
-  init: true
-  security_opt:
-    - no-new-privileges:true
-
-# Redis — кэш (rate limit, presence); без RDB на диск и без cap_drop: ALL
-x-hardening-redis: &hardening-redis
+x-hardening-db: &hardening-db
   init: true
   security_opt:
     - no-new-privileges:true
@@ -52,14 +44,19 @@ x-hardening-redis: &hardening-redis
 services:
   remnawave-app:
     image: ghcr.io/kissesses/remnawave-app-new:${SHOPBOT_IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        INSTALL_DOCKER_CLI: ${INSTALL_DOCKER_CLI:-1}
     container_name: remnawave-app-new
-    <<: [*common, *logging, *env-shopbot, *coinstall-network, *hardening]
-    stop_grace_period: 30s
-    mem_limit: 768m
-    cpus: "1.0"
+    <<: [*common, *logging, *env-shopbot, *hardening]
+    stop_grace_period: 45s
+    mem_limit: ${APP_MEM_LIMIT:-1024m}
+    cpus: "1.5"
     ports:
-      - '127.0.0.1:1337:1337'
-      - '127.0.0.1:8000:8000'
+      - "127.0.0.1:1337:1337"
+      - "127.0.0.1:8000:8000"
     volumes:
       - shopbot-data:/app/project/data
       - backups-data:/app/project/backups
@@ -81,34 +78,40 @@ services:
       SHOPBOT_RP_ID: ${SHOPBOT_RP_ID:-}
       SHOPBOT_RP_ORIGIN: ${SHOPBOT_RP_ORIGIN:-}
       SHOPBOT_WEBAPP_TOKEN_DAYS: ${SHOPBOT_WEBAPP_TOKEN_DAYS:-90}
-      STEALTHX_DATABASE_URL: postgresql://${POSTGRES_USER:-shopbot}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-shopbot}
-      STEALTHX_JWT_SECRET: ${STEALTHX_JWT_SECRET:-}
-      STEALTHX_JWT_ACCESS_MINUTES: ${STEALTHX_JWT_ACCESS_MINUTES:-15}
-      STEALTHX_JWT_REFRESH_DAYS: ${STEALTHX_JWT_REFRESH_DAYS:-7}
-      STEALTHX_AUTO_CONFIGURE: ${STEALTHX_AUTO_CONFIGURE:-1}
-      STEALTHX_INIT_STRICT: ${STEALTHX_INIT_STRICT:-0}
       SHOPBOT_DEBUG: ${SHOPBOT_DEBUG:-0}
       SHOPBOT_IMAGE_TAG: ${SHOPBOT_IMAGE_TAG:-latest}
       DEVELOPER_SUPPORT_ENABLED: ${DEVELOPER_SUPPORT_ENABLED:-0}
       DEVELOPER_SUPPORT_HUB_URL: ${DEVELOPER_SUPPORT_HUB_URL:-}
       SHOPBOT_COMPOSE_PROJECT_DIR: ${SHOPBOT_COMPOSE_PROJECT_DIR:-/opt/remnawave-app}
       REMNAWAVE_BACKUP_COMPOSE_DIR: ${REMNAWAVE_BACKUP_COMPOSE_DIR:-/opt/remnawave}
+      STEALTHX_DATABASE_URL: postgresql://${POSTGRES_USER:-shopbot}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-shopbot}
+      STEALTHX_JWT_SECRET: ${STEALTHX_JWT_SECRET:-}
+      STEALTHX_JWT_ACCESS_MINUTES: ${STEALTHX_JWT_ACCESS_MINUTES:-15}
+      STEALTHX_JWT_REFRESH_DAYS: ${STEALTHX_JWT_REFRESH_DAYS:-7}
+      STEALTHX_AUTO_CONFIGURE: ${STEALTHX_AUTO_CONFIGURE:-1}
+      STEALTHX_INIT_STRICT: ${STEALTHX_INIT_STRICT:-0}
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:1337/login >/dev/null || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS http://127.0.0.1:8000/health >/dev/null && curl -fsS http://127.0.0.1:1337/login >/dev/null || exit 1",
+        ]
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 90s
+      start_period: 120s
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+    networks:
+      - app-network
 
   postgres:
     image: postgres:18-alpine
-    <<: [*common, *logging, *coinstall-network, *hardening-postgres]
-    mem_limit: 512m
+    <<: [*common, *logging, *hardening-db]
+    mem_limit: ${POSTGRES_MEM_LIMIT:-768m}
     cpus: "1.0"
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-shopbot}
@@ -121,15 +124,16 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    networks:
+      - app-network
 
   redis:
     image: redis:8-alpine
-    <<: [*common, *logging, *coinstall-network, *hardening-redis]
-    mem_limit: 128m
+    <<: [*common, *logging, *hardening-db]
+    mem_limit: ${REDIS_MEM_LIMIT:-192m}
     cpus: "0.5"
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
-    # Без RDB: только кэш; избегает Permission denied на volume и MISCONF stop-writes
     command:
       - redis-server
       - --save
@@ -148,11 +152,13 @@ services:
       timeout: 3s
       retries: 5
       start_period: 10s
+    networks:
+      - app-network
 
 networks:
-  remnawave-network:
-    external: true
-    name: remnawave-network
+  app-network:
+    name: ${COMPOSE_NETWORK_NAME:-remnawave-network}
+    external: ${COMPOSE_NETWORK_EXTERNAL:-true}
 
 volumes:
   shopbot-data:
